@@ -25,8 +25,8 @@
   --amber: #E8A84E;
 }
 
-html, body, #root { height: 100%; overflow: hidden; background: var(--bg); }
-body { color: var(--text); font-family: var(--fb); font-size: 15px; line-height: 1.5; overscroll-behavior: none; }
+html, body, #root { height: 100%; overflow: hidden; background: var(--bg); max-width: 100vw; }
+body { color: var(--text); font-family: var(--fb); font-size: 15px; line-height: 1.5; overscroll-behavior: none; -webkit-text-size-adjust: 100%; }
 
 /* ── App shell ── */
 .app-wrapper { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
@@ -67,7 +67,7 @@ body { color: var(--text); font-family: var(--fb); font-size: 15px; line-height:
 .navbar-row { display: flex; justify-content: space-between; align-items: flex-end; }
 
 /* ── Sub tabs ── */
-.sub-tabs { display: flex; border-bottom: .5px solid var(--sep); margin-top: 6px; overflow-x: auto; }
+.sub-tabs { display: flex; border-bottom: .5px solid var(--sep); margin-top: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
 .sub-tabs::-webkit-scrollbar { display: none; }
 .sub-tab { flex-shrink: 0; padding: 7px 12px 9px; font-size: 14px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--text3); cursor: pointer; font-family: var(--fb); white-space: nowrap; }
 .sub-tab.active { color: var(--blue); border-bottom-color: var(--blue); font-weight: 600; }
@@ -96,8 +96,8 @@ body { color: var(--text); font-family: var(--fb); font-size: 15px; line-height:
 .fab:disabled { opacity: .5; cursor: default; }
 
 /* ── Sheet / Modal ── */
-.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 100; display: flex; align-items: flex-end; animation: fadeIn .18s ease; }
-.sheet { width: 100%; background: var(--bg); border-radius: 14px 14px 0 0; padding: 0 0 calc(16px + var(--sb)); max-height: 90dvh; overflow-y: auto; animation: slideUp .3s cubic-bezier(.32,.72,0,1); display: flex; flex-direction: column; }
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 100; display: flex; align-items: flex-end; animation: fadeIn .18s ease; overscroll-behavior: contain; }
+.sheet { width: 100%; background: var(--bg); border-radius: 14px 14px 0 0; padding: 0 0 calc(16px + var(--sb)); max-height: 92dvh; overflow-y: auto; animation: slideUp .3s cubic-bezier(.32,.72,0,1); display: flex; flex-direction: column; -webkit-overflow-scrolling: touch; }
 .sheet::-webkit-scrollbar { display: none; }
 .sheet-handle { width: 36px; height: 5px; border-radius: 3px; background: var(--sep); margin: 12px auto 0; flex-shrink: 0; }
 .sheet-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px 16px; flex-shrink: 0; }
@@ -112,14 +112,14 @@ body { color: var(--text); font-family: var(--fb); font-size: 15px; line-height:
 .form-cell { display: flex; align-items: center; padding: 11px 16px; border-bottom: .5px solid var(--sep2); gap: 12px; }
 .form-cell:last-child { border-bottom: none; }
 .form-label { font-size: 15px; min-width: 130px; flex-shrink: 0; }
-.form-input { flex: 1; background: transparent; border: none; outline: none; font-size: 15px; font-family: var(--fb); text-align: right; color: var(--text2); }
+.form-input { flex: 1; background: transparent; border: none; outline: none; font-size: 16px; font-family: var(--fb); text-align: right; color: var(--text2); }
 .form-input::placeholder { color: var(--text4); }
-.form-select { flex: 1; background: transparent; border: none; outline: none; font-size: 15px; font-family: var(--fb); text-align: right; color: var(--text2); appearance: none; -webkit-appearance: none; cursor: pointer; }
+.form-select { flex: 1; background: transparent; border: none; outline: none; font-size: 16px; font-family: var(--fb); text-align: right; color: var(--text2); appearance: none; -webkit-appearance: none; cursor: pointer; }
 .form-textarea { width: 100%; background: transparent; border: none; outline: none; font-size: 15px; font-family: var(--fb); color: var(--text2); resize: none; min-height: 80px; padding: 11px 16px; line-height: 1.6; }
 .form-textarea::placeholder { color: var(--text4); }
 
 /* ── Bulk textarea ── */
-.bulk-textarea { width: 100%; background: var(--surface); border: .5px solid var(--sep2); border-radius: 12px; padding: 12px 16px; font-size: 15px; font-family: var(--fb); color: var(--text); resize: none; outline: none; min-height: 140px; line-height: 1.8; }
+.bulk-textarea { width: 100%; background: var(--surface); border: .5px solid var(--sep2); border-radius: 12px; padding: 12px 16px; font-size: 15px; font-family: var(--fb); color: var(--text); resize: none; outline: none; min-height: 80px; line-height: 1.8; overflow: hidden; field-sizing: content; }
 .bulk-textarea::placeholder { color: var(--text4); }
 .bulk-hint { font-size: 12px; color: var(--text3); margin-top: 6px; padding: 0 4px; }
 
@@ -188,7 +188,7 @@ body { color: var(--text); font-family: var(--fb); font-size: 15px; line-height:
 .tag-input { border: none; outline: none; font-family: var(--fb); font-size: 15px; color: var(--text); background: transparent; min-width: 80px; flex: 1; }
 
 /* ── Home page ── */
-.home-page { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); padding: 40px 24px; text-align: center; }
+.home-page { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); background-image: var(--home-bg-image, none); background-size: cover; background-position: center; padding: 40px 24px; text-align: center; position: relative; }
 .home-logo { width: 120px; height: 120px; margin-bottom: 24px; }
 .home-title { font-size: 32px; font-weight: 700; letter-spacing: -.5px; margin-bottom: 8px; }
 .home-sub { font-size: 16px; color: var(--text3); }

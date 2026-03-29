@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { useCtx } from '../App.jsx'
 import * as db from '../db.js'
-import { addToGoogleCalendar } from '../supabase.js'
-import { Sheet, FormCell, STOCK_STATUS, fmt, IPlus, ITrash, IEdit, ICalendar } from '../components/Shared.jsx'
+import { addToGoogleCalendar, addToAppleReminders } from '../supabase.js'
+import { Sheet, FormCell, STOCK_STATUS, fmt, IPlus, ITrash, IEdit, ICalendar, IBell } from '../components/Shared.jsx'
 
 export default function Stock() {
   const { data, mutate } = useCtx()
@@ -72,12 +72,19 @@ export default function Stock() {
                         {item.notes && <div style={{ fontSize: 13, color: 'var(--text3)', marginTop: 2 }}>{item.notes}</div>}
                         <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
                           <button className="btn-secondary" onClick={() => setDetail(item)}>Moisture log</button>
-                          {(item.status === 'Freshly cut' || item.status === 'Drying') && (
+                          {(item.status === 'Freshly cut' || item.status === 'Drying') && (<>
                             <button onClick={() => addDryingReminder(item)}
                               style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '8px 14px', borderRadius: 9, border: 'none', cursor: 'pointer', fontFamily: 'var(--fb)', fontSize: 14, fontWeight: 600, background: 'rgba(0,122,255,.1)', color: 'var(--blue)' }}>
-                              <ICalendar size={13} c="var(--blue)" /> Add to Google Calendar
+                              <ICalendar size={13} c="var(--blue)" /> Google Calendar
                             </button>
-                          )}
+                            <button onClick={() => {
+                              if (!item.harvested_at) { alert('Set a harvest date first.'); return }
+                              const sixMonths = new Date(new Date(item.harvested_at).getTime() + 180 * 86400000)
+                              addToAppleReminders({ title: `Check ${item.species} — ready to use?`, notes: `Harvested ${fmt(item.harvested_at)}. Check moisture content.`, dueDate: sixMonths })
+                            }} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '8px 14px', borderRadius: 9, border: 'none', cursor: 'pointer', fontFamily: 'var(--fb)', fontSize: 14, fontWeight: 600, background: 'rgba(52,199,89,.1)', color: 'var(--green)' }}>
+                              <IBell size={13} c="var(--green)" /> Add to Reminders
+                            </button>
+                          </>)}
                         </div>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginLeft: 8 }}>

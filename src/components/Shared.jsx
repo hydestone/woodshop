@@ -29,6 +29,13 @@ export const IShop    = p => <Svg {...p} d={['M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 
 export const IPhoto   = p => <Svg {...p} d={['M21 15l-5-5L5 21','M3 3h18v18H3z','M8.5 8.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z']} fill={p.fill||'none'} />
 export const IFinish  = p => <Svg {...p} d={['M12 2L2 7l10 5 10-5-10-5','M2 17l10 5 10-5','M2 12l10 5 10-5']} />
 export const IMore    = p => <Svg {...p} d="M5 12h.01M12 12h.01M19 12h.01" sw={3} />
+export const IBell    = p => <Svg {...p} d={['M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9','M13.73 21a2 2 0 0 1-3.46 0']} />
+
+// ─── Auto-expand textarea ────────────────────────────────────────────────────
+export const autoExpand = (e) => {
+  e.target.style.height = 'auto'
+  e.target.style.height = e.target.scrollHeight + 'px'
+}
 
 // ─── Sheet ────────────────────────────────────────────────────────────────────
 export function Sheet({ title, onClose, onSave, children }) {
@@ -136,72 +143,144 @@ export function UndoToast({ message, onUndo, onDone }) {
   )
 }
 
-// ─── Lightbox ─────────────────────────────────────────────────────────────────
+// ─── Lightbox with infinite zoom + pan ───────────────────────────────────────
 function Lightbox({ photos, index, onClose }) {
   const [cur, setCur] = useState(index)
-  const [zoomed, setZoomed] = useState(false)
-  const touchStartX = useRef(null)
-  const lastTap = useRef(0)
+  const [scale, setScale] = useState(1)
+  const [origin, setOrigin] = useState({ x: 0.5, y: 0.5 }) // transform origin as fraction
+  const [pan, setPan] = useState({ x: 0, y: 0 })
+  const containerRef = useRef()
+  const imgRef = useRef()
+  const lastTouchDist = useRef(null)
+  const lastTouchMid = useRef(null)
+  const dragStart = useRef(null)
+  const panStart = useRef(null)
+  const swipeStartX = useRef(null)
 
-  useEffect(() => { setZoomed(false) }, [cur])
+  const resetZoom = () => { setScale(1); setPan({ x: 0, y: 0 }) }
+
+  useEffect(() => { resetZoom() }, [cur])
 
   useEffect(() => {
     const handleKey = (e) => {
-      if (e.key === 'ArrowRight') { setZoomed(false); setCur(i => Math.min(i + 1, photos.length - 1)) }
-      if (e.key === 'ArrowLeft')  { setZoomed(false); setCur(i => Math.max(i - 1, 0)) }
       if (e.key === 'Escape') onClose()
+      if (scale > 1) return
+      if (e.key === 'ArrowRight') setCur(i => Math.min(i + 1, photos.length - 1))
+      if (e.key === 'ArrowLeft')  setCur(i => Math.max(i - 1, 0))
+    }
+    const handleWheel = (e) => {
+      e.preventDefault()
+      const delta = -e.deltaY * 0.001
+      setScale(s => Math.max(1, Math.min(10, s * (1 + delta))))
     }
     window.addEventListener('keydown', handleKey)
-    return () => window.removeEventListener('keydown', handleKey)
-  }, [photos.length, onClose])
+    containerRef.current?.addEventListener('wheel', handleWheel, { passive: false })
+    return () => {
+      window.removeEventListener('keydown', handleKey)
+      containerRef.current?.removeEventListener('wheel', handleWheel)
+    }
+  }, [photos.length, onClose, scale])
 
   const photo = photos[cur]
   const tags = photo.tags ? photo.tags.split(',').map(t => t.trim()).filter(Boolean) : []
-  const hasPrev = cur > 0
-  const hasNext = cur < photos.length - 1
+  const hasPrev = cur > 0 && scale === 1
+  const hasNext = cur < photos.length - 1 && scale === 1
 
-  const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX }
-  const handleTouchEnd = (e) => {
-    if (touchStartX.current === null) return
-    const diff = touchStartX.current - e.changedTouches[0].clientX
-    // Double-tap to zoom
-    const now = Date.now()
-    if (Math.abs(diff) < 10 && now - lastTap.current < 300) {
-      setZoomed(z => !z)
-      lastTap.current = 0
-      touchStartX.current = null
-      return
+  // Mouse drag to pan
+  const onMouseDown = (e) => {
+    if (scale <= 1) return
+    e.preventDefault()
+    dragStart.current = { x: e.clientX, y: e.clientY }
+    panStart.current = { ...pan }
+  }
+  const onMouseMove = (e) => {
+    if (!dragStart.current) return
+    setPan({ x: panStart.current.x + e.clientX - dragStart.current.x, y: panStart.current.y + e.clientY - dragStart.current.y })
+  }
+  const onMouseUp = () => { dragStart.current = null }
+
+  // Touch: pinch-to-zoom + pan + swipe
+  const onTouchStart = (e) => {
+    if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX
+      const dy = e.touches[0].clientY - e.touches[1].clientY
+      lastTouchDist.current = Math.sqrt(dx*dx + dy*dy)
+      lastTouchMid.current = { x: (e.touches[0].clientX + e.touches[1].clientX) / 2, y: (e.touches[0].clientY + e.touches[1].clientY) / 2 }
+      panStart.current = { ...pan }
+      swipeStartX.current = null
+    } else if (e.touches.length === 1) {
+      swipeStartX.current = e.touches[0].clientX
+      dragStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+      panStart.current = { ...pan }
     }
-    lastTap.current = now
-    if (!zoomed) {
-      if (diff > 50 && hasNext) { setCur(i => i + 1) }
-      if (diff < -50 && hasPrev) { setCur(i => i - 1) }
+  }
+  const onTouchMove = (e) => {
+    if (e.touches.length === 2 && lastTouchDist.current) {
+      e.preventDefault()
+      const dx = e.touches[0].clientX - e.touches[1].clientX
+      const dy = e.touches[0].clientY - e.touches[1].clientY
+      const dist = Math.sqrt(dx*dx + dy*dy)
+      const ratio = dist / lastTouchDist.current
+      setScale(s => Math.max(1, Math.min(10, s * ratio)))
+      lastTouchDist.current = dist
+      // Pan with pinch midpoint
+      const mid = { x: (e.touches[0].clientX + e.touches[1].clientX) / 2, y: (e.touches[0].clientY + e.touches[1].clientY) / 2 }
+      if (lastTouchMid.current) {
+        setPan(p => ({ x: p.x + mid.x - lastTouchMid.current.x, y: p.y + mid.y - lastTouchMid.current.y }))
+      }
+      lastTouchMid.current = mid
+    } else if (e.touches.length === 1 && scale > 1 && dragStart.current) {
+      e.preventDefault()
+      setPan({ x: panStart.current.x + e.touches[0].clientX - dragStart.current.x, y: panStart.current.y + e.touches[0].clientY - dragStart.current.y })
     }
-    touchStartX.current = null
+  }
+  const onTouchEnd = (e) => {
+    if (e.touches.length < 2) { lastTouchDist.current = null; lastTouchMid.current = null }
+    // Swipe to next/prev only when not zoomed
+    if (scale === 1 && swipeStartX.current !== null && e.changedTouches.length > 0) {
+      const diff = swipeStartX.current - e.changedTouches[0].clientX
+      if (diff > 60 && hasNext) setCur(i => i + 1)
+      if (diff < -60 && hasPrev) setCur(i => i - 1)
+    }
+    swipeStartX.current = null
+    dragStart.current = null
   }
 
   return (
     <div
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.94)', zIndex: 200, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: zoomed ? 'auto' : 'hidden' }}
-      onClick={() => { if (zoomed) setZoomed(false); else onClose() }}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
+      ref={containerRef}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.96)', zIndex: 200, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', cursor: scale > 1 ? 'grab' : 'default', touchAction: 'none' }}
+      onClick={e => { if (e.target === e.currentTarget && scale === 1) onClose() }}
+      onMouseDown={onMouseDown}
+      onMouseMove={onMouseMove}
+      onMouseUp={onMouseUp}
+      onMouseLeave={onMouseUp}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
     >
       <img
-        src={photo.url} alt={photo.caption}
+        ref={imgRef}
+        src={photo.url}
+        alt={photo.caption}
+        draggable={false}
         style={{
-          maxWidth: zoomed ? 'none' : '100%',
-          maxHeight: zoomed ? 'none' : '80vh',
-          width: zoomed ? '200%' : 'auto',
-          objectFit: 'contain', borderRadius: 6,
-          padding: zoomed ? 0 : '0 60px',
-          cursor: zoomed ? 'zoom-out' : 'zoom-in',
-          transition: 'transform .2s',
+          maxWidth: '100%',
+          maxHeight: '85vh',
+          objectFit: 'contain',
+          borderRadius: scale > 1 ? 0 : 6,
+          transform: `scale(${scale}) translate(${pan.x / scale}px, ${pan.y / scale}px)`,
+          transformOrigin: 'center center',
+          transition: scale === 1 && !dragStart.current ? 'transform .25s' : 'none',
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
         }}
-        onClick={e => { e.stopPropagation(); setZoomed(z => !z) }}
+        onClick={e => e.stopPropagation()}
       />
-      {!zoomed && (photo.caption || tags.length > 0) && (
-        <div style={{ marginTop: 14, textAlign: 'center', padding: '0 60px' }} onClick={e => e.stopPropagation()}>
+
+      {/* Caption & tags - hide when zoomed */}
+      {scale === 1 && (photo.caption || tags.length > 0) && (
+        <div style={{ marginTop: 14, textAlign: 'center', padding: '0 60px' }}>
           {photo.caption && <p style={{ color: '#fff', fontSize: 15, marginBottom: 6 }}>{photo.caption}</p>}
           {tags.length > 0 && (
             <div style={{ display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -210,39 +289,39 @@ function Lightbox({ photos, index, onClose }) {
           )}
         </div>
       )}
-      {!zoomed && photos.length > 1 && (
-        <div style={{ marginTop: 12, color: 'rgba(255,255,255,.5)', fontSize: 13 }}>{cur + 1} / {photos.length}</div>
+
+      {/* Counter */}
+      {scale === 1 && photos.length > 1 && (
+        <div style={{ marginTop: 10, color: 'rgba(255,255,255,.4)', fontSize: 13 }}>{cur + 1} / {photos.length}</div>
       )}
-      {!zoomed && hasPrev && (
+
+      {/* Prev / Next */}
+      {hasPrev && (
         <button onClick={e => { e.stopPropagation(); setCur(i => i - 1) }}
-          style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,.15)', border: 'none', borderRadius: 99, width: 44, height: 44, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,.15)', border: 'none', borderRadius: 99, width: 44, height: 44, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
           <IBack size={20} c="#fff" sw={2} />
         </button>
       )}
-      {!zoomed && hasNext && (
+      {hasNext && (
         <button onClick={e => { e.stopPropagation(); setCur(i => i + 1) }}
-          style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,.15)', border: 'none', borderRadius: 99, width: 44, height: 44, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,.15)', border: 'none', borderRadius: 99, width: 44, height: 44, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
           <IChev size={20} c="#fff" sw={2} />
         </button>
       )}
-      {!zoomed && (
-        <div style={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 8 }}>
-          <button onClick={e => { e.stopPropagation(); setZoomed(true) }}
-            style={{ background: 'rgba(255,255,255,.15)', border: 'none', borderRadius: 99, padding: 8, cursor: 'pointer', color: '#fff', fontSize: 16 }}>
-            🔍
+
+      {/* Top bar: close + reset zoom */}
+      <div style={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 8, zIndex: 1 }}>
+        {scale > 1 && (
+          <button onClick={e => { e.stopPropagation(); resetZoom() }}
+            style={{ background: 'rgba(255,255,255,.15)', border: 'none', borderRadius: 99, padding: '6px 14px', cursor: 'pointer', color: '#fff', fontSize: 13, fontFamily: 'var(--fb)' }}>
+            Reset
           </button>
-          <button onClick={onClose}
-            style={{ background: 'rgba(255,255,255,.15)', border: 'none', borderRadius: 99, padding: 8, cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-            <IX size={20} c="#fff" sw={2.5} />
-          </button>
-        </div>
-      )}
-      {zoomed && (
-        <button onClick={e => { e.stopPropagation(); setZoomed(false) }}
-          style={{ position: 'fixed', top: 16, right: 16, background: 'rgba(255,255,255,.15)', border: 'none', borderRadius: 99, padding: '6px 14px', cursor: 'pointer', color: '#fff', fontSize: 13, fontFamily: 'var(--fb)' }}>
-          Zoom out
+        )}
+        <button onClick={onClose}
+          style={{ background: 'rgba(255,255,255,.15)', border: 'none', borderRadius: 99, padding: 8, cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+          <IX size={20} c="#fff" sw={2.5} />
         </button>
-      )}
+      </div>
     </div>
   )
 }

@@ -9,6 +9,11 @@ export default function Brainstorm() {
   const [editVal, setEditVal] = useState('')
   const [composing, setComposing] = useState('')
 
+  const autoExpand = (e) => {
+    e.target.style.height = 'auto'
+    e.target.style.height = e.target.scrollHeight + 'px'
+  }
+
   const notes = data.brainstorming
 
   const saveNew = async () => {
@@ -50,7 +55,7 @@ export default function Brainstorm() {
             style={{ minHeight: 80, flex: 1 }}
             placeholder="Type an idea…"
             value={composing}
-            onChange={e => setComposing(e.target.value)}
+            onChange={e => { setComposing(e.target.value); autoExpand(e) }}
             onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) saveNew() }}
           />
           <button
@@ -72,7 +77,7 @@ export default function Brainstorm() {
                     className="bulk-textarea"
                     style={{ minHeight: 80 }}
                     value={editVal}
-                    onChange={e => setEditVal(e.target.value)}
+                    onChange={e => { setEditVal(e.target.value); autoExpand(e) }}
                     autoFocus
                   />
                   <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>

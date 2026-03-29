@@ -1,8 +1,8 @@
 import { useState, useRef } from 'react'
 import { useCtx } from '../App.jsx'
 import * as db from '../db.js'
-import { addToGoogleCalendar } from '../supabase.js'
-import { Sheet, FormCell, maintStatus, fmtShort, localDt, IPlus, ITrash, IEdit, ICalendar } from '../components/Shared.jsx'
+import { addToGoogleCalendar, addToAppleReminders } from '../supabase.js'
+import { Sheet, FormCell, maintStatus, fmtShort, localDt, IPlus, ITrash, IEdit, ICalendar, IBell } from '../components/Shared.jsx'
 
 export default function Maintenance() {
   const { data, mutate } = useCtx()
@@ -90,7 +90,15 @@ export default function Maintenance() {
                         </button>
                         <button onClick={() => addReminder(m)}
                           style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 9, border: 'none', cursor: 'pointer', fontFamily: 'var(--fb)', fontSize: 14, fontWeight: 600, background: 'rgba(0,122,255,.1)', color: 'var(--blue)' }}>
-                          <ICalendar size={14} c="var(--blue)" /> Add to Google Calendar
+                          <ICalendar size={14} c="var(--blue)" /> Google Calendar
+                        </button>
+                        <button onClick={() => {
+                          const next = m.last_done
+                            ? new Date(new Date(m.last_done).getTime() + m.interval_days * 86400000)
+                            : new Date(Date.now() + m.interval_days * 86400000)
+                          addToAppleReminders({ title: `${m.name} — JDH Woodworks`, notes: m.notes || '', dueDate: next })
+                        }} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 9, border: 'none', cursor: 'pointer', fontFamily: 'var(--fb)', fontSize: 14, fontWeight: 600, background: 'rgba(52,199,89,.1)', color: 'var(--green)' }}>
+                          <IBell size={14} c="var(--green)" /> Add to Reminders
                         </button>
                       </div>
                     </div>

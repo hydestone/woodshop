@@ -1,11 +1,11 @@
 import { useState, useRef } from 'react'
 import { useCtx } from '../App.jsx'
 import * as db from '../db.js'
-import { addToGoogleCalendar } from '../supabase.js'
+import { addToGoogleCalendar, addToAppleReminders } from '../supabase.js'
 import {
   Sheet, FormCell, BulkAddSheet, DropZone, PhotoGrid, TagInput,
   STATUS, coatStatus, fmtShort, localDt,
-  IPlus, ITrash, ICirc, IDone, IChev, IBack, IEdit, ICalendar, ICamera
+  IPlus, ITrash, ICirc, IDone, IChev, IBack, IEdit, ICalendar, ICamera, IBell, autoExpand
 } from '../components/Shared.jsx'
 
 const SS = STATUS
@@ -102,6 +102,15 @@ export function ProjectDetail() {
     } catch (e) { alert('Error: ' + e.message) }
   }
 
+  const handleDelete = async () => {
+    if (!window.confirm(`Delete "${project.name}"? This cannot be undone.`)) return
+    try {
+      mutate(d => ({ ...d, projects: d.projects.filter(p => p.id !== projId), steps: d.steps.filter(s => s.project_id !== projId), coats: d.coats.filter(c => c.project_id !== projId) }))
+      await db.deleteProject(projId)
+      setProjId(null)
+    } catch (e) { alert('Error: ' + e.message) }
+  }
+
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }} className="slide-in">
       <div className="navbar" style={{ paddingTop: 14 }}>
@@ -142,7 +151,7 @@ export function ProjectDetail() {
         {sub === 'progress'    && <PhotoPane      projId={projId} type="progress" />}
         {sub === 'inspiration' && <PhotoPane      projId={projId} type="inspiration" />}
       </div>
-      {editing && <EditProjectSheet project={project} onSave={handleUpdate} onClose={() => setEditing(false)} />}
+      {editing && <EditProjectSheet project={project} onSave={handleUpdate} onDelete={handleDelete} onClose={() => setEditing(false)} />}
     </div>
   )
 }
@@ -309,12 +318,19 @@ function FinishingPane({ projId }) {
                             onClick={() => setMarkId(coat.id)}>
                             {coat.applied_at ? (st.urgent ? 'Apply next coat' : 'Re-log') : 'Mark applied'}
                           </button>
-                          {coat.applied_at && (
+                          {coat.applied_at && (<>
                             <button onClick={() => addCalendarReminder(coat)}
                               style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 9, border: 'none', cursor: 'pointer', fontFamily: 'var(--fb)', fontSize: 14, fontWeight: 600, background: 'rgba(0,122,255,.1)', color: 'var(--blue)' }}>
-                              <ICalendar size={14} c="var(--blue)" /> Add to Google Calendar
+                              <ICalendar size={14} c="var(--blue)" /> Google Calendar
                             </button>
-                          )}
+                            <button onClick={() => {
+                              const ms = coat.interval_unit === 'hours' ? coat.interval_value * 3600000 : coat.interval_value * 86400000
+                              const readyAt = new Date(new Date(coat.applied_at).getTime() + ms)
+                              addToAppleReminders({ title: `Apply coat ${coat.coat_number + 1} — ${coat.product}`, notes: `Coat ${coat.coat_number} is ready. Apply next coat of ${coat.product}.`, dueDate: readyAt })
+                            }} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 9, border: 'none', cursor: 'pointer', fontFamily: 'var(--fb)', fontSize: 14, fontWeight: 600, background: 'rgba(52,199,89,.1)', color: 'var(--green)' }}>
+                              <IBell size={14} c="var(--green)" /> Add to Reminders
+                            </button>
+                          </>)}
                         </div>
                       )}
                       {locked && <div style={{ fontSize: 13, color: 'var(--text3)', marginTop: 6 }}>Waiting for coat {coat.coat_number - 1}</div>}
@@ -449,7 +465,7 @@ function AddProjectSheet({ onSave, onClose }) {
   )
 }
 
-function EditProjectSheet({ project, onSave, onClose }) {
+function EditProjectSheet({ project, onSave, onDelete, onClose }) {
   const refs = {
     name: useRef(), wood: useRef(), desc: useRef(),
     status: useRef(), rough: useRef(), final: useRef()
@@ -485,6 +501,12 @@ function EditProjectSheet({ project, onSave, onClose }) {
         <FormCell label="Rough dimensions"><input ref={refs.rough} className="form-input" defaultValue={project.dimensions_rough} placeholder='12" × 12" × 4"' /></FormCell>
         <FormCell label="Final dimensions" last><input ref={refs.final} className="form-input" defaultValue={project.dimensions_final} placeholder='10" × 3"' /></FormCell>
       </div>
+      {onDelete && (
+        <button onClick={onDelete}
+          style={{ width: '100%', marginTop: 8, padding: '12px', background: 'rgba(220,38,38,.08)', color: 'var(--red)', border: 'none', borderRadius: 12, fontSize: 16, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--fb)' }}>
+          Delete Project
+        </button>
+      )}
     </Sheet>
   )
 }
