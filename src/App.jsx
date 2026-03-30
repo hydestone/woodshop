@@ -14,6 +14,7 @@ import AllPhotos        from './pages/Photos.jsx'
 import FinishedProducts from './pages/FinishedProducts.jsx'
 import Inspiration      from './pages/Inspiration.jsx'
 
+import GlobalSearch from './components/Search.jsx'
 import {
   IFolder, ICart, IWrench, ICamera,
   ITree, IBulb, IBook, IShop, IPhoto, IFinish, IMore, IX,
@@ -123,8 +124,11 @@ export default function App() {
 
         {/* Full-width top bar */}
         <div className="top-bar">
-          <img src="/logo.png" className="top-bar-logo" alt="JDH Woodworks" />
-          <span className="top-bar-title">JDH WOODWORKS</span>
+          <div className="top-bar-brand">
+            <img src="/logo.png" className="top-bar-logo" alt="JDH Woodworks" />
+            <span className="top-bar-title">JDH WOODWORKS</span>
+          </div>
+          <GlobalSearch />
         </div>
 
         <div className="app">

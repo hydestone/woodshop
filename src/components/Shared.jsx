@@ -147,7 +147,8 @@ export function UndoToast({ message, onUndo, onDone }) {
 function Lightbox({ photos, index, onClose }) {
   const [cur, setCur] = useState(index)
   const [scale, setScale] = useState(1)
-  const [origin, setOrigin] = useState({ x: 0.5, y: 0.5 }) // transform origin as fraction
+  const [rotation, setRotation] = useState(0)
+  const [origin, setOrigin] = useState({ x: 0.5, y: 0.5 })
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const containerRef = useRef()
   const imgRef = useRef()
@@ -157,7 +158,7 @@ function Lightbox({ photos, index, onClose }) {
   const panStart = useRef(null)
   const swipeStartX = useRef(null)
 
-  const resetZoom = () => { setScale(1); setPan({ x: 0, y: 0 }) }
+  const resetZoom = () => { setScale(1); setPan({ x: 0, y: 0 }); setRotation(0) }
 
   useEffect(() => { resetZoom() }, [cur])
 
@@ -269,7 +270,7 @@ function Lightbox({ photos, index, onClose }) {
           maxHeight: '85vh',
           objectFit: 'contain',
           borderRadius: scale > 1 ? 0 : 6,
-          transform: `scale(${scale}) translate(${pan.x / scale}px, ${pan.y / scale}px)`,
+          transform: `scale(${scale}) translate(${pan.x / scale}px, ${pan.y / scale}px) rotate(${rotation}deg)`,
           transformOrigin: 'center center',
           transition: scale === 1 && !dragStart.current ? 'transform .25s' : 'none',
           userSelect: 'none',
@@ -317,6 +318,16 @@ function Lightbox({ photos, index, onClose }) {
             Reset
           </button>
         )}
+        <button onClick={e => { e.stopPropagation(); setRotation(r => r - 90) }}
+          style={{ background: 'rgba(255,255,255,.15)', border: 'none', borderRadius: 99, width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 16 }}
+          title="Rotate left">
+          ↺
+        </button>
+        <button onClick={e => { e.stopPropagation(); setRotation(r => r + 90) }}
+          style={{ background: 'rgba(255,255,255,.15)', border: 'none', borderRadius: 99, width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 16 }}
+          title="Rotate right">
+          ↻
+        </button>
         <button onClick={onClose}
           style={{ background: 'rgba(255,255,255,.15)', border: 'none', borderRadius: 99, padding: 8, cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
           <IX size={20} c="#fff" sw={2.5} />
