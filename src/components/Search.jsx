@@ -1,24 +1,42 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { useCtx } from '../App.jsx'
+import { ISearch } from './Shared.jsx'
 
-function SearchIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-    </svg>
-  )
+const TYPE_COLOR = {
+  Project:     '#C97B12',
+  Step:        '#7C3AED',
+  Shopping:    '#D97706',
+  Maintenance: '#B83232',
+  'Wood Stock':'#2A7A4A',
+  Finish:      '#0369A1',
+  Resource:    '#4F46E5',
+  Brainstorm:  '#DB2777',
+  Shop:        '#D97706',
+  Photo:       '#6B7280',
+}
+
+function useDebounce(value, delay) {
+  const [debounced, setDebounced] = useState(value)
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(value), delay)
+    return () => clearTimeout(t)
+  }, [value, delay])
+  return debounced
 }
 
 export default function GlobalSearch() {
   const { data, setTab, setProjId } = useCtx()
-  const [query, setQuery] = useState('')
-  const [open, setOpen] = useState(false)
-  const inputRef = useRef()
+  const [query, setQuery]           = useState('')
+  const [open, setOpen]             = useState(false)
+  const [cursor, setCursor]         = useState(-1)
+  const [focused, setFocused]       = useState(false)
+  const inputRef    = useRef()
   const containerRef = useRef()
+  const debounced   = useDebounce(query, 160)
 
-  // Close on click outside
+  // Close on outside click
   useEffect(() => {
-    const handler = (e) => {
+    const handler = e => {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
         setOpen(false)
       }
@@ -27,123 +45,118 @@ export default function GlobalSearch() {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  const results = useCallback(() => {
-    if (!query.trim() || query.length < 2) return []
-    const q = query.toLowerCase()
+  const results = useMemo(() => {
+    const q = debounced.trim().toLowerCase()
+    if (q.length < 2) return []
     const hits = []
 
-    // Projects
-    data.projects.forEach(p => {
-      if ([p.name, p.wood_type, p.description, p.dimensions_rough, p.dimensions_final].some(f => f?.toLowerCase().includes(q))) {
-        hits.push({ type: 'Project', title: p.name, sub: p.wood_type || p.status, action: () => { setProjId(p.id); setTab('projects') } })
-      }
-    })
+    const match = (...fields) => fields.some(f => f?.toLowerCase().includes(q))
 
-    // Steps
+    data.projects.forEach(p => {
+      if (match(p.name, p.wood_type, p.description, p.dimensions_rough, p.dimensions_final))
+        hits.push({ type: 'Project', title: p.name, sub: `${p.wood_type || ''} · ${p.status}`.replace(/^ · /, ''), action: () => { setProjId(p.id); setTab('projects') } })
+    })
     data.steps.forEach(s => {
-      if ([s.title, s.note].some(f => f?.toLowerCase().includes(q))) {
+      if (match(s.title, s.note)) {
         const proj = data.projects.find(p => p.id === s.project_id)
         hits.push({ type: 'Step', title: s.title, sub: proj?.name || '', action: () => { setProjId(s.project_id); setTab('projects') } })
       }
     })
-
-    // Shopping
     data.shopping.forEach(s => {
-      if ([s.name, s.store, s.notes].some(f => f?.toLowerCase().includes(q))) {
-        hits.push({ type: 'Shopping', title: s.name, sub: s.store || s.notes || '', action: () => setTab('shopping') })
-      }
+      if (match(s.name, s.store, s.notes))
+        hits.push({ type: 'Shopping', title: s.name, sub: s.store || '', action: () => setTab('shopping') })
     })
-
-    // Maintenance
     data.maintenance.forEach(m => {
-      if ([m.name, m.category, m.notes].some(f => f?.toLowerCase().includes(q))) {
+      if (match(m.name, m.category, m.notes))
         hits.push({ type: 'Maintenance', title: m.name, sub: m.category || '', action: () => setTab('maintenance') })
-      }
     })
-
-    // Wood stock
     data.woodStock.forEach(s => {
-      if ([s.species, s.location, s.intended_use, s.notes].some(f => f?.toLowerCase().includes(q))) {
-        hits.push({ type: 'Wood Stock', title: s.species, sub: s.location || s.status || '', action: () => setTab('stock') })
-      }
+      if (match(s.species, s.location, s.intended_use, s.notes))
+        hits.push({ type: 'Wood Stock', title: s.species, sub: `${s.location || ''} · ${s.status || ''}`.replace(/^ · /, ''), action: () => setTab('stock') })
     })
-
-    // Finishes
     data.finishProducts.forEach(p => {
-      if ([p.name, p.manufacturer, p.notes, p.feedback].some(f => f?.toLowerCase().includes(q))) {
-        hits.push({ type: 'Finish', title: p.name, sub: p.manufacturer || p.category || '', action: () => setTab('finishes') })
-      }
+      if (match(p.name, p.manufacturer, p.notes, p.feedback))
+        hits.push({ type: 'Finish', title: p.name, sub: p.manufacturer || '', action: () => setTab('finishes') })
     })
-
-    // Resources
     data.resources.forEach(r => {
-      if ([r.title, r.url, r.notes, r.category].some(f => f?.toLowerCase().includes(q))) {
+      if (match(r.title, r.url, r.notes, r.category))
         hits.push({ type: 'Resource', title: r.title, sub: r.category || '', action: () => setTab('resources') })
-      }
     })
-
-    // Brainstorm
     data.brainstorming.forEach(b => {
-      if (b.content?.toLowerCase().includes(q)) {
-        hits.push({ type: 'Brainstorm', title: b.content.slice(0, 60) + (b.content.length > 60 ? '…' : ''), sub: '', action: () => setTab('brainstorm') })
-      }
+      if (match(b.content))
+        hits.push({ type: 'Brainstorm', title: b.content.slice(0, 70) + (b.content.length > 70 ? '…' : ''), sub: '', action: () => setTab('brainstorm') })
     })
-
-    // Shop improvements
     data.shopImprovements.forEach(s => {
-      if ([s.title, s.notes, s.category].some(f => f?.toLowerCase().includes(q))) {
+      if (match(s.title, s.notes, s.category))
         hits.push({ type: 'Shop', title: s.title, sub: s.category || '', action: () => setTab('shop') })
-      }
     })
-
-    // Photos (caption + tags)
     data.photos.forEach(p => {
-      if ([p.caption, p.tags].some(f => f?.toLowerCase().includes(q))) {
+      if (match(p.caption, p.tags))
         hits.push({ type: 'Photo', title: p.caption || p.tags || 'Photo', sub: p.photo_type || '', action: () => setTab('photos') })
-      }
     })
 
     return hits.slice(0, 20)
-  }, [query, data, setTab, setProjId])
+  }, [debounced, data, setTab, setProjId])
 
-  const hits = results()
+  useEffect(() => { setCursor(-1) }, [results])
 
-  const handleSelect = (hit) => {
+  const select = useCallback((hit) => {
     hit.action()
     setQuery('')
     setOpen(false)
     inputRef.current?.blur()
+  }, [])
+
+  const onKeyDown = e => {
+    if (!open || !results.length) return
+    if (e.key === 'ArrowDown') { e.preventDefault(); setCursor(c => Math.min(c + 1, results.length - 1)) }
+    if (e.key === 'ArrowUp')   { e.preventDefault(); setCursor(c => Math.max(c - 1, -1)) }
+    if (e.key === 'Enter' && cursor >= 0) { e.preventDefault(); select(results[cursor]) }
+    if (e.key === 'Escape')    { setOpen(false); setQuery('') }
   }
 
-  const TYPE_COLOR = {
-    'Project': '#2563EB', 'Step': '#7C3AED', 'Shopping': '#D97706',
-    'Maintenance': '#DC2626', 'Wood Stock': '#16A34A', 'Finish': '#0891B2',
-    'Resource': '#6366F1', 'Brainstorm': '#EC4899', 'Shop': '#F59E0B', 'Photo': '#64748B'
-  }
+  const showResults = open && debounced.length >= 2
 
   return (
-    <div ref={containerRef} className="top-bar-search">
-      <span className="top-bar-search-icon"><SearchIcon /></span>
-      <input
-        ref={inputRef}
-        type="search"
-        placeholder="Search everything…"
-        value={query}
-        onChange={e => { setQuery(e.target.value); setOpen(true) }}
-        onFocus={() => setOpen(true)}
-        onKeyDown={e => { if (e.key === 'Escape') { setOpen(false); setQuery('') } }}
-        autoComplete="off"
-      />
-      {open && query.length >= 2 && (
-        <div className="search-results">
-          {hits.length === 0 ? (
-            <div style={{ padding: '20px 16px', textAlign: 'center', color: 'var(--text3)', fontSize: 14 }}>
-              No results for "{query}"
-            </div>
+    <div ref={containerRef} className="search-wrap">
+      <div className={`search-input-wrap ${focused ? 'focused' : ''}`}>
+        <ISearch size={15} color="var(--text-4)" sw={2} />
+        <input
+          ref={inputRef}
+          className="search-input"
+          type="search"
+          placeholder="Search…"
+          value={query}
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
+          aria-label="Search all content"
+          aria-expanded={showResults}
+          aria-haspopup="listbox"
+          onChange={e => { setQuery(e.target.value); setOpen(true) }}
+          onFocus={() => { setFocused(true); if (query.length >= 2) setOpen(true) }}
+          onBlur={() => setFocused(false)}
+          onKeyDown={onKeyDown}
+        />
+      </div>
+
+      {showResults && (
+        <div className="search-results" role="listbox" aria-label="Search results">
+          {results.length === 0 ? (
+            <div className="search-empty">No results for "{debounced}"</div>
           ) : (
-            hits.map((hit, i) => (
-              <div key={i} className="search-result-item" onClick={() => handleSelect(hit)}>
-                <span className="search-result-type" style={{ color: TYPE_COLOR[hit.type] || 'var(--text4)' }}>{hit.type}</span>
+            results.map((hit, i) => (
+              <div
+                key={i}
+                className={`search-result-item ${i === cursor ? 'highlighted' : ''}`}
+                role="option"
+                aria-selected={i === cursor}
+                onMouseDown={e => { e.preventDefault(); select(hit) }}
+                onMouseEnter={() => setCursor(i)}
+              >
+                <span className="search-result-type" style={{ color: TYPE_COLOR[hit.type] || 'var(--text-4)' }}>
+                  {hit.type}
+                </span>
                 <span className="search-result-title">{hit.title}</span>
                 {hit.sub && <span className="search-result-sub">{hit.sub}</span>}
               </div>
