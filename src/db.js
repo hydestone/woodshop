@@ -11,20 +11,21 @@ async function q(promise) {
 
 // ── Load all ──────────────────────────────────────────────────────────────────
 export async function loadAll() {
+  const safe = (promise, fallback = []) => promise.then(r => r.data ?? fallback).catch(() => fallback)
   const [projects, steps, coats, maintenance, shopping, photos,
          woodStock, brainstorming, finishProducts, resources, shopImprovements, categories] = await Promise.all([
-    q(supabase.from('projects').select('*').order('created_at')),
-    q(supabase.from('steps').select('*').order('sort_order')),
-    q(supabase.from('coats').select('*').order('coat_number')),
-    q(supabase.from('maintenance').select('*').order('name')),
-    q(supabase.from('shopping').select('*').order('created_at')),
-    q(supabase.from('photos').select('*').order('created_at', { ascending: false })),
-    q(supabase.from('wood_stock').select('*').order('created_at')),
-    q(supabase.from('brainstorming').select('*').order('created_at', { ascending: false })),
-    q(supabase.from('finish_products').select('*').order('name')),
-    q(supabase.from('resources').select('*').order('created_at', { ascending: false })),
-    q(supabase.from('shop_improvements').select('*').order('created_at')),
-    supabase.from('categories').select('*').eq('type', 'project').order('name').then(r => r.data || []),
+    safe(supabase.from('projects').select('*').order('created_at')),
+    safe(supabase.from('steps').select('*').order('sort_order')),
+    safe(supabase.from('coats').select('*').order('coat_number')),
+    safe(supabase.from('maintenance').select('*').order('name')),
+    safe(supabase.from('shopping').select('*').order('created_at')),
+    safe(supabase.from('photos').select('*').order('created_at', { ascending: false })),
+    safe(supabase.from('wood_stock').select('*').order('created_at')),
+    safe(supabase.from('brainstorming').select('*').order('created_at', { ascending: false })),
+    safe(supabase.from('finish_products').select('*').order('name')),
+    safe(supabase.from('resources').select('*').order('created_at', { ascending: false })),
+    safe(supabase.from('shop_improvements').select('*').order('created_at')),
+    safe(supabase.from('categories').select('*').eq('type', 'project').order('name')),
   ])
   return {
     projects,
