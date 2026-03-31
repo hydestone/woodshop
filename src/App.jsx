@@ -183,8 +183,7 @@ export default function App() {
                 <ProjectDetail />
               ) : (
                 <>
-                  {tab === 'home'        && <Home />}
-                  {tab === 'dashboard'   && <Dashboard />}
+                  {tab === 'home'        && <Dashboard />}
                   {tab === 'projects'    && <Projects />}
                   {tab === 'shopping'    && <Shopping />}
                   {tab === 'maintenance' && <Maintenance />}
