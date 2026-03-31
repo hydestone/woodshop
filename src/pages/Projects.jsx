@@ -104,6 +104,7 @@ export function ProjectDetail() {
   const [sub, setSub]       = useState('steps')
   const [editing, setEditing] = useState(false)
   const [confirming, setConfirming] = useState(false)
+  const [showRon, setShowRon] = useState(false)
 
   const project = data.projects.find(p => p.id === projId)
   if (!project) return null
@@ -114,6 +115,7 @@ export function ProjectDetail() {
     const next = STATUS_ORDER[(STATUS_ORDER.indexOf(project.status) + 1) % STATUS_ORDER.length]
     mutate(d => ({ ...d, projects: d.projects.map(p => p.id === projId ? { ...p, status: next } : p) }))
     await db.updateProject(projId, { status: next }).catch(e => toast(e.message, 'error'))
+    if (next === 'complete') setShowRon(true)
   }
 
   const handleUpdate = async fields => {
@@ -122,6 +124,7 @@ export function ProjectDetail() {
       await db.updateProject(projId, fields)
       toast('Saved', 'success')
       setEditing(false)
+      if (fields.status === 'complete' && project.status !== 'complete') setShowRon(true)
     } catch (e) { toast(e.message, 'error') }
   }
 
@@ -181,6 +184,7 @@ export function ProjectDetail() {
       </div>
 
       {editing && <ProjectSheet project={project} onSave={handleUpdate} onClose={() => setEditing(false)} />}
+      {showRon && <RonSwansonModal onClose={() => setShowRon(false)} />}
       {confirming && (
         <ConfirmSheet
           message={`Delete "${project.name}"? All steps, coats, and photos will be removed. This cannot be undone.`}
@@ -602,5 +606,46 @@ function PhotoTagSheet({ count, onSave, onClose }) {
       <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 8 }}>Tags</p>
       <TagInput tags={tags} onChange={setTags} />
     </Sheet>
+  )
+}
+
+// ─── Ron Swanson completion modal ─────────────────────────────────────────────
+function RonSwansonModal({ onClose }) {
+  return (
+    <div
+      className="overlay"
+      onClick={onClose}
+      style={{ alignItems: 'center', justifyContent: 'center' }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: '#1A1208',
+          borderRadius: 16,
+          overflow: 'hidden',
+          maxWidth: 380,
+          width: '90%',
+          boxShadow: '0 24px 60px rgba(0,0,0,.5)',
+          animation: 'slideUp .3s cubic-bezier(.32,.72,0,1)',
+        }}
+      >
+        <img
+          src="/ronswanson.webp"
+          alt="Ron Swanson"
+          style={{ width: '100%', display: 'block', maxHeight: 280, objectFit: 'cover', objectPosition: 'top' }}
+        />
+        <div style={{ padding: '20px 24px 24px', textAlign: 'center' }}>
+          <p style={{ color: '#FAF0DC', fontSize: 18, fontWeight: 700, lineHeight: 1.4, marginBottom: 16 }}>
+            "A real man always cleans his shop after every project."
+          </p>
+          <button
+            onClick={onClose}
+            style={{ background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 10, padding: '11px 32px', fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+          >
+            Got it
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }
