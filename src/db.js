@@ -101,11 +101,41 @@ export async function clearDoneItems() {
 }
 
 // ── Photos ────────────────────────────────────────────────────────────────────
+async function compressImage(file, maxPx = 1600, quality = 0.85) {
+  // HEIC and non-image types fall through uncompressed
+  if (!file.type.startsWith('image/') || file.type === 'image/gif') return file
+  return new Promise((resolve) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      const { naturalWidth: w, naturalHeight: h } = img
+      const scale = Math.min(1, maxPx / Math.max(w, h))
+      const canvas = document.createElement('canvas')
+      canvas.width  = Math.round(w * scale)
+      canvas.height = Math.round(h * scale)
+      const ctx = canvas.getContext('2d')
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+      canvas.toBlob(blob => {
+        // Only use compressed if it's actually smaller
+        if (blob && blob.size < file.size) {
+          resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }))
+        } else {
+          resolve(file)
+        }
+      }, 'image/jpeg', quality)
+    }
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file) }
+    img.src = url
+  })
+}
+
 export async function uploadPhoto(projectId, file, caption, photoType, tags) {
-  const ext = file.name.split('.').pop().toLowerCase() || 'jpg'
+  const compressed = await compressImage(file)
+  const ext = compressed.type === 'image/jpeg' ? 'jpg' : (file.name.split('.').pop().toLowerCase() || 'jpg')
   const safeExt = ['jpg','jpeg','png','gif','webp','heic'].includes(ext) ? ext : 'jpg'
   const path = `${projectId || 'general'}/${uid()}.${safeExt}`
-  const { error: uploadError } = await supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type, upsert: false })
+  const { error: uploadError } = await supabase.storage.from(BUCKET).upload(path, compressed, { contentType: compressed.type, upsert: false })
   if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`)
   const row = { id: uid(), project_id: projectId || null, storage_path: path, caption: caption || '', photo_type: photoType || 'progress', tags: tags || '', created_at: isoNow() }
   const saved = await q(supabase.from('photos').insert(row).select().single())
