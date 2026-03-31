@@ -18,7 +18,8 @@ export default function Projects() {
   const toast   = useToast()
   const [showAdd, setShowAdd]   = useState(false)
   const [viewMode, setViewMode] = useState('cards') // 'cards' | 'table'
-  const [filter, setFilter]     = useState('all')
+  const [filter, setFilter]         = useState('all')
+  const [statusFilter, setStatusFilter] = useState('all')
 
   const handleAdd = async fields => {
     try {
@@ -30,9 +31,9 @@ export default function Projects() {
   }
 
   const categories = data.categories || []
-  const filtered = filter === 'all'
-    ? data.projects
-    : data.projects.filter(p => p.category === filter)
+  const filtered = data.projects
+    .filter(p => filter === 'all' || p.category === filter)
+    .filter(p => statusFilter === 'all' || p.status === statusFilter)
 
   const groups = STATUS_ORDER.reduce((acc, s) => {
     const items = filtered.filter(p => p.status === s)
@@ -76,7 +77,7 @@ export default function Projects() {
         {/* Desktop table view */}
         <style>{`@media (min-width: 768px) { #table-toggle-btn { display: inline-flex !important; } }`}</style>
         {viewMode === 'table'
-          ? <ProjectTable projects={filtered} categories={categories} />
+          ? <ProjectTable projects={filtered} categories={categories} statusFilter={statusFilter} setStatusFilter={setStatusFilter} />
           : (
             <div style={{ paddingTop: 8, paddingBottom: 24 }}>
               {groups.map(({ status, items }) => (
@@ -105,8 +106,8 @@ export default function Projects() {
 }
 
 // ─── Project table (desktop) ──────────────────────────────────────────────────
-function ProjectTable({ projects, categories }) {
-  const { mutate, setProjId } = useCtx()
+function ProjectTable({ projects, categories, statusFilter, setStatusFilter }) {
+  const { data, mutate, setProjId } = useCtx()
   const toast = useToast()
 
   const update = async (id, field, value) => {
@@ -114,46 +115,110 @@ function ProjectTable({ projects, categories }) {
     await db.updateProject(id, { [field]: value }).catch(e => toast(e.message, 'error'))
   }
 
-  const cols = ['name', 'category', 'status', 'wood_type', 'wood_source', 'built_with', 'finish_used', 'year_completed']
-  const labels = { name: 'Project', category: 'Category', status: 'Status', wood_type: 'Wood', wood_source: 'Source', built_with: 'Built With', finish_used: 'Finish', year_completed: 'Year' }
+  // Get first photo for a project (prefer 'finished' tagged, fall back to any)
+  const thumbFor = (projId) => {
+    const photos = data.photos.filter(p => p.project_id === projId)
+    if (!photos.length) return null
+    const finished = photos.find(p => p.tags?.includes('finished'))
+    return (finished || photos[0])?.url || null
+  }
+
+  const STATUS_FILTERS = [
+    { id: 'all',      label: 'All' },
+    { id: 'active',   label: 'Active' },
+    { id: 'planning', label: 'Planning' },
+    { id: 'paused',   label: 'Paused' },
+    { id: 'complete', label: 'Complete' },
+  ]
+
+  const chipStyle = (id) => ({
+    padding: '4px 12px', borderRadius: 99, border: 'none', cursor: 'pointer', flexShrink: 0,
+    fontSize: 13, fontWeight: 500, fontFamily: 'inherit',
+    background: statusFilter === id ? '#0F1E38' : 'var(--fill)',
+    color: statusFilter === id ? '#fff' : 'var(--text-2)',
+  })
 
   return (
-    <div className="proj-table-wrap">
-      <table className="proj-table">
-        <thead>
-          <tr>
-            {cols.map(c => <th key={c}>{labels[c]}</th>)}
-            <th>Open</th>
-          </tr>
-        </thead>
-        <tbody>
-          {projects.map(p => (
-            <tr key={p.id}>
-              <td><input className="proj-table-input" defaultValue={p.name} onBlur={e => { if (e.target.value !== p.name) update(p.id, 'name', e.target.value) }} /></td>
-              <td>
-                <select className="proj-table-select" value={p.category || ''} onChange={e => update(p.id, 'category', e.target.value)}>
-                  <option value="">—</option>
-                  {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                </select>
-              </td>
-              <td>
-                <select className="proj-table-select" value={p.status} onChange={e => update(p.id, 'status', e.target.value)}>
-                  {STATUS_ORDER.map(s => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
-                </select>
-              </td>
-              <td><input className="proj-table-input" defaultValue={p.wood_type} onBlur={e => { if (e.target.value !== p.wood_type) update(p.id, 'wood_type', e.target.value) }} /></td>
-              <td><input className="proj-table-input" defaultValue={p.wood_source} onBlur={e => { if (e.target.value !== (p.wood_source||'')) update(p.id, 'wood_source', e.target.value) }} /></td>
-              <td><input className="proj-table-input" defaultValue={p.built_with} onBlur={e => { if (e.target.value !== (p.built_with||'')) update(p.id, 'built_with', e.target.value) }} /></td>
-              <td><input className="proj-table-input" defaultValue={p.finish_used} onBlur={e => { if (e.target.value !== (p.finish_used||'')) update(p.id, 'finish_used', e.target.value) }} /></td>
-              <td><input className="proj-table-input" type="number" defaultValue={p.year_completed} placeholder={new Date().getFullYear()} style={{ width: 70 }} onBlur={e => { const v = e.target.value ? parseInt(e.target.value) : null; if (v !== p.year_completed) update(p.id, 'year_completed', v) }} /></td>
-              <td>
-                <button className="btn-text" onClick={() => setProjId(p.id)}>Open →</button>
-              </td>
+    <div>
+      {/* Status filter chips */}
+      <div style={{ display: 'flex', gap: 6, padding: '12px 20px 4px', overflowX: 'auto', scrollbarWidth: 'none' }}>
+        {STATUS_FILTERS.map(f => (
+          <button key={f.id} style={chipStyle(f.id)} onClick={() => setStatusFilter(f.id)}>
+            {f.label}
+            {f.id !== 'all' && (
+              <span style={{ marginLeft: 5, opacity: .65, fontSize: 11 }}>
+                ({data.projects.filter(p => p.status === f.id).length})
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      <div className="proj-table-wrap">
+        <table className="proj-table">
+          <thead>
+            <tr>
+              <th style={{ width: 56 }}>Photo</th>
+              <th>Project</th>
+              <th>Category</th>
+              <th>Status</th>
+              <th>Wood</th>
+              <th>Source</th>
+              <th>Built With</th>
+              <th>Finish</th>
+              <th>Year</th>
+              <th></th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-      {!projects.length && <div className="empty"><div className="empty-icon">📋</div><div className="empty-title">No projects</div></div>}
+          </thead>
+          <tbody>
+            {projects.map(p => {
+              const thumb = thumbFor(p.id)
+              const ss = STATUS[p.status] || STATUS.planning
+              return (
+                <tr key={p.id}>
+                  <td style={{ padding: '6px 12px' }}>
+                    {thumb ? (
+                      <img
+                        src={thumb}
+                        alt={p.name}
+                        style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 6, display: 'block', cursor: 'pointer' }}
+                        onClick={() => setProjId(p.id)}
+                      />
+                    ) : (
+                      <div style={{ width: 40, height: 40, borderRadius: 6, background: 'var(--fill)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>🪵</div>
+                    )}
+                  </td>
+                  <td><input className="proj-table-input" defaultValue={p.name} onBlur={e => { if (e.target.value !== p.name) update(p.id, 'name', e.target.value) }} /></td>
+                  <td>
+                    <select className="proj-table-select" value={p.category || ''} onChange={e => update(p.id, 'category', e.target.value)}>
+                      <option value="">—</option>
+                      {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                    </select>
+                  </td>
+                  <td>
+                    <select className="proj-table-select" value={p.status} onChange={e => update(p.id, 'status', e.target.value)}>
+                      {STATUS_ORDER.map(s => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
+                    </select>
+                  </td>
+                  <td><input className="proj-table-input" defaultValue={p.wood_type} onBlur={e => { if (e.target.value !== (p.wood_type||'')) update(p.id, 'wood_type', e.target.value) }} /></td>
+                  <td><input className="proj-table-input" defaultValue={p.wood_source} onBlur={e => { if (e.target.value !== (p.wood_source||'')) update(p.id, 'wood_source', e.target.value) }} /></td>
+                  <td><input className="proj-table-input" defaultValue={p.built_with} onBlur={e => { if (e.target.value !== (p.built_with||'')) update(p.id, 'built_with', e.target.value) }} /></td>
+                  <td><input className="proj-table-input" defaultValue={p.finish_used} onBlur={e => { if (e.target.value !== (p.finish_used||'')) update(p.id, 'finish_used', e.target.value) }} /></td>
+                  <td><input className="proj-table-input" type="number" defaultValue={p.year_completed} placeholder={new Date().getFullYear()} style={{ width: 64 }} onBlur={e => { const v = e.target.value ? parseInt(e.target.value) : null; if (v !== p.year_completed) update(p.id, 'year_completed', v) }} /></td>
+                  <td><button className="btn-text" onClick={() => setProjId(p.id)}>Open →</button></td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+        {!projects.length && (
+          <div className="empty">
+            <div className="empty-icon">📋</div>
+            <div className="empty-title">No {statusFilter === 'all' ? '' : statusFilter + ' '}projects</div>
+            <p className="empty-sub">{statusFilter !== 'all' ? 'Try a different status filter' : 'Click + to add your first project'}</p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
