@@ -24,7 +24,7 @@ export async function loadAll() {
     q(supabase.from('finish_products').select('*').order('name')),
     q(supabase.from('resources').select('*').order('created_at', { ascending: false })),
     q(supabase.from('shop_improvements').select('*').order('created_at')),
-    q(supabase.from('categories').select('*').eq('type', 'project').order('name')),
+    supabase.from('categories').select('*').eq('type', 'project').order('name').then(r => r.data || []),
   ])
   return {
     projects,
