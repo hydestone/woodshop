@@ -12,7 +12,7 @@ async function q(promise) {
 // ── Load all ──────────────────────────────────────────────────────────────────
 export async function loadAll() {
   const [projects, steps, coats, maintenance, shopping, photos,
-         woodStock, brainstorming, finishProducts, resources, shopImprovements] = await Promise.all([
+         woodStock, brainstorming, finishProducts, resources, shopImprovements, categories] = await Promise.all([
     q(supabase.from('projects').select('*').order('created_at')),
     q(supabase.from('steps').select('*').order('sort_order')),
     q(supabase.from('coats').select('*').order('coat_number')),
@@ -24,6 +24,7 @@ export async function loadAll() {
     q(supabase.from('finish_products').select('*').order('name')),
     q(supabase.from('resources').select('*').order('created_at', { ascending: false })),
     q(supabase.from('shop_improvements').select('*').order('created_at')),
+    q(supabase.from('categories').select('*').eq('type', 'project').order('name')),
   ])
   return {
     projects,
@@ -37,6 +38,7 @@ export async function loadAll() {
     finishProducts,
     resources,
     shopImprovements,
+    categories,
   }
 }
 
@@ -176,4 +178,15 @@ export async function updateShopImprovement(id, fields) {
 }
 export async function deleteShopImprovement(id) {
   return q(supabase.from('shop_improvements').delete().eq('id', id))
+}
+
+// ── Categories ────────────────────────────────────────────────────────────────
+export async function loadCategories() {
+  return q(supabase.from('categories').select('*').eq('type', 'project').order('name'))
+}
+export async function addCategory(name) {
+  return q(supabase.from('categories').insert({ id: Math.random().toString(36).slice(2), name, type: 'project', created_at: isoNow() }).select().single())
+}
+export async function deleteCategory(id) {
+  return q(supabase.from('categories').delete().eq('id', id))
 }

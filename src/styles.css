@@ -9,43 +9,45 @@
 /* ─── Design tokens ──────────────────────────────────────────────────────── */
 :root {
   /* Backgrounds */
-  --bg:          #F8F5F0;
+  --bg:          #F0F4F8;
   --surface:     #FFFFFF;
-  --fill:        #EDE8E1;
-  --fill-2:      #F4F1EC;
+  --fill:        #E2E8F0;
+  --fill-2:      #EEF2F7;
 
   /* Sidebar */
-  --sb-bg:       #2D1F12;
-  --sb-text:     #9B7D62;
+  --sb-bg:       #0F1E38;
+  --sb-text:     #8BA8D0;
   --sb-hover:    rgba(255,255,255,.07);
-  --sb-active-bg:rgba(201,123,18,.14);
-  --sb-active:   #D47C0F;
-  --sb-divider:  rgba(255,255,255,.09);
-  --sb-width:    220px;
+  --sb-active-bg:#BFDBFE;
+  --sb-active:   #1E293B;
+  --sb-divider:  rgba(255,255,255,.1);
+  --sb-width:    224px;
 
   /* Accent */
-  --accent:      #C97B12;
-  --accent-dim:  rgba(201,123,18,.12);
+  --accent:      #1D4ED8;
+  --accent-dim:  rgba(29,78,216,.1);
 
   /* Semantic */
-  --green:       #2A7A4A;
+  --green:       #166534;
   --green-dim:   #DCFCE7;
-  --red:         #B83232;
+  --red:         #B91C1C;
   --red-dim:     #FEE2E2;
-  --blue:        #2563EB;
-  --blue-dim:    #EFF6FF;
-  --orange:      #C97B12;
+  --blue:        #1D4ED8;
+  --blue-dim:    #DBEAFE;
+  --orange:      #B45309;
   --orange-dim:  #FEF3C7;
+  --forest:      #166534;
+  --forest-dim:  #DCFCE7;
 
   /* Text */
-  --text:        #1A1208;
-  --text-2:      #6B5540;
-  --text-3:      #9B7D62;
-  --text-4:      #C4AE98;
+  --text:        #0F172A;
+  --text-2:      #1E293B;
+  --text-3:      #64748B;
+  --text-4:      #94A3B8;
 
   /* Borders */
-  --border:      rgba(26,18,8,.09);
-  --border-2:    rgba(26,18,8,.05);
+  --border:      rgba(15,23,42,.1);
+  --border-2:    rgba(15,23,42,.06);
 
   /* Typography */
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
@@ -61,10 +63,10 @@
   --r-lg:  16px;
 
   /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(26,18,8,.06), 0 1px 2px rgba(26,18,8,.04);
-  --shadow-md: 0 4px 12px rgba(26,18,8,.08), 0 2px 4px rgba(26,18,8,.04);
-  --shadow-lg: 0 8px 24px rgba(26,18,8,.12), 0 4px 8px rgba(26,18,8,.06);
-  --shadow-xl: 0 16px 40px rgba(26,18,8,.14);
+  --shadow-sm: 0 1px 3px rgba(15,23,42,.06), 0 1px 2px rgba(15,23,42,.04);
+  --shadow-md: 0 4px 12px rgba(15,23,42,.08), 0 2px 4px rgba(15,23,42,.04);
+  --shadow-lg: 0 8px 24px rgba(15,23,42,.12), 0 4px 8px rgba(15,23,42,.06);
+  --shadow-xl: 0 16px 40px rgba(15,23,42,.14);
 }
 
 /* ─── Base ───────────────────────────────────────────────────────────────── */
@@ -149,25 +151,25 @@ body {
   font-family: var(--font);
   font-size: 14px;
   font-weight: 500;
-  color: var(--sb-text);
+  color: #CBD5E1;
   text-align: left;
   cursor: pointer;
   transition: background 120ms ease, color 120ms ease;
 }
 .sidebar-item:hover {
-  background: var(--sb-hover);
-  color: #D4B896;
+  background: rgba(255,255,255,.08);
+  color: #FFFFFF;
 }
 .sidebar-item.active {
-  background: var(--sb-active-bg);
-  color: var(--sb-active);
-  font-weight: 600;
+  background: #BFDBFE;
+  color: #0F172A;
+  font-weight: 700;
 }
 .sidebar-item svg { flex-shrink: 0; }
 
 .sidebar-badge {
   margin-left: auto;
-  background: var(--red);
+  background: var(--forest);
   color: #fff;
   border-radius: 99px;
   font-size: 10px;
@@ -407,7 +409,7 @@ body {
   width: 52px;
   height: 52px;
   border-radius: 26px;
-  background: var(--accent);
+  background: #0F1E38;
   border: none;
   cursor: pointer;
   display: flex;
@@ -608,8 +610,8 @@ body {
   justify-content: center;
   gap: 6px;
   width: 100%;
-  background: var(--red-dim);
-  color: var(--red);
+  background: #FEE2E2;
+  color: #B91C1C;
   border: none;
   border-radius: var(--r-md);
   padding: 13px;
@@ -756,7 +758,7 @@ body {
   cursor: pointer;
   transition: background 120ms, color 120ms;
 }
-.tag-preset.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+.tag-preset.on { background: #166534; color: #fff; border-color: #166534; }
 
 /* ─── Coat circle ────────────────────────────────────────────────────────── */
 .coat-circle {
@@ -1078,3 +1080,18 @@ body {
 @keyframes slideIn  { from { transform: translateX(28px); opacity: 0 } to { transform: translateX(0); opacity: 1 } }
 @keyframes spin     { to { transform: rotate(360deg) } }
 @keyframes toastIn  { from { transform: translateX(-50%) translateY(8px); opacity: 0 } to { transform: translateX(-50%) translateY(0); opacity: 1 } }
+
+/* ─── Project spreadsheet table (desktop only) ─────────────────────────────── */
+.proj-table-wrap { overflow-x: auto; padding: 0 20px 24px; }
+.proj-table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 800px; }
+.proj-table th { background: #0F1E38; color: #CBD5E1; font-weight: 600; padding: 10px 12px; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; }
+.proj-table th:first-child { border-radius: var(--r-sm) 0 0 0; }
+.proj-table th:last-child  { border-radius: 0 var(--r-sm) 0 0; }
+.proj-table td { padding: 9px 12px; border-bottom: 1px solid var(--border-2); background: var(--surface); vertical-align: middle; }
+.proj-table tr:last-child td { border-bottom: none; }
+.proj-table tr:hover td { background: var(--fill-2); }
+.proj-table-input { background: transparent; border: none; outline: none; font-family: var(--font); font-size: 14px; color: var(--text); width: 100%; min-width: 80px; }
+.proj-table-input:focus { background: var(--blue-dim); border-radius: 4px; padding: 2px 6px; margin: -2px -6px; }
+.proj-table-select { background: transparent; border: none; outline: none; font-family: var(--font); font-size: 14px; color: var(--text); cursor: pointer; appearance: none; -webkit-appearance: none; width: 100%; }
+.proj-table-select:focus { background: var(--blue-dim); border-radius: 4px; padding: 2px 6px; }
+.proj-table-badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; }

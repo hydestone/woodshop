@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
@@ -6,7 +6,7 @@ import { addToGoogleCalendar, addToAppleReminders } from '../supabase.js'
 import {
   Sheet, FormCell, BulkAddSheet, ConfirmSheet, DropZone, PhotoGrid, TagInput,
   STATUS, coatStatus, fmtShort, localDt,
-  IPlus, ITrash, ICircle, ICheck, IChevR, IChevL, IEdit, ICal, ICamera, IBell,
+  IPlus, ITrash, ICircle, ICheck, IChevR, IChevL, IEdit, ICal, ICamera, IBell, IGrid,
 } from '../components/Shared.jsx'
 
 const STATUS_ORDER = ['active', 'planning', 'paused', 'complete']
@@ -16,7 +16,9 @@ const STATUS_LABEL = { active: 'Active', planning: 'Planning', paused: 'Paused',
 export default function Projects() {
   const { data, mutate, setProjId } = useCtx()
   const toast   = useToast()
-  const [showAdd, setShowAdd] = useState(false)
+  const [showAdd, setShowAdd]   = useState(false)
+  const [viewMode, setViewMode] = useState('cards') // 'cards' | 'table'
+  const [filter, setFilter]     = useState('all')
 
   const handleAdd = async fields => {
     try {
@@ -27,8 +29,13 @@ export default function Projects() {
     } catch (e) { toast(e.message, 'error') }
   }
 
+  const categories = data.categories || []
+  const filtered = filter === 'all'
+    ? data.projects
+    : data.projects.filter(p => p.category === filter)
+
   const groups = STATUS_ORDER.reduce((acc, s) => {
-    const items = data.projects.filter(p => p.status === s)
+    const items = filtered.filter(p => p.status === s)
     if (items.length) acc.push({ status: s, items })
     return acc
   }, [])
@@ -37,32 +44,121 @@ export default function Projects() {
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
       <div className="scroll-page" style={{ paddingBottom: 80 }}>
         <div className="page-header">
-          <h1 className="page-title">Projects</h1>
-        </div>
-        <div style={{ paddingTop: 8, paddingBottom: 24 }}>
-          {groups.map(({ status, items }) => (
-            <div key={status}>
-              <span className="section-label">{STATUS_LABEL[status]}</span>
-              {items.map(p => <ProjectCard key={p.id} project={p} onOpen={() => setProjId(p.id)} data={data} />)}
-            </div>
-          ))}
-          {!data.projects.length && (
-            <div className="empty">
-              <div className="empty-icon">📋</div>
-              <div className="empty-title">No projects yet</div>
-              <p className="empty-sub">Click + to start your first build</p>
+          <div className="page-header-row">
+            <h1 className="page-title">Projects</h1>
+            {/* Table view toggle — desktop only */}
+            <button
+              className={viewMode === 'table' ? 'btn-primary' : 'btn-secondary'}
+              style={{ padding: '5px 12px', fontSize: 13, display: 'none' }}
+              id="table-toggle-btn"
+              onClick={() => setViewMode(v => v === 'cards' ? 'table' : 'cards')}
+            >
+              {viewMode === 'table' ? 'Card view' : 'Table view'}
+            </button>
+          </div>
+          {/* Category filter */}
+          {categories.length > 0 && (
+            <div style={{ display: 'flex', gap: 6, marginTop: 10, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 2 }}>
+              {['all', ...categories.map(c => c.name)].map(cat => (
+                <button key={cat} onClick={() => setFilter(cat)} style={{
+                  padding: '4px 12px', borderRadius: 99, border: 'none', cursor: 'pointer', flexShrink: 0,
+                  fontSize: 13, fontWeight: 500, fontFamily: 'inherit',
+                  background: filter === cat ? '#0F1E38' : 'var(--fill)',
+                  color: filter === cat ? '#fff' : 'var(--text-2)',
+                }}>
+                  {cat === 'all' ? 'All' : cat}
+                </button>
+              ))}
             </div>
           )}
         </div>
+
+        {/* Desktop table view */}
+        <style>{`@media (min-width: 768px) { #table-toggle-btn { display: inline-flex !important; } }`}</style>
+        {viewMode === 'table'
+          ? <ProjectTable projects={filtered} categories={categories} />
+          : (
+            <div style={{ paddingTop: 8, paddingBottom: 24 }}>
+              {groups.map(({ status, items }) => (
+                <div key={status}>
+                  <span className="section-label">{STATUS_LABEL[status]}</span>
+                  {items.map(p => <ProjectCard key={p.id} project={p} onOpen={() => setProjId(p.id)} data={data} />)}
+                </div>
+              ))}
+              {!filtered.length && (
+                <div className="empty">
+                  <div className="empty-icon">📋</div>
+                  <div className="empty-title">{filter === 'all' ? 'No projects yet' : `No ${filter} projects`}</div>
+                  <p className="empty-sub">{filter === 'all' ? 'Click + to start your first build' : 'Try a different category filter'}</p>
+                </div>
+              )}
+            </div>
+          )
+        }
       </div>
       <button className="fab" onClick={() => setShowAdd(true)} aria-label="Add project">
         <IPlus size={22} color="#fff" sw={2.5} />
       </button>
-      {showAdd && <ProjectSheet onSave={handleAdd} onClose={() => setShowAdd(false)} />}
+      {showAdd && <ProjectSheet categories={categories} onSave={handleAdd} onClose={() => setShowAdd(false)} mutate={mutate} />}
     </div>
   )
 }
 
+// ─── Project table (desktop) ──────────────────────────────────────────────────
+function ProjectTable({ projects, categories }) {
+  const { mutate, setProjId } = useCtx()
+  const toast = useToast()
+
+  const update = async (id, field, value) => {
+    mutate(d => ({ ...d, projects: d.projects.map(p => p.id === id ? { ...p, [field]: value } : p) }))
+    await db.updateProject(id, { [field]: value }).catch(e => toast(e.message, 'error'))
+  }
+
+  const cols = ['name', 'category', 'status', 'wood_type', 'wood_source', 'built_with', 'finish_used', 'year_completed']
+  const labels = { name: 'Project', category: 'Category', status: 'Status', wood_type: 'Wood', wood_source: 'Source', built_with: 'Built With', finish_used: 'Finish', year_completed: 'Year' }
+
+  return (
+    <div className="proj-table-wrap">
+      <table className="proj-table">
+        <thead>
+          <tr>
+            {cols.map(c => <th key={c}>{labels[c]}</th>)}
+            <th>Open</th>
+          </tr>
+        </thead>
+        <tbody>
+          {projects.map(p => (
+            <tr key={p.id}>
+              <td><input className="proj-table-input" defaultValue={p.name} onBlur={e => { if (e.target.value !== p.name) update(p.id, 'name', e.target.value) }} /></td>
+              <td>
+                <select className="proj-table-select" value={p.category || ''} onChange={e => update(p.id, 'category', e.target.value)}>
+                  <option value="">—</option>
+                  {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                </select>
+              </td>
+              <td>
+                <select className="proj-table-select" value={p.status} onChange={e => update(p.id, 'status', e.target.value)}>
+                  {STATUS_ORDER.map(s => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
+                </select>
+              </td>
+              <td><input className="proj-table-input" defaultValue={p.wood_type} onBlur={e => { if (e.target.value !== p.wood_type) update(p.id, 'wood_type', e.target.value) }} /></td>
+              <td><input className="proj-table-input" defaultValue={p.wood_source} onBlur={e => { if (e.target.value !== (p.wood_source||'')) update(p.id, 'wood_source', e.target.value) }} /></td>
+              <td><input className="proj-table-input" defaultValue={p.built_with} onBlur={e => { if (e.target.value !== (p.built_with||'')) update(p.id, 'built_with', e.target.value) }} /></td>
+              <td><input className="proj-table-input" defaultValue={p.finish_used} onBlur={e => { if (e.target.value !== (p.finish_used||'')) update(p.id, 'finish_used', e.target.value) }} /></td>
+              <td><input className="proj-table-input" type="number" defaultValue={p.year_completed} placeholder={new Date().getFullYear()} style={{ width: 70 }} onBlur={e => { const v = e.target.value ? parseInt(e.target.value) : null; if (v !== p.year_completed) update(p.id, 'year_completed', v) }} /></td>
+              <td>
+                <button className="btn-text" onClick={() => setProjId(p.id)}>Open →</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {!projects.length && <div className="empty"><div className="empty-icon">📋</div><div className="empty-title">No projects</div></div>}
+    </div>
+  )
+}
+
+// ─── Project card ─────────────────────────────────────────────────────────────
 function ProjectCard({ project, onOpen, data }) {
   const ps    = data.steps.filter(s => s.project_id === project.id)
   const done  = ps.filter(s => s.completed).length
@@ -71,12 +167,16 @@ function ProjectCard({ project, onOpen, data }) {
   const ss    = STATUS[project.status] || STATUS.planning
 
   return (
-    <button className="proj-card" onClick={onOpen} aria-label={`Open project ${project.name}`}>
+    <button className="proj-card" onClick={onOpen}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: total ? 10 : 0 }}>
         <div style={{ flex: 1, paddingRight: 12, minWidth: 0 }}>
           <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 2 }}>{project.name}</div>
-          {project.wood_type && <div style={{ fontSize: 13, color: 'var(--text-3)' }}>{project.wood_type}</div>}
-          {project.description && <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 2 }}>{project.description}</div>}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 2 }}>
+            {project.wood_type && <span style={{ fontSize: 13, color: 'var(--text-3)' }}>{project.wood_type}</span>}
+            {project.category  && <span style={{ fontSize: 12, background: 'var(--blue-dim)', color: 'var(--blue)', borderRadius: 99, padding: '1px 8px', fontWeight: 500 }}>{project.category}</span>}
+            {project.year_completed && <span style={{ fontSize: 12, color: 'var(--text-4)' }}>{project.year_completed}</span>}
+          </div>
+          {project.description && <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>{project.description}</div>}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
           {rc > 0 && <span className="badge-pill" style={{ background: 'var(--orange-dim)', color: 'var(--orange)' }}>coat ready</span>}
@@ -89,7 +189,7 @@ function ProjectCard({ project, onOpen, data }) {
             <span style={{ fontSize: 12, color: 'var(--text-3)' }}>{done}/{total}</span>
           </div>
           <div className="progress-bar">
-            <div className="progress-fill" style={{ width: `${(done / total) * 100}%`, background: project.status === 'complete' ? 'var(--green)' : 'var(--accent)' }} />
+            <div className="progress-fill" style={{ width: `${(done / total) * 100}%`, background: project.status === 'complete' ? 'var(--forest)' : 'var(--accent)' }} />
           </div>
         </>
       )}
@@ -101,15 +201,16 @@ function ProjectCard({ project, onOpen, data }) {
 export function ProjectDetail() {
   const { data, mutate, projId, setProjId } = useCtx()
   const toast = useToast()
-  const [sub, setSub]       = useState('steps')
-  const [editing, setEditing] = useState(false)
+  const [sub, setSub]           = useState('steps')
+  const [editing, setEditing]   = useState(false)
   const [confirming, setConfirming] = useState(false)
-  const [showRon, setShowRon] = useState(false)
+  const [showRon, setShowRon]   = useState(false)
 
   const project = data.projects.find(p => p.id === projId)
   if (!project) return null
 
   const ss = STATUS[project.status] || STATUS.planning
+  const categories = data.categories || []
 
   const cycleStatus = async () => {
     const next = STATUS_ORDER[(STATUS_ORDER.indexOf(project.status) + 1) % STATUS_ORDER.length]
@@ -151,24 +252,30 @@ export function ProjectDetail() {
           </button>
           <div style={{ display: 'flex', gap: 4, paddingBottom: 8 }}>
             <button className="icon-btn" onClick={() => setEditing(true)} aria-label="Edit project"><IEdit size={17} /></button>
-            <button className="icon-btn" onClick={() => setConfirming(true)} aria-label="Delete project"><ITrash size={17} /></button>
+            <button className="icon-btn" onClick={() => setConfirming(true)} aria-label="Delete project" style={{ color: 'var(--red)' }}><ITrash size={17} /></button>
           </div>
         </div>
         <h2 className="page-title" style={{ fontSize: 22 }}>{project.name}</h2>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
+          {project.category && <span style={{ fontSize: 12, background: 'var(--blue-dim)', color: 'var(--blue)', borderRadius: 99, padding: '2px 10px', fontWeight: 600 }}>{project.category}</span>}
           {project.wood_type && <span style={{ fontSize: 13, color: 'var(--text-3)' }}>{project.wood_type}</span>}
+          {project.year_completed && <span style={{ fontSize: 13, color: 'var(--text-4)' }}>{project.year_completed}</span>}
           <button
             className="badge-pill"
             style={{ background: ss.bg, color: ss.color, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
             onClick={cycleStatus}
             title="Tap to change status"
-            aria-label={`Status: ${project.status}. Tap to change.`}
           >
             {project.status} ▾
           </button>
-          {project.dimensions_rough && <span style={{ fontSize: 12, color: 'var(--text-3)' }}>Rough: {project.dimensions_rough}</span>}
-          {project.dimensions_final && <span style={{ fontSize: 12, color: 'var(--text-3)' }}>Final: {project.dimensions_final}</span>}
         </div>
+        {(project.built_with || project.wood_source || project.finish_used) && (
+          <div style={{ display: 'flex', gap: 12, marginTop: 6, flexWrap: 'wrap' }}>
+            {project.built_with  && <span style={{ fontSize: 12, color: 'var(--text-3)' }}>👤 {project.built_with}</span>}
+            {project.wood_source && <span style={{ fontSize: 12, color: 'var(--text-3)' }}>🌲 {project.wood_source}</span>}
+            {project.finish_used && <span style={{ fontSize: 12, color: 'var(--text-3)' }}>🎨 {project.finish_used}</span>}
+          </div>
+        )}
         <div className="sub-tabs">
           {[['steps','Build'],['finishing','Finishing'],['progress','Progress'],['inspiration','Inspiration']].map(([id, label]) => (
             <button key={id} className={`sub-tab ${sub === id ? 'active' : ''}`} onClick={() => setSub(id)}>{label}</button>
@@ -183,8 +290,7 @@ export function ProjectDetail() {
         {sub === 'inspiration' && <PhotoPane       projId={projId} type="inspiration" />}
       </div>
 
-      {editing && <ProjectSheet project={project} onSave={handleUpdate} onClose={() => setEditing(false)} />}
-      {showRon && <RonSwansonModal onClose={() => setShowRon(false)} />}
+      {editing && <ProjectSheet project={project} categories={categories} onSave={handleUpdate} onClose={() => setEditing(false)} mutate={mutate} />}
       {confirming && (
         <ConfirmSheet
           message={`Delete "${project.name}"? All steps, coats, and photos will be removed. This cannot be undone.`}
@@ -192,6 +298,7 @@ export function ProjectDetail() {
           onClose={() => setConfirming(false)}
         />
       )}
+      {showRon && <RonSwansonModal onClose={() => setShowRon(false)} />}
     </div>
   )
 }
@@ -200,9 +307,9 @@ export function ProjectDetail() {
 function StepsPane({ projId }) {
   const { data, mutate } = useCtx()
   const toast = useToast()
-  const [showAdd, setShowAdd]   = useState(false)
-  const [editId, setEditId]     = useState(null)
-  const [editVal, setEditVal]   = useState('')
+  const [showAdd, setShowAdd] = useState(false)
+  const [editId, setEditId]   = useState(null)
+  const [editVal, setEditVal] = useState('')
 
   const steps = data.steps.filter(s => s.project_id === projId).sort((a, b) => a.sort_order - b.sort_order)
   const done  = steps.filter(s => s.completed).length
@@ -248,38 +355,27 @@ function StepsPane({ projId }) {
             <div className="group">
               {steps.map(s => (
                 <div key={s.id} className="cell">
-                  <button className="check-btn" onClick={() => toggle(s)} aria-label={s.completed ? 'Mark incomplete' : 'Mark complete'}>
+                  <button className="check-btn" onClick={() => toggle(s)}>
                     {s.completed
-                      ? <ICheck size={22} color="var(--green)" sw={2} />
+                      ? <ICheck size={22} color="var(--forest)" sw={2} />
                       : <ICircle size={22} color="var(--text-4)" sw={1.5} />}
                   </button>
                   <div style={{ flex: 1 }}>
                     {editId === s.id ? (
                       <div style={{ display: 'flex', gap: 8 }}>
-                        <input
-                          className="edit-input"
-                          value={editVal}
-                          onChange={e => setEditVal(e.target.value)}
-                          onKeyDown={e => { if (e.key === 'Enter') saveEdit(s.id); if (e.key === 'Escape') setEditId(null) }}
-                          autoFocus
-                          aria-label="Edit step"
-                        />
+                        <input className="edit-input" value={editVal} onChange={e => setEditVal(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') saveEdit(s.id); if (e.key === 'Escape') setEditId(null) }} autoFocus />
                         <button className="btn-text" onClick={() => saveEdit(s.id)}>Save</button>
                       </div>
                     ) : (
-                      <div
-                        style={{ textDecoration: s.completed ? 'line-through' : 'none', color: s.completed ? 'var(--text-3)' : 'var(--text)', cursor: 'text' }}
-                        onDoubleClick={() => { setEditId(s.id); setEditVal(s.title) }}
-                        title="Double-click to edit"
-                      >
+                      <div style={{ textDecoration: s.completed ? 'line-through' : 'none', color: s.completed ? 'var(--text-3)' : 'var(--text)', cursor: 'text' }}
+                        onDoubleClick={() => { setEditId(s.id); setEditVal(s.title) }}>
                         {s.title}
                       </div>
                     )}
                     {s.note && <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 2 }}>{s.note}</div>}
                   </div>
-                  <button className="icon-btn" onClick={() => del(s.id)} aria-label={`Delete step ${s.title}`}>
-                    <ITrash size={15} />
-                  </button>
+                  <button className="icon-btn" onClick={() => del(s.id)}><ITrash size={15} /></button>
                 </div>
               ))}
             </div>
@@ -293,17 +389,8 @@ function StepsPane({ projId }) {
           )}
         </div>
       </div>
-      <button className="fab" onClick={() => setShowAdd(true)} aria-label="Add steps">
-        <IPlus size={22} color="#fff" sw={2.5} />
-      </button>
-      {showAdd && (
-        <BulkAddSheet
-          title="Add Build Steps"
-          hint="Enter one step per line"
-          onSave={handleBulkAdd}
-          onClose={() => setShowAdd(false)}
-        />
-      )}
+      <button className="fab" onClick={() => setShowAdd(true)}><IPlus size={22} color="#fff" sw={2.5} /></button>
+      {showAdd && <BulkAddSheet title="Add Build Steps" hint="Enter one step per line" onSave={handleBulkAdd} onClose={() => setShowAdd(false)} />}
     </div>
   )
 }
@@ -316,7 +403,7 @@ function FinishingPane({ projId }) {
   const [markId, setMarkId]     = useState(null)
   const [editCoat, setEditCoat] = useState(null)
 
-  const coats   = data.coats.filter(c => c.project_id === projId).sort((a, b) => a.coat_number - b.coat_number)
+  const coats    = data.coats.filter(c => c.project_id === projId).sort((a, b) => a.coat_number - b.coat_number)
   const lastCoat = coats.at(-1)
   const nextNum  = (lastCoat?.coat_number ?? 0) + 1
   const proj     = data.projects.find(p => p.id === projId)
@@ -354,23 +441,14 @@ function FinishingPane({ projId }) {
     if (!coat.applied_at) { toast('Mark coat as applied first', 'error'); return }
     const ms      = coat.interval_unit === 'hours' ? coat.interval_value * 3_600_000 : coat.interval_value * 86_400_000
     const readyAt = new Date(new Date(coat.applied_at).getTime() + ms)
-    addToGoogleCalendar({
-      title: `Apply coat ${coat.coat_number + 1} — ${coat.product}${proj ? ` (${proj.name})` : ''}`,
-      start: readyAt,
-      end:   new Date(readyAt.getTime() + 3_600_000),
-      description: `Coat ${coat.coat_number} of ${coat.product} is ready. Time to apply the next coat.`,
-    })
+    addToGoogleCalendar({ title: `Apply coat ${coat.coat_number + 1} — ${coat.product}${proj ? ` (${proj.name})` : ''}`, start: readyAt, end: new Date(readyAt.getTime() + 3_600_000), description: `Coat ${coat.coat_number} is ready.` })
   }
 
   const appleReminder = coat => {
     if (!coat.applied_at) { toast('Mark coat as applied first', 'error'); return }
     const ms      = coat.interval_unit === 'hours' ? coat.interval_value * 3_600_000 : coat.interval_value * 86_400_000
     const readyAt = new Date(new Date(coat.applied_at).getTime() + ms)
-    addToAppleReminders({
-      title: `Apply coat ${coat.coat_number + 1} — ${coat.product}`,
-      notes: `Coat ${coat.coat_number} is ready.`,
-      dueDate: readyAt,
-    })
+    addToAppleReminders({ title: `Apply coat ${coat.coat_number + 1} — ${coat.product}`, notes: `Coat ${coat.coat_number} is ready.`, dueDate: readyAt })
   }
 
   return (
@@ -380,13 +458,13 @@ function FinishingPane({ projId }) {
           {coats.length > 0 ? (
             <div className="group">
               {coats.map((coat, idx) => {
-                const st     = coatStatus(coat)
-                const prevOk = idx === 0 || !!coats[idx - 1].applied_at
-                const locked = !coat.applied_at && !prevOk
+                const st      = coatStatus(coat)
+                const prevOk  = idx === 0 || !!coats[idx - 1].applied_at
+                const locked  = !coat.applied_at && !prevOk
                 const applied = !!coat.applied_at
                 const circleClass = applied ? 'coat-circle applied' : st.urgent ? 'coat-circle urgent' : 'coat-circle'
                 return (
-                  <div key={coat.id} style={{ borderBottom: idx < coats.length - 1 ? '1px solid var(--border-2)' : 'none', padding: '14px 16px', background: 'var(--surface)' }}>
+                  <div key={coat.id} style={{ borderBottom: idx < coats.length - 1 ? '1px solid var(--border-2)' : 'none', padding: '14px 16px' }}>
                     <div style={{ display: 'flex', gap: 14 }}>
                       <div className={circleClass}>{coat.coat_number}</div>
                       <div style={{ flex: 1 }}>
@@ -394,31 +472,22 @@ function FinishingPane({ projId }) {
                           <span style={{ fontWeight: 600 }}>{coat.product}</span>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             <span style={{ fontSize: 13, fontWeight: 600, color: st.color }}>{st.label}</span>
-                            <button className="icon-btn" onClick={() => setEditCoat(coat)} aria-label="Edit coat"><IEdit size={14} /></button>
-                            <button className="icon-btn" onClick={() => del(coat.id)} aria-label="Delete coat"><ITrash size={14} /></button>
+                            <button className="icon-btn" onClick={() => setEditCoat(coat)}><IEdit size={14} /></button>
+                            <button className="icon-btn" onClick={() => del(coat.id)} style={{ color: 'var(--red)' }}><ITrash size={14} /></button>
                           </div>
                         </div>
                         {coat.notes && <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 2 }}>{coat.notes}</div>}
                         <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 4 }}>
-                          {coat.applied_at ? `Applied ${fmtShort(coat.applied_at)} · ` : ''}
-                          Wait {coat.interval_value}{coat.interval_unit === 'hours' ? 'h' : 'd'}
+                          {coat.applied_at ? `Applied ${fmtShort(coat.applied_at)} · ` : ''}Wait {coat.interval_value}{coat.interval_unit === 'hours' ? 'h' : 'd'}
                         </div>
                         {!locked && (
                           <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-                            <button
-                              className={st.urgent ? 'btn-primary' : 'btn-secondary'}
-                              style={st.urgent ? { background: 'var(--orange)' } : {}}
-                              onClick={() => setMarkId(coat.id)}
-                            >
+                            <button className={st.urgent ? 'btn-primary' : 'btn-secondary'} onClick={() => setMarkId(coat.id)}>
                               {coat.applied_at ? (st.urgent ? 'Apply next coat' : 'Re-log') : 'Mark applied'}
                             </button>
                             {applied && <>
-                              <button className="btn-cal" onClick={() => calReminder(coat)}>
-                                <ICal size={13} color="currentColor" /> Google Calendar
-                              </button>
-                              <button className="btn-reminder" onClick={() => appleReminder(coat)}>
-                                <IBell size={13} color="currentColor" /> Add to Reminders
-                              </button>
+                              <button className="btn-cal" onClick={() => calReminder(coat)}><ICal size={13} color="currentColor" /> Google Calendar</button>
+                              <button className="btn-reminder" onClick={() => appleReminder(coat)}><IBell size={13} color="currentColor" /> Add to Reminders</button>
                             </>}
                           </div>
                         )}
@@ -438,9 +507,7 @@ function FinishingPane({ projId }) {
           )}
         </div>
       </div>
-      <button className="fab" onClick={() => setShowAdd(true)} aria-label="Add coat">
-        <IPlus size={22} color="#fff" sw={2.5} />
-      </button>
+      <button className="fab" onClick={() => setShowAdd(true)}><IPlus size={22} color="#fff" sw={2.5} /></button>
       {showAdd   && <CoatSheet nextNum={nextNum} defaultCoat={lastCoat} onSave={handleAdd} onClose={() => setShowAdd(false)} />}
       {editCoat  && <CoatSheet nextNum={editCoat.coat_number} defaultCoat={editCoat} isEdit onSave={f => handleEdit(editCoat.id, f)} onClose={() => setEditCoat(null)} />}
       {markId    && (
@@ -509,42 +576,106 @@ function PhotoPane({ projId, type }) {
         <DropZone onFiles={handleFiles} uploading={uploading} />
         {photos.length > 0
           ? <PhotoGrid photos={photos} onEdit={edit} />
-          : <div className="empty"><div className="empty-icon">📷</div><div className="empty-title">No photos yet</div><p className="empty-sub">Drop photos above or tap the camera button</p></div>
+          : <div className="empty"><div className="empty-icon">📷</div><div className="empty-title">No photos yet</div></div>
         }
       </div>
       <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => handleFiles(e.target.files)} />
-      <button className="fab" onClick={() => fileRef.current?.click()} disabled={uploading} aria-label="Upload photo">
+      <button className="fab" onClick={() => fileRef.current?.click()} disabled={uploading}>
         {uploading ? <div className="spinner" style={{ width: 20, height: 20, borderWidth: 2, borderTopColor: '#fff' }} /> : <ICamera size={22} color="#fff" sw={2} />}
       </button>
-      {showTag && <PhotoTagSheet count={pendingFiles.length} onSave={doUpload} onClose={() => { setShowTag(false); setPendingFiles([]) }} />}
+      {showTag && (
+        <Sheet title="Add Photo" onClose={() => { setShowTag(false); setPendingFiles([]) }} onSave={async () => {}}>
+          <PhotoTagSheetBody count={pendingFiles.length} onSave={doUpload} />
+        </Sheet>
+      )}
     </div>
   )
 }
 
-// ─── Sheets ───────────────────────────────────────────────────────────────────
-function ProjectSheet({ project, onSave, onClose }) {
+function PhotoTagSheetBody({ count, onSave }) {
+  const [caption, setCaption] = useState('')
+  const [tags, setTags]       = useState([])
+  return (
+    <div>
+      <div className="form-group">
+        <FormCell label="Caption" last>
+          <input className="form-input" placeholder="Optional" value={caption} onChange={e => setCaption(e.target.value)} autoFocus />
+        </FormCell>
+      </div>
+      <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 8 }}>Tags</p>
+      <TagInput tags={tags} onChange={setTags} />
+      <button className="btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: 16 }} onClick={() => onSave(caption, tags.join(','))}>
+        Upload {count > 1 ? `${count} photos` : 'photo'}
+      </button>
+    </div>
+  )
+}
+
+// ─── Project sheet ────────────────────────────────────────────────────────────
+function ProjectSheet({ project, categories, onSave, onClose, mutate }) {
+  const toast = useToast()
   const refs = {
-    name:   useRef(), wood:   useRef(), desc:   useRef(),
-    status: useRef(), rough:  useRef(), final:  useRef(),
+    name: useRef(), wood: useRef(), desc: useRef(), status: useRef(),
+    rough: useRef(), final: useRef(), builtWith: useRef(),
+    woodSource: useRef(), finishUsed: useRef(), year: useRef(),
   }
+  const [category, setCategory]   = useState(project?.category || '')
+  const [newCat, setNewCat]       = useState('')
+  const [showNewCat, setShowNewCat] = useState(false)
+
+  const addNewCategory = async () => {
+    const name = newCat.trim()
+    if (!name) return
+    try {
+      const cat = await db.addCategory(name)
+      mutate(d => ({ ...d, categories: [...(d.categories || []), cat].sort((a,b) => a.name.localeCompare(b.name)) }))
+      setCategory(name)
+      setNewCat('')
+      setShowNewCat(false)
+      toast('Category added', 'success')
+    } catch (e) { toast(e.message, 'error') }
+  }
+
   const handleSave = async () => {
     const name = refs.name.current?.value.trim()
     if (!name) return
+    const yearVal = refs.year.current?.value.trim()
     await onSave({
       name,
-      wood_type:        refs.wood.current?.value.trim()   || '',
-      description:      refs.desc.current?.value.trim()   || '',
-      status:           refs.status.current?.value        || 'active',
-      dimensions_rough: refs.rough.current?.value.trim()  || '',
-      dimensions_final: refs.final.current?.value.trim()  || '',
+      category,
+      wood_type:        refs.wood.current?.value.trim()       || '',
+      description:      refs.desc.current?.value.trim()       || '',
+      status:           refs.status.current?.value            || 'active',
+      dimensions_rough: refs.rough.current?.value.trim()      || '',
+      dimensions_final: refs.final.current?.value.trim()      || '',
+      built_with:       refs.builtWith.current?.value.trim()  || '',
+      wood_source:      refs.woodSource.current?.value.trim() || '',
+      finish_used:      refs.finishUsed.current?.value.trim() || '',
+      year_completed:   yearVal ? parseInt(yearVal) : null,
     })
   }
+
   return (
     <Sheet title={project ? 'Edit Project' : 'New Project'} onClose={onClose} onSave={handleSave}>
       <div className="form-group">
         <FormCell label="Name"><input ref={refs.name} className="form-input" placeholder="Cherry Bowl" defaultValue={project?.name || ''} autoFocus /></FormCell>
-        <FormCell label="Wood species"><input ref={refs.wood} className="form-input" placeholder="Cherry" defaultValue={project?.wood_type || ''} /></FormCell>
-        <FormCell label="Notes"><input ref={refs.desc} className="form-input" placeholder="Optional" defaultValue={project?.description || ''} /></FormCell>
+        <FormCell label="Category">
+          <select className="form-select" value={category} onChange={e => {
+            if (e.target.value === '__new__') { setShowNewCat(true) }
+            else setCategory(e.target.value)
+          }}>
+            <option value="">None</option>
+            {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+            <option value="__new__">+ Add new category…</option>
+          </select>
+        </FormCell>
+        {showNewCat && (
+          <FormCell label="New category">
+            <input className="form-input" placeholder="e.g. Turning" value={newCat} onChange={e => setNewCat(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && addNewCategory()} autoFocus />
+            <button className="btn-text" style={{ marginLeft: 8, flexShrink: 0 }} onClick={addNewCategory}>Add</button>
+          </FormCell>
+        )}
         <FormCell label="Status" last>
           <select ref={refs.status} className="form-select" defaultValue={project?.status || 'active'}>
             <option value="planning">Planning</option>
@@ -555,25 +686,26 @@ function ProjectSheet({ project, onSave, onClose }) {
         </FormCell>
       </div>
       <div className="form-group">
-        <FormCell label="Rough dimensions"><input ref={refs.rough} className="form-input" placeholder='12" × 12" × 4"' defaultValue={project?.dimensions_rough || ''} /></FormCell>
+        <FormCell label="Wood species"><input ref={refs.wood} className="form-input" placeholder="Cherry" defaultValue={project?.wood_type || ''} /></FormCell>
+        <FormCell label="Wood source"><input ref={refs.woodSource} className="form-input" placeholder="Sherborn back lot" defaultValue={project?.wood_source || ''} /></FormCell>
+        <FormCell label="Built with"><input ref={refs.builtWith} className="form-input" placeholder="Solo, with dad…" defaultValue={project?.built_with || ''} /></FormCell>
+        <FormCell label="Finish used"><input ref={refs.finishUsed} className="form-input" placeholder="Arm-R-Seal" defaultValue={project?.finish_used || ''} /></FormCell>
+        <FormCell label="Year completed"><input ref={refs.year} className="form-input" type="number" placeholder={new Date().getFullYear()} defaultValue={project?.year_completed || ''} /></FormCell>
+        <FormCell label="Notes"><input ref={refs.desc} className="form-input" placeholder="Optional" defaultValue={project?.description || ''} /></FormCell>
+        <FormCell label="Rough dimensions"><input ref={refs.rough} className="form-input" placeholder='12" × 12"' defaultValue={project?.dimensions_rough || ''} /></FormCell>
         <FormCell label="Final dimensions" last><input ref={refs.final} className="form-input" placeholder='10" × 3"' defaultValue={project?.dimensions_final || ''} /></FormCell>
       </div>
     </Sheet>
   )
 }
 
+// ─── Coat sheet ───────────────────────────────────────────────────────────────
 function CoatSheet({ nextNum, defaultCoat, isEdit, onSave, onClose }) {
   const refs = { prod: useRef(), num: useRef(), iv: useRef(), iu: useRef(), notes: useRef() }
   const handleSave = async () => {
     const product = refs.prod.current?.value.trim()
     if (!product) return
-    await onSave({
-      product,
-      coat_number:    parseInt(refs.num.current?.value)   || nextNum,
-      interval_value: parseFloat(refs.iv.current?.value)  || 4,
-      interval_unit:  refs.iu.current?.value               || 'hours',
-      notes:          refs.notes.current?.value.trim()     || '',
-    })
+    await onSave({ product, coat_number: parseInt(refs.num.current?.value) || nextNum, interval_value: parseFloat(refs.iv.current?.value) || 4, interval_unit: refs.iu.current?.value || 'hours', notes: refs.notes.current?.value.trim() || '' })
   }
   return (
     <Sheet title={isEdit ? 'Edit Coat' : 'Add Coat'} onClose={onClose} onSave={handleSave}>
@@ -581,67 +713,24 @@ function CoatSheet({ nextNum, defaultCoat, isEdit, onSave, onClose }) {
         <FormCell label="Product"><input ref={refs.prod} className="form-input" placeholder="Arm-R-Seal" defaultValue={defaultCoat?.product || ''} autoFocus /></FormCell>
         <FormCell label="Coat #"><input ref={refs.num} className="form-input" type="number" defaultValue={isEdit ? defaultCoat?.coat_number : nextNum} /></FormCell>
         <FormCell label="Wait"><input ref={refs.iv} className="form-input" type="number" defaultValue={defaultCoat?.interval_value ?? 4} /></FormCell>
-        <FormCell label="Unit">
-          <select ref={refs.iu} className="form-select" defaultValue={defaultCoat?.interval_unit || 'hours'}>
-            <option value="hours">Hours</option>
-            <option value="days">Days</option>
-          </select>
-        </FormCell>
+        <FormCell label="Unit"><select ref={refs.iu} className="form-select" defaultValue={defaultCoat?.interval_unit || 'hours'}><option value="hours">Hours</option><option value="days">Days</option></select></FormCell>
         <FormCell label="Notes" last><input ref={refs.notes} className="form-input" placeholder="Optional" defaultValue={defaultCoat?.notes || ''} /></FormCell>
       </div>
     </Sheet>
   )
 }
 
-function PhotoTagSheet({ count, onSave, onClose }) {
-  const [caption, setCaption] = useState('')
-  const [tags, setTags]       = useState([])
-  return (
-    <Sheet title={count > 1 ? `${count} Photos` : 'Add Photo'} onClose={onClose} onSave={() => onSave(caption, tags.join(','))}>
-      <div className="form-group">
-        <FormCell label="Caption" last>
-          <input className="form-input" placeholder="Optional" value={caption} onChange={e => setCaption(e.target.value)} autoFocus />
-        </FormCell>
-      </div>
-      <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 8 }}>Tags</p>
-      <TagInput tags={tags} onChange={setTags} />
-    </Sheet>
-  )
-}
-
-// ─── Ron Swanson completion modal ─────────────────────────────────────────────
+// ─── Ron Swanson modal ────────────────────────────────────────────────────────
 function RonSwansonModal({ onClose }) {
   return (
-    <div
-      className="overlay"
-      onClick={onClose}
-      style={{ alignItems: 'center', justifyContent: 'center' }}
-    >
-      <div
-        onClick={e => e.stopPropagation()}
-        style={{
-          background: '#1A1208',
-          borderRadius: 16,
-          overflow: 'hidden',
-          maxWidth: 380,
-          width: '90%',
-          boxShadow: '0 24px 60px rgba(0,0,0,.5)',
-          animation: 'slideUp .3s cubic-bezier(.32,.72,0,1)',
-        }}
-      >
-        <img
-          src="/ronswanson.webp"
-          alt="Ron Swanson"
-          style={{ width: '100%', display: 'block', maxHeight: 280, objectFit: 'cover', objectPosition: 'top' }}
-        />
+    <div className="overlay" onClick={onClose} style={{ alignItems: 'center', justifyContent: 'center' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#0F1E38', borderRadius: 16, overflow: 'hidden', maxWidth: 380, width: '90%', boxShadow: '0 24px 60px rgba(0,0,0,.5)', animation: 'slideUp .3s cubic-bezier(.32,.72,0,1)' }}>
+        <img src="/ronswanson.webp" alt="Ron Swanson" style={{ width: '100%', display: 'block', maxHeight: 280, objectFit: 'cover', objectPosition: 'top' }} />
         <div style={{ padding: '20px 24px 24px', textAlign: 'center' }}>
-          <p style={{ color: '#FAF0DC', fontSize: 18, fontWeight: 700, lineHeight: 1.4, marginBottom: 16 }}>
+          <p style={{ color: '#F0F4F8', fontSize: 18, fontWeight: 700, lineHeight: 1.4, marginBottom: 16 }}>
             "A real man always cleans his shop after every project."
           </p>
-          <button
-            onClick={onClose}
-            style={{ background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 10, padding: '11px 32px', fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
-          >
+          <button onClick={onClose} style={{ background: '#1D4ED8', color: '#fff', border: 'none', borderRadius: 10, padding: '11px 32px', fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
             Got it
           </button>
         </div>

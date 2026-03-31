@@ -150,7 +150,7 @@ export default function App() {
                       onClick={() => setTab(t.id)}
                       aria-current={active ? 'page' : undefined}
                     >
-                      <t.Icon size={16} color="currentColor" sw={active ? 2.2 : 1.6} />
+                      <t.Icon size={16} color={active ? "#0F172A" : "currentColor"} sw={active ? 2.2 : 1.6} />
                       {t.label}
                       {badge > 0 && <span className="sidebar-badge" aria-label={`${badge} urgent`}>{badge}</span>}
                     </button>
@@ -169,7 +169,7 @@ export default function App() {
                       onClick={() => setTab(t.id)}
                       aria-current={active ? 'page' : undefined}
                     >
-                      <t.Icon size={16} color="currentColor" sw={active ? 2.2 : 1.6} />
+                      <t.Icon size={16} color={active ? "#0F172A" : "currentColor"} sw={active ? 2.2 : 1.6} />
                       {t.label}
                     </button>
                   )
