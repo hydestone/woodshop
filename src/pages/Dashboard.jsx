@@ -280,15 +280,20 @@ function StatusPipeline({ projects }) {
 }
 
 // ── Wood Source Leaflet Map ───────────────────────────────────────────────────
-function WoodSourceMap({ locations, projects }) {
+function WoodSourceMap({ locations, woodStock, projectWoodSources }) {
   const mapRef = useRef(null)
   const mapInstance = useRef(null)
+  const [expanded, setExpanded] = useState(false)
 
+  // Count uses per location via junction table: project_wood_sources -> wood_stock -> location_id
   const sourceCounts = useMemo(()=>{
     const m={}
-    projects.forEach(p=>{ if(p.wood_location_id) m[p.wood_location_id]=(m[p.wood_location_id]||0)+1 })
+    ;(projectWoodSources||[]).forEach(pws=>{
+      const stock = (woodStock||[]).find(w=>w.id===pws.wood_stock_id)
+      if (stock?.location_id) m[stock.location_id]=(m[stock.location_id]||0)+1
+    })
     return m
-  },[projects])
+  },[projectWoodSources, woodStock])
 
   const mappable = locations.filter(l=>l.lat&&l.lng)
 
@@ -340,7 +345,16 @@ function WoodSourceMap({ locations, projects }) {
 
   return (
     <div>
-      <div ref={mapRef} style={{height:200,borderRadius:8,overflow:'hidden',border:'1px solid var(--border-2)'}}/>
+      <div
+        ref={mapRef}
+        onClick={()=>setExpanded(true)}
+        style={{height:200,borderRadius:8,overflow:'hidden',border:'1px solid var(--border-2)',cursor:'pointer',position:'relative'}}
+        title="Click to expand"
+      >
+        <div style={{position:'absolute',bottom:8,right:8,zIndex:1000,background:'rgba(255,255,255,.85)',borderRadius:6,padding:'3px 8px',fontSize:11,fontWeight:600,color:'#333',pointerEvents:'none'}}>
+          ⤢ Expand
+        </div>
+      </div>
       <div style={{marginTop:10,display:'flex',flexDirection:'column',gap:4}}>
         {locations.slice(0,4).map(l=>(
           <div key={l.id} style={{display:'flex',justifyContent:'space-between',fontSize:12}}>
@@ -348,6 +362,58 @@ function WoodSourceMap({ locations, projects }) {
             <span style={{color:'var(--text-3)'}}>{sourceCounts[l.id]||0} uses</span>
           </div>
         ))}
+      </div>
+      {expanded && <MapModal locations={locations} sourceCounts={sourceCounts} onClose={()=>setExpanded(false)}/>}
+    </div>
+  )
+}
+
+// ── Expanded Map Modal ─────────────────────────────────────────────────────────
+function MapModal({ locations, sourceCounts, onClose }) {
+  const mapRef = useRef(null)
+  const mapInstance = useRef(null)
+  const containerRef = useRef(null)
+
+  const mappable = locations.filter(l=>l.lat&&l.lng)
+
+  useEffect(()=>{
+    const el = containerRef.current
+    if (!el) return
+    // Prevent scroll bleed
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return ()=>{ document.body.style.overflow = prev }
+  },[])
+
+  useEffect(()=>{
+    if (!mapRef.current || mappable.length===0) return
+    const L = window.L
+    if (!L) return
+    const lats=mappable.map(l=>l.lat), lngs=mappable.map(l=>l.lng)
+    const centerLat=(Math.min(...lats)+Math.max(...lats))/2
+    const centerLng=(Math.min(...lngs)+Math.max(...lngs))/2
+    const map = L.map(mapRef.current,{zoomControl:true,scrollWheelZoom:true}).setView([centerLat||43.5,centerLng||-71.5],mappable.length===1?12:9)
+    mapInstance.current = map
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(map)
+    mappable.forEach(loc=>{
+      const count=sourceCounts[loc.id]||0
+      const size=Math.max(28,Math.min(44,28+count*4))
+      const icon=L.divIcon({className:'',html:`<div style="width:${size}px;height:${size}px;border-radius:50%;background:#0F1E38;border:2px solid #BFDBFE;display:flex;align-items:center;justify-content:center;color:#fff;font-size:${count>0?12:10}px;font-weight:700;font-family:system-ui">${count>0?count:'📍'}</div>`,iconSize:[size,size],iconAnchor:[size/2,size/2]})
+      L.marker([loc.lat,loc.lng],{icon}).addTo(map)
+        .bindPopup(`<strong>${loc.name}</strong>${loc.address?'<br>'+loc.address:''}${count?'<br>'+count+' project'+(count>1?'s':''):''}`)
+    })
+    return ()=>{ if(mapInstance.current){mapInstance.current.remove();mapInstance.current=null} }
+  },[mappable,sourceCounts])
+
+  return (
+    <div ref={containerRef} onClick={e=>{if(e.target===e.currentTarget)onClose()}}
+      style={{position:'fixed',inset:0,background:'rgba(0,0,0,.7)',zIndex:2000,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:16}}>
+      <div style={{width:'100%',maxWidth:800,height:'80vh',display:'flex',flexDirection:'column',borderRadius:12,overflow:'hidden',background:'#fff'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'12px 16px',background:'#0F1E38'}}>
+          <span style={{color:'#fff',fontWeight:600,fontSize:15}}>Wood Source Locations</span>
+          <button onClick={onClose} style={{background:'rgba(255,255,255,.15)',border:'none',borderRadius:8,color:'#fff',width:32,height:32,cursor:'pointer',fontSize:18,display:'flex',alignItems:'center',justifyContent:'center'}}>×</button>
+        </div>
+        <div ref={mapRef} style={{flex:1}}/>
       </div>
     </div>
   )
@@ -520,7 +586,7 @@ export default function Dashboard() {
           <div style={CARD}><div style={CARD_TITLE}>Category Heatmap</div><CategoryHeatmap projects={data.projects} categories={cats}/></div>
           <div style={CARD}><div style={CARD_TITLE}>Finish Usage</div><FinishUsage projects={data.projects}/></div>
           <div style={CARD}><div style={CARD_TITLE}>Project Status</div><StatusPipeline projects={data.projects}/></div>
-          <div style={{...CARD,gridColumn:'span 1'}}><div style={CARD_TITLE}>Wood Source Map</div><WoodSourceMap locations={locations} projects={data.projects}/></div>
+          <div style={{...CARD,gridColumn:'span 1'}}><div style={CARD_TITLE}>Wood Source Map</div><WoodSourceMap locations={locations} woodStock={data.woodStock} projectWoodSources={data.projectWoodSources}/></div>
           <div style={CARD}><div style={CARD_TITLE}>Build Rate (5yr)</div><BuildRate projects={data.projects}/></div>
           <div style={CARD}><div style={CARD_TITLE}>Moisture Trends</div><MoistureTrend woodStock={data.woodStock}/></div>
         </div>
