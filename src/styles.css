@@ -106,13 +106,12 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-shrink: 0;
 }
-.top-bar-logo { height: 40px; width: 40px; flex-shrink: 0; }
+.top-bar-logo { height: 48px; width: 48px; flex-shrink: 0; }
 .top-bar-title {
-  font-size: 17px;
+  font-size: 20px;
   font-weight: 800;
-  letter-spacing: -.3px;
+  letter-spacing: -.4px;
   color: #1a1a1a;
   white-space: nowrap;
 }
