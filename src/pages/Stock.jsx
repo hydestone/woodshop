@@ -137,33 +137,132 @@ function LocationsSection({ locations, woodStock, mutate }) {
 
 function LocationSheet({ loc, onSave, onClose }) {
   const toast = useToast()
-  const nameRef = useRef(), addrRef = useRef()
-  const [geocoding, setGeocoding] = useState(false)
+  const nameRef = useRef()
+  const [searchVal, setSearchVal]   = useState('')
+  const [searching, setSearching]   = useState(false)
+  const [results, setResults]       = useState([])
+  const [pinLat, setPinLat]         = useState(loc?.lat || null)
+  const [pinLng, setPinLng]         = useState(loc?.lng || null)
+  const [pinLabel, setPinLabel]     = useState(loc?.address || '')
+  const mapRef     = useRef()
+  const mapInst    = useRef()
+  const markerInst = useRef()
+
+  // Load Leaflet once
+  useEffect(() => {
+    if (!document.getElementById('leaflet-css')) {
+      const link = document.createElement('link')
+      link.id = 'leaflet-css'; link.rel = 'stylesheet'
+      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+      document.head.appendChild(link)
+    }
+    const init = () => {
+      if (!mapRef.current || mapInst.current) return
+      const L = window.L
+      if (!L) { setTimeout(init, 150); return }
+      const center = (pinLat && pinLng) ? [pinLat, pinLng] : [42.3, -71.5]
+      const zoom   = (pinLat && pinLng) ? 13 : 9
+      const map = L.map(mapRef.current, { zoomControl: true }).setView(center, zoom)
+      mapInst.current = map
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap', maxZoom: 19
+      }).addTo(map)
+      if (pinLat && pinLng) {
+        markerInst.current = L.marker([pinLat, pinLng]).addTo(map)
+      }
+      map.on('click', e => {
+        const { lat, lng } = e.latlng
+        setPinLat(lat); setPinLng(lng)
+        setPinLabel(lat.toFixed(5) + ', ' + lng.toFixed(5))
+        if (markerInst.current) map.removeLayer(markerInst.current)
+        markerInst.current = L.marker([lat, lng]).addTo(map)
+      })
+    }
+    if (!window.L) {
+      const s = document.createElement('script')
+      s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+      s.onload = init
+      document.head.appendChild(s)
+    } else { setTimeout(init, 50) }
+    return () => { if (mapInst.current) { mapInst.current.remove(); mapInst.current = null } }
+  }, [])
+
+  const search = async () => {
+    const q = searchVal.trim(); if (!q) return
+    setSearching(true); setResults([])
+    try {
+      const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(q) + '&limit=5&countrycodes=us', {
+        headers: { 'Accept-Language': 'en-US', 'User-Agent': 'JDHWoodworks/1.0' }
+      })
+      const data = await r.json()
+      setResults(data)
+    } catch(e) { toast('Search failed', 'error') }
+    setSearching(false)
+  }
+
+  const pickResult = r => {
+    const lat = parseFloat(r.lat), lng = parseFloat(r.lon)
+    const L = window.L
+    if (L && mapInst.current) {
+      mapInst.current.setView([lat, lng], 13)
+      if (markerInst.current) mapInst.current.removeLayer(markerInst.current)
+      markerInst.current = L.marker([lat, lng]).addTo(mapInst.current)
+    }
+    setPinLat(lat); setPinLng(lng)
+    setPinLabel(r.display_name.split(',').slice(0,2).join(',').trim())
+    setResults([])
+  }
 
   const handleSave = async () => {
     const name = nameRef.current?.value.trim()
     if (!name) return
-    const address = addrRef.current?.value.trim() || ''
-    setGeocoding(true)
-    let lat = loc?.lat || null, lng = loc?.lng || null
-    if (address && (!loc || address !== loc.address)) {
-      const coords = await db.geocodeAddress(address)
-      if (coords) { lat = coords.lat; lng = coords.lng }
-      else toast('Could not geocode address — pin will be missing from map', 'error')
-    }
-    setGeocoding(false)
-    await onSave({ name, address, lat, lng })
+    if (!pinLat || !pinLng) { toast('Click on the map to place a pin first', 'error'); return }
+    await onSave({ name, address: pinLabel, lat: pinLat, lng: pinLng })
   }
 
   return (
     <Sheet title={loc ? 'Edit Location' : 'Add Location'} onClose={onClose} onSave={handleSave}>
-      <div className="form-group">
-        <FormCell label="Name"><input ref={nameRef} className="form-input" placeholder="Sherborn Back Lot" defaultValue={loc?.name||''} autoFocus/></FormCell>
-        <FormCell label="Address / city, state" last>
-          <input ref={addrRef} className="form-input" placeholder="Sherborn, MA" defaultValue={loc?.address||''}/>
+      <div className="form-group" style={{marginBottom:12}}>
+        <FormCell label="Name" last>
+          <input ref={nameRef} className="form-input" placeholder="Sherborn Back Lot" defaultValue={loc?.name||''} autoFocus/>
         </FormCell>
       </div>
-      {geocoding && <div style={{padding:'8px 16px',fontSize:13,color:'var(--text-3)'}}>Geocoding address…</div>}
+
+      {/* Search bar */}
+      <div style={{padding:'0 16px 8px'}}>
+        <div style={{display:'flex',gap:8,marginBottom:6}}>
+          <input
+            className="form-input" style={{flex:1}}
+            placeholder="Search: Sherborn, MA…"
+            value={searchVal}
+            onChange={e=>setSearchVal(e.target.value)}
+            onKeyDown={e=>e.key==='Enter'&&search()}
+          />
+          <button className="btn-secondary" style={{padding:'0 14px',flexShrink:0}} onClick={search} disabled={searching}>
+            {searching?'…':'Search'}
+          </button>
+        </div>
+        {results.length>0&&(
+          <div style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:8,marginBottom:6,maxHeight:120,overflowY:'auto'}}>
+            {results.map((r,i)=>(
+              <div key={i} onClick={()=>pickResult(r)} style={{padding:'8px 12px',fontSize:13,cursor:'pointer',borderBottom:i<results.length-1?'1px solid var(--border-2)':'none',color:'var(--text-2)'}}>
+                {r.display_name.split(',').slice(0,3).join(', ')}
+              </div>
+            ))}
+          </div>
+        )}
+        <div style={{fontSize:12,color:'var(--text-3)',marginBottom:6}}>Then click anywhere on the map to place your pin</div>
+      </div>
+
+      {/* Map */}
+      <div ref={mapRef} style={{height:260,margin:'0 16px 12px',borderRadius:8,overflow:'hidden',border:'1px solid var(--border-2)'}}/>
+
+      {/* Pin confirmation */}
+      {pinLat&&pinLng&&(
+        <div style={{margin:'0 16px 8px',padding:'8px 12px',background:'var(--green-dim)',borderRadius:8,fontSize:13,color:'var(--forest)',fontWeight:500}}>
+          ✓ Pin set · {pinLabel || `${pinLat.toFixed(4)}, ${pinLng.toFixed(4)}`}
+        </div>
+      )}
     </Sheet>
   )
 }
