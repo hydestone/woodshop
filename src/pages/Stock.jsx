@@ -227,10 +227,10 @@ function LocationSheet({ loc, onSave, onClose }) {
         <FormCell label="Name">
           <input ref={nameRef} className="form-input" placeholder="Sherborn Back Lot" defaultValue={loc?.name||''} autoFocus/>
         </FormCell>
-        <FormCell label="City, state" last>
+        <FormCell label="Street, city, state" last>
           <input
             className="form-input"
-            placeholder="Sherborn, MA"
+            placeholder="123 Mill St, Sherborn, MA"
             value={cityState}
             onChange={e=>setCityState(e.target.value)}
             onBlur={async()=>{
