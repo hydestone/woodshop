@@ -288,3 +288,9 @@ export async function updateFinish(id, name) {
 export async function deleteFinish(id) {
   return q(supabase.from('finishes').delete().eq('id', id))
 }
+
+// ── Photo record (for bulk import — photo already uploaded) ──────────────────
+export async function addPhotoRecord(projectId, storagePath, caption, photoType, tags) {
+  const row = { id: Math.random().toString(36).slice(2), project_id: projectId || null, storage_path: storagePath, caption: caption || '', photo_type: photoType || 'finished', tags: tags || 'finished', created_at: isoNow() }
+  return q(supabase.from('photos').insert(row).select().single())
+}
