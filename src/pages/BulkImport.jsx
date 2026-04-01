@@ -149,12 +149,15 @@ export default function BulkImport() {
           name: first.name || 'Untitled', category: first.category || '',
           wood_type: first.species || '', species_id: sp?.id || null,
           finish_used: first.finish || '', finish_id: fi?.id || null,
-          wood_stock_id: first.woodStockId || null,
           year_completed: first.year ? parseInt(first.year) : null,
           status: first.status || 'complete',
           built_with: first.builtWith || '', gift_recipient: first.giftRecipient || '',
           description: '', dimensions_final: '',
         })
+        // Link wood stock via junction table if set
+        if (first.woodStockId) {
+          await db.addProjectWoodSource(proj.id, first.woodStockId).catch(() => {})
+        }
         newProjects.push(proj)
         for (const row of groupRows) {
           try {
@@ -207,7 +210,8 @@ export default function BulkImport() {
     </div>
   )
 
-  const { newCount, existingCount, stockCount } = rows.length ? projectCount() : { newCount:0, existingCount:0, stockCount:0 }
+  const counts = rows.length ? projectCount() : { newCount:0, existingCount:0, stockCount:0 }
+  const { newCount, existingCount, stockCount } = counts
   const sel = { fontSize: 12, background: 'transparent', border: 'none', outline: 'none', fontFamily: 'inherit', color: 'var(--text)', cursor: 'pointer', width: '100%' }
   const inp = { fontSize: 12, background: 'transparent', border: 'none', outline: 'none', fontFamily: 'inherit', color: 'var(--text)', width: '100%' }
 
@@ -216,7 +220,7 @@ export default function BulkImport() {
       <div className="scroll-page" style={{ paddingBottom: 100 }}>
         <div className="page-header">
           <h1 className="page-title">Bulk Import</h1>
-          <p style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>Drop photos, fill in the table, import all at once. Double-click any cell to copy its value to all rows below.</p>
+          <p style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>Drop photos, fill in what you know, import. Then clean up details in Projects → Table view. Fields can be left blank. Same Group ID = same project.</p>
         </div>
 
         {!rows.length ? (
@@ -238,7 +242,7 @@ export default function BulkImport() {
 
             <div style={{ overflowX: 'auto', padding: '0 20px' }}>
               <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: 860, fontSize: 13 }}>
-                <thead>
+                <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
                   <tr style={{ background: '#0F1E38' }}>
                     {['Photo','Destination','Name / Project / Stock','Species','Category','Finish','Year','Status','Built With','Gift','Tag','Group ID',''].map((h,i) => (
                       <th key={i} style={{ padding: '8px 10px', color: '#CBD5E1', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '.4px', textAlign: 'left', whiteSpace: 'nowrap' }}>{h}</th>
