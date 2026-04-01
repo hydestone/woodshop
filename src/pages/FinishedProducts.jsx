@@ -5,7 +5,7 @@ import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
 
 export default function FinishedProducts() {
-  const { data, mutate, setTab } = useCtx()
+  const { data, mutate, reload, setTab } = useCtx()
   const toast = useToast()
   const [editMode, setEditMode] = useState(false)
 
@@ -76,20 +76,21 @@ export default function FinishedProducts() {
                       aria-label="Delete photo"
                     >×</button>
                   </div>
-                  <div style={{ padding: '6px 8px' }}>
-                    {photo.caption && <div style={{ fontSize: 12, color: 'var(--text-2)', fontWeight: 500, marginBottom: 4 }}>{photo.caption}</div>}
+                  <div style={{ padding: '8px' }}>
+                    {photo.caption && <div style={{ fontSize: 12, color: 'var(--text-2)', fontWeight: 500, marginBottom: 6 }}>{photo.caption}</div>}
+                    <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.4px' }}>Project</div>
                     <select
-                      className="form-select"
-                      style={{ fontSize: 12, padding: '4px 8px', width: '100%' }}
+                      style={{ width: '100%', padding: '6px 8px', fontSize: 13, borderRadius: 6, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontFamily: 'inherit', cursor: 'pointer' }}
                       value={photo.project_id || ''}
                       onChange={async e => {
                         const project_id = e.target.value || null
                         mutate(d => ({ ...d, photos: d.photos.map(p => p.id === photo.id ? { ...p, project_id } : p) }))
                         await db.updatePhoto(photo.id, { project_id }).catch(err => toast(err.message, 'error'))
-                        toast('Project linked', 'success')
+                        await reload()
+                        toast(project_id ? 'Project linked ✓' : 'Project unlinked', 'success')
                       }}
                     >
-                      <option value="">No project</option>
+                      <option value="">— no project —</option>
                       {data.projects.sort((a,b) => a.name.localeCompare(b.name)).map(p => (
                         <option key={p.id} value={p.id}>{p.name}{p.year_completed ? ' · ' + p.year_completed : ''}</option>
                       ))}

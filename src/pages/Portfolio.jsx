@@ -1,11 +1,5 @@
 import { useEffect, useState } from 'react'
-import { createClient } from '@supabase/supabase-js'
-
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
-const BUCKET = 'woodshop-photos'
-const photoUrl = path => `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${path}`
+import { supabase, BUCKET, photoUrl } from '../supabase.js'
 
 export default function Portfolio() {
   const [photos, setPhotos]     = useState([])
