@@ -151,6 +151,7 @@ export async function deletePhoto(photo) {
 }
 
 // ── Wood stock ────────────────────────────────────────────────────────────────
+// thickness_in added for drying estimator
 export async function addWoodStock(fields) {
   return q(supabase.from('wood_stock').insert({ id: uid(), created_at: isoNow(), ...fields }).select().single())
 }

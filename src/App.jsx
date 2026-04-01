@@ -22,6 +22,7 @@ import ShopImprovements from './pages/ShopImprovements.jsx'
 import AllPhotos        from './pages/Photos.jsx'
 import FinishedProducts from './pages/FinishedProducts.jsx'
 import Inspiration      from './pages/Inspiration.jsx'
+import YearReview      from './pages/YearReview.jsx'
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 const AppCtx = createContext(null)
@@ -38,6 +39,7 @@ const MAIN_NAV = [
   { id: 'shopping',    label: 'Shopping List',     Icon: ICart    },
   { id: 'resources',   label: 'Resources',         Icon: IBook    },
   { id: 'brainstorm',  label: 'Brainstorm',        Icon: IBulb    },
+  { id: 'yearreview',  label: 'Year in Review',    Icon: IBulb    },
 ]
 
 const GALLERY_NAV = [
@@ -195,6 +197,7 @@ export default function App() {
                   {tab === 'photos'      && <AllPhotos />}
                   {tab === 'finished'    && <FinishedProducts />}
                   {tab === 'inspiration' && <Inspiration />}
+                  {tab === 'yearreview'  && <YearReview />}
                 </>
               )}
 

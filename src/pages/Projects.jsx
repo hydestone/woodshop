@@ -240,6 +240,7 @@ function ProjectCard({ project, onOpen, data }) {
             {project.wood_type && <span style={{ fontSize: 13, color: 'var(--text-3)' }}>{project.wood_type}</span>}
             {project.category  && <span style={{ fontSize: 12, background: 'var(--blue-dim)', color: 'var(--blue)', borderRadius: 99, padding: '1px 8px', fontWeight: 500 }}>{project.category}</span>}
             {project.year_completed && <span style={{ fontSize: 12, color: 'var(--text-4)' }}>{project.year_completed}</span>}
+            {project.gift_recipient && <span style={{ fontSize: 12, color: 'var(--text-3)' }}>🎁 {project.gift_recipient}</span>}
           </div>
           {project.description && <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>{project.description}</div>}
         </div>
@@ -339,6 +340,7 @@ export function ProjectDetail() {
             {project.built_with  && <span style={{ fontSize: 12, color: 'var(--text-3)' }}>👤 {project.built_with}</span>}
             {project.wood_source && <span style={{ fontSize: 12, color: 'var(--text-3)' }}>🌲 {project.wood_source}</span>}
             {project.finish_used && <span style={{ fontSize: 12, color: 'var(--text-3)' }}>🎨 {project.finish_used}</span>}
+          {project.gift_recipient && <span style={{ fontSize: 12, color: 'var(--text-3)' }}>🎁 {project.gift_recipient}</span>}
           </div>
         )}
         <div className="sub-tabs">
@@ -717,6 +719,7 @@ function ProjectSheet({ project, categories, onSave, onClose, mutate }) {
       wood_source:      refs.woodSource.current?.value.trim() || '',
       finish_used:      refs.finishUsed.current?.value.trim() || '',
       year_completed:   yearVal ? parseInt(yearVal) : null,
+      gift_recipient:   refs.giftRecipient.current?.value.trim() || '',
     })
   }
 
@@ -757,6 +760,7 @@ function ProjectSheet({ project, categories, onSave, onClose, mutate }) {
         <FormCell label="Finish used"><input ref={refs.finishUsed} className="form-input" placeholder="Arm-R-Seal" defaultValue={project?.finish_used || ''} /></FormCell>
         <FormCell label="Year completed"><input ref={refs.year} className="form-input" type="number" placeholder={new Date().getFullYear()} defaultValue={project?.year_completed || ''} /></FormCell>
         <FormCell label="Notes"><input ref={refs.desc} className="form-input" placeholder="Optional" defaultValue={project?.description || ''} /></FormCell>
+        <FormCell label="Gift / recipient"><input ref={refs.giftRecipient} className="form-input" placeholder="Dad, Christmas 2023" defaultValue={project?.gift_recipient || ''} /></FormCell>
         <FormCell label="Rough dimensions"><input ref={refs.rough} className="form-input" placeholder='12" × 12"' defaultValue={project?.dimensions_rough || ''} /></FormCell>
         <FormCell label="Final dimensions" last><input ref={refs.final} className="form-input" placeholder='10" × 3"' defaultValue={project?.dimensions_final || ''} /></FormCell>
       </div>
