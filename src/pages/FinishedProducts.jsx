@@ -56,29 +56,45 @@ export default function FinishedProducts() {
           editMode ? (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 8, padding: '0 20px' }}>
               {photos.map(photo => (
-                <div key={photo.id} style={{ position: 'relative', borderRadius: 10, overflow: 'hidden' }}>
-                  <img
-                    src={photo.url}
-                    alt={photo.caption || ''}
-                    style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', display: 'block' }}
-                  />
-                  <button
-                    onClick={() => deletePhoto(photo)}
-                    style={{
-                      position: 'absolute', top: 6, right: 6,
-                      width: 28, height: 28, borderRadius: '50%',
-                      background: '#B91C1C', border: 'none',
-                      color: '#fff', fontSize: 16, fontWeight: 700,
-                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      lineHeight: 1, boxShadow: '0 2px 6px rgba(0,0,0,.4)'
-                    }}
-                    aria-label="Delete photo"
-                  >×</button>
-                  {photo.caption && (
-                    <div style={{ padding: '6px 8px', fontSize: 12, color: 'var(--text-2)', background: 'var(--surface)', fontWeight: 500 }}>
-                      {photo.caption}
-                    </div>
-                  )}
+                <div key={photo.id} style={{ borderRadius: 10, overflow: 'hidden', border: '1px solid var(--border-2)', background: 'var(--surface)' }}>
+                  <div style={{ position: 'relative' }}>
+                    <img
+                      src={photo.url}
+                      alt={photo.caption || ''}
+                      style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', display: 'block' }}
+                    />
+                    <button
+                      onClick={() => deletePhoto(photo)}
+                      style={{
+                        position: 'absolute', top: 6, right: 6,
+                        width: 28, height: 28, borderRadius: '50%',
+                        background: '#B91C1C', border: 'none',
+                        color: '#fff', fontSize: 16, fontWeight: 700,
+                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        lineHeight: 1, boxShadow: '0 2px 6px rgba(0,0,0,.4)'
+                      }}
+                      aria-label="Delete photo"
+                    >×</button>
+                  </div>
+                  <div style={{ padding: '6px 8px' }}>
+                    {photo.caption && <div style={{ fontSize: 12, color: 'var(--text-2)', fontWeight: 500, marginBottom: 4 }}>{photo.caption}</div>}
+                    <select
+                      className="form-select"
+                      style={{ fontSize: 12, padding: '4px 8px', width: '100%' }}
+                      value={photo.project_id || ''}
+                      onChange={async e => {
+                        const project_id = e.target.value || null
+                        mutate(d => ({ ...d, photos: d.photos.map(p => p.id === photo.id ? { ...p, project_id } : p) }))
+                        await db.updatePhoto(photo.id, { project_id }).catch(err => toast(err.message, 'error'))
+                        toast('Project linked', 'success')
+                      }}
+                    >
+                      <option value="">No project</option>
+                      {data.projects.sort((a,b) => a.name.localeCompare(b.name)).map(p => (
+                        <option key={p.id} value={p.id}>{p.name}{p.year_completed ? ' · ' + p.year_completed : ''}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               ))}
             </div>
