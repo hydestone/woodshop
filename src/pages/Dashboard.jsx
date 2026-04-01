@@ -1,16 +1,17 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import { useCtx } from '../App.jsx'
 import { coatStatus, maintStatus, fmtShort, fmt, IChevR, PhotoGrid } from '../components/Shared.jsx'
+import * as db from '../db.js'
 
 const SC = { active:'#1D4ED8', planning:'#7C3AED', paused:'#B45309', complete:'#166534' }
 const SL = { active:'Active', planning:'Planning', paused:'Paused', complete:'Complete' }
 const SO = ['complete','active','planning','paused']
-
 const CARD = { background:'var(--surface)', borderRadius:'var(--r-md)', border:'1px solid var(--border-2)', padding:'16px 20px', boxShadow:'var(--shadow-sm)' }
 const CARD_TITLE = { fontSize:12, fontWeight:600, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:12 }
 
-// ── Projects by Year ──────────────────────────────────────────────────────────
-function ProjectsByYear({ projects }) {
+// ── Year bar click panel ──────────────────────────────────────────────────────
+function ProjectsByYear({ projects, photos, onOpen }) {
+  const [selected, setSelected] = useState(null)
   const grouped = useMemo(() => {
     const m = {}
     projects.forEach(p => {
@@ -20,8 +21,13 @@ function ProjectsByYear({ projects }) {
     })
     return Object.entries(m).sort((a,b)=>Number(a[0])-Number(b[0]))
   }, [projects])
+
   if (!grouped.length) return <div style={{textAlign:'center',padding:'24px 0',color:'var(--text-3)',fontSize:13}}>No years set on projects yet</div>
   const max = Math.max(...grouped.map(([,c])=>Object.values(c).reduce((a,b)=>a+b,0)))
+
+  const yearProjects = selected ? projects.filter(p => p.year_completed === Number(selected)) : []
+  const thumbFor = pid => photos.find(ph => ph.project_id === pid && ph.tags?.includes('finished')) || photos.find(ph => ph.project_id === pid)
+
   return (
     <div>
       <div style={{display:'flex',gap:12,flexWrap:'wrap',marginBottom:14}}>
@@ -31,15 +37,42 @@ function ProjectsByYear({ projects }) {
         {grouped.map(([y,c])=>{
           const tot=Object.values(c).reduce((a,b)=>a+b,0)
           const h=Math.max(20,(tot/max)*100)
-          return <div key={y} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4,flexShrink:0,minWidth:40}}>
-            <span style={{fontSize:11,fontWeight:600,color:'var(--text-2)'}}>{tot}</span>
-            <div style={{display:'flex',flexDirection:'column-reverse',width:28,height:h,borderRadius:4,overflow:'hidden'}}>
-              {SO.map(s=>c[s]>0&&<div key={s} style={{background:SC[s],height:(c[s]/tot*100)+'%',minHeight:2}} title={c[s]+' '+s}/>)}
+          const isSelected = selected === y
+          return (
+            <div key={y} onClick={()=>setSelected(isSelected?null:y)} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4,flexShrink:0,minWidth:40,cursor:'pointer',opacity:selected&&!isSelected?0.4:1,transition:'opacity 150ms'}}>
+              <span style={{fontSize:11,fontWeight:600,color:'var(--text-2)'}}>{tot}</span>
+              <div style={{display:'flex',flexDirection:'column-reverse',width:28,height:h,borderRadius:4,overflow:'hidden',outline:isSelected?'2px solid var(--accent)':'none',outlineOffset:2}}>
+                {SO.map(s=>c[s]>0&&<div key={s} style={{background:SC[s],height:(c[s]/tot*100)+'%',minHeight:2}}/>)}
+              </div>
+              <span style={{fontSize:10,color:isSelected?'var(--accent)':'var(--text-3)',fontWeight:isSelected?700:400}}>{y}</span>
             </div>
-            <span style={{fontSize:10,color:'var(--text-3)'}}>{y}</span>
-          </div>
+          )
         })}
       </div>
+
+      {selected && (
+        <div style={{marginTop:16,borderTop:'1px solid var(--border-2)',paddingTop:14}}>
+          <div style={{fontSize:12,fontWeight:600,color:'var(--text-2)',marginBottom:10}}>{selected} — {yearProjects.length} project{yearProjects.length!==1?'s':''}</div>
+          <div style={{display:'flex',flexDirection:'column',gap:8}}>
+            {yearProjects.map(p=>{
+              const thumb = thumbFor(p.id)
+              return (
+                <div key={p.id} onClick={()=>onOpen(p.id)} style={{display:'flex',alignItems:'center',gap:10,cursor:'pointer',padding:'6px 8px',borderRadius:8,background:'var(--fill-2)'}}>
+                  {thumb
+                    ? <img src={thumb.url} alt={p.name} style={{width:40,height:40,objectFit:'cover',borderRadius:6,flexShrink:0}}/>
+                    : <div style={{width:40,height:40,borderRadius:6,background:'var(--fill)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>🪵</div>
+                  }
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontWeight:500,fontSize:13,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</div>
+                    <div style={{fontSize:11,color:'var(--text-3)'}}>{[p.wood_type,p.category].filter(Boolean).join(' · ')}</div>
+                  </div>
+                  <div style={{width:8,height:8,borderRadius:2,background:SC[p.status],flexShrink:0}}/>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -71,7 +104,7 @@ function SpeciesDonut({ projects }) {
         {slices.map((s,i)=><path key={i} d={s.d} fill={s.color}/>)}
         <circle cx="50" cy="50" r="22" fill="var(--surface)"/>
         <text x="50" y="47" textAnchor="middle" fontSize="10" fontWeight="600" fill="var(--text-2)">{total}</text>
-        <text x="50" y="57" textAnchor="middle" fontSize="7" fill="var(--text-3)">species</text>
+        <text x="50" y="57" textAnchor="middle" fontSize="7" fill="var(--text-3)">projects</text>
       </svg>
       <div style={{flex:1,display:'flex',flexDirection:'column',gap:5}}>
         {slices.slice(0,6).map((s,i)=>(
@@ -176,38 +209,73 @@ function StatusPipeline({ projects }) {
   )
 }
 
-// ── Wood Source Map (New England) ─────────────────────────────────────────────
-function WoodSourceMap({ projects }) {
-  const sources = useMemo(()=>{
+// ── Wood Source Leaflet Map ───────────────────────────────────────────────────
+function WoodSourceMap({ locations, projects }) {
+  const mapRef = useRef(null)
+  const mapInstance = useRef(null)
+
+  const sourceCounts = useMemo(()=>{
     const m={}
-    projects.forEach(p=>{ const s=p.wood_source?.trim(); if(s) m[s]=(m[s]||0)+1 })
-    return Object.entries(m).sort((a,b)=>b[1]-a[1])
-  }, [projects])
-  if (!sources.length) return <div style={{textAlign:'center',padding:'24px 0',color:'var(--text-3)',fontSize:13}}>No wood sources logged yet</div>
-  const NE_STATES = [
-    {name:'ME',path:'M 148 8 L 168 10 L 170 35 L 155 40 L 148 30 Z',cx:158,cy:24},
-    {name:'NH',path:'M 130 12 L 148 8 L 148 30 L 155 40 L 138 44 L 128 30 Z',cx:140,cy:28},
-    {name:'VT',path:'M 112 12 L 130 12 L 128 30 L 138 44 L 118 46 L 110 30 Z',cx:121,cy:30},
-    {name:'MA',path:'M 108 46 L 118 46 L 138 44 L 148 50 L 162 48 L 164 58 L 108 60 Z',cx:136,cy:54},
-    {name:'RI',path:'M 148 58 L 164 58 L 164 68 L 148 68 Z',cx:156,cy:64},
-    {name:'CT',path:'M 108 60 L 148 58 L 148 72 L 108 72 Z',cx:128,cy:67},
-  ]
+    projects.forEach(p=>{ if(p.wood_location_id) m[p.wood_location_id]=(m[p.wood_location_id]||0)+1 })
+    return m
+  },[projects])
+
+  const mappable = locations.filter(l=>l.lat&&l.lng)
+
+  useEffect(()=>{
+    if (!mapRef.current || mappable.length===0) return
+    if (mapInstance.current) { mapInstance.current.remove(); mapInstance.current=null }
+
+    const L = window.L
+    if (!L) return
+
+    const lats = mappable.map(l=>l.lat), lngs = mappable.map(l=>l.lng)
+    const centerLat = (Math.min(...lats)+Math.max(...lats))/2
+    const centerLng = (Math.min(...lngs)+Math.max(...lngs))/2
+
+    const map = L.map(mapRef.current, { zoomControl:true, scrollWheelZoom:false }).setView([centerLat||43.5, centerLng||-71.5], mappable.length===1?10:7)
+    mapInstance.current = map
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+      attribution:'© OpenStreetMap', maxZoom:19
+    }).addTo(map)
+
+    mappable.forEach(loc=>{
+      const count = sourceCounts[loc.id]||0
+      const size = Math.max(24, Math.min(40, 24+count*4))
+      const icon = L.divIcon({
+        className:'',
+        html:`<div style="width:${size}px;height:${size}px;border-radius:50%;background:#0F1E38;border:2px solid #BFDBFE;display:flex;align-items:center;justify-content:center;color:#fff;font-size:${count>0?11:9}px;font-weight:700;font-family:system-ui">${count>0?count:'📍'}</div>`,
+        iconSize:[size,size], iconAnchor:[size/2,size/2]
+      })
+      L.marker([loc.lat,loc.lng],{icon}).addTo(map)
+        .bindPopup(`<strong>${loc.name}</strong>${loc.address?'<br>'+loc.address:''}${count?'<br>'+count+' project'+(count>1?'s':''):''}`)
+    })
+
+    return ()=>{ if(mapInstance.current) { mapInstance.current.remove(); mapInstance.current=null } }
+  },[mappable, sourceCounts])
+
+  if (!locations.length) return <div style={{textAlign:'center',padding:'24px 0',color:'var(--text-3)',fontSize:13}}>No wood locations added yet</div>
+
+  if (mappable.length===0) return (
+    <div>
+      {locations.map(l=>(
+        <div key={l.id} style={{display:'flex',justifyContent:'space-between',padding:'4px 0',borderBottom:'1px solid var(--border-2)'}}>
+          <span style={{fontSize:12,color:'var(--text-2)'}}>{l.name}</span>
+          <span style={{fontSize:12,color:'var(--text-3)'}}>{sourceCounts[l.id]||0} projects</span>
+        </div>
+      ))}
+    </div>
+  )
+
   return (
-    <div style={{display:'flex',gap:12,alignItems:'flex-start'}}>
-      <svg viewBox="95 5 80 75" style={{width:120,height:90,flexShrink:0}}>
-        {NE_STATES.map(s=>(
-          <g key={s.name}>
-            <path d={s.path} fill="var(--fill)" stroke="var(--surface)" strokeWidth="1.5"/>
-            <text x={s.cx} y={s.cy} textAnchor="middle" fontSize="5" fill="var(--text-3)" fontWeight="500">{s.name}</text>
-          </g>
-        ))}
-      </svg>
-      <div style={{flex:1}}>
-        <div style={{fontSize:11,color:'var(--text-3)',marginBottom:8}}>Sources</div>
-        {sources.slice(0,6).map(([name,count])=>(
-          <div key={name} style={{display:'flex',justifyContent:'space-between',padding:'3px 0',borderBottom:'1px solid var(--border-2)'}}>
-            <span style={{fontSize:12,color:'var(--text-2)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'80%'}}>{name}</span>
-            <span style={{fontSize:12,color:'var(--text-3)',flexShrink:0,marginLeft:8}}>{count}</span>
+    <div>
+      <div ref={mapRef} style={{height:200,borderRadius:8,overflow:'hidden',border:'1px solid var(--border-2)'}}/>
+      <div style={{marginTop:10,display:'flex',flexDirection:'column',gap:4}}>
+        {locations.slice(0,4).map(l=>(
+          <div key={l.id} style={{display:'flex',justifyContent:'space-between',fontSize:12}}>
+            <span style={{color:'var(--text-2)'}}>{l.name}</span>
+            <span style={{color:'var(--text-3)'}}>{sourceCounts[l.id]||0} uses</span>
           </div>
         ))}
       </div>
@@ -219,11 +287,7 @@ function WoodSourceMap({ projects }) {
 function BuildRate({ projects }) {
   const data = useMemo(()=>{
     const m={}
-    projects.forEach(p=>{
-      const y=p.year_completed; if(!y) return
-      const k=y+''
-      m[k]=(m[k]||0)+1
-    })
+    projects.forEach(p=>{ const y=p.year_completed; if(!y) return; m[y+'']=( m[y+'']||0)+1 })
     const now=new Date().getFullYear()
     const years=[]
     for(let y=now-4;y<=now;y++) years.push(String(y))
@@ -247,15 +311,14 @@ function BuildRate({ projects }) {
 function MoistureTrend({ woodStock }) {
   const [selected, setSelected] = useState(null)
   const [logs, setLogs] = useState({})
-  const items = woodStock.filter(w=>w.status==='Drying'||w.status==='Freshly cut')
 
   const loadLog = async (item) => {
-    if (logs[item.id]) { setSelected(item); return }
+    if (logs[item.id]!==undefined) { setSelected(item); return }
     try {
-      const rows = await import('../db.js').then(m=>m.loadMoistureLog(item.id))
+      const rows = await db.loadMoistureLog(item.id)
       setLogs(prev=>({...prev,[item.id]:rows}))
       setSelected(item)
-    } catch(e) { setSelected(item) }
+    } catch(e) { setLogs(prev=>({...prev,[item.id]:[]})); setSelected(item) }
   }
 
   if (!woodStock.length) return <div style={{textAlign:'center',padding:'24px 0',color:'var(--text-3)',fontSize:13}}>No wood stock logged yet</div>
@@ -277,11 +340,11 @@ function MoistureTrend({ woodStock }) {
         ))}
       </div>
       {!selected && <div style={{textAlign:'center',padding:'16px 0',color:'var(--text-3)',fontSize:13}}>Select a log above</div>}
-      {selected && cur.length===0 && <div style={{textAlign:'center',padding:'16px 0',color:'var(--text-3)',fontSize:13}}>No readings logged for {selected.species}</div>}
+      {selected && cur.length===0 && <div style={{textAlign:'center',padding:'16px 0',color:'var(--text-3)',fontSize:13}}>No readings for {selected.species}</div>}
       {selected && cur.length>0 && (
         <div>
           <div style={{position:'relative',height:80}}>
-            <svg viewBox={`0 0 200 80`} style={{width:'100%',height:'100%'}}>
+            <svg viewBox="0 0 200 80" style={{width:'100%',height:'100%'}}>
               <line x1="0" y1={80*(1-target/maxMC)} x2="200" y2={80*(1-target/maxMC)} stroke="#166534" strokeWidth="1" strokeDasharray="4,2" opacity="0.5"/>
               {cur.length>1&&<polyline points={cur.map((r,i)=>`${i/(cur.length-1)*200},${80*(1-r.reading/maxMC)}`).join(' ')} fill="none" stroke="#1D4ED8" strokeWidth="2" strokeLinejoin="round"/>}
               {cur.map((r,i)=><circle key={i} cx={cur.length>1?i/(cur.length-1)*200:100} cy={80*(1-r.reading/maxMC)} r="3" fill="#1D4ED8"/>)}
@@ -289,7 +352,7 @@ function MoistureTrend({ woodStock }) {
           </div>
           <div style={{display:'flex',justifyContent:'space-between',marginTop:4}}>
             <span style={{fontSize:11,color:'var(--text-3)'}}>{fmt(cur[0]?.logged_at)}</span>
-            <span style={{fontSize:11,color:'var(--green)'}}>— target {target}%</span>
+            <span style={{fontSize:11,color:'var(--forest)'}}>— target {target}%</span>
             <span style={{fontSize:11,color:'var(--text-3)'}}>{fmt(cur[cur.length-1]?.logged_at)}</span>
           </div>
           <div style={{marginTop:6,fontSize:12,color:'var(--text-2)'}}>
@@ -306,6 +369,23 @@ function MoistureTrend({ woodStock }) {
 export default function Dashboard() {
   const { data, setProjId, setTab } = useCtx()
   const today = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})
+  const [locations, setLocations] = useState(data.woodLocations||[])
+
+  useEffect(()=>{
+    // Load Leaflet CSS + JS once
+    if (!document.getElementById('leaflet-css')) {
+      const link = document.createElement('link')
+      link.id='leaflet-css'; link.rel='stylesheet'
+      link.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+      document.head.appendChild(link)
+    }
+    if (!window.L) {
+      const script = document.createElement('script')
+      script.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+      document.head.appendChild(script)
+    }
+    db.loadWoodLocations().then(locs=>setLocations(locs)).catch(()=>{})
+  },[])
 
   const urgCoats = data.coats.filter(c=>c.applied_at&&coatStatus(c).urgent).map(c=>({...c,proj:data.projects.find(p=>p.id===c.project_id)}))
   const upCoats  = data.coats.filter(c=>c.applied_at&&!coatStatus(c).urgent).map(c=>({...c,proj:data.projects.find(p=>p.id===c.project_id)})).slice(0,3)
@@ -364,22 +444,18 @@ export default function Dashboard() {
 
         {!hasUrgent&&<div className="empty" style={{paddingTop:32,paddingBottom:0}}><div className="empty-icon">🪵</div><div className="empty-title">All clear</div><p className="empty-sub">Nothing urgent today.</p></div>}
 
-        {/* ── Chart grid ── */}
         <span className="section-label" style={{marginTop:28}}>Analytics</span>
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',gap:12,padding:'0 20px'}}>
-
-          <div style={CARD}><div style={CARD_TITLE}>Projects by Year</div><ProjectsByYear projects={data.projects}/></div>
+          <div style={CARD}><div style={CARD_TITLE}>Projects by Year</div><ProjectsByYear projects={data.projects} photos={data.photos} onOpen={setProjId}/></div>
           <div style={CARD}><div style={CARD_TITLE}>Species Breakdown</div><SpeciesDonut projects={data.projects}/></div>
           <div style={CARD}><div style={CARD_TITLE}>Category Heatmap</div><CategoryHeatmap projects={data.projects} categories={cats}/></div>
           <div style={CARD}><div style={CARD_TITLE}>Finish Usage</div><FinishUsage projects={data.projects}/></div>
           <div style={CARD}><div style={CARD_TITLE}>Project Status</div><StatusPipeline projects={data.projects}/></div>
-          <div style={CARD}><div style={CARD_TITLE}>Wood Sources</div><WoodSourceMap projects={data.projects}/></div>
+          <div style={{...CARD,gridColumn:'span 1'}}><div style={CARD_TITLE}>Wood Source Map</div><WoodSourceMap locations={locations} projects={data.projects}/></div>
           <div style={CARD}><div style={CARD_TITLE}>Build Rate (5yr)</div><BuildRate projects={data.projects}/></div>
           <div style={CARD}><div style={CARD_TITLE}>Moisture Trends</div><MoistureTrend woodStock={data.woodStock}/></div>
-
         </div>
 
-        {/* ── Recent Photos ── */}
         {data.photos.length>0&&<>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',margin:'24px 20px 6px'}}>
             <span style={{fontSize:11,fontWeight:600,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'.6px'}}>Recent Photos</span>

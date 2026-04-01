@@ -562,3 +562,79 @@ export function DropZone({ onFiles, uploading }) {
     </div>
   )
 }
+
+// ── LocationPicker ────────────────────────────────────────────────────────────
+export function LocationPicker({ value, onChange, locations, onLocationsChange }) {
+  const [showAdd, setShowAdd] = useState(false)
+  const [newName, setNewName] = useState('')
+  const [newAddr, setNewAddr] = useState('')
+  const [geocoding, setGeocoding] = useState(false)
+  const toast = useToast ? useToast() : null
+
+  const geocode = async (address) => {
+    setGeocoding(true)
+    try {
+      const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`, {
+        headers: { 'Accept-Language': 'en-US', 'User-Agent': 'JDHWoodworks/1.0' }
+      })
+      const data = await resp.json()
+      if (data.length > 0) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }
+      return null
+    } catch(e) { return null }
+    finally { setGeocoding(false) }
+  }
+
+  const handleAdd = async () => {
+    const name = newName.trim()
+    const addr = newAddr.trim()
+    if (!name) return
+    setGeocoding(true)
+    const coords = addr ? await geocode(addr) : null
+    setGeocoding(false)
+    try {
+      const db = await import('../db.js')
+      const loc = await db.addWoodLocation({ name, address: addr, lat: coords?.lat||null, lng: coords?.lng||null })
+      onLocationsChange && onLocationsChange([...locations, loc])
+      onChange(loc.id)
+      setShowAdd(false); setNewName(''); setNewAddr('')
+    } catch(e) { console.error(e) }
+  }
+
+  // Auto-match: try to match existing free-text wood_source to a location name
+  const matchText = (text) => {
+    if (!text) return ''
+    const lower = text.toLowerCase()
+    const match = locations.find(l => lower.includes(l.name.toLowerCase()) || l.name.toLowerCase().includes(lower))
+    return match?.id || ''
+  }
+
+  return (
+    <div>
+      <select
+        className="form-select"
+        value={value || ''}
+        onChange={e => {
+          if (e.target.value === '__add__') { setShowAdd(true) }
+          else onChange(e.target.value)
+        }}
+      >
+        <option value="">No location</option>
+        {locations.map(l => <option key={l.id} value={l.id}>{l.name}{l.address ? ' — ' + l.address : ''}</option>)}
+        <option value="__add__">+ Add new location…</option>
+      </select>
+      {showAdd && (
+        <div style={{ marginTop: 8, padding: '10px 12px', background: 'var(--fill-2)', borderRadius: 8 }}>
+          <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 6 }}>New location</div>
+          <input className="form-input" placeholder="Name (e.g. Sherborn Back Lot)" value={newName} onChange={e=>setNewName(e.target.value)} style={{ marginBottom: 6 }} />
+          <input className="form-input" placeholder="Address or city, state (for map pin)" value={newAddr} onChange={e=>setNewAddr(e.target.value)} style={{ marginBottom: 8 }} />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn-primary" style={{ flex: 1, justifyContent: 'center', fontSize: 13 }} onClick={handleAdd} disabled={geocoding}>
+              {geocoding ? 'Geocoding…' : 'Add location'}
+            </button>
+            <button className="btn-secondary" style={{ fontSize: 13 }} onClick={() => { setShowAdd(false); setNewName(''); setNewAddr('') }}>Cancel</button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

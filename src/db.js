@@ -13,7 +13,7 @@ async function q(promise) {
 export async function loadAll() {
   const safe = (promise, fallback = []) => promise.then(r => r.data ?? fallback).catch(() => fallback)
   const [projects, steps, coats, maintenance, shopping, photos,
-         woodStock, brainstorming, finishProducts, resources, shopImprovements, categories] = await Promise.all([
+         woodStock, brainstorming, finishProducts, resources, shopImprovements, categories, woodLocations] = await Promise.all([
     safe(supabase.from('projects').select('*').order('created_at')),
     safe(supabase.from('steps').select('*').order('sort_order')),
     safe(supabase.from('coats').select('*').order('coat_number')),
@@ -26,6 +26,7 @@ export async function loadAll() {
     safe(supabase.from('resources').select('*').order('created_at', { ascending: false })),
     safe(supabase.from('shop_improvements').select('*').order('created_at')),
     safe(supabase.from('categories').select('*').eq('type', 'project').order('name')),
+    safe(supabase.from('wood_locations').select('*').order('name')),
   ])
   return {
     projects,
@@ -40,6 +41,7 @@ export async function loadAll() {
     resources,
     shopImprovements,
     categories,
+    woodLocations,
   }
 }
 
@@ -222,3 +224,19 @@ export async function addCategory(name) {
 export async function deleteCategory(id) {
   return q(supabase.from('categories').delete().eq('id', id))
 }
+
+// ── Wood Locations ────────────────────────────────────────────────────────────
+export async function loadWoodLocations() {
+  const r = await supabase.from('wood_locations').select('*').order('name')
+  return r.data || []
+}
+export async function addWoodLocation(fields) {
+  return q(supabase.from('wood_locations').insert({ id: Math.random().toString(36).slice(2), ...fields, created_at: isoNow() }).select().single())
+}
+export async function updateWoodLocation(id, fields) {
+  return q(supabase.from('wood_locations').update(fields).eq('id', id).select().single())
+}
+export async function deleteWoodLocation(id) {
+  return q(supabase.from('wood_locations').delete().eq('id', id))
+}
+

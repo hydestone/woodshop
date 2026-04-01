@@ -4,7 +4,7 @@ import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
 import { addToGoogleCalendar, addToAppleReminders } from '../supabase.js'
 import {
-  Sheet, FormCell, BulkAddSheet, ConfirmSheet, DropZone, PhotoGrid, TagInput,
+  Sheet, FormCell, BulkAddSheet, ConfirmSheet, DropZone, PhotoGrid, TagInput, LocationPicker,
   STATUS, coatStatus, fmtShort, localDt,
   IPlus, ITrash, ICircle, ICheck, IChevR, IChevL, IEdit, ICal, ICamera, IBell, IGrid,
 } from '../components/Shared.jsx'
@@ -680,6 +680,8 @@ function PhotoTagSheetBody({ count, onSave }) {
 
 // ─── Project sheet ────────────────────────────────────────────────────────────
 function ProjectSheet({ project, categories, onSave, onClose, mutate }) {
+  const { data } = useCtx()
+  const woodLocations = data?.woodLocations || []
   const toast = useToast()
   const refs = {
     name: useRef(), wood: useRef(), desc: useRef(), status: useRef(),
@@ -687,6 +689,7 @@ function ProjectSheet({ project, categories, onSave, onClose, mutate }) {
     woodSource: useRef(), finishUsed: useRef(), year: useRef(), giftRecipient: useRef(),
   }
   const [category, setCategory]   = useState(project?.category || '')
+  const [locationId, setLocationId] = useState(project?.wood_location_id || '')
   const [newCat, setNewCat]       = useState('')
   const [showNewCat, setShowNewCat] = useState(false)
 
@@ -720,6 +723,7 @@ function ProjectSheet({ project, categories, onSave, onClose, mutate }) {
       finish_used:      refs.finishUsed.current?.value.trim() || '',
       year_completed:   yearVal ? parseInt(yearVal) : null,
       gift_recipient:   refs.giftRecipient.current?.value.trim() || '',
+      wood_location_id: locationId || null,
     })
   }
 
@@ -756,6 +760,9 @@ function ProjectSheet({ project, categories, onSave, onClose, mutate }) {
       <div className="form-group">
         <FormCell label="Wood species"><input ref={refs.wood} className="form-input" placeholder="Cherry" defaultValue={project?.wood_type || ''} /></FormCell>
         <FormCell label="Wood source"><input ref={refs.woodSource} className="form-input" placeholder="Sherborn back lot" defaultValue={project?.wood_source || ''} /></FormCell>
+        <FormCell label="Location (map)">
+          <LocationPicker value={locationId} onChange={setLocationId} locations={woodLocations} onLocationsChange={locs=>mutate&&mutate(d=>({...d,woodLocations:locs}))}/>
+        </FormCell>
         <FormCell label="Built with"><input ref={refs.builtWith} className="form-input" placeholder="Solo, with dad…" defaultValue={project?.built_with || ''} /></FormCell>
         <FormCell label="Finish used"><input ref={refs.finishUsed} className="form-input" placeholder="Arm-R-Seal" defaultValue={project?.finish_used || ''} /></FormCell>
         <FormCell label="Year completed"><input ref={refs.year} className="form-input" type="number" placeholder={new Date().getFullYear()} defaultValue={project?.year_completed || ''} /></FormCell>

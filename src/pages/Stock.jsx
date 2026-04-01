@@ -3,7 +3,7 @@ import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
 import { addToGoogleCalendar, addToAppleReminders } from '../supabase.js'
-import { Sheet, FormCell, ConfirmSheet, STOCK_STATUS, fmt, IPlus, ITrash, IEdit, ICal, IBell } from '../components/Shared.jsx'
+import { Sheet, FormCell, ConfirmSheet, STOCK_STATUS, fmt, IPlus, ITrash, IEdit, ICal, IBell, LocationPicker } from '../components/Shared.jsx'
 
 const STATUS_ORDER = ['Freshly cut','Drying','Ready to use','Used up']
 
@@ -273,6 +273,9 @@ export default function Stock() {
 }
 
 function StockSheet({ item, onSave, onClose }) {
+  const { data, mutate } = useCtx()
+  const woodLocations = data?.woodLocations || []
+  const [locationId, setLocationId] = useState(item?.wood_location_id||'')
   const refs = { species:useRef(), location:useRef(), harvested:useRef(), use:useRef(), status:useRef(), notes:useRef(), thickness:useRef() }
   const handleSave = async () => {
     const species = refs.species.current?.value.trim()
@@ -285,6 +288,7 @@ function StockSheet({ item, onSave, onClose }) {
       status:       refs.status.current?.value||'Drying',
       notes:        refs.notes.current?.value.trim()||'',
       thickness_in: parseFloat(refs.thickness.current?.value)||1,
+      wood_location_id: locationId||null,
     })
   }
   return (
@@ -292,6 +296,7 @@ function StockSheet({ item, onSave, onClose }) {
       <div className="form-group">
         <FormCell label="Species"><input ref={refs.species} className="form-input" placeholder="White Oak" defaultValue={item?.species||''} autoFocus/></FormCell>
         <FormCell label="Location/Source"><input ref={refs.location} className="form-input" placeholder="Back lot, Sherborn" defaultValue={item?.location||''}/></FormCell>
+        <FormCell label="Map location"><LocationPicker value={locationId} onChange={setLocationId} locations={woodLocations} onLocationsChange={locs=>mutate(d=>({...d,woodLocations:locs}))}/></FormCell>
         <FormCell label="Thickness (in)"><input ref={refs.thickness} className="form-input" type="number" step="0.25" placeholder="1" defaultValue={item?.thickness_in||''}/></FormCell>
         <FormCell label="Harvested"><input ref={refs.harvested} className="form-input" type="date" defaultValue={item?.harvested_at||''}/></FormCell>
         <FormCell label="Intended use"><input ref={refs.use} className="form-input" placeholder="Bowl blanks" defaultValue={item?.intended_use||''}/></FormCell>
