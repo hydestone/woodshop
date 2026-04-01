@@ -13,7 +13,7 @@ async function q(promise) {
 export async function loadAll() {
   const safe = (promise, fallback = []) => promise.then(r => r.data ?? fallback).catch(() => fallback)
   const [projects, steps, coats, maintenance, shopping, photos,
-         woodStock, brainstorming, finishProducts, resources, shopImprovements, categories, woodLocations] = await Promise.all([
+         woodStock, brainstorming, finishProducts, resources, shopImprovements, categories, woodLocations, projectWoodSources] = await Promise.all([
     safe(supabase.from('projects').select('*').order('created_at')),
     safe(supabase.from('steps').select('*').order('sort_order')),
     safe(supabase.from('coats').select('*').order('coat_number')),
@@ -27,6 +27,7 @@ export async function loadAll() {
     safe(supabase.from('shop_improvements').select('*').order('created_at')),
     safe(supabase.from('categories').select('*').eq('type', 'project').order('name')),
     safe(supabase.from('wood_locations').select('*').order('name')),
+    safe(supabase.from('project_wood_sources').select('*')),
   ])
   return {
     projects,
@@ -42,6 +43,7 @@ export async function loadAll() {
     shopImprovements,
     categories,
     woodLocations,
+    projectWoodSources,
   }
 }
 
@@ -240,3 +242,20 @@ export async function deleteWoodLocation(id) {
   return q(supabase.from('wood_locations').delete().eq('id', id))
 }
 
+
+// ── Project Wood Sources (junction) ──────────────────────────────────────────
+export async function addProjectWoodSource(projectId, woodStockId) {
+  return q(supabase.from('project_wood_sources').insert({ id: Math.random().toString(36).slice(2), project_id: projectId, wood_stock_id: woodStockId, created_at: isoNow() }).select().single())
+}
+export async function removeProjectWoodSource(id) {
+  return q(supabase.from('project_wood_sources').delete().eq('id', id))
+}
+
+// ── Wood Locations CRUD ───────────────────────────────────────────────────────
+export async function geocodeAddress(address) {
+  try {
+    const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(address) + '&limit=1', { headers: { 'Accept-Language': 'en-US', 'User-Agent': 'JDHWoodworks/1.0' } })
+    const d = await r.json()
+    return d.length ? { lat: parseFloat(d[0].lat), lng: parseFloat(d[0].lon) } : null
+  } catch(e) { return null }
+}
