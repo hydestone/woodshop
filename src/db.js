@@ -221,26 +221,19 @@ export async function deleteShopImprovement(id) {
 }
 
 // ── Categories ────────────────────────────────────────────────────────────────
-export async function loadCategories() {
-  return q(supabase.from('categories').select('*').eq('type', 'project').order('name'))
-}
 export async function updateCategory(id, name) {
   return q(supabase.from('categories').update({ name }).eq('id', id).select().single())
 }
 export async function addCategory(name) {
-  return q(supabase.from('categories').insert({ id: Math.random().toString(36).slice(2), name, type: 'project', created_at: isoNow() }).select().single())
+  return q(supabase.from('categories').insert({ id: uid(), name, type: 'project', created_at: isoNow() }).select().single())
 }
 export async function deleteCategory(id) {
   return q(supabase.from('categories').delete().eq('id', id))
 }
 
 // ── Wood Locations ────────────────────────────────────────────────────────────
-export async function loadWoodLocations() {
-  const r = await supabase.from('wood_locations').select('*').order('name')
-  return r.data || []
-}
 export async function addWoodLocation(fields) {
-  return q(supabase.from('wood_locations').insert({ id: Math.random().toString(36).slice(2), ...fields, created_at: isoNow() }).select().single())
+  return q(supabase.from('wood_locations').insert({ id: uid(), ...fields, created_at: isoNow() }).select().single())
 }
 export async function updateWoodLocation(id, fields) {
   return q(supabase.from('wood_locations').update(fields).eq('id', id).select().single())
@@ -252,24 +245,15 @@ export async function deleteWoodLocation(id) {
 
 // ── Project Wood Sources (junction) ──────────────────────────────────────────
 export async function addProjectWoodSource(projectId, woodStockId) {
-  return q(supabase.from('project_wood_sources').insert({ id: Math.random().toString(36).slice(2), project_id: projectId, wood_stock_id: woodStockId, created_at: isoNow() }).select().single())
+  return q(supabase.from('project_wood_sources').insert({ id: uid(), project_id: projectId, wood_stock_id: woodStockId, created_at: isoNow() }).select().single())
 }
 export async function removeProjectWoodSource(id) {
   return q(supabase.from('project_wood_sources').delete().eq('id', id))
 }
 
-// ── Wood Locations CRUD ───────────────────────────────────────────────────────
-export async function geocodeAddress(address) {
-  try {
-    const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(address) + '&limit=1', { headers: { 'Accept-Language': 'en-US', 'User-Agent': 'JDHWoodworks/1.0' } })
-    const d = await r.json()
-    return d.length ? { lat: parseFloat(d[0].lat), lng: parseFloat(d[0].lon) } : null
-  } catch(e) { return null }
-}
-
 // ── Species ───────────────────────────────────────────────────────────────────
 export async function addSpecies(name) {
-  return q(supabase.from('species').insert({ id: Math.random().toString(36).slice(2), name, created_at: isoNow() }).select().single())
+  return q(supabase.from('species').insert({ id: uid(), name, created_at: isoNow() }).select().single())
 }
 export async function updateSpecies(id, name) {
   return q(supabase.from('species').update({ name }).eq('id', id).select().single())
@@ -280,7 +264,7 @@ export async function deleteSpecies(id) {
 
 // ── Finishes ──────────────────────────────────────────────────────────────────
 export async function addFinish(name) {
-  return q(supabase.from('finishes').insert({ id: Math.random().toString(36).slice(2), name, created_at: isoNow() }).select().single())
+  return q(supabase.from('finishes').insert({ id: uid(), name, created_at: isoNow() }).select().single())
 }
 export async function updateFinish(id, name) {
   return q(supabase.from('finishes').update({ name }).eq('id', id).select().single())
@@ -289,8 +273,3 @@ export async function deleteFinish(id) {
   return q(supabase.from('finishes').delete().eq('id', id))
 }
 
-// ── Photo record (for bulk import — photo already uploaded) ──────────────────
-export async function addPhotoRecord(projectId, storagePath, caption, photoType, tags) {
-  const row = { id: Math.random().toString(36).slice(2), project_id: projectId || null, storage_path: storagePath, caption: caption || '', photo_type: photoType || 'finished', tags: tags || 'finished', created_at: isoNow() }
-  return q(supabase.from('photos').insert(row).select().single())
-}

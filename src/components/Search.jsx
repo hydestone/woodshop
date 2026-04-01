@@ -53,7 +53,7 @@ export default function GlobalSearch() {
     const match = (...fields) => fields.some(f => f?.toLowerCase().includes(q))
 
     data.projects.forEach(p => {
-      if (match(p.name, p.wood_type, p.description, p.dimensions_rough, p.dimensions_final))
+      if (match(p.name, p.wood_type, p.description, p.dimensions_final, p.built_with, p.finish_used, p.category))
         hits.push({ type: 'Project', title: p.name, sub: `${p.wood_type || ''} · ${p.status}`.replace(/^ · /, ''), action: () => { setProjId(p.id); setTab('projects') } })
     })
     data.steps.forEach(s => {

@@ -53,7 +53,7 @@
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
 
   /* Layout */
-  --topbar-h:    68px;
+  --topbar-h:    64px;
   --tabbar-h:    82px;
   --safe-b:      env(safe-area-inset-bottom, 0px);
 
@@ -95,31 +95,28 @@ body {
   display: flex;
   align-items: center;
   height: var(--topbar-h);
-  padding: 0 20px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  background: #ffffff;
+  border-bottom: 1px solid rgba(0,0,0,.09);
   flex-shrink: 0;
-  gap: 16px;
-  box-shadow: var(--shadow-sm);
+  gap: 20px;
+  box-shadow: 0 1px 0 rgba(0,0,0,.06);
 }
 .top-bar-brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  flex: 1;
-  min-width: 0;
+  gap: 10px;
+  flex-shrink: 0;
 }
-.top-bar-logo { height: 48px; width: 48px; flex-shrink: 0; }
+.top-bar-logo { height: 40px; width: 40px; flex-shrink: 0; }
 .top-bar-title {
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: .5px;
-  color: var(--text);
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -.3px;
+  color: #1a1a1a;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
-.top-bar-accent { color: var(--accent); }
+.top-bar-accent { color: #2D5A3D; }
 
 /* ─── App body ───────────────────────────────────────────────────────────── */
 .app { display: flex; flex: 1; overflow: hidden; }

@@ -439,7 +439,7 @@ function MoistureTrend({ woodStock }) {
 export default function Dashboard() {
   const { data, setProjId, setTab } = useCtx()
   const today = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})
-  const [locations, setLocations] = useState(data.woodLocations||[])
+  const locations = data.woodLocations || []
 
   useEffect(()=>{
     // Load Leaflet CSS + JS once
@@ -454,7 +454,6 @@ export default function Dashboard() {
       script.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
       document.head.appendChild(script)
     }
-    db.loadWoodLocations().then(locs=>setLocations(locs)).catch(()=>{})
   },[])
 
   const urgCoats = data.coats.filter(c=>c.applied_at&&coatStatus(c).urgent).map(c=>({...c,proj:data.projects.find(p=>p.id===c.project_id)}))

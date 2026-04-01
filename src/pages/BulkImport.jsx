@@ -2,10 +2,9 @@ import { useState, useRef, useCallback } from 'react'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
+import { uid } from '../db.js'
 
 const DEST = { NEW: 'new', EXISTING: 'existing', STOCK: 'stock' }
-
-function uid() { return Math.random().toString(36).slice(2) }
 
 function PhotoLightbox({ src, onClose }) {
   return (
@@ -54,7 +53,7 @@ function CleanupTable({ newProjects, onDone }) {
         <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: 900, fontSize: 13 }}>
           <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
             <tr>
-              {['Project','Species','Category','Finish','Year','Status','Built With','Gift / Recipient','Wood Source'].map((h,i) => (
+              {['Project','Species','Category','Finish','Year','Status','Built With','Gift / Recipient'].map((h,i) => (
                 <th key={i} style={th}>{h}</th>
               ))}
             </tr>
@@ -104,15 +103,8 @@ function CleanupTable({ newProjects, onDone }) {
                     <input style={inp} defaultValue={live.gift_recipient || ''}
                       onBlur={e => { if (e.target.value !== (live.gift_recipient||'')) save(proj.id, 'gift_recipient', e.target.value) }} />
                   </td>
-                  <td style={{ ...td(i), minWidth: 130 }}>
-                    <select style={sel} value={live.wood_stock_id || ''} onChange={e => save(proj.id, 'wood_stock_id', e.target.value || null)}>
-                      <option value="">—</option>
-                      {woodLocations.map(loc => {
-                        const items = woodStock.filter(w => w.location_id === loc.id)
-                        return items.length ? <optgroup key={loc.id} label={loc.name}>{items.map(w => <option key={w.id} value={w.id}>{w.species}{w.harvested_at?' · '+new Date(w.harvested_at).getFullYear():''}</option>)}</optgroup> : null
-                      })}
-                      {woodStock.filter(w=>!w.location_id).map(w => <option key={w.id} value={w.id}>{w.species}</option>)}
-                    </select>
+                  <td style={{ ...td(i), minWidth: 130, fontSize: 12, color: 'var(--text-4)', padding: '7px 8px' }}>
+                    <span style={{ fontSize: 11, color: 'var(--text-4)' }}>Edit in Projects</span>
                   </td>
                 </tr>
               )
@@ -141,8 +133,6 @@ export default function BulkImport() {
   const [groupColors]             = useState(() => ['#1D4ED8','#166534','#B45309','#7C3AED','#0891B2','#BE185D'])
 
   const projects      = data.projects      || []
-  const woodStock     = data.woodStock     || []
-  const woodLocations = data.woodLocations || []
 
   const makeRow = (file, preview) => ({
     id: uid(), file, preview,

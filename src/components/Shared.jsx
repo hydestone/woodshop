@@ -282,47 +282,76 @@ function Lightbox({ photos, index, onClose }) {
   const onMouseMove = e => { if (!dragStart.current) return; setPan({ x: panStart.current.x + e.clientX - dragStart.current.x, y: panStart.current.y + e.clientY - dragStart.current.y }) }
   const onMouseUp   = () => { dragStart.current = null }
 
-  // Touch pinch + swipe
-  const onTouchStart = e => {
-    if (e.touches.length === 2) {
-      const dx = e.touches[0].clientX - e.touches[1].clientX
-      const dy = e.touches[0].clientY - e.touches[1].clientY
-      lastDist.current = Math.hypot(dx, dy)
-      lastMid.current  = { x: (e.touches[0].clientX + e.touches[1].clientX) / 2, y: (e.touches[0].clientY + e.touches[1].clientY) / 2 }
-      panStart.current = { ...pan }
+  // Touch handlers — useEffect with passive:false required for iOS Safari
+  // React synthetic onTouchMove is passive by default and cannot call preventDefault
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+
+    const onTouchStart = e => {
+      if (e.touches.length === 2) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX
+        const dy = e.touches[0].clientY - e.touches[1].clientY
+        lastDist.current = Math.hypot(dx, dy)
+        lastMid.current  = { x: (e.touches[0].clientX + e.touches[1].clientX) / 2, y: (e.touches[0].clientY + e.touches[1].clientY) / 2 }
+        panStart.current = { x: 0, y: 0 }
+        swipeStartX.current = null
+      } else if (e.touches.length === 1) {
+        swipeStartX.current = e.touches[0].clientX
+        dragStart.current   = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+        panStart.current    = { x: 0, y: 0 }
+      }
+    }
+
+    const onTouchMove = e => {
+      if (e.touches.length === 2 && lastDist.current) {
+        e.preventDefault()
+        const dx   = e.touches[0].clientX - e.touches[1].clientX
+        const dy   = e.touches[0].clientY - e.touches[1].clientY
+        const dist = Math.hypot(dx, dy)
+        setScale(s => Math.max(1, Math.min(10, s * (dist / lastDist.current))))
+        const mid = { x: (e.touches[0].clientX + e.touches[1].clientX) / 2, y: (e.touches[0].clientY + e.touches[1].clientY) / 2 }
+        if (lastMid.current) setPan(p => ({ x: p.x + mid.x - lastMid.current.x, y: p.y + mid.y - lastMid.current.y }))
+        lastDist.current = dist
+        lastMid.current  = mid
+      } else if (e.touches.length === 1 && dragStart.current) {
+        setScale(s => {
+          if (s <= 1) return s
+          e.preventDefault()
+          setPan({ x: panStart.current.x + e.touches[0].clientX - dragStart.current.x, y: panStart.current.y + e.touches[0].clientY - dragStart.current.y })
+          return s
+        })
+      }
+    }
+
+    const onTouchEnd = e => {
+      if (e.touches.length < 2) { lastDist.current = null; lastMid.current = null }
+      if (swipeStartX.current !== null && e.changedTouches.length > 0) {
+        const diff = swipeStartX.current - e.changedTouches[0].clientX
+        setScale(s => {
+          if (s === 1) {
+            if (diff > 60)  setCur(i => Math.min(i + 1, 999))
+            if (diff < -60) setCur(i => Math.max(i - 1, 0))
+          }
+          return s
+        })
+      }
       swipeStartX.current = null
-    } else if (e.touches.length === 1) {
-      swipeStartX.current = e.touches[0].clientX
-      dragStart.current   = { x: e.touches[0].clientX, y: e.touches[0].clientY }
-      panStart.current    = { ...pan }
+      dragStart.current   = null
     }
-  }
-  const onTouchMove = e => {
-    if (e.touches.length === 2 && lastDist.current) {
-      e.preventDefault()
-      const dx   = e.touches[0].clientX - e.touches[1].clientX
-      const dy   = e.touches[0].clientY - e.touches[1].clientY
-      const dist = Math.hypot(dx, dy)
-      setScale(s => Math.max(1, Math.min(10, s * (dist / lastDist.current))))
-      const mid = { x: (e.touches[0].clientX + e.touches[1].clientX) / 2, y: (e.touches[0].clientY + e.touches[1].clientY) / 2 }
-      if (lastMid.current) setPan(p => ({ x: p.x + mid.x - lastMid.current.x, y: p.y + mid.y - lastMid.current.y }))
-      lastDist.current = dist
-      lastMid.current  = mid
-    } else if (e.touches.length === 1 && scale > 1 && dragStart.current) {
-      e.preventDefault()
-      setPan({ x: panStart.current.x + e.touches[0].clientX - dragStart.current.x, y: panStart.current.y + e.touches[0].clientY - dragStart.current.y })
+
+    el.addEventListener('touchstart',  onTouchStart, { passive: true  })
+    el.addEventListener('touchmove',   onTouchMove,  { passive: false })
+    el.addEventListener('touchend',    onTouchEnd,   { passive: true  })
+    return () => {
+      el.removeEventListener('touchstart',  onTouchStart)
+      el.removeEventListener('touchmove',   onTouchMove)
+      el.removeEventListener('touchend',    onTouchEnd)
     }
-  }
-  const onTouchEnd = e => {
-    if (e.touches.length < 2) { lastDist.current = null; lastMid.current = null }
-    if (scale === 1 && swipeStartX.current !== null && e.changedTouches.length > 0) {
-      const diff = swipeStartX.current - e.changedTouches[0].clientX
-      if (diff > 60 && cur < photos.length - 1) setCur(i => i + 1)
-      if (diff < -60 && cur > 0)                 setCur(i => i - 1)
-    }
-    swipeStartX.current = null
-    dragStart.current   = null
-  }
+  }, [cur])
+
+  // Keep pan refs in sync
+  useEffect(() => { panStart.current = { ...pan } }, [pan])
 
   return (
     <div
@@ -333,7 +362,7 @@ function Lightbox({ photos, index, onClose }) {
       style={{ position: 'fixed', inset: 0, background: 'rgba(26,18,8,.96)', zIndex: 200, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', cursor: scale > 1 ? 'grab' : 'default', touchAction: 'none' }}
       onClick={e => { if (e.target === e.currentTarget && scale === 1) onClose() }}
       onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseLeave={onMouseUp}
-      onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
+
     >
       <img
         src={photo.url} alt={photo.caption || 'Photo'}

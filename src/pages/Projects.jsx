@@ -752,7 +752,6 @@ function ProjectSheet({ project, categories, onSave, onClose, mutate }) {
       category,
       wood_type:        speciesVal,
       species_id:       sp?.id || null,
-      wood_stock_id:    woodSrcId || null,
       description:      refs.desc.current?.value.trim()       || '',
       status:           refs.status.current?.value            || 'active',
       dimensions_final: refs.final.current?.value.trim()      || '',
