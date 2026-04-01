@@ -4,7 +4,7 @@ import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
 import { addToGoogleCalendar, addToAppleReminders } from '../supabase.js'
 import {
-  Sheet, FormCell, BulkAddSheet, ConfirmSheet, DropZone, PhotoGrid, PhotoCard, TagInput,
+  Sheet, FormCell, BulkAddSheet, ConfirmSheet, DropZone, PhotoGrid, TagInput,
   STATUS, coatStatus, fmtShort, localDt,
   IPlus, ITrash, ICircle, ICheck, IChevR, IChevL, IEdit, ICal, ICamera, IBell, IGrid,
 } from '../components/Shared.jsx'
@@ -40,20 +40,6 @@ export default function Projects() {
     if (items.length) acc.push({ status: s, items })
     return acc
   }, [])
-
-  if (inline) return (
-    <PhotoGrid photos={photos} onEdit={async (id, fields) => {
-      if (fields._delete) {
-        const p = data.photos.find(x => x.id === id)
-        mutate(d => ({ ...d, photos: d.photos.filter(x => x.id !== id) }))
-        if (p) await db.deletePhoto(p).catch(() => {})
-      } else {
-        mutate(d => ({ ...d, photos: d.photos.map(x => x.id === id ? { ...x, ...fields } : x) }))
-        await db.updatePhoto(id, fields).catch(() => {})
-        toast('Saved', 'success')
-      }
-    }} />
-  )
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
@@ -604,256 +590,7 @@ function FinishingList({ projId, sub, setSub }) {
   )
 }
 
-// ─── Steps pane ───────────────────────────────────────────────────────────────
-function StepsPane({ projId }) {
-  const { data, mutate } = useCtx()
-  const toast = useToast()
-  const [showAdd, setShowAdd] = useState(false)
-  const [editId, setEditId]   = useState(null)
-  const [editVal, setEditVal] = useState('')
-
-  const steps = data.steps.filter(s => s.project_id === projId).sort((a, b) => a.sort_order - b.sort_order)
-  const done  = steps.filter(s => s.completed).length
-
-  const toggle = async step => {
-    const completed = !step.completed
-    mutate(d => ({ ...d, steps: d.steps.map(s => s.id === step.id ? { ...s, completed } : s) }))
-    await db.updateStep(step.id, { completed }).catch(e => toast(e.message, 'error'))
-  }
-
-  const del = async id => {
-    mutate(d => ({ ...d, steps: d.steps.filter(s => s.id !== id) }))
-    await db.deleteStep(id).catch(e => toast(e.message, 'error'))
-  }
-
-  const saveEdit = async id => {
-    const title = editVal.trim()
-    if (!title) { setEditId(null); return }
-    mutate(d => ({ ...d, steps: d.steps.map(s => s.id === id ? { ...s, title } : s) }))
-    await db.updateStep(id, { title }).catch(e => toast(e.message, 'error'))
-    setEditId(null)
-  }
-
-  const handleBulkAdd = async lines => {
-    const maxOrder = steps.length ? Math.max(...steps.map(s => s.sort_order)) : 0
-    const rows = lines.map((title, i) => ({ project_id: projId, title, note: '', completed: false, sort_order: maxOrder + i + 1 }))
-    try {
-      const saved = await db.addStepsBulk(rows)
-      mutate(d => ({ ...d, steps: [...d.steps, ...saved] }))
-      toast(`${saved.length} steps added`, 'success')
-      setShowAdd(false)
-    } catch (e) { toast(e.message, 'error') }
-  }
-
-  if (inline) return (
-    <PhotoGrid photos={photos} onEdit={async (id, fields) => {
-      if (fields._delete) {
-        const p = data.photos.find(x => x.id === id)
-        mutate(d => ({ ...d, photos: d.photos.filter(x => x.id !== id) }))
-        if (p) await db.deletePhoto(p).catch(() => {})
-      } else {
-        mutate(d => ({ ...d, photos: d.photos.map(x => x.id === id ? { ...x, ...fields } : x) }))
-        await db.updatePhoto(id, fields).catch(() => {})
-        toast('Saved', 'success')
-      }
-    }} />
-  )
-
-  return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
-      <div className="scroll-page" style={{ paddingBottom: 80 }}>
-        <div style={{ padding: '12px 0 24px' }}>
-          {steps.length > 0 && (
-            <p style={{ fontSize: 13, color: 'var(--text-3)', margin: '0 20px 8px' }}>{done} of {steps.length} complete</p>
-          )}
-          {steps.length > 0 && (
-            <div className="group">
-              {steps.map(s => (
-                <div key={s.id} className="cell">
-                  <button className="check-btn" onClick={() => toggle(s)}>
-                    {s.completed
-                      ? <ICheck size={22} color="var(--forest)" sw={2} />
-                      : <ICircle size={22} color="var(--text-4)" sw={1.5} />}
-                  </button>
-                  <div style={{ flex: 1 }}>
-                    {editId === s.id ? (
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <input className="edit-input" value={editVal} onChange={e => setEditVal(e.target.value)}
-                          onKeyDown={e => { if (e.key === 'Enter') saveEdit(s.id); if (e.key === 'Escape') setEditId(null) }} autoFocus />
-                        <button className="btn-text" onClick={() => saveEdit(s.id)}>Save</button>
-                      </div>
-                    ) : (
-                      <div style={{ textDecoration: s.completed ? 'line-through' : 'none', color: s.completed ? 'var(--text-3)' : 'var(--text)', cursor: 'text' }}
-                        onDoubleClick={() => { setEditId(s.id); setEditVal(s.title) }}>
-                        {s.title}
-                      </div>
-                    )}
-                    {s.note && <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 2 }}>{s.note}</div>}
-                  </div>
-                  <button className="icon-btn" onClick={() => del(s.id)}><ITrash size={15} /></button>
-                </div>
-              ))}
-            </div>
-          )}
-          {!steps.length && (
-            <div className="empty">
-              <div className="empty-icon">📋</div>
-              <div className="empty-title">No steps yet</div>
-              <p className="empty-sub">Click + to add your build sequence</p>
-            </div>
-          )}
-        </div>
-      </div>
-      <button className="fab" onClick={() => setShowAdd(true)}><IPlus size={22} color="#fff" sw={2.5} /></button>
-      {showAdd && <BulkAddSheet title="Add Build Steps" hint="Enter one step per line" onSave={handleBulkAdd} onClose={() => setShowAdd(false)} />}
-    </div>
-  )
-}
-
-// ─── Finishing pane ───────────────────────────────────────────────────────────
-function FinishingPane({ projId }) {
-  const { data, mutate } = useCtx()
-  const toast = useToast()
-  const [showAdd, setShowAdd]   = useState(false)
-  const [markId, setMarkId]     = useState(null)
-  const [editCoat, setEditCoat] = useState(null)
-
-  const coats    = data.coats.filter(c => c.project_id === projId).sort((a, b) => a.coat_number - b.coat_number)
-  const lastCoat = coats.at(-1)
-  const nextNum  = (lastCoat?.coat_number ?? 0) + 1
-  const proj     = data.projects.find(p => p.id === projId)
-
-  const del = async id => {
-    mutate(d => ({ ...d, coats: d.coats.filter(c => c.id !== id) }))
-    await db.deleteCoat(id).catch(e => toast(e.message, 'error'))
-  }
-
-  const markApplied = async (id, dt) => {
-    const applied_at = new Date(dt).toISOString()
-    mutate(d => ({ ...d, coats: d.coats.map(c => c.id === id ? { ...c, applied_at } : c) }))
-    await db.updateCoat(id, { applied_at }).catch(e => toast(e.message, 'error'))
-    toast('Coat logged', 'success')
-    setMarkId(null)
-  }
-
-  const handleAdd = async fields => {
-    try {
-      const coat = await db.addCoat({ project_id: projId, applied_at: null, ...fields })
-      mutate(d => ({ ...d, coats: [...d.coats, coat] }))
-      toast('Coat added', 'success')
-      setShowAdd(false)
-    } catch (e) { toast(e.message, 'error') }
-  }
-
-  const handleEdit = async (id, fields) => {
-    mutate(d => ({ ...d, coats: d.coats.map(c => c.id === id ? { ...c, ...fields } : c) }))
-    await db.updateCoat(id, fields).catch(e => toast(e.message, 'error'))
-    toast('Saved', 'success')
-    setEditCoat(null)
-  }
-
-  const calReminder = coat => {
-    if (!coat.applied_at) { toast('Mark coat as applied first', 'error'); return }
-    const ms      = coat.interval_unit === 'hours' ? coat.interval_value * 3_600_000 : coat.interval_value * 86_400_000
-    const readyAt = new Date(new Date(coat.applied_at).getTime() + ms)
-    addToGoogleCalendar({ title: `Apply coat ${coat.coat_number + 1} — ${coat.product}${proj ? ` (${proj.name})` : ''}`, start: readyAt, end: new Date(readyAt.getTime() + 3_600_000), description: `Coat ${coat.coat_number} is ready.` })
-  }
-
-  const appleReminder = coat => {
-    if (!coat.applied_at) { toast('Mark coat as applied first', 'error'); return }
-    const ms      = coat.interval_unit === 'hours' ? coat.interval_value * 3_600_000 : coat.interval_value * 86_400_000
-    const readyAt = new Date(new Date(coat.applied_at).getTime() + ms)
-    addToAppleReminders({ title: `Apply coat ${coat.coat_number + 1} — ${coat.product}`, notes: `Coat ${coat.coat_number} is ready.`, dueDate: readyAt })
-  }
-
-  if (inline) return (
-    <PhotoGrid photos={photos} onEdit={async (id, fields) => {
-      if (fields._delete) {
-        const p = data.photos.find(x => x.id === id)
-        mutate(d => ({ ...d, photos: d.photos.filter(x => x.id !== id) }))
-        if (p) await db.deletePhoto(p).catch(() => {})
-      } else {
-        mutate(d => ({ ...d, photos: d.photos.map(x => x.id === id ? { ...x, ...fields } : x) }))
-        await db.updatePhoto(id, fields).catch(() => {})
-        toast('Saved', 'success')
-      }
-    }} />
-  )
-
-  return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
-      <div className="scroll-page" style={{ paddingBottom: 80 }}>
-        <div style={{ padding: '12px 0 24px' }}>
-          {coats.length > 0 ? (
-            <div className="group">
-              {coats.map((coat, idx) => {
-                const st      = coatStatus(coat)
-                const prevOk  = idx === 0 || !!coats[idx - 1].applied_at
-                const locked  = !coat.applied_at && !prevOk
-                const applied = !!coat.applied_at
-                const circleClass = applied ? 'coat-circle applied' : st.urgent ? 'coat-circle urgent' : 'coat-circle'
-                return (
-                  <div key={coat.id} style={{ borderBottom: idx < coats.length - 1 ? '1px solid var(--border-2)' : 'none', padding: '14px 16px' }}>
-                    <div style={{ display: 'flex', gap: 14 }}>
-                      <div className={circleClass}>{coat.coat_number}</div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                          <span style={{ fontWeight: 600 }}>{coat.product}</span>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <span style={{ fontSize: 13, fontWeight: 600, color: st.color }}>{st.label}</span>
-                            <button className="icon-btn" onClick={() => setEditCoat(coat)}><IEdit size={14} /></button>
-                            <button className="icon-btn" onClick={() => del(coat.id)} style={{ color: 'var(--red)' }}><ITrash size={14} /></button>
-                          </div>
-                        </div>
-                        {coat.notes && <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 2 }}>{coat.notes}</div>}
-                        <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 4 }}>
-                          {coat.applied_at ? `Applied ${fmtShort(coat.applied_at)} · ` : ''}Wait {coat.interval_value}{coat.interval_unit === 'hours' ? 'h' : 'd'}
-                        </div>
-                        {!locked && (
-                          <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-                            <button className={st.urgent ? 'btn-primary' : 'btn-secondary'} onClick={() => setMarkId(coat.id)}>
-                              {coat.applied_at ? (st.urgent ? 'Apply next coat' : 'Re-log') : 'Mark applied'}
-                            </button>
-                            {applied && <>
-                              <button className="btn-cal" onClick={() => calReminder(coat)}><ICal size={13} color="currentColor" /> Google Calendar</button>
-                              <button className="btn-reminder" onClick={() => appleReminder(coat)}><IBell size={13} color="currentColor" /> Add to Reminders</button>
-                            </>}
-                          </div>
-                        )}
-                        {locked && <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 6 }}>Waiting for coat {coat.coat_number - 1}</div>}
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          ) : (
-            <div className="empty">
-              <div className="empty-icon">🎨</div>
-              <div className="empty-title">No finish coats</div>
-              <p className="empty-sub">Click + to set up your finishing schedule</p>
-            </div>
-          )}
-        </div>
-      </div>
-      <button className="fab" onClick={() => setShowAdd(true)}><IPlus size={22} color="#fff" sw={2.5} /></button>
-      {showAdd   && <CoatSheet nextNum={nextNum} defaultCoat={lastCoat} onSave={handleAdd} onClose={() => setShowAdd(false)} />}
-      {editCoat  && <CoatSheet nextNum={editCoat.coat_number} defaultCoat={editCoat} isEdit onSave={f => handleEdit(editCoat.id, f)} onClose={() => setEditCoat(null)} />}
-      {markId    && (
-        <Sheet title="Mark Applied" onClose={() => setMarkId(null)} onSave={async () => {
-          const el = document.getElementById('coat-dt-input')
-          if (el?.value) await markApplied(markId, el.value)
-        }}>
-          <div className="form-group">
-            <FormCell label="Date & time" last>
-              <input id="coat-dt-input" className="form-input" type="datetime-local" defaultValue={localDt()} />
-            </FormCell>
-          </div>
-        </Sheet>
-      )}
-    </div>
-  )
-}
+// StepsPane removed — replaced by StepsList
 
 // ─── Photo pane ───────────────────────────────────────────────────────────────
 function PhotoPane({ projId, type, showAll, inline }) {
@@ -900,19 +637,7 @@ function PhotoPane({ projId, type, showAll, inline }) {
     toast('Saved', 'success')
   }
 
-  if (inline) return (
-    <PhotoGrid photos={photos} onEdit={async (id, fields) => {
-      if (fields._delete) {
-        const p = data.photos.find(x => x.id === id)
-        mutate(d => ({ ...d, photos: d.photos.filter(x => x.id !== id) }))
-        if (p) await db.deletePhoto(p).catch(() => {})
-      } else {
-        mutate(d => ({ ...d, photos: d.photos.map(x => x.id === id ? { ...x, ...fields } : x) }))
-        await db.updatePhoto(id, fields).catch(() => {})
-        toast('Saved', 'success')
-      }
-    }} />
-  )
+  if (inline) return <PhotoGrid photos={photos} onEdit={edit} />
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
