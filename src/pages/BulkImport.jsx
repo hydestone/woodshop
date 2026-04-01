@@ -50,6 +50,8 @@ export default function BulkImport() {
   const [progress, setProgress]   = useState(0)
   const [done, setDone]           = useState(false)
   const [lightbox, setLightbox]   = useState(null)
+  const [selected, setSelected]   = useState(new Set())
+  const [groupColors] = useState(() => ['#1D4ED8','#166534','#B45309','#7C3AED','#0891B2','#BE185D','#15803D','#9333EA'])
 
   const categories   = data.categories   || []
   const speciesList  = data.species      || []
@@ -92,6 +94,40 @@ export default function BulkImport() {
 
   const update = (id, field, value) => setRows(prev => prev.map(r => r.id === id ? { ...r, [field]: value } : r))
   const removeRow = id => setRows(prev => prev.filter(r => r.id !== id))
+  const toggleSelect = id => setSelected(prev => {
+    const s = new Set(prev)
+    s.has(id) ? s.delete(id) : s.add(id)
+    return s
+  })
+
+  const selectAll = () => {
+    if (selected.size === rows.length) setSelected(new Set())
+    else setSelected(new Set(rows.map(r => r.id)))
+  }
+
+  const groupSelected = () => {
+    if (selected.size < 2) return
+    // Find if any selected row already has a groupId
+    const selectedRows = rows.filter(r => selected.has(r.id))
+    const existingGroup = selectedRows.find(r => r.groupId?.trim())?.groupId?.trim()
+    const groupId = existingGroup || 'g' + Math.random().toString(36).slice(2,6)
+    setRows(prev => prev.map(r => selected.has(r.id) ? { ...r, groupId, dest: DEST.NEW } : r))
+    setSelected(new Set())
+  }
+
+  const ungroup = id => {
+    setRows(prev => prev.map(r => r.id === id ? { ...r, groupId: '' } : r))
+  }
+
+  // Assign a color per unique groupId
+  const groupColorMap = {}
+  let colorIdx = 0
+  rows.forEach(r => {
+    if (r.groupId?.trim() && !groupColorMap[r.groupId]) {
+      groupColorMap[r.groupId] = groupColors[colorIdx++ % groupColors.length]
+    }
+  })
+
   const copyDown = (fromId, field) => {
     const idx = rows.findIndex(r => r.id === fromId)
     if (idx < 0) return
@@ -244,7 +280,10 @@ export default function BulkImport() {
               <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: 860, fontSize: 13 }}>
                 <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
                   <tr style={{ background: '#0F1E38' }}>
-                    {['Photo','Destination','Name / Project / Stock','Species','Category','Finish','Year','Status','Built With','Gift','Tag','Group ID',''].map((h,i) => (
+                    <th style={{ padding: '8px 10px', width: 32 }}>
+                        <input type="checkbox" checked={selected.size === rows.length && rows.length > 0} onChange={selectAll} style={{ cursor: 'pointer' }}/>
+                      </th>
+                    {['Photo','Destination','Name / Project / Stock','Species','Category','Finish','Year','Status','Built With','Gift','Tag','Group',''].map((h,i) => (
                       <th key={i} style={{ padding: '8px 10px', color: '#CBD5E1', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '.4px', textAlign: 'left', whiteSpace: 'nowrap' }}>{h}</th>
                     ))}
                   </tr>
@@ -257,7 +296,10 @@ export default function BulkImport() {
                     const bg = rowIdx % 2 === 0 ? 'var(--surface)' : 'var(--fill-2)'
                     const cell = { padding: '6px 6px', borderBottom: '1px solid var(--border-2)', background: bg }
                     return (
-                      <tr key={row.id}>
+                      <tr key={row.id} style={{ outline: selected.has(row.id) ? '2px solid #1D4ED8' : 'none', outlineOffset: -1 }}>
+                        <td style={{ ...cell, padding: '8px 10px' }}>
+                          <input type="checkbox" checked={selected.has(row.id)} onChange={() => toggleSelect(row.id)} style={{ cursor: 'pointer' }}/>
+                        </td>
                         {/* Thumbnail */}
                         <td style={{ ...cell, padding: '8px 10px' }}>
                           <img src={row.preview} alt="" onClick={() => setLightbox(row.preview)}
@@ -333,9 +375,15 @@ export default function BulkImport() {
                             {['finished','progress','inspiration','before','after','stock'].map(t=><option key={t} value={t}>{t}</option>)}
                           </select>
                         </td>
-                        {/* Group ID — only for new */}
-                        <td style={{ ...cell, minWidth: 70, opacity: isNew ? 1 : 0.3 }}>
-                          {isNew ? <input style={{...inp,width:66}} value={row.groupId} onChange={e=>update(row.id,'groupId',e.target.value)} placeholder="bowl1"/> : <span style={{fontSize:12,color:'var(--text-4)'}}>—</span>}
+                        {/* Group indicator */}
+                        <td style={{ ...cell, minWidth: 60 }}>
+                          {row.groupId ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                              <div style={{ width: 10, height: 10, borderRadius: 3, background: groupColorMap[row.groupId] || '#888', flexShrink: 0 }}/>
+                              <span style={{ fontSize: 11, color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 50 }}>{row.groupId}</span>
+                              <button onClick={() => ungroup(row.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-4)', fontSize: 12, padding: 0, lineHeight: 1, flexShrink: 0 }} title="Remove from group">×</button>
+                            </div>
+                          ) : <span style={{ fontSize: 12, color: 'var(--text-4)' }}>—</span>}
                         </td>
                         {/* Remove */}
                         <td style={{ ...cell }}>
@@ -354,17 +402,36 @@ export default function BulkImport() {
 
       {/* Sticky footer */}
       {rows.length > 0 && !importing && (
-        <div style={{ position: 'sticky', bottom: 0, background: 'var(--surface)', borderTop: '1px solid var(--border-2)', padding: '12px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: 13, color: 'var(--text-3)' }}>
-            {newCount > 0 && `${newCount} new project${newCount!==1?'s':''}`}
-            {newCount > 0 && (existingCount > 0 || stockCount > 0) && ' · '}
-            {existingCount > 0 && `${existingCount} existing`}
-            {existingCount > 0 && stockCount > 0 && ' · '}
-            {stockCount > 0 && `${stockCount} stock`}
-          </span>
-          <button className="btn-primary" style={{ padding: '10px 28px', justifyContent: 'center' }} onClick={handleImport}>
-            Import all
-          </button>
+        <div style={{ position: 'sticky', bottom: 0, background: 'var(--surface)', borderTop: '1px solid var(--border-2)', padding: '12px 20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              {selected.size >= 2 && (
+                <button className="btn-primary" style={{ padding: '8px 16px', fontSize: 13, justifyContent: 'center' }} onClick={groupSelected}>
+                  Group {selected.size} selected
+                </button>
+              )}
+              {selected.size > 0 && selected.size < 2 && (
+                <span style={{ fontSize: 12, color: 'var(--text-3)' }}>Select 2+ to group</span>
+              )}
+              {selected.size === 0 && (
+                <span style={{ fontSize: 13, color: 'var(--text-3)' }}>
+                  {newCount > 0 && `${newCount} new`}
+                  {newCount > 0 && (existingCount > 0 || stockCount > 0) && ' · '}
+                  {existingCount > 0 && `${existingCount} existing`}
+                  {existingCount > 0 && stockCount > 0 && ' · '}
+                  {stockCount > 0 && `${stockCount} stock`}
+                </span>
+              )}
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn-secondary" style={{ padding: '10px 20px', justifyContent: 'center' }} onClick={() => { setRows([]); setSelected(new Set()) }}>
+                Cancel
+              </button>
+              <button className="btn-primary" style={{ padding: '10px 28px', justifyContent: 'center' }} onClick={handleImport}>
+                Import all
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
