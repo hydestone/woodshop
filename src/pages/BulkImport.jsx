@@ -6,28 +6,6 @@ import * as db from '../db.js'
 const STATUSES = ['complete','active','planning','paused']
 const DEST = { NEW: 'new', EXISTING: 'existing', STOCK: 'stock' }
 
-function compressImage(file) {
-  return new Promise(resolve => {
-    if (!file.type.startsWith('image/') || file.type === 'image/gif') { resolve(file); return }
-    const img = new Image()
-    const url = URL.createObjectURL(file)
-    img.onload = () => {
-      URL.revokeObjectURL(url)
-      const { naturalWidth: w, naturalHeight: h } = img
-      const scale = Math.min(1, 1600 / Math.max(w, h))
-      const canvas = document.createElement('canvas')
-      canvas.width = Math.round(w * scale); canvas.height = Math.round(h * scale)
-      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
-      canvas.toBlob(blob => {
-        if (blob && blob.size < file.size) resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }))
-        else resolve(file)
-      }, 'image/jpeg', 0.85)
-    }
-    img.onerror = () => { URL.revokeObjectURL(url); resolve(file) }
-    img.src = url
-  })
-}
-
 function uid() { return Math.random().toString(36).slice(2) }
 
 function PhotoLightbox({ src, onClose }) {
@@ -150,24 +128,8 @@ export default function BulkImport() {
   const handleImport = async () => {
     if (!rows.length) return
     setImporting(true); setProgress(0)
-    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
-    const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
-    const BUCKET = 'woodshop-photos'
     let uploaded = 0
     const newProjects = [], newPhotos = []
-
-    const uploadFile = async (file, projectId) => {
-      const compressed = await compressImage(file)
-      const ext = compressed.type === 'image/jpeg' ? 'jpg' : (file.name.split('.').pop() || 'jpg')
-      const path = `${projectId}/${uid()}.${ext}`
-      const resp = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': compressed.type, 'x-upsert': 'false' },
-        body: compressed,
-      })
-      if (!resp.ok) throw new Error('Upload failed')
-      return path
-    }
 
     // ── New projects ──
     const newGroups = {}
@@ -197,10 +159,9 @@ export default function BulkImport() {
         newProjects.push(proj)
         for (const row of groupRows) {
           try {
-            const path = await uploadFile(row.file, proj.id)
-            const photo = await db.addPhotoRecord(proj.id, path, '', row.tag || 'finished', row.tag || 'finished')
-            newPhotos.push({ ...photo, url: `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${path}` })
-          } catch(e) { console.error(e) }
+            const photo = await db.uploadPhoto(proj.id, row.file, '', row.tag || 'finished', row.tag || 'finished')
+            newPhotos.push(photo)
+          } catch(e) { console.error('Photo upload failed:', e) }
           uploaded++; setProgress(Math.round(uploaded / rows.length * 100))
         }
       } catch(e) { toast(`Failed: ${first.name}`, 'error'); uploaded += groupRows.length; setProgress(Math.round(uploaded / rows.length * 100)) }
@@ -209,22 +170,18 @@ export default function BulkImport() {
     // ── Existing projects ──
     for (const row of rows.filter(r => r.dest === DEST.EXISTING && r.existingProjId)) {
       try {
-        const path = await uploadFile(row.file, row.existingProjId)
-        const photo = await db.addPhotoRecord(row.existingProjId, path, '', row.tag || 'finished', row.tag || 'finished')
-        newPhotos.push({ ...photo, url: `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${path}` })
-      } catch(e) { console.error(e) }
+        const photo = await db.uploadPhoto(row.existingProjId, row.file, '', row.tag || 'finished', row.tag || 'finished')
+        newPhotos.push(photo)
+      } catch(e) { console.error('Existing project photo upload failed:', e) }
       uploaded++; setProgress(Math.round(uploaded / rows.length * 100))
     }
 
     // ── Wood stock ──
     for (const row of rows.filter(r => r.dest === DEST.STOCK && r.existingStockId)) {
       try {
-        const path = await uploadFile(row.file, `stock_${row.existingStockId}`)
-        const photo = await db.addPhotoRecord(null, path, '', 'stock', 'stock')
-        // Store stock_id in caption as metadata
-        await db.updatePhoto(photo.id, { caption: `stock:${row.existingStockId}` })
-        newPhotos.push({ ...photo, url: `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${path}` })
-      } catch(e) { console.error(e) }
+        const photo = await db.uploadPhoto(null, row.file, `stock:${row.existingStockId}`, 'progress', 'stock')
+        newPhotos.push(photo)
+      } catch(e) { console.error('Stock photo upload failed:', e) }
       uploaded++; setProgress(Math.round(uploaded / rows.length * 100))
     }
 
@@ -276,7 +233,7 @@ export default function BulkImport() {
               <button className="btn-secondary" style={{ fontSize: 13 }} onClick={() => fileRef.current?.click()}>+ Add more</button>
             </div>
 
-            <div style={{ overflowX: 'auto', padding: '0 20px' }}>
+            <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: 'calc(100vh - 280px)', padding: '0 20px' }}>
               <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: 860, fontSize: 13 }}>
                 <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
                   <tr style={{ background: '#0F1E38' }}>
