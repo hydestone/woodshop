@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
 import { useCtx } from '../App.jsx'
-import { coatStatus, maintStatus, fmtShort, fmt, IChevR, PhotoGrid } from '../components/Shared.jsx'
+import { coatStatus, maintStatus, fmtShort, fmt, IChevR, IChevL, PhotoGrid } from '../components/Shared.jsx'
 import * as db from '../db.js'
 
 const SC = { active:'#1D4ED8', planning:'#7C3AED', paused:'#B45309', complete:'#166534' }
@@ -9,9 +9,97 @@ const SO = ['complete','active','planning','paused']
 const CARD = { background:'var(--surface)', borderRadius:'var(--r-md)', border:'1px solid var(--border-2)', padding:'16px 20px', boxShadow:'var(--shadow-sm)' }
 const CARD_TITLE = { fontSize:12, fontWeight:600, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:12 }
 
-// ── Year bar click panel ──────────────────────────────────────────────────────
+// ── Year Carousel overlay ─────────────────────────────────────────────────────
+function YearCarousel({ year, projects, photos, onClose }) {
+  const yearProjects = projects.filter(p => p.year_completed === Number(year))
+  // Build a flat list of finished photos for these projects, with project info attached
+  const carouselPhotos = yearProjects.flatMap(p => {
+    const projPhotos = photos.filter(ph => ph.project_id === p.id && ph.photo_type === 'finished')
+    if (!projPhotos.length) {
+      // Fall back to any photo
+      const any = photos.find(ph => ph.project_id === p.id)
+      if (any) return [{ ...any, _projName: p.name, _projWood: p.wood_type, _projCat: p.category }]
+      return []
+    }
+    return projPhotos.map(ph => ({ ...ph, _projName: p.name, _projWood: p.wood_type, _projCat: p.category }))
+  })
+
+  const [cur, setCur] = useState(0)
+  const photo = carouselPhotos[cur]
+
+  useEffect(() => {
+    const onKey = e => {
+      if (e.key === 'Escape') onClose()
+      if (e.key === 'ArrowRight' && cur < carouselPhotos.length - 1) setCur(i => i + 1)
+      if (e.key === 'ArrowLeft' && cur > 0) setCur(i => i - 1)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [cur, carouselPhotos.length, onClose])
+
+  if (!carouselPhotos.length) return (
+    <div className="overlay" onClick={onClose} style={{alignItems:'center',justifyContent:'center'}}>
+      <div style={{background:'var(--surface)',borderRadius:16,padding:'32px 24px',maxWidth:360,width:'90%',textAlign:'center'}}>
+        <div style={{fontSize:40,marginBottom:12}}>📷</div>
+        <div style={{fontWeight:600,fontSize:16,marginBottom:8}}>{year} — No photos yet</div>
+        <p style={{fontSize:13,color:'var(--text-3)',marginBottom:16}}>{yearProjects.length} project{yearProjects.length!==1?'s':''} but no finished photos uploaded.</p>
+        <button className="btn-primary" style={{width:'100%',justifyContent:'center'}} onClick={onClose}>Close</button>
+      </div>
+    </div>
+  )
+
+  return (
+    <div style={{position:'fixed',inset:0,background:'#000',zIndex:1000,display:'flex',flexDirection:'column'}}>
+      {/* Header */}
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 16px',background:'rgba(0,0,0,.6)',position:'absolute',top:0,left:0,right:0,zIndex:2}}>
+        <button onClick={onClose} style={{display:'flex',alignItems:'center',gap:6,background:'none',border:'none',color:'#fff',cursor:'pointer',fontSize:14,fontFamily:'inherit',fontWeight:500,padding:'4px 0'}}>
+          <IChevL size={16} color="#fff" sw={2}/> Back
+        </button>
+        <div style={{textAlign:'center'}}>
+          <div style={{color:'#fff',fontWeight:700,fontSize:15}}>{year}</div>
+          <div style={{color:'rgba(255,255,255,.6)',fontSize:12}}>{cur+1} of {carouselPhotos.length}</div>
+        </div>
+        <div style={{width:60}}/>
+      </div>
+
+      {/* Main photo */}
+      <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',position:'relative'}}>
+        <img src={photo.url} alt={photo._projName} style={{maxWidth:'100vw',maxHeight:'100vh',objectFit:'contain'}}/>
+
+        {/* Prev/next arrows */}
+        {cur > 0 && (
+          <button onClick={()=>setCur(i=>i-1)} style={{position:'absolute',left:12,background:'rgba(0,0,0,.5)',border:'none',borderRadius:'50%',width:40,height:40,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}}>
+            <IChevL size={20} color="#fff" sw={2}/>
+          </button>
+        )}
+        {cur < carouselPhotos.length - 1 && (
+          <button onClick={()=>setCur(i=>i+1)} style={{position:'absolute',right:12,background:'rgba(0,0,0,.5)',border:'none',borderRadius:'50%',width:40,height:40,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}}>
+            <IChevR size={20} color="#fff" sw={2}/>
+          </button>
+        )}
+      </div>
+
+      {/* Caption */}
+      <div style={{padding:'12px 20px 24px',background:'rgba(0,0,0,.6)',position:'absolute',bottom:0,left:0,right:0}}>
+        <div style={{color:'#fff',fontWeight:600,fontSize:15}}>{photo._projName}</div>
+        <div style={{color:'rgba(255,255,255,.6)',fontSize:13,marginTop:2}}>{[photo._projWood,photo._projCat,photo.caption].filter(Boolean).join(' · ')}</div>
+        {/* Strip thumbnails */}
+        {carouselPhotos.length > 1 && (
+          <div style={{display:'flex',gap:6,marginTop:10,overflowX:'auto',scrollbarWidth:'none',paddingBottom:2}}>
+            {carouselPhotos.map((ph,i)=>(
+              <img key={ph.id} src={ph.url} alt="" onClick={()=>setCur(i)} style={{width:44,height:44,objectFit:'cover',borderRadius:6,flexShrink:0,cursor:'pointer',opacity:cur===i?1:0.5,outline:cur===i?'2px solid #fff':'none',outlineOffset:1}}/>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── Projects by Year ──────────────────────────────────────────────────────────
 function ProjectsByYear({ projects, photos, onOpen }) {
-  const [selected, setSelected] = useState(null)
+  const [carouselYear, setCarouselYear] = useState(null)
+
   const grouped = useMemo(() => {
     const m = {}
     projects.forEach(p => {
@@ -25,9 +113,6 @@ function ProjectsByYear({ projects, photos, onOpen }) {
   if (!grouped.length) return <div style={{textAlign:'center',padding:'24px 0',color:'var(--text-3)',fontSize:13}}>No years set on projects yet</div>
   const max = Math.max(...grouped.map(([,c])=>Object.values(c).reduce((a,b)=>a+b,0)))
 
-  const yearProjects = selected ? projects.filter(p => p.year_completed === Number(selected)) : []
-  const thumbFor = pid => photos.find(ph => ph.project_id === pid && ph.tags?.includes('finished')) || photos.find(ph => ph.project_id === pid)
-
   return (
     <div>
       <div style={{display:'flex',gap:12,flexWrap:'wrap',marginBottom:14}}>
@@ -37,41 +122,26 @@ function ProjectsByYear({ projects, photos, onOpen }) {
         {grouped.map(([y,c])=>{
           const tot=Object.values(c).reduce((a,b)=>a+b,0)
           const h=Math.max(20,(tot/max)*100)
-          const isSelected = selected === y
           return (
-            <div key={y} onClick={()=>setSelected(isSelected?null:y)} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4,flexShrink:0,minWidth:40,cursor:'pointer',opacity:selected&&!isSelected?0.4:1,transition:'opacity 150ms'}}>
+            <div key={y} onClick={()=>setCarouselYear(y)} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4,flexShrink:0,minWidth:40,cursor:'pointer',transition:'opacity 150ms'}}>
               <span style={{fontSize:11,fontWeight:600,color:'var(--text-2)'}}>{tot}</span>
-              <div style={{display:'flex',flexDirection:'column-reverse',width:28,height:h,borderRadius:4,overflow:'hidden',outline:isSelected?'2px solid var(--accent)':'none',outlineOffset:2}}>
+              <div style={{display:'flex',flexDirection:'column-reverse',width:28,height:h,borderRadius:4,overflow:'hidden'}}>
                 {SO.map(s=>c[s]>0&&<div key={s} style={{background:SC[s],height:(c[s]/tot*100)+'%',minHeight:2}}/>)}
               </div>
-              <span style={{fontSize:10,color:isSelected?'var(--accent)':'var(--text-3)',fontWeight:isSelected?700:400}}>{y}</span>
+              <span style={{fontSize:10,color:'var(--text-3)'}}>{y}</span>
             </div>
           )
         })}
       </div>
+      <div style={{fontSize:11,color:'var(--text-4)',marginTop:8}}>Tap a bar to browse that year's pieces</div>
 
-      {selected && (
-        <div style={{marginTop:16,borderTop:'1px solid var(--border-2)',paddingTop:14}}>
-          <div style={{fontSize:12,fontWeight:600,color:'var(--text-2)',marginBottom:10}}>{selected} — {yearProjects.length} project{yearProjects.length!==1?'s':''}</div>
-          <div style={{display:'flex',flexDirection:'column',gap:8}}>
-            {yearProjects.map(p=>{
-              const thumb = thumbFor(p.id)
-              return (
-                <div key={p.id} onClick={()=>onOpen(p.id)} style={{display:'flex',alignItems:'center',gap:10,cursor:'pointer',padding:'6px 8px',borderRadius:8,background:'var(--fill-2)'}}>
-                  {thumb
-                    ? <img src={thumb.url} alt={p.name} style={{width:40,height:40,objectFit:'cover',borderRadius:6,flexShrink:0}}/>
-                    : <div style={{width:40,height:40,borderRadius:6,background:'var(--fill)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>🪵</div>
-                  }
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontWeight:500,fontSize:13,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</div>
-                    <div style={{fontSize:11,color:'var(--text-3)'}}>{[p.wood_type,p.category].filter(Boolean).join(' · ')}</div>
-                  </div>
-                  <div style={{width:8,height:8,borderRadius:2,background:SC[p.status],flexShrink:0}}/>
-                </div>
-              )
-            })}
-          </div>
-        </div>
+      {carouselYear && (
+        <YearCarousel
+          year={carouselYear}
+          projects={projects}
+          photos={photos}
+          onClose={()=>setCarouselYear(null)}
+        />
       )}
     </div>
   )
