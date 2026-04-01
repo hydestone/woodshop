@@ -41,18 +41,6 @@ export default function Projects() {
     return acc
   }, [])
 
-  if (fabOnly) return (
-    <div style={{ position: 'fixed', right: 20, bottom: 96, zIndex: 10 }}>
-      <button className="fab" onClick={() => fileRef.current?.click()} disabled={uploading} aria-label="Upload photos">
-        <ICamera size={22} color="#fff" sw={2} />
-      </button>
-      <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => handleFiles(Array.from(e.target.files))} />
-      {showTag && pendingFiles.length > 0 && (
-        <TagSheet files={pendingFiles} projId={projId} onDone={() => { setPendingFiles([]); setShowTag(false) }} onClose={() => { setPendingFiles([]); setShowTag(false) }} />
-      )}
-    </div>
-  )
-
   if (inline) return (
     <PhotoGrid photos={photos} onEdit={async (id, fields) => {
       if (fields._delete) {
@@ -293,7 +281,7 @@ function ProjectCard({ project, onOpen, data }) {
 export function ProjectDetail() {
   const { data, mutate, projId, setProjId } = useCtx()
   const toast = useToast()
-  const [sub, setSub]           = useState('steps')
+  const [sub, setSub]           = useState(null)
   const [editing, setEditing]   = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [showRon, setShowRon]   = useState(false)
@@ -415,9 +403,7 @@ export function ProjectDetail() {
         </div>
       )}
 
-      {/* ── Add photo FAB ── */}
-      <div style={{ height: 80 }} />
-      <PhotoPane projId={projId} type="progress" showAll fabOnly />
+      <div style={{ height: 20 }} />
 
       {editing    && <ProjectSheet project={project} categories={categories} onSave={handleUpdate} onClose={() => setEditing(false)} mutate={mutate} />}
       {confirming && <ConfirmSheet message={`Delete "${project.name}"? All steps, coats, and photos will be removed. This cannot be undone.`} onConfirm={handleDelete} onClose={() => setConfirming(false)} />}
@@ -659,18 +645,6 @@ function StepsPane({ projId }) {
     } catch (e) { toast(e.message, 'error') }
   }
 
-  if (fabOnly) return (
-    <div style={{ position: 'fixed', right: 20, bottom: 96, zIndex: 10 }}>
-      <button className="fab" onClick={() => fileRef.current?.click()} disabled={uploading} aria-label="Upload photos">
-        <ICamera size={22} color="#fff" sw={2} />
-      </button>
-      <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => handleFiles(Array.from(e.target.files))} />
-      {showTag && pendingFiles.length > 0 && (
-        <TagSheet files={pendingFiles} projId={projId} onDone={() => { setPendingFiles([]); setShowTag(false) }} onClose={() => { setPendingFiles([]); setShowTag(false) }} />
-      )}
-    </div>
-  )
-
   if (inline) return (
     <PhotoGrid photos={photos} onEdit={async (id, fields) => {
       if (fields._delete) {
@@ -792,18 +766,6 @@ function FinishingPane({ projId }) {
     addToAppleReminders({ title: `Apply coat ${coat.coat_number + 1} — ${coat.product}`, notes: `Coat ${coat.coat_number} is ready.`, dueDate: readyAt })
   }
 
-  if (fabOnly) return (
-    <div style={{ position: 'fixed', right: 20, bottom: 96, zIndex: 10 }}>
-      <button className="fab" onClick={() => fileRef.current?.click()} disabled={uploading} aria-label="Upload photos">
-        <ICamera size={22} color="#fff" sw={2} />
-      </button>
-      <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => handleFiles(Array.from(e.target.files))} />
-      {showTag && pendingFiles.length > 0 && (
-        <TagSheet files={pendingFiles} projId={projId} onDone={() => { setPendingFiles([]); setShowTag(false) }} onClose={() => { setPendingFiles([]); setShowTag(false) }} />
-      )}
-    </div>
-  )
-
   if (inline) return (
     <PhotoGrid photos={photos} onEdit={async (id, fields) => {
       if (fields._delete) {
@@ -894,7 +856,7 @@ function FinishingPane({ projId }) {
 }
 
 // ─── Photo pane ───────────────────────────────────────────────────────────────
-function PhotoPane({ projId, type, showAll, inline, fabOnly }) {
+function PhotoPane({ projId, type, showAll, inline }) {
   const { data, mutate } = useCtx()
   const toast = useToast()
   const [uploading, setUploading]       = useState(false)
@@ -937,18 +899,6 @@ function PhotoPane({ projId, type, showAll, inline, fabOnly }) {
     await db.updatePhoto(id, fields).catch(e => toast(e.message, 'error'))
     toast('Saved', 'success')
   }
-
-  if (fabOnly) return (
-    <div style={{ position: 'fixed', right: 20, bottom: 96, zIndex: 10 }}>
-      <button className="fab" onClick={() => fileRef.current?.click()} disabled={uploading} aria-label="Upload photos">
-        <ICamera size={22} color="#fff" sw={2} />
-      </button>
-      <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => handleFiles(Array.from(e.target.files))} />
-      {showTag && pendingFiles.length > 0 && (
-        <TagSheet files={pendingFiles} projId={projId} onDone={() => { setPendingFiles([]); setShowTag(false) }} onClose={() => { setPendingFiles([]); setShowTag(false) }} />
-      )}
-    </div>
-  )
 
   if (inline) return (
     <PhotoGrid photos={photos} onEdit={async (id, fields) => {
