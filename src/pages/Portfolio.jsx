@@ -8,13 +8,8 @@ export default function Portfolio() {
   const [lightbox, setLightbox] = useState(null)
 
   useEffect(() => {
-    // Allow scrolling on portfolio page (main app sets overflow:hidden)
-    document.documentElement.style.overflow = 'auto'
-    document.body.style.overflow = 'auto'
-    return () => {
-      document.documentElement.style.overflow = ''
-      document.body.style.overflow = ''
-    }
+    document.body.classList.add('portfolio-page')
+    return () => document.body.classList.remove('portfolio-page')
   }, [])
 
   useEffect(() => {
