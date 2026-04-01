@@ -23,6 +23,7 @@ import AllPhotos        from './pages/Photos.jsx'
 import FinishedProducts from './pages/FinishedProducts.jsx'
 import Inspiration      from './pages/Inspiration.jsx'
 import YearReview      from './pages/YearReview.jsx'
+import Settings       from './pages/Settings.jsx'
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 const AppCtx = createContext(null)
@@ -40,6 +41,7 @@ const MAIN_NAV = [
   { id: 'resources',   label: 'Resources',         Icon: IBook    },
   { id: 'brainstorm',  label: 'Brainstorm',        Icon: IBulb    },
   { id: 'yearreview',  label: 'Year in Review',    Icon: IBulb    },
+  { id: 'settings',    label: 'Settings',          Icon: IWrench  },
 ]
 
 const GALLERY_NAV = [
@@ -198,6 +200,7 @@ export default function App() {
                   {tab === 'finished'    && <FinishedProducts />}
                   {tab === 'inspiration' && <Inspiration />}
                   {tab === 'yearreview'  && <YearReview />}
+                  {tab === 'settings'    && <Settings />}
                 </>
               )}
 

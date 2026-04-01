@@ -679,46 +679,86 @@ function PhotoTagSheetBody({ count, onSave }) {
 }
 
 // ─── Project sheet ────────────────────────────────────────────────────────────
+function ManagedSelect({ label, value, onChange, items, onAddNew, addLabel, last }) {
+  const [showNew, setShowNew] = useState(false)
+  const [newVal, setNewVal]   = useState('')
+  const toast = useToast()
+
+  const handleAdd = async () => {
+    const name = newVal.trim(); if (!name) return
+    try {
+      await onAddNew(name)
+      onChange(name)
+      setNewVal(''); setShowNew(false)
+    } catch(e) { toast(e.message, 'error') }
+  }
+
+  return (
+    <>
+      <FormCell label={label} last={last && !showNew}>
+        <select className="form-select" value={value} onChange={e => {
+          if (e.target.value === '__new__') setShowNew(true)
+          else { onChange(e.target.value); setShowNew(false) }
+        }}>
+          <option value="">None</option>
+          {items.map(i => <option key={i.id} value={i.name}>{i.name}</option>)}
+          <option value="__new__">+ Add {addLabel}…</option>
+        </select>
+      </FormCell>
+      {showNew && (
+        <FormCell label={`New ${addLabel}`} last={last}>
+          <input className="form-input" placeholder={`e.g. ${addLabel}`} value={newVal}
+            onChange={e=>setNewVal(e.target.value)}
+            onKeyDown={e=>e.key==='Enter'&&handleAdd()} autoFocus/>
+          <button className="btn-text" style={{marginLeft:8,flexShrink:0}} onClick={handleAdd}>Add</button>
+        </FormCell>
+      )}
+    </>
+  )
+}
+
 function ProjectSheet({ project, categories, onSave, onClose, mutate }) {
+  const { data } = useCtx()
   const toast = useToast()
   const refs = {
-    name: useRef(), wood: useRef(), desc: useRef(), status: useRef(),
-    rough: useRef(), final: useRef(), builtWith: useRef(),
-    woodSource: useRef(), finishUsed: useRef(), year: useRef(), giftRecipient: useRef(),
+    name: useRef(), desc: useRef(), status: useRef(),
+    final: useRef(), builtWith: useRef(), year: useRef(), giftRecipient: useRef(),
   }
-  const [category, setCategory]   = useState(project?.category || '')
-  const [locationId, setLocationId] = useState(project?.wood_location_id || '')
-  const [newCat, setNewCat]       = useState('')
-  const [showNewCat, setShowNewCat] = useState(false)
+  const [category,   setCategory]   = useState(project?.category    || '')
+  const [speciesVal, setSpeciesVal] = useState(project?.wood_type   || '')
+  const [finishVal,  setFinishVal]  = useState(project?.finish_used || '')
+  const [woodSrcId,  setWoodSrcId]  = useState(project?.wood_stock_id || '')
 
-  const addNewCategory = async () => {
-    const name = newCat.trim()
-    if (!name) return
-    try {
-      const cat = await db.addCategory(name)
-      mutate(d => ({ ...d, categories: [...(d.categories || []), cat].sort((a,b) => a.name.localeCompare(b.name)) }))
-      setCategory(name)
-      setNewCat('')
-      setShowNewCat(false)
-      toast('Category added', 'success')
-    } catch (e) { toast(e.message, 'error') }
-  }
+  const woodLocations = data?.woodLocations || []
+  const woodStock     = data?.woodStock     || []
+  const speciesList   = data?.species       || []
+  const finishesList  = data?.finishes      || []
+
+  // Group stock by location for the dropdown
+  const stockGroups = woodLocations.map(loc => ({
+    loc,
+    items: woodStock.filter(w => w.location_id === loc.id && w.status !== 'Used up')
+  })).filter(g => g.items.length > 0)
+  const unlocated = woodStock.filter(w => !w.location_id && w.status !== 'Used up')
 
   const handleSave = async () => {
-    const name = refs.name.current?.value.trim()
-    if (!name) return
+    const name = refs.name.current?.value.trim(); if (!name) return
     const yearVal = refs.year.current?.value.trim()
+    // Resolve species_id and finish_id
+    const sp = speciesList.find(s => s.name === speciesVal)
+    const fi = finishesList.find(f => f.name === finishVal)
     await onSave({
       name,
       category,
-      wood_type:        refs.wood.current?.value.trim()       || '',
+      wood_type:        speciesVal,
+      species_id:       sp?.id || null,
+      wood_stock_id:    woodSrcId || null,
       description:      refs.desc.current?.value.trim()       || '',
       status:           refs.status.current?.value            || 'active',
-      dimensions_rough: refs.rough.current?.value.trim()      || '',
       dimensions_final: refs.final.current?.value.trim()      || '',
       built_with:       refs.builtWith.current?.value.trim()  || '',
-      wood_source:      refs.woodSource.current?.value.trim() || '',
-      finish_used:      refs.finishUsed.current?.value.trim() || '',
+      finish_used:      finishVal,
+      finish_id:        fi?.id || null,
       year_completed:   yearVal ? parseInt(yearVal) : null,
       gift_recipient:   refs.giftRecipient.current?.value.trim() || '',
     })
@@ -728,23 +768,13 @@ function ProjectSheet({ project, categories, onSave, onClose, mutate }) {
     <Sheet title={project ? 'Edit Project' : 'New Project'} onClose={onClose} onSave={handleSave}>
       <div className="form-group">
         <FormCell label="Name"><input ref={refs.name} className="form-input" placeholder="Cherry Bowl" defaultValue={project?.name || ''} autoFocus /></FormCell>
-        <FormCell label="Category">
-          <select className="form-select" value={category} onChange={e => {
-            if (e.target.value === '__new__') { setShowNewCat(true) }
-            else setCategory(e.target.value)
-          }}>
-            <option value="">None</option>
-            {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-            <option value="__new__">+ Add new category…</option>
-          </select>
-        </FormCell>
-        {showNewCat && (
-          <FormCell label="New category">
-            <input className="form-input" placeholder="e.g. Turning" value={newCat} onChange={e => setNewCat(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && addNewCategory()} autoFocus />
-            <button className="btn-text" style={{ marginLeft: 8, flexShrink: 0 }} onClick={addNewCategory}>Add</button>
-          </FormCell>
-        )}
+        <ManagedSelect label="Category" value={category} onChange={setCategory}
+          items={categories} addLabel="category"
+          onAddNew={async name => {
+            const cat = await db.addCategory(name)
+            mutate(d => ({ ...d, categories: [...(d.categories||[]), cat].sort((a,b)=>a.name.localeCompare(b.name)) }))
+          }}
+        />
         <FormCell label="Status" last>
           <select ref={refs.status} className="form-select" defaultValue={project?.status || 'active'}>
             <option value="planning">Planning</option>
@@ -755,14 +785,39 @@ function ProjectSheet({ project, categories, onSave, onClose, mutate }) {
         </FormCell>
       </div>
       <div className="form-group">
-        <FormCell label="Wood species"><input ref={refs.wood} className="form-input" placeholder="Cherry" defaultValue={project?.wood_type || ''} /></FormCell>
-        <FormCell label="Wood source"><input ref={refs.woodSource} className="form-input" placeholder="Sherborn back lot" defaultValue={project?.wood_source || ''} /></FormCell>
+        <ManagedSelect label="Wood species" value={speciesVal} onChange={setSpeciesVal}
+          items={speciesList} addLabel="species"
+          onAddNew={async name => {
+            const s = await db.addSpecies(name)
+            mutate(d => ({ ...d, species: [...(d.species||[]), s].sort((a,b)=>a.name.localeCompare(b.name)) }))
+          }}
+        />
+        <FormCell label="Wood source">
+          <select className="form-select" value={woodSrcId} onChange={e=>setWoodSrcId(e.target.value)}>
+            <option value="">None</option>
+            {stockGroups.map(g => (
+              <optgroup key={g.loc.id} label={g.loc.name}>
+                {g.items.map(w => <option key={w.id} value={w.id}>{w.species}{w.harvested_at?' · '+new Date(w.harvested_at).getFullYear():''} · {w.status}</option>)}
+              </optgroup>
+            ))}
+            {unlocated.length > 0 && (
+              <optgroup label="No location">
+                {unlocated.map(w => <option key={w.id} value={w.id}>{w.species}{w.harvested_at?' · '+new Date(w.harvested_at).getFullYear():''}</option>)}
+              </optgroup>
+            )}
+          </select>
+        </FormCell>
         <FormCell label="Built with"><input ref={refs.builtWith} className="form-input" placeholder="Solo, with dad…" defaultValue={project?.built_with || ''} /></FormCell>
-        <FormCell label="Finish used"><input ref={refs.finishUsed} className="form-input" placeholder="Arm-R-Seal" defaultValue={project?.finish_used || ''} /></FormCell>
+        <ManagedSelect label="Finish used" value={finishVal} onChange={setFinishVal}
+          items={finishesList} addLabel="finish"
+          onAddNew={async name => {
+            const f = await db.addFinish(name)
+            mutate(d => ({ ...d, finishes: [...(d.finishes||[]), f].sort((a,b)=>a.name.localeCompare(b.name)) }))
+          }}
+        />
         <FormCell label="Year completed"><input ref={refs.year} className="form-input" type="number" placeholder={new Date().getFullYear()} defaultValue={project?.year_completed || ''} /></FormCell>
         <FormCell label="Notes"><input ref={refs.desc} className="form-input" placeholder="Optional" defaultValue={project?.description || ''} /></FormCell>
         <FormCell label="Gift / recipient"><input ref={refs.giftRecipient} className="form-input" placeholder="Dad, Christmas 2023" defaultValue={project?.gift_recipient || ''} /></FormCell>
-        <FormCell label="Rough dimensions"><input ref={refs.rough} className="form-input" placeholder='12" × 12"' defaultValue={project?.dimensions_rough || ''} /></FormCell>
         <FormCell label="Final dimensions" last><input ref={refs.final} className="form-input" placeholder='10" × 3"' defaultValue={project?.dimensions_final || ''} /></FormCell>
       </div>
     </Sheet>

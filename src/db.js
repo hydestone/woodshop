@@ -13,7 +13,7 @@ async function q(promise) {
 export async function loadAll() {
   const safe = (promise, fallback = []) => promise.then(r => r.data ?? fallback).catch(() => fallback)
   const [projects, steps, coats, maintenance, shopping, photos,
-         woodStock, brainstorming, finishProducts, resources, shopImprovements, categories, woodLocations, projectWoodSources] = await Promise.all([
+         woodStock, brainstorming, finishProducts, resources, shopImprovements, categories, woodLocations, projectWoodSources, species, finishes] = await Promise.all([
     safe(supabase.from('projects').select('*').order('created_at')),
     safe(supabase.from('steps').select('*').order('sort_order')),
     safe(supabase.from('coats').select('*').order('coat_number')),
@@ -28,6 +28,8 @@ export async function loadAll() {
     safe(supabase.from('categories').select('*').eq('type', 'project').order('name')),
     safe(supabase.from('wood_locations').select('*').order('name')),
     safe(supabase.from('project_wood_sources').select('*')),
+    safe(supabase.from('species').select('*').order('name')),
+    safe(supabase.from('finishes').select('*').order('name')),
   ])
   return {
     projects,
@@ -44,6 +46,8 @@ export async function loadAll() {
     categories,
     woodLocations,
     projectWoodSources,
+    species,
+    finishes,
   }
 }
 
@@ -220,6 +224,9 @@ export async function deleteShopImprovement(id) {
 export async function loadCategories() {
   return q(supabase.from('categories').select('*').eq('type', 'project').order('name'))
 }
+export async function updateCategory(id, name) {
+  return q(supabase.from('categories').update({ name }).eq('id', id).select().single())
+}
 export async function addCategory(name) {
   return q(supabase.from('categories').insert({ id: Math.random().toString(36).slice(2), name, type: 'project', created_at: isoNow() }).select().single())
 }
@@ -258,4 +265,26 @@ export async function geocodeAddress(address) {
     const d = await r.json()
     return d.length ? { lat: parseFloat(d[0].lat), lng: parseFloat(d[0].lon) } : null
   } catch(e) { return null }
+}
+
+// ── Species ───────────────────────────────────────────────────────────────────
+export async function addSpecies(name) {
+  return q(supabase.from('species').insert({ id: Math.random().toString(36).slice(2), name, created_at: isoNow() }).select().single())
+}
+export async function updateSpecies(id, name) {
+  return q(supabase.from('species').update({ name }).eq('id', id).select().single())
+}
+export async function deleteSpecies(id) {
+  return q(supabase.from('species').delete().eq('id', id))
+}
+
+// ── Finishes ──────────────────────────────────────────────────────────────────
+export async function addFinish(name) {
+  return q(supabase.from('finishes').insert({ id: Math.random().toString(36).slice(2), name, created_at: isoNow() }).select().single())
+}
+export async function updateFinish(id, name) {
+  return q(supabase.from('finishes').update({ name }).eq('id', id).select().single())
+}
+export async function deleteFinish(id) {
+  return q(supabase.from('finishes').delete().eq('id', id))
 }
