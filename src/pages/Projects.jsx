@@ -344,7 +344,7 @@ export function ProjectDetail() {
           </div>
         )}
         <div className="sub-tabs">
-          {[['steps','Build'],['finishing','Finishing'],['progress','Progress'],['inspiration','Inspiration']].map(([id, label]) => (
+          {[['steps','Build'],['finishing','Finishing'],['progress','Progress Photos'],['inspiration','Inspiration']].map(([id, label]) => (
             <button key={id} className={`sub-tab ${sub === id ? 'active' : ''}`} onClick={() => setSub(id)}>{label}</button>
           ))}
         </div>
@@ -684,7 +684,7 @@ function ProjectSheet({ project, categories, onSave, onClose, mutate }) {
   const refs = {
     name: useRef(), wood: useRef(), desc: useRef(), status: useRef(),
     rough: useRef(), final: useRef(), builtWith: useRef(),
-    woodSource: useRef(), finishUsed: useRef(), year: useRef(),
+    woodSource: useRef(), finishUsed: useRef(), year: useRef(), giftRecipient: useRef(),
   }
   const [category, setCategory]   = useState(project?.category || '')
   const [newCat, setNewCat]       = useState('')

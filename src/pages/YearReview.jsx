@@ -8,11 +8,19 @@ export default function YearReview() {
   const currentYear = new Date().getFullYear()
   const availableYears = useMemo(()=>{
     const ys = new Set(data.projects.map(p=>p.year_completed).filter(Boolean))
-    if (!ys.has(currentYear)) ys.add(currentYear)
+    ys.add(currentYear)
     return [...ys].sort((a,b)=>b-a)
-  },[data.projects])
+  },[data.projects, currentYear])
 
-  const [year, setYear] = useState(currentYear)
+  const defaultYear = useMemo(()=>{
+    const withProjects = data.projects.map(p=>p.year_completed).filter(Boolean)
+    return withProjects.length ? Math.max(...withProjects) : currentYear
+  },[data.projects, currentYear])
+
+  const [year, setYear] = useState(()=>{
+    const withProjects = data.projects.map(p=>p.year_completed).filter(Boolean)
+    return withProjects.length ? Math.max(...withProjects) : currentYear
+  })
 
   const stats = useMemo(()=>{
     const projs = data.projects.filter(p=>p.year_completed===year)
