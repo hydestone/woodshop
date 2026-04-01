@@ -139,6 +139,7 @@ function LocationSheet({ loc, onSave, onClose }) {
   const toast = useToast()
   const nameRef = useRef()
   const [searchVal, setSearchVal]   = useState('')
+  const [cityState, setCityState]   = useState(loc?.address?.split('·')[0]?.trim() || '')
   const [searching, setSearching]   = useState(false)
   const [results, setResults]       = useState([])
   const [pinLat, setPinLat]         = useState(loc?.lat || null)
@@ -160,8 +161,8 @@ function LocationSheet({ loc, onSave, onClose }) {
       if (!mapRef.current || mapInst.current) return
       const L = window.L
       if (!L) { setTimeout(init, 150); return }
-      const center = (pinLat && pinLng) ? [pinLat, pinLng] : [42.3, -71.5]
-      const zoom   = (pinLat && pinLng) ? 13 : 9
+      const center = (pinLat && pinLng) ? [pinLat, pinLng] : [43.5, -71.5]
+      const zoom   = (pinLat && pinLng) ? 13 : 7
       const map = L.map(mapRef.current, { zoomControl: true }).setView(center, zoom)
       mapInst.current = map
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -217,14 +218,30 @@ function LocationSheet({ loc, onSave, onClose }) {
     const name = nameRef.current?.value.trim()
     if (!name) return
     if (!pinLat || !pinLng) { toast('Click on the map to place a pin first', 'error'); return }
-    await onSave({ name, address: pinLabel, lat: pinLat, lng: pinLng })
+    await onSave({ name, address: cityState.trim() || pinLabel, lat: pinLat, lng: pinLng })
   }
 
   return (
     <Sheet title={loc ? 'Edit Location' : 'Add Location'} onClose={onClose} onSave={handleSave}>
       <div className="form-group" style={{marginBottom:12}}>
-        <FormCell label="Name" last>
+        <FormCell label="Name">
           <input ref={nameRef} className="form-input" placeholder="Sherborn Back Lot" defaultValue={loc?.name||''} autoFocus/>
+        </FormCell>
+        <FormCell label="City, state" last>
+          <input
+            className="form-input"
+            placeholder="Sherborn, MA"
+            value={cityState}
+            onChange={e=>setCityState(e.target.value)}
+            onBlur={async()=>{
+              const q=cityState.trim(); if(!q||!mapInst.current) return
+              try {
+                const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&q='+encodeURIComponent(q)+'&limit=1&countrycodes=us',{headers:{'Accept-Language':'en-US','User-Agent':'JDHWoodworks/1.0'}})
+                const d=await r.json()
+                if(d.length) mapInst.current.setView([parseFloat(d[0].lat),parseFloat(d[0].lon)],12)
+              } catch(e){}
+            }}
+          />
         </FormCell>
       </div>
 
