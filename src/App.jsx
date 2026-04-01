@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, createContext, useContext } from 'react'
 import * as db from './db.js'
+import { getSession, signOut, onAuthStateChange } from './supabase.js'
+import Auth from './pages/Auth.jsx'
 import { ToastProvider } from './components/Toast.jsx'
 import GlobalSearch from './components/Search.jsx'
 import {
@@ -61,12 +63,33 @@ const MOBILE_TABS = [
 
 // ─── Root ─────────────────────────────────────────────────────────────────────
 export default function App() {
+  const [session, setSession]   = useState(null)
+  const [authChecked, setAuthChecked] = useState(false)
   const [data, setData]         = useState(null)
   const [loading, setLoading]   = useState(true)
   const [error, setError]       = useState(null)
   const [tab, setTabRaw]        = useState('home')
   const [projId, setProjId]     = useState(null)
   const [showMore, setShowMore] = useState(false)
+
+  // ── Auth state ────────────────────────────────────────────────────────────
+  useEffect(() => {
+    // Check for existing session on mount
+    getSession().then(s => {
+      setSession(s)
+      setAuthChecked(true)
+    })
+    // Listen for auth changes (login / logout)
+    const { data: { subscription } } = onAuthStateChange(s => {
+      setSession(s)
+      if (!s) {
+        // Logged out — clear data
+        setData(null)
+        setLoading(true)
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [])
 
   const reload = useCallback(async () => {
     try {
@@ -80,7 +103,10 @@ export default function App() {
     }
   }, [])
 
-  useEffect(() => { reload() }, [reload])
+  // Load data once authenticated
+  useEffect(() => {
+    if (session) reload()
+  }, [session, reload])
 
   const mutate = useCallback(fn => setData(prev => fn({ ...prev })), [])
 
@@ -89,6 +115,15 @@ export default function App() {
     setShowMore(false)
     setTabRaw(id)
   }, [])
+
+  // ── Auth gate ─────────────────────────────────────────────────────────────
+  if (!authChecked) return (
+    <div className="center-screen">
+      <div className="spinner" />
+    </div>
+  )
+
+  if (!session) return <Auth onLogin={s => setSession(s)} />
 
   // ── Loading ────────────────────────────────────────────────────────────────
   if (loading) return (
@@ -186,6 +221,29 @@ export default function App() {
                     </button>
                   )
                 })}
+              </div>
+              <div style={{ padding: '12px 8px', borderTop: '1px solid rgba(255,255,255,.08)' }}>
+                <button
+                  onClick={() => signOut()}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    width: '100%', padding: '9px 10px',
+                    background: 'transparent', border: 'none',
+                    borderRadius: 8, cursor: 'pointer',
+                    fontSize: 13, fontWeight: 500,
+                    color: 'rgba(203,213,225,.6)',
+                    fontFamily: 'inherit',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.color = '#fff'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'rgba(203,213,225,.6)'}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                  </svg>
+                  Sign out
+                </button>
               </div>
             </nav>
 

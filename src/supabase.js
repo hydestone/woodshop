@@ -10,6 +10,27 @@ if (!url || !key) {
 export const supabase = createClient(url || '', key || '')
 export const BUCKET = 'woodshop-photos'
 
+// ── Auth helpers ──────────────────────────────────────────────────────────────
+export async function getSession() {
+  const { data: { session } } = await supabase.auth.getSession()
+  return session
+}
+
+export async function getCurrentUserId() {
+  const { data: { user } } = await supabase.auth.getUser()
+  return user?.id || null
+}
+
+export async function signOut() {
+  await supabase.auth.signOut()
+}
+
+export function onAuthStateChange(callback) {
+  return supabase.auth.onAuthStateChange((_event, session) => {
+    callback(session)
+  })
+}
+
 export function photoUrl(storagePath) {
   if (!storagePath) return null
   const { data } = supabase.storage.from(BUCKET).getPublicUrl(storagePath)
