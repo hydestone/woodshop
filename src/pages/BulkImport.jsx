@@ -87,8 +87,8 @@ function CleanupTable({ newProjects, onDone }) {
                     </select>
                   </td>
                   <td style={{ ...td(i), minWidth: 64 }}>
-                    <input style={{ ...inp, width: 56 }} type="number" defaultValue={live.year_completed || ''}
-                      placeholder={new Date().getFullYear()}
+                    <input style={{ ...inp, width: 64 }} type="number" min="1900" max="2100" step="1"
+                      defaultValue={live.year_completed || new Date().getFullYear()}
                       onBlur={e => { const v = e.target.value ? parseInt(e.target.value) : null; if (v !== live.year_completed) save(proj.id, 'year_completed', v) }} />
                   </td>
                   <td style={{ ...td(i), minWidth: 90 }}>
@@ -225,7 +225,7 @@ export default function BulkImport() {
         created.push(proj)
         for (const row of groupRows) {
           try {
-            const photo = await db.uploadPhoto(proj.id, row.file, '', 'finished', 'finished')
+            const photo = await db.uploadPhoto(proj.id, row.file, '', 'progress', 'finished')
             mutate(d => ({ ...d, photos: [photo, ...d.photos] }))
           } catch(e) { console.error('Photo failed:', e) }
           uploaded++; setProgress(Math.round(uploaded/rows.length*100))
@@ -236,7 +236,7 @@ export default function BulkImport() {
     // Existing projects
     for (const row of rows.filter(r => r.dest===DEST.EXISTING && r.existingProjId)) {
       try {
-        const photo = await db.uploadPhoto(row.existingProjId, row.file, '', 'finished', 'finished')
+        const photo = await db.uploadPhoto(row.existingProjId, row.file, '', 'progress', 'finished')
         mutate(d => ({ ...d, photos: [photo, ...d.photos] }))
       } catch(e) { console.error('Existing photo failed:', e) }
       uploaded++; setProgress(Math.round(uploaded/rows.length*100))
