@@ -4,7 +4,7 @@ import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
 import { addToGoogleCalendar, addToAppleReminders } from '../supabase.js'
 import {
-  Sheet, FormCell, BulkAddSheet, ConfirmSheet, DropZone, PhotoGrid, TagInput,
+  Sheet, FormCell, BulkAddSheet, ConfirmSheet, DropZone, PhotoGrid, PhotoCard, TagInput,
   STATUS, coatStatus, fmtShort, localDt,
   IPlus, ITrash, ICircle, ICheck, IChevR, IChevL, IEdit, ICal, ICamera, IBell, IGrid,
 } from '../components/Shared.jsx'
@@ -40,6 +40,32 @@ export default function Projects() {
     if (items.length) acc.push({ status: s, items })
     return acc
   }, [])
+
+  if (fabOnly) return (
+    <div style={{ position: 'fixed', right: 20, bottom: 96, zIndex: 10 }}>
+      <button className="fab" onClick={() => fileRef.current?.click()} disabled={uploading} aria-label="Upload photos">
+        <ICamera size={22} color="#fff" sw={2} />
+      </button>
+      <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => handleFiles(Array.from(e.target.files))} />
+      {showTag && pendingFiles.length > 0 && (
+        <TagSheet files={pendingFiles} projId={projId} onDone={() => { setPendingFiles([]); setShowTag(false) }} onClose={() => { setPendingFiles([]); setShowTag(false) }} />
+      )}
+    </div>
+  )
+
+  if (inline) return (
+    <PhotoGrid photos={photos} onEdit={async (id, fields) => {
+      if (fields._delete) {
+        const p = data.photos.find(x => x.id === id)
+        mutate(d => ({ ...d, photos: d.photos.filter(x => x.id !== id) }))
+        if (p) await db.deletePhoto(p).catch(() => {})
+      } else {
+        mutate(d => ({ ...d, photos: d.photos.map(x => x.id === id ? { ...x, ...fields } : x) }))
+        await db.updatePhoto(id, fields).catch(() => {})
+        toast('Saved', 'success')
+      }
+    }} />
+  )
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
@@ -308,64 +334,286 @@ export function ProjectDetail() {
     } catch (e) { toast(e.message, 'error') }
   }
 
+  const steps      = data.steps.filter(s => s.project_id === projId)
+  const coats      = data.coats.filter(c => c.project_id === projId)
+  const photos     = data.photos.filter(p => p.project_id === projId)
+  const stepsDone  = steps.filter(s => s.completed).length
+
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }} className="slide-in">
-      <div className="page-header" style={{ paddingTop: 12 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div style={{ height: '100%', overflowY: 'auto', background: 'var(--bg)' }} className="slide-in">
+
+      {/* ── Header ── */}
+      <div style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)', padding: '12px 20px 16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <button className="back-btn" onClick={() => setProjId(null)}>
             <IChevL size={16} color="currentColor" sw={2.2} />
             Projects
           </button>
-          <div style={{ display: 'flex', gap: 4, paddingBottom: 8 }}>
+          <div style={{ display: 'flex', gap: 4 }}>
             <button className="icon-btn" onClick={() => setEditing(true)} aria-label="Edit project"><IEdit size={17} /></button>
             <button className="icon-btn" onClick={() => setConfirming(true)} aria-label="Delete project" style={{ color: 'var(--red)' }}><ITrash size={17} /></button>
           </div>
         </div>
-        <h2 className="page-title" style={{ fontSize: 22 }}>{project.name}</h2>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
+
+        <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 6 }}>{project.name}</h2>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
           {project.category && <span style={{ fontSize: 12, background: 'var(--blue-dim)', color: 'var(--blue)', borderRadius: 99, padding: '2px 10px', fontWeight: 600 }}>{project.category}</span>}
           {project.wood_type && <span style={{ fontSize: 13, color: 'var(--text-3)' }}>{project.wood_type}</span>}
           {project.year_completed && <span style={{ fontSize: 13, color: 'var(--text-4)' }}>{project.year_completed}</span>}
-          <button
-            className="badge-pill"
-            style={{ background: ss.bg, color: ss.color, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
-            onClick={cycleStatus}
-            title="Tap to change status"
-          >
+          <button className="badge-pill" style={{ background: ss.bg, color: ss.color, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }} onClick={cycleStatus} title="Tap to change status">
             {project.status} ▾
           </button>
         </div>
-        {(project.built_with || project.wood_source || project.finish_used) && (
-          <div style={{ display: 'flex', gap: 12, marginTop: 6, flexWrap: 'wrap' }}>
-            {project.built_with  && <span style={{ fontSize: 12, color: 'var(--text-3)' }}>👤 {project.built_with}</span>}
-            {project.wood_source && <span style={{ fontSize: 12, color: 'var(--text-3)' }}>🌲 {project.wood_source}</span>}
-            {project.finish_used && <span style={{ fontSize: 12, color: 'var(--text-3)' }}>🎨 {project.finish_used}</span>}
-          {project.gift_recipient && <span style={{ fontSize: 12, color: 'var(--text-3)' }}>🎁 {project.gift_recipient}</span>}
-          </div>
-        )}
-        <div className="sub-tabs">
-          {[['steps','Build'],['finishing','Finishing'],['progress','Progress Photos'],['inspiration','Inspiration']].map(([id, label]) => (
-            <button key={id} className={`sub-tab ${sub === id ? 'active' : ''}`} onClick={() => setSub(id)}>{label}</button>
-          ))}
+
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          {project.built_with    && <span style={{ fontSize: 12, color: 'var(--text-3)' }}>👤 {project.built_with}</span>}
+          {project.finish_used   && <span style={{ fontSize: 12, color: 'var(--text-3)' }}>🎨 {project.finish_used}</span>}
+          {project.gift_recipient&& <span style={{ fontSize: 12, color: 'var(--text-3)' }}>🎁 {project.gift_recipient}</span>}
+          {project.description   && <span style={{ fontSize: 12, color: 'var(--text-3)' }}>{project.description}</span>}
         </div>
       </div>
 
-      <div style={{ flex: 1, overflow: 'hidden', background: 'var(--bg)' }}>
-        {sub === 'steps'       && <StepsPane      projId={projId} />}
-        {sub === 'finishing'   && <FinishingPane   projId={projId} />}
-        {sub === 'progress'    && <PhotoPane       projId={projId} type="progress" showAll />}
-        {sub === 'inspiration' && <PhotoPane       projId={projId} type="inspiration" />}
+      {/* ── Two-column body ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'var(--border-2)' }} className="proj-detail-grid">
+
+        {/* Left — Build Steps */}
+        <div style={{ background: 'var(--surface)', padding: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.8px' }}>Build Steps</div>
+              {steps.length > 0 && <div style={{ fontSize: 12, color: 'var(--text-4)', marginTop: 2 }}>{stepsDone} of {steps.length} complete</div>}
+            </div>
+            <button className="icon-btn" onClick={() => setSub('steps-add')} aria-label="Add step"><IPlus size={18} color="var(--accent)" /></button>
+          </div>
+          <StepsList projId={projId} />
+        </div>
+
+        {/* Right — Finishing */}
+        <div style={{ background: 'var(--surface)', padding: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.8px' }}>Finishing</div>
+            <button className="icon-btn" onClick={() => setSub('finish-add')} aria-label="Add coat"><IPlus size={18} color="var(--accent)" /></button>
+          </div>
+          <FinishingList projId={projId} sub={sub} setSub={setSub} />
+        </div>
       </div>
 
-      {editing && <ProjectSheet project={project} categories={categories} onSave={handleUpdate} onClose={() => setEditing(false)} mutate={mutate} />}
-      {confirming && (
-        <ConfirmSheet
-          message={`Delete "${project.name}"? All steps, coats, and photos will be removed. This cannot be undone.`}
-          onConfirm={handleDelete}
-          onClose={() => setConfirming(false)}
+      {/* ── Photos full-width ── */}
+      {photos.length > 0 && (
+        <div style={{ background: 'var(--surface)', marginTop: 1, padding: '20px' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.8px', marginBottom: 12 }}>Photos</div>
+          <PhotoPane projId={projId} type="progress" showAll inline />
+        </div>
+      )}
+
+      {/* ── Inspiration ── */}
+      {data.photos.filter(p => p.project_id === projId && p.photo_type === 'inspiration').length > 0 && (
+        <div style={{ background: 'var(--surface)', marginTop: 1, padding: '20px' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.8px', marginBottom: 12 }}>Inspiration</div>
+          <PhotoPane projId={projId} type="inspiration" inline />
+        </div>
+      )}
+
+      {/* ── Add photo FAB ── */}
+      <div style={{ height: 80 }} />
+      <PhotoPane projId={projId} type="progress" showAll fabOnly />
+
+      {editing    && <ProjectSheet project={project} categories={categories} onSave={handleUpdate} onClose={() => setEditing(false)} mutate={mutate} />}
+      {confirming && <ConfirmSheet message={`Delete "${project.name}"? All steps, coats, and photos will be removed. This cannot be undone.`} onConfirm={handleDelete} onClose={() => setConfirming(false)} />}
+      {showRon    && <RonSwansonModal onClose={() => setShowRon(false)} />}
+
+      {/* Add steps sheet */}
+      {sub === 'steps-add' && (
+        <BulkAddSheet title="Add Build Steps" hint="Enter one step per line"
+          onSave={async lines => {
+            const existing = data.steps.filter(s => s.project_id === projId)
+            const maxOrder = existing.length ? Math.max(...existing.map(s => s.sort_order)) : 0
+            const rows = lines.map((title, i) => ({ project_id: projId, title, note: '', completed: false, sort_order: maxOrder + i + 1 }))
+            const saved = await db.addStepsBulk(rows)
+            mutate(d => ({ ...d, steps: [...d.steps, ...saved] }))
+            setSub(null)
+          }}
+          onClose={() => setSub(null)}
         />
       )}
-      {showRon && <RonSwansonModal onClose={() => setShowRon(false)} />}
+      {/* Add coat sheet */}
+      {sub === 'finish-add' && (
+        <CoatSheet
+          nextNum={(data.coats.filter(c=>c.project_id===projId).at(-1)?.coat_number??0)+1}
+          defaultCoat={data.coats.filter(c=>c.project_id===projId).at(-1)}
+          onSave={async fields => {
+            const coat = await db.addCoat({ project_id: projId, applied_at: null, ...fields })
+            mutate(d => ({ ...d, coats: [...d.coats, coat] }))
+            setSub(null)
+          }}
+          onClose={() => setSub(null)}
+        />
+      )}
+    </div>
+  )
+}
+
+
+// ─── StepsList (inline for two-column layout) ─────────────────────────────────
+function StepsList({ projId }) {
+  const { data, mutate } = useCtx()
+  const toast = useToast()
+  const [editId, setEditId] = useState(null)
+  const [editVal, setEditVal] = useState('')
+
+  const steps = data.steps.filter(s => s.project_id === projId).sort((a, b) => a.sort_order - b.sort_order)
+
+  const toggle = async step => {
+    const completed = !step.completed
+    mutate(d => ({ ...d, steps: d.steps.map(s => s.id === step.id ? { ...s, completed } : s) }))
+    await db.updateStep(step.id, { completed }).catch(e => toast(e.message, 'error'))
+  }
+
+  const del = async id => {
+    mutate(d => ({ ...d, steps: d.steps.filter(s => s.id !== id) }))
+    await db.deleteStep(id).catch(e => toast(e.message, 'error'))
+  }
+
+  const saveEdit = async id => {
+    const title = editVal.trim()
+    if (!title) { setEditId(null); return }
+    mutate(d => ({ ...d, steps: d.steps.map(s => s.id === id ? { ...s, title } : s) }))
+    await db.updateStep(id, { title }).catch(e => toast(e.message, 'error'))
+    setEditId(null)
+  }
+
+  if (!steps.length) return (
+    <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-4)', fontSize: 13 }}>No steps yet — click + to add</div>
+  )
+
+  return (
+    <div>
+      {steps.map(s => (
+        <div key={s.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--border-2)' }}>
+          <button className="check-btn" onClick={() => toggle(s)} style={{ flexShrink: 0, marginTop: 1 }}>
+            {s.completed ? <ICheck size={20} color="var(--forest)" sw={2} /> : <ICircle size={20} color="var(--text-4)" sw={1.5} />}
+          </button>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {editId === s.id ? (
+              <div style={{ display: 'flex', gap: 6 }}>
+                <input className="edit-input" value={editVal} onChange={e => setEditVal(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') saveEdit(s.id); if (e.key === 'Escape') setEditId(null) }} autoFocus />
+                <button className="btn-text" onClick={() => saveEdit(s.id)}>Save</button>
+              </div>
+            ) : (
+              <div style={{ fontSize: 14, textDecoration: s.completed ? 'line-through' : 'none', color: s.completed ? 'var(--text-4)' : 'var(--text)', cursor: 'text' }}
+                onDoubleClick={() => { setEditId(s.id); setEditVal(s.title) }}>
+                {s.title}
+              </div>
+            )}
+            {s.note && <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>{s.note}</div>}
+          </div>
+          <button className="icon-btn" onClick={() => del(s.id)} style={{ flexShrink: 0 }}><ITrash size={14} /></button>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+
+// ─── FinishingList (inline for two-column layout) ─────────────────────────────
+function FinishingList({ projId, sub, setSub }) {
+  const { data, mutate } = useCtx()
+  const toast = useToast()
+  const [markId, setMarkId]     = useState(null)
+  const [editCoat, setEditCoat] = useState(null)
+
+  const coats = data.coats.filter(c => c.project_id === projId).sort((a, b) => a.coat_number - b.coat_number)
+  const proj  = data.projects.find(p => p.id === projId)
+
+  const del = async id => {
+    mutate(d => ({ ...d, coats: d.coats.filter(c => c.id !== id) }))
+    await db.deleteCoat(id).catch(e => toast(e.message, 'error'))
+  }
+
+  const markApplied = async (id, dt) => {
+    const applied_at = new Date(dt).toISOString()
+    mutate(d => ({ ...d, coats: d.coats.map(c => c.id === id ? { ...c, applied_at } : c) }))
+    await db.updateCoat(id, { applied_at }).catch(e => toast(e.message, 'error'))
+    toast('Coat logged', 'success')
+    setMarkId(null)
+  }
+
+  const handleEdit = async (id, fields) => {
+    mutate(d => ({ ...d, coats: d.coats.map(c => c.id === id ? { ...c, ...fields } : c) }))
+    await db.updateCoat(id, fields).catch(e => toast(e.message, 'error'))
+    toast('Saved', 'success')
+    setEditCoat(null)
+  }
+
+  if (!coats.length) return (
+    <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-4)', fontSize: 13 }}>No coats yet — click + to add</div>
+  )
+
+  return (
+    <div>
+      {coats.map((coat, idx) => {
+        const st     = coatStatus(coat)
+        const prevOk = idx === 0 || !!coats[idx - 1].applied_at
+        const locked = !coat.applied_at && !prevOk
+        const applied= !!coat.applied_at
+        const circleClass = applied ? 'coat-circle applied' : st.urgent ? 'coat-circle urgent' : 'coat-circle'
+        return (
+          <div key={coat.id} style={{ borderBottom: idx < coats.length - 1 ? '1px solid var(--border-2)' : 'none', padding: '12px 0' }}>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <div className={circleClass} style={{ flexShrink: 0 }}>{coat.coat_number}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <span style={{ fontWeight: 600, fontSize: 14 }}>{coat.product}</span>
+                  <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: st.color }}>{st.label}</span>
+                    <button className="icon-btn" onClick={() => setEditCoat(coat)}><IEdit size={13} /></button>
+                    <button className="icon-btn" onClick={() => del(coat.id)} style={{ color: 'var(--red)' }}><ITrash size={13} /></button>
+                  </div>
+                </div>
+                {coat.notes && <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>{coat.notes}</div>}
+                <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 3 }}>
+                  {coat.applied_at ? `Applied ${fmtShort(coat.applied_at)} · ` : ''}Wait {coat.interval_value}{coat.interval_unit === 'hours' ? 'h' : 'd'}
+                </div>
+                {!locked && (
+                  <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+                    <button className={st.urgent ? 'btn-primary' : 'btn-secondary'} style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => setMarkId(coat.id)}>
+                      {coat.applied_at ? (st.urgent ? 'Apply next coat' : 'Re-log') : 'Mark applied'}
+                    </button>
+                    {applied && <>
+                      <button className="btn-cal" onClick={() => {
+                        const ms = coat.interval_unit==='hours' ? coat.interval_value*3600000 : coat.interval_value*86400000
+                        const readyAt = new Date(new Date(coat.applied_at).getTime()+ms)
+                        addToGoogleCalendar({ title: `Apply coat ${coat.coat_number+1} — ${coat.product}${proj?` (${proj.name})`:''}`, start: readyAt, end: new Date(readyAt.getTime()+3600000), description: `Coat ${coat.coat_number} is ready.` })
+                      }}><ICal size={12} color="currentColor" /> Calendar</button>
+                      <button className="btn-reminder" onClick={() => {
+                        const ms = coat.interval_unit==='hours' ? coat.interval_value*3600000 : coat.interval_value*86400000
+                        const readyAt = new Date(new Date(coat.applied_at).getTime()+ms)
+                        addToAppleReminders({ title: `Apply coat ${coat.coat_number+1} — ${coat.product}`, notes: `Coat ${coat.coat_number} is ready.`, dueDate: readyAt })
+                      }}><IBell size={12} color="currentColor" /> Reminders</button>
+                    </>}
+                  </div>
+                )}
+                {locked && <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 4 }}>Waiting for coat {coat.coat_number - 1}</div>}
+              </div>
+            </div>
+          </div>
+        )
+      })}
+      {markId && (
+        <Sheet title="Mark Applied" onClose={() => setMarkId(null)} onSave={async () => {
+          const el = document.getElementById('coat-dt-input')
+          if (el?.value) await markApplied(markId, el.value)
+        }}>
+          <div className="form-group">
+            <FormCell label="Date & time" last>
+              <input id="coat-dt-input" className="form-input" type="datetime-local" defaultValue={localDt()} />
+            </FormCell>
+          </div>
+        </Sheet>
+      )}
+      {editCoat && <CoatSheet nextNum={editCoat.coat_number} defaultCoat={editCoat} isEdit onSave={f => handleEdit(editCoat.id, f)} onClose={() => setEditCoat(null)} />}
     </div>
   )
 }
@@ -410,6 +658,32 @@ function StepsPane({ projId }) {
       setShowAdd(false)
     } catch (e) { toast(e.message, 'error') }
   }
+
+  if (fabOnly) return (
+    <div style={{ position: 'fixed', right: 20, bottom: 96, zIndex: 10 }}>
+      <button className="fab" onClick={() => fileRef.current?.click()} disabled={uploading} aria-label="Upload photos">
+        <ICamera size={22} color="#fff" sw={2} />
+      </button>
+      <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => handleFiles(Array.from(e.target.files))} />
+      {showTag && pendingFiles.length > 0 && (
+        <TagSheet files={pendingFiles} projId={projId} onDone={() => { setPendingFiles([]); setShowTag(false) }} onClose={() => { setPendingFiles([]); setShowTag(false) }} />
+      )}
+    </div>
+  )
+
+  if (inline) return (
+    <PhotoGrid photos={photos} onEdit={async (id, fields) => {
+      if (fields._delete) {
+        const p = data.photos.find(x => x.id === id)
+        mutate(d => ({ ...d, photos: d.photos.filter(x => x.id !== id) }))
+        if (p) await db.deletePhoto(p).catch(() => {})
+      } else {
+        mutate(d => ({ ...d, photos: d.photos.map(x => x.id === id ? { ...x, ...fields } : x) }))
+        await db.updatePhoto(id, fields).catch(() => {})
+        toast('Saved', 'success')
+      }
+    }} />
+  )
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
@@ -518,6 +792,32 @@ function FinishingPane({ projId }) {
     addToAppleReminders({ title: `Apply coat ${coat.coat_number + 1} — ${coat.product}`, notes: `Coat ${coat.coat_number} is ready.`, dueDate: readyAt })
   }
 
+  if (fabOnly) return (
+    <div style={{ position: 'fixed', right: 20, bottom: 96, zIndex: 10 }}>
+      <button className="fab" onClick={() => fileRef.current?.click()} disabled={uploading} aria-label="Upload photos">
+        <ICamera size={22} color="#fff" sw={2} />
+      </button>
+      <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => handleFiles(Array.from(e.target.files))} />
+      {showTag && pendingFiles.length > 0 && (
+        <TagSheet files={pendingFiles} projId={projId} onDone={() => { setPendingFiles([]); setShowTag(false) }} onClose={() => { setPendingFiles([]); setShowTag(false) }} />
+      )}
+    </div>
+  )
+
+  if (inline) return (
+    <PhotoGrid photos={photos} onEdit={async (id, fields) => {
+      if (fields._delete) {
+        const p = data.photos.find(x => x.id === id)
+        mutate(d => ({ ...d, photos: d.photos.filter(x => x.id !== id) }))
+        if (p) await db.deletePhoto(p).catch(() => {})
+      } else {
+        mutate(d => ({ ...d, photos: d.photos.map(x => x.id === id ? { ...x, ...fields } : x) }))
+        await db.updatePhoto(id, fields).catch(() => {})
+        toast('Saved', 'success')
+      }
+    }} />
+  )
+
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
       <div className="scroll-page" style={{ paddingBottom: 80 }}>
@@ -594,12 +894,13 @@ function FinishingPane({ projId }) {
 }
 
 // ─── Photo pane ───────────────────────────────────────────────────────────────
-function PhotoPane({ projId, type, showAll }) {
+function PhotoPane({ projId, type, showAll, inline, fabOnly }) {
   const { data, mutate } = useCtx()
   const toast = useToast()
   const [uploading, setUploading]       = useState(false)
   const [pendingFiles, setPendingFiles] = useState([])
   const [showTag, setShowTag]           = useState(false)
+  const [lightboxIdx, setLightboxIdx]   = useState(null)
   const fileRef = useRef()
 
   const photos = data.photos.filter(p => p.project_id === projId && (showAll ? true : p.photo_type === type))
@@ -636,6 +937,32 @@ function PhotoPane({ projId, type, showAll }) {
     await db.updatePhoto(id, fields).catch(e => toast(e.message, 'error'))
     toast('Saved', 'success')
   }
+
+  if (fabOnly) return (
+    <div style={{ position: 'fixed', right: 20, bottom: 96, zIndex: 10 }}>
+      <button className="fab" onClick={() => fileRef.current?.click()} disabled={uploading} aria-label="Upload photos">
+        <ICamera size={22} color="#fff" sw={2} />
+      </button>
+      <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => handleFiles(Array.from(e.target.files))} />
+      {showTag && pendingFiles.length > 0 && (
+        <TagSheet files={pendingFiles} projId={projId} onDone={() => { setPendingFiles([]); setShowTag(false) }} onClose={() => { setPendingFiles([]); setShowTag(false) }} />
+      )}
+    </div>
+  )
+
+  if (inline) return (
+    <PhotoGrid photos={photos} onEdit={async (id, fields) => {
+      if (fields._delete) {
+        const p = data.photos.find(x => x.id === id)
+        mutate(d => ({ ...d, photos: d.photos.filter(x => x.id !== id) }))
+        if (p) await db.deletePhoto(p).catch(() => {})
+      } else {
+        mutate(d => ({ ...d, photos: d.photos.map(x => x.id === id ? { ...x, ...fields } : x) }))
+        await db.updatePhoto(id, fields).catch(() => {})
+        toast('Saved', 'success')
+      }
+    }} />
+  )
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
