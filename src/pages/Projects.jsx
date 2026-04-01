@@ -353,7 +353,7 @@ export function ProjectDetail() {
       <div style={{ flex: 1, overflow: 'hidden', background: 'var(--bg)' }}>
         {sub === 'steps'       && <StepsPane      projId={projId} />}
         {sub === 'finishing'   && <FinishingPane   projId={projId} />}
-        {sub === 'progress'    && <PhotoPane       projId={projId} type="progress" />}
+        {sub === 'progress'    && <PhotoPane       projId={projId} type="progress" showAll />}
         {sub === 'inspiration' && <PhotoPane       projId={projId} type="inspiration" />}
       </div>
 
@@ -594,7 +594,7 @@ function FinishingPane({ projId }) {
 }
 
 // ─── Photo pane ───────────────────────────────────────────────────────────────
-function PhotoPane({ projId, type }) {
+function PhotoPane({ projId, type, showAll }) {
   const { data, mutate } = useCtx()
   const toast = useToast()
   const [uploading, setUploading]       = useState(false)
@@ -602,7 +602,7 @@ function PhotoPane({ projId, type }) {
   const [showTag, setShowTag]           = useState(false)
   const fileRef = useRef()
 
-  const photos = data.photos.filter(p => p.project_id === projId && p.photo_type === type)
+  const photos = data.photos.filter(p => p.project_id === projId && (showAll ? true : p.photo_type === type))
 
   const handleFiles = files => {
     const arr = Array.from(files)
