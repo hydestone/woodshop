@@ -70,19 +70,13 @@
 }
 
 /* ─── Base ───────────────────────────────────────────────────────────────── */
-html, body, #root {
+html:not(.portfolio-page),
+body:not(.portfolio-page),
+#root:not(.portfolio-page) {
   height: 100%;
   overflow: hidden;
   background: var(--bg);
   max-width: 100vw;
-}
-
-/* Portfolio page needs scrolling */
-body.portfolio-page,
-body.portfolio-page #root {
-  height: auto;
-  overflow: visible;
-  min-height: 100%;
 }
 body {
   font-family: var(--font);

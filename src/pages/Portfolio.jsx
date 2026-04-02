@@ -8,11 +8,6 @@ export default function Portfolio() {
   const [lightbox, setLightbox] = useState(null)
 
   useEffect(() => {
-    document.body.classList.add('portfolio-page')
-    return () => document.body.classList.remove('portfolio-page')
-  }, [])
-
-  useEffect(() => {
     Promise.all([
       supabase.from('photos').select('*').eq('photo_type','finished').order('created_at',{ascending:false}),
       supabase.from('projects').select('*').eq('status','complete'),

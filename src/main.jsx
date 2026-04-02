@@ -6,6 +6,11 @@ import './styles.css'
 
 const isPortfolio = window.location.pathname === '/portfolio'
 
+// Must run synchronously before React renders and before CSS locks in
+if (isPortfolio) {
+  document.documentElement.classList.add('portfolio-page')
+}
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     {isPortfolio ? <Portfolio /> : <App />}
