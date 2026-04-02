@@ -374,12 +374,10 @@ export function ProjectDetail() {
       </div>
 
       {/* ── Photos full-width ── */}
-      {photos.length > 0 && (
-        <div style={{ background: 'var(--surface)', marginTop: 1, padding: '20px' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.8px', marginBottom: 12 }}>Photos</div>
-          <PhotoPane projId={projId} type="progress" showAll inline />
-        </div>
-      )}
+      <div style={{ background: 'var(--surface)', marginTop: 1, padding: '20px' }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.8px', marginBottom: 12 }}>Photos</div>
+        <PhotoPane projId={projId} type="progress" showAll inline />
+      </div>
 
       {/* ── Inspiration ── */}
       {data.photos.filter(p => p.project_id === projId && p.photo_type === 'inspiration').length > 0 && (
@@ -637,7 +635,39 @@ function PhotoPane({ projId, type, showAll, inline }) {
     toast('Saved', 'success')
   }
 
-  if (inline) return <PhotoGrid photos={photos} onEdit={edit} />
+  if (inline) return (
+    <div style={{ position: 'relative' }}>
+      <PhotoGrid photos={photos} onEdit={edit} />
+      {photos.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-4)', fontSize: 13 }}>
+          No photos yet — tap + to add
+        </div>
+      )}
+      <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => handleFiles(e.target.files)} />
+      <button
+        onClick={() => fileRef.current?.click()}
+        disabled={uploading}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          marginTop: 12, padding: '8px 14px',
+          background: 'var(--accent)', color: '#fff',
+          border: 'none', borderRadius: 8, cursor: 'pointer',
+          fontSize: 13, fontWeight: 600, fontFamily: 'inherit',
+          opacity: uploading ? .6 : 1,
+        }}
+      >
+        {uploading
+          ? <div className="spinner" style={{ width: 14, height: 14, borderWidth: 2, borderTopColor: '#fff' }} />
+          : <ICamera size={14} color="#fff" sw={2} />}
+        {uploading ? 'Uploading…' : 'Add Photo'}
+      </button>
+      {showTag && (
+        <Sheet title="Add Photo" onClose={() => { setShowTag(false); setPendingFiles([]) }} onSave={async () => {}}>
+          <PhotoTagSheetBody count={pendingFiles.length} onSave={doUpload} />
+        </Sheet>
+      )}
+    </div>
+  )
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
