@@ -1103,3 +1103,6 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* Table view toggle — desktop only */
+@media (min-width: 768px) { #table-toggle-btn { display: inline-flex !important; } }

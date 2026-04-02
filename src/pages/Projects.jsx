@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
@@ -24,29 +24,39 @@ export default function Projects() {
   const handleAdd = async (fields, woodStockId) => {
     try {
       const proj = await db.addProject(fields)
-      mutate(d => ({ ...d, projects: [...d.projects, proj] }))
+      let pws = null
       if (woodStockId) {
-        await db.addProjectWoodSource(proj.id, woodStockId)
-        mutate(d => ({
-          ...d,
-          projectWoodSources: [...d.projectWoodSources, { project_id: proj.id, wood_stock_id: woodStockId }]
-        }))
+        pws = await db.addProjectWoodSource(proj.id, woodStockId)
       }
+      // Mutate only after all DB calls succeed
+      mutate(d => ({
+        ...d,
+        projects: [...d.projects, proj],
+        projectWoodSources: pws
+          ? [...d.projectWoodSources, pws]
+          : d.projectWoodSources
+      }))
       toast('Project added', 'success')
       setShowAdd(false)
     } catch (e) { toast(e.message, 'error') }
   }
 
   const categories = data.categories || []
-  const filtered = data.projects
-    .filter(p => filter === 'all' || p.category === filter)
-    .filter(p => statusFilter === 'all' || p.status === statusFilter)
+  const filtered = useMemo(() =>
+    data.projects
+      .filter(p => filter === 'all' || p.category === filter)
+      .filter(p => statusFilter === 'all' || p.status === statusFilter),
+    [data.projects, filter, statusFilter]
+  )
 
-  const groups = STATUS_ORDER.reduce((acc, s) => {
-    const items = filtered.filter(p => p.status === s)
-    if (items.length) acc.push({ status: s, items })
-    return acc
-  }, [])
+  const groups = useMemo(() =>
+    STATUS_ORDER.reduce((acc, s) => {
+      const items = filtered.filter(p => p.status === s)
+      if (items.length) acc.push({ status: s, items })
+      return acc
+    }, []),
+    [filtered]
+  )
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
@@ -82,7 +92,6 @@ export default function Projects() {
         </div>
 
         {/* Desktop table view */}
-        <style>{`@media (min-width: 768px) { #table-toggle-btn { display: inline-flex !important; } }`}</style>
         {viewMode === 'table'
           ? <ProjectTable projects={filtered} categories={categories} statusFilter={statusFilter} setStatusFilter={setStatusFilter} />
           : (
@@ -293,28 +302,34 @@ export function ProjectDetail() {
   }
 
   const handleUpdate = async (fields, woodStockId) => {
+    // Snapshot for rollback
+    const prevProjects = data.projects
+    const prevWoodSources = data.projectWoodSources
     try {
+      // Optimistic update
       mutate(d => ({ ...d, projects: d.projects.map(p => p.id === projId ? { ...p, ...fields } : p) }))
+      // Persist project fields
       await db.updateProject(projId, fields)
-      // Update wood source junction table if a stock entry was selected
+      // Persist wood source junction — only if caller passed woodStockId
       if (woodStockId !== undefined) {
-        // Remove existing junction records for this project via Supabase directly
         await db.removeProjectWoodSources(projId)
-        if (woodStockId) {
-          await db.addProjectWoodSource(projId, woodStockId)
-        }
+        const newPws = woodStockId ? await db.addProjectWoodSource(projId, woodStockId) : null
         mutate(d => ({
           ...d,
           projectWoodSources: [
             ...d.projectWoodSources.filter(pws => pws.project_id !== projId),
-            ...(woodStockId ? [{ project_id: projId, wood_stock_id: woodStockId }] : [])
+            ...(newPws ? [newPws] : [])
           ]
         }))
       }
       toast('Saved', 'success')
       setEditing(false)
       if (fields.status === 'complete' && project.status !== 'complete') setShowRon(true)
-    } catch (e) { toast(e.message, 'error') }
+    } catch (e) {
+      // Rollback optimistic updates on failure
+      mutate(d => ({ ...d, projects: prevProjects, projectWoodSources: prevWoodSources }))
+      toast('Save failed: ' + e.message, 'error')
+    }
   }
 
   const handleDelete = async () => {
@@ -781,7 +796,11 @@ function ProjectSheet({ project, categories, onSave, onClose, mutate }) {
   const [category,   setCategory]   = useState(project?.category    || '')
   const [finishVal,  setFinishVal]  = useState(project?.finish_used || '')
   const existingWoodSrc = data?.projectWoodSources?.find(pws => pws.project_id === project?.id)
-  const [woodSrcId, setWoodSrcId] = useState(existingWoodSrc?.wood_stock_id || '')
+  const [woodSrcId, setWoodSrcId] = useState(() => {
+    // useState initializer function runs once on mount with current data
+    const pws = data?.projectWoodSources?.find(p => p.project_id === project?.id)
+    return pws?.wood_stock_id || ''
+  })
 
   const woodLocations = data?.woodLocations || []
   const woodStock     = data?.woodStock     || []
