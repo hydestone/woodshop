@@ -31,7 +31,7 @@ export default function Portfolio() {
   )
 
   return (
-    <div style={{minHeight:'100vh',background:'#F0F4F8',overflowY:'auto',fontFamily:'-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif'}}>
+    <div style={{minHeight:'100vh',background:'#F0F4F8',fontFamily:'-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif'}}>
       {/* Header */}
       <div style={{background:'#0F1E38',padding:'48px 24px 40px',textAlign:'center'}}>
         <div style={{fontSize:13,fontWeight:600,letterSpacing:2,color:'#BFDBFE',textTransform:'uppercase',marginBottom:12}}>Handcrafted in Sherborn, MA</div>
