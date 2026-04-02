@@ -21,10 +21,17 @@ export default function Projects() {
   const [filter, setFilter]         = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
 
-  const handleAdd = async fields => {
+  const handleAdd = async (fields, woodStockId) => {
     try {
       const proj = await db.addProject(fields)
       mutate(d => ({ ...d, projects: [...d.projects, proj] }))
+      if (woodStockId) {
+        await db.addProjectWoodSource(proj.id, woodStockId)
+        mutate(d => ({
+          ...d,
+          projectWoodSources: [...d.projectWoodSources, { project_id: proj.id, wood_stock_id: woodStockId }]
+        }))
+      }
       toast('Project added', 'success')
       setShowAdd(false)
     } catch (e) { toast(e.message, 'error') }
@@ -290,16 +297,17 @@ export function ProjectDetail() {
       mutate(d => ({ ...d, projects: d.projects.map(p => p.id === projId ? { ...p, ...fields } : p) }))
       await db.updateProject(projId, fields)
       // Update wood source junction table if a stock entry was selected
-      if (woodStockId) {
-        // Remove existing junction records for this project then add new one
-        const existing = data.projectWoodSources.filter(pws => pws.project_id === projId)
-        await Promise.all(existing.map(pws => db.removeProjectWoodSource(pws.id)))
-        await db.addProjectWoodSource(projId, woodStockId)
+      if (woodStockId !== undefined) {
+        // Remove existing junction records for this project via Supabase directly
+        await db.removeProjectWoodSources(projId)
+        if (woodStockId) {
+          await db.addProjectWoodSource(projId, woodStockId)
+        }
         mutate(d => ({
           ...d,
           projectWoodSources: [
             ...d.projectWoodSources.filter(pws => pws.project_id !== projId),
-            { project_id: projId, wood_stock_id: woodStockId }
+            ...(woodStockId ? [{ project_id: projId, wood_stock_id: woodStockId }] : [])
           ]
         }))
       }
@@ -772,7 +780,8 @@ function ProjectSheet({ project, categories, onSave, onClose, mutate }) {
   }
   const [category,   setCategory]   = useState(project?.category    || '')
   const [finishVal,  setFinishVal]  = useState(project?.finish_used || '')
-  const [woodSrcId,  setWoodSrcId]  = useState('')
+  const existingWoodSrc = data?.projectWoodSources?.find(pws => pws.project_id === project?.id)
+  const [woodSrcId, setWoodSrcId] = useState(existingWoodSrc?.wood_stock_id || '')
 
   const woodLocations = data?.woodLocations || []
   const woodStock     = data?.woodStock     || []

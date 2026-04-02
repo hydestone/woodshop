@@ -269,6 +269,9 @@ export async function addProjectWoodSource(projectId, woodStockId) {
 export async function removeProjectWoodSource(id) {
   return q(supabase.from('project_wood_sources').delete().eq('id', id))
 }
+export async function removeProjectWoodSources(projectId) {
+  return q(supabase.from('project_wood_sources').delete().eq('project_id', projectId))
+}
 
 // ── Species ───────────────────────────────────────────────────────────────────
 export async function addSpecies(name) {
