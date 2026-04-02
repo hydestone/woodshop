@@ -53,7 +53,7 @@
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
 
   /* Layout */
-  --topbar-h:    64px;
+  --topbar-h:    80px;
   --tabbar-h:    82px;
   --safe-b:      env(safe-area-inset-bottom, 0px);
 
@@ -135,7 +135,7 @@ body {
 }
 .top-bar-logo { height: 48px; width: 48px; flex-shrink: 0; }
 .top-bar-title {
-  font-size: 20px;
+  font-size: 40px;
   font-weight: 800;
   letter-spacing: -.4px;
   color: #1a1a1a;
@@ -1093,7 +1093,7 @@ body {
   .search-input-wrap { width: 140px; }
   .search-input-wrap.focused { width: 180px; }
   .search-results { width: 280px; }
-  .top-bar-title { font-size: 15px; }
+  .top-bar-title { font-size: 28px; }
 }
 
 /* ─── Keyframes ──────────────────────────────────────────────────────────── */

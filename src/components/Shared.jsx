@@ -174,7 +174,7 @@ export function ConfirmSheet({ message, confirmLabel = 'Delete', onConfirm, onCl
 }
 
 // ─── TagInput ─────────────────────────────────────────────────────────────────
-const PRESETS = ['finished', 'inspiration', 'progress', 'before', 'after']
+const PRESETS = ['finished', 'portfolio', 'inspiration', 'progress', 'before', 'after']
 
 export function TagInput({ tags, onChange }) {
   const [input, setInput] = useState('')
@@ -228,7 +228,7 @@ export function TagInput({ tags, onChange }) {
         ))}
       </div>
       <p className="form-hint" style={{ marginTop: 6 }}>
-        Tag "finished" → Finished Work gallery. Tag "inspiration" → Inspiration gallery.
+        Tag "finished" → Finished Work gallery. Tag "portfolio" → Public portfolio. Tag "inspiration" → Inspiration gallery.
       </p>
     </div>
   )

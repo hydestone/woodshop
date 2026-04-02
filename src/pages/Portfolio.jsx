@@ -9,7 +9,7 @@ export default function Portfolio() {
 
   useEffect(() => {
     Promise.all([
-      supabase.from('photos').select('*').eq('photo_type','finished').order('created_at',{ascending:false}),
+      supabase.from('photos').select('*').ilike('tags','%portfolio%').order('created_at',{ascending:false}),
       supabase.from('projects').select('*').eq('status','complete'),
     ]).then(([ph, pr]) => {
       setPhotos((ph.data||[]).map(p=>({...p,url:photoUrl(p.storage_path)})))
