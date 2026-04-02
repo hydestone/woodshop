@@ -9,6 +9,8 @@ const isPortfolio = window.location.pathname === '/portfolio'
 // Must run synchronously before React renders and before CSS locks in
 if (isPortfolio) {
   document.documentElement.classList.add('portfolio-page')
+} else {
+  document.documentElement.classList.remove('portfolio-page')
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(
