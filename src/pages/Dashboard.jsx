@@ -587,8 +587,6 @@ export default function Dashboard() {
           <div style={CARD}><div style={CARD_TITLE}>Finish Usage</div><FinishUsage projects={data.projects}/></div>
           <div style={CARD}><div style={CARD_TITLE}>Project Status</div><StatusPipeline projects={data.projects}/></div>
           <div style={{...CARD,gridColumn:'span 1'}}><div style={CARD_TITLE}>Wood Source Map</div><WoodSourceMap locations={locations} woodStock={data.woodStock} projectWoodSources={data.projectWoodSources}/></div>
-          <div style={CARD}><div style={CARD_TITLE}>Build Rate (5yr)</div><BuildRate projects={data.projects}/></div>
-          <div style={CARD}><div style={CARD_TITLE}>Moisture Trends</div><MoistureTrend woodStock={data.woodStock}/></div>
         </div>
 
         {data.photos.length>0&&<>
