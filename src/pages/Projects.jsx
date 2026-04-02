@@ -285,10 +285,24 @@ export function ProjectDetail() {
     if (next === 'complete') setShowRon(true)
   }
 
-  const handleUpdate = async fields => {
+  const handleUpdate = async (fields, woodStockId) => {
     try {
       mutate(d => ({ ...d, projects: d.projects.map(p => p.id === projId ? { ...p, ...fields } : p) }))
       await db.updateProject(projId, fields)
+      // Update wood source junction table if a stock entry was selected
+      if (woodStockId) {
+        // Remove existing junction records for this project then add new one
+        const existing = data.projectWoodSources.filter(pws => pws.project_id === projId)
+        await Promise.all(existing.map(pws => db.removeProjectWoodSource(pws.id)))
+        await db.addProjectWoodSource(projId, woodStockId)
+        mutate(d => ({
+          ...d,
+          projectWoodSources: [
+            ...d.projectWoodSources.filter(pws => pws.project_id !== projId),
+            { project_id: projId, wood_stock_id: woodStockId }
+          ]
+        }))
+      }
       toast('Saved', 'success')
       setEditing(false)
       if (fields.status === 'complete' && project.status !== 'complete') setShowRon(true)
@@ -757,13 +771,11 @@ function ProjectSheet({ project, categories, onSave, onClose, mutate }) {
     final: useRef(), builtWith: useRef(), year: useRef(), giftRecipient: useRef(),
   }
   const [category,   setCategory]   = useState(project?.category    || '')
-  const [speciesVal, setSpeciesVal] = useState(project?.wood_type   || '')
   const [finishVal,  setFinishVal]  = useState(project?.finish_used || '')
-  const [woodSrcId,  setWoodSrcId]  = useState(project?.wood_stock_id || '')
+  const [woodSrcId,  setWoodSrcId]  = useState('')
 
   const woodLocations = data?.woodLocations || []
   const woodStock     = data?.woodStock     || []
-  const speciesList   = data?.species       || []
   const finishesList  = data?.finishes      || []
 
   // Group stock by location for the dropdown
@@ -776,14 +788,14 @@ function ProjectSheet({ project, categories, onSave, onClose, mutate }) {
   const handleSave = async () => {
     const name = refs.name.current?.value.trim(); if (!name) return
     const yearVal = refs.year.current?.value.trim()
-    // Resolve species_id and finish_id
-    const sp = speciesList.find(s => s.name === speciesVal)
     const fi = finishesList.find(f => f.name === finishVal)
+    // Derive wood_type from selected wood stock entry's species
+    const selectedStock = woodStock.find(w => w.id === woodSrcId)
+    const derivedWoodType = selectedStock?.species || ''
     await onSave({
       name,
       category,
-      wood_type:        speciesVal,
-      species_id:       sp?.id || null,
+      wood_type:        derivedWoodType,
       description:      refs.desc.current?.value.trim()       || '',
       status:           refs.status.current?.value            || 'active',
       dimensions_final: refs.final.current?.value.trim()      || '',
@@ -792,7 +804,7 @@ function ProjectSheet({ project, categories, onSave, onClose, mutate }) {
       finish_id:        fi?.id || null,
       year_completed:   yearVal ? parseInt(yearVal) : null,
       gift_recipient:   refs.giftRecipient.current?.value.trim() || '',
-    })
+    }, woodSrcId || null)
   }
 
   return (
@@ -816,13 +828,6 @@ function ProjectSheet({ project, categories, onSave, onClose, mutate }) {
         </FormCell>
       </div>
       <div className="form-group">
-        <ManagedSelect label="Wood species" value={speciesVal} onChange={setSpeciesVal}
-          items={speciesList} addLabel="species"
-          onAddNew={async name => {
-            const s = await db.addSpecies(name)
-            mutate(d => ({ ...d, species: [...(d.species||[]), s].sort((a,b)=>a.name.localeCompare(b.name)) }))
-          }}
-        />
         <FormCell label="Wood source">
           <select className="form-select" value={woodSrcId} onChange={e=>setWoodSrcId(e.target.value)}>
             <option value="">None</option>
