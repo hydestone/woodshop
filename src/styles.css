@@ -83,13 +83,19 @@ html:not(.portfolio-page) #root {
   overflow: hidden;
 }
 
-/* Portfolio page scrolls freely */
-.portfolio-page,
-.portfolio-page body,
-.portfolio-page #root {
-  height: auto;
+/* Portfolio page — fully unlock viewport for mouse wheel */
+html.portfolio-page,
+html.portfolio-page body {
+  height: auto !important;
+  overflow-y: auto !important;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+html.portfolio-page #root {
+  height: auto !important;
   min-height: 100vh;
-  overflow-y: auto;
+  display: block;
 }
 body {
   font-family: var(--font);
