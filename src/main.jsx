@@ -14,7 +14,5 @@ if (isPortfolio) {
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    {isPortfolio ? <Portfolio /> : <App />}
-  </React.StrictMode>
+  {isPortfolio ? <Portfolio /> : <App />}
 )
