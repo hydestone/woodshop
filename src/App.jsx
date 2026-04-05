@@ -26,6 +26,7 @@ import Inspiration      from './pages/Inspiration.jsx'
 import YearReview      from './pages/YearReview.jsx'
 import Settings       from './pages/Settings.jsx'
 import BulkImport     from './pages/BulkImport.jsx'
+import Audit          from './pages/Audit.jsx'
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 const AppCtx = createContext(null)
@@ -43,6 +44,7 @@ const MAIN_NAV = [
   { id: 'resources',   label: 'Resources',         Icon: IBook    },
   { id: 'brainstorm',  label: 'Brainstorm',        Icon: IBulb    },
   { id: 'yearreview',  label: 'Year in Review',    Icon: IBulb    },
+  { id: 'audit',       label: 'Data Audit',         Icon: IWrench  },
   { id: 'settings',    label: 'Settings',          Icon: IWrench  },
   { id: 'import',      label: 'Bulk Import',       Icon: ICamera  },
 ]
@@ -292,6 +294,7 @@ export default function App() {
                   {tab === 'yearreview'  && <YearReview />}
                   {tab === 'settings'    && <Settings />}
                   {tab === 'import'      && <BulkImport />}
+                  {tab === 'audit'       && <Audit />}
                 </>
               )}
 
