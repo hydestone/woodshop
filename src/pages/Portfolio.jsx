@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { supabase, BUCKET, photoUrl } from '../supabase.js'
 
 // ── Ron Swanson splash screen ──────────────────────────────────────────────────
@@ -66,11 +66,140 @@ function RonSplash({ onDone }) {
   )
 }
 
+// ── Full-featured lightbox with swipe + pinch zoom ────────────────────────────
+function Lightbox({ photos, projects, idx, onClose, onNav }) {
+  const photo = photos[idx]
+  const proj = projects.find(p => p.id === photo?.project_id)
+  const [scale, setScale] = useState(1)
+  const [offset, setOffset] = useState({ x: 0, y: 0 })
+  const touchStart = useRef(null)
+  const lastDist = useRef(null)
+  const isDragging = useRef(false)
+  const dragStart = useRef(null)
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handler = e => {
+      if (e.key === 'ArrowRight') goNext()
+      if (e.key === 'ArrowLeft')  goPrev()
+      if (e.key === 'Escape')     onClose()
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [idx])
+
+  // Reset zoom when photo changes
+  useEffect(() => { setScale(1); setOffset({ x: 0, y: 0 }) }, [idx])
+
+  const goPrev = () => { if (idx > 0) onNav(idx - 1) }
+  const goNext = () => { if (idx < photos.length - 1) onNav(idx + 1) }
+
+  const getTouchDist = touches =>
+    Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY)
+
+  const handleTouchStart = e => {
+    if (e.touches.length === 2) {
+      lastDist.current = getTouchDist(e.touches)
+    } else if (e.touches.length === 1) {
+      touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, t: Date.now() }
+      dragStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, ox: offset.x, oy: offset.y }
+      isDragging.current = false
+    }
+  }
+
+  const handleTouchMove = e => {
+    e.preventDefault()
+    if (e.touches.length === 2) {
+      const dist = getTouchDist(e.touches)
+      if (lastDist.current) {
+        const delta = dist / lastDist.current
+        setScale(s => Math.min(5, Math.max(1, s * delta)))
+      }
+      lastDist.current = dist
+    } else if (e.touches.length === 1 && dragStart.current && scale > 1) {
+      isDragging.current = true
+      const dx = e.touches[0].clientX - dragStart.current.x
+      const dy = e.touches[0].clientY - dragStart.current.y
+      setOffset({ x: dragStart.current.ox + dx, y: dragStart.current.oy + dy })
+    }
+  }
+
+  const handleTouchEnd = e => {
+    lastDist.current = null
+    if (!isDragging.current && touchStart.current && scale === 1) {
+      const dx = e.changedTouches[0].clientX - touchStart.current.x
+      const dt = Date.now() - touchStart.current.t
+      if (Math.abs(dx) > 50 && dt < 400) {
+        if (dx < 0) goNext(); else goPrev()
+      }
+    }
+    isDragging.current = false
+    touchStart.current = null
+    dragStart.current = null
+  }
+
+  const handleDoubleTap = () => {
+    if (scale > 1) { setScale(1); setOffset({ x: 0, y: 0 }) }
+    else setScale(2.5)
+  }
+
+  if (!photo) return null
+
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.95)', zIndex: 2000, display: 'flex', flexDirection: 'column', userSelect: 'none' }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* Top bar */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', zIndex: 10 }}>
+        <span style={{ color: 'rgba(255,255,255,.5)', fontSize: 13 }}>{idx + 1} / {photos.length}</span>
+        <button onClick={onClose} style={{ background: 'rgba(255,255,255,.15)', border: 'none', borderRadius: '50%', width: 36, height: 36, color: '#fff', fontSize: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+      </div>
+
+      {/* Image */}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' }}>
+        <img
+          src={photo.url}
+          alt={photo.caption || ''}
+          onDoubleClick={handleDoubleTap}
+          style={{
+            maxWidth: '100%', maxHeight: '100%',
+            objectFit: 'contain',
+            transform: `scale(${scale}) translate(${offset.x / scale}px, ${offset.y / scale}px)`,
+            transition: scale === 1 ? 'transform 200ms ease' : 'none',
+            touchAction: 'none',
+            cursor: scale > 1 ? 'grab' : 'default',
+          }}
+        />
+        {/* Desktop prev/next arrows */}
+        {idx > 0 && (
+          <button onClick={goPrev} style={{ position: 'absolute', left: 12, background: 'rgba(255,255,255,.15)', border: 'none', borderRadius: '50%', width: 44, height: 44, color: '#fff', fontSize: 22, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>‹</button>
+        )}
+        {idx < photos.length - 1 && (
+          <button onClick={goNext} style={{ position: 'absolute', right: 12, background: 'rgba(255,255,255,.15)', border: 'none', borderRadius: '50%', width: 44, height: 44, color: '#fff', fontSize: 22, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>›</button>
+        )}
+      </div>
+
+      {/* Caption */}
+      {(photo.caption || proj) && (
+        <div style={{ padding: '12px 20px 24px', textAlign: 'center' }}>
+          {photo.caption && <div style={{ color: '#fff', fontWeight: 600, fontSize: 15 }}>{photo.caption}</div>}
+          {proj && <div style={{ color: 'rgba(255,255,255,.5)', fontSize: 13, marginTop: 4 }}>
+            {[proj.wood_type, proj.year_completed, proj.finish_used].filter(Boolean).join(' · ')}
+          </div>}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Portfolio() {
   const [photos, setPhotos]       = useState([])
   const [projects, setProjects]   = useState([])
   const [loading, setLoading]     = useState(true)
-  const [lightbox, setLightbox]   = useState(null)
+  const [lightboxIdx, setLightboxIdx] = useState(null)
   const [showSplash, setShowSplash] = useState(true)
 
   useEffect(() => {
@@ -123,7 +252,7 @@ export default function Portfolio() {
               {photos.map(photo=>{
                 const proj = projFor(photo.project_id)
                 return (
-                  <div key={photo.id} style={{breakInside:'avoid',marginBottom:16,background:'#fff',borderRadius:12,overflow:'hidden',boxShadow:'0 1px 3px rgba(0,0,0,.08)',cursor:'pointer'}} onClick={()=>setLightbox(photo)}>
+                  <div key={photo.id} style={{breakInside:'avoid',marginBottom:16,background:'#fff',borderRadius:12,overflow:'hidden',boxShadow:'0 1px 3px rgba(0,0,0,.08)',cursor:'pointer'}} onClick={()=>setLightboxIdx(photos.indexOf(photo))}>
                     <img src={photo.url} alt={photo.caption||proj?.name||'Finished piece'} loading="lazy" style={{width:'100%',display:'block',objectFit:'cover'}}/>
                     {(photo.caption||proj) && (
                       <div style={{padding:'12px 14px'}}>
@@ -148,10 +277,14 @@ export default function Portfolio() {
         </div>
 
         {/* Lightbox */}
-        {lightbox&&(
-          <div onClick={()=>setLightbox(null)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,.9)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000,cursor:'pointer'}}>
-            <img src={lightbox.url} alt="" style={{maxWidth:'90vw',maxHeight:'90vh',objectFit:'contain',borderRadius:8}}/>
-          </div>
+        {lightboxIdx !== null && (
+          <Lightbox
+            photos={photos}
+            projects={projects}
+            idx={lightboxIdx}
+            onClose={() => setLightboxIdx(null)}
+            onNav={setLightboxIdx}
+          />
         )}
       </div>
     </>
