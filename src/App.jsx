@@ -63,6 +63,123 @@ const MOBILE_TABS = [
   { id: 'more',     label: 'More',     Icon: IMore   },
 ]
 
+
+// ── QR Code Modal ─────────────────────────────────────────────────────────────
+function QRModal({ onClose }) {
+  const canvasRef = React.useRef(null)
+
+  React.useEffect(() => {
+    // Load qrcode.js dynamically
+    const PORTFOLIO_URL = 'https://woodshop-pdd2.vercel.app/portfolio'
+    const SIZE = 260
+
+    const loadAndDraw = () => {
+      const canvas = canvasRef.current
+      if (!canvas) return
+      const ctx = canvas.getContext('2d')
+      canvas.width = SIZE
+      canvas.height = SIZE
+
+      // Use QRCode library to generate
+      const tmp = document.createElement('div')
+      tmp.style.display = 'none'
+      document.body.appendChild(tmp)
+
+      // eslint-disable-next-line no-undef
+      new QRCode(tmp, {
+        text: PORTFOLIO_URL,
+        width: SIZE, height: SIZE,
+        colorDark: '#0F1E38',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.H,
+      })
+
+      setTimeout(() => {
+        const el = tmp.querySelector('img') || tmp.querySelector('canvas')
+        if (!el) { tmp.remove(); return }
+        const src = el.tagName === 'CANVAS' ? el.toDataURL() : el.src
+        const qrImg = new Image()
+        qrImg.onload = () => {
+          ctx.drawImage(qrImg, 0, 0, SIZE, SIZE)
+          // White circle for logo
+          ctx.beginPath()
+          ctx.arc(SIZE/2, SIZE/2, 30, 0, Math.PI*2)
+          ctx.fillStyle = '#ffffff'
+          ctx.fill()
+          tmp.remove()
+        }
+        qrImg.src = src
+      }, 100)
+    }
+
+    if (window.QRCode) {
+      loadAndDraw()
+    } else {
+      const script = document.createElement('script')
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'
+      script.onload = loadAndDraw
+      document.head.appendChild(script)
+    }
+  }, [])
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, background: 'rgba(0,0,0,.75)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 3000, padding: 24,
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: '#fff', borderRadius: 20, padding: '32px 28px 24px',
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+          gap: 16, maxWidth: 340, width: '100%',
+          boxShadow: '0 24px 60px rgba(0,0,0,.4)',
+        }}
+      >
+        {/* Logo */}
+        <svg width="36" height="32" viewBox="0 0 80 72" fill="none">
+          <path d="M10 52 L28 24 L40 38 L52 18 L70 52 Z" fill="#2D5A3D" opacity="0.85"/>
+          <path d="M10 52 L28 24 L40 38" fill="#1C3A2A"/>
+          <path d="M15 60 Q40 52 65 60" stroke="#4A7A5A" strokeWidth="1.2" fill="none" opacity="0.6"/>
+          <path d="M12 65 Q40 57 68 65" stroke="#4A7A5A" strokeWidth="1.2" fill="none" opacity="0.45"/>
+          <path d="M10 70 Q40 62 70 70" stroke="#4A7A5A" strokeWidth="1.2" fill="none" opacity="0.3"/>
+        </svg>
+
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 18, fontWeight: 800, color: '#0F1E38', letterSpacing: '-.3px' }}>
+            JDH <span style={{ color: '#2D5A3D' }}>WOODWORKS</span>
+          </div>
+          <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>Scan to view portfolio</div>
+        </div>
+
+        <canvas
+          ref={canvasRef}
+          style={{ borderRadius: 12, border: '1px solid #E2E8F0', display: 'block' }}
+        />
+
+        <div style={{ fontSize: 11, color: '#94A3B8', textAlign: 'center' }}>
+          woodshop-pdd2.vercel.app/portfolio
+        </div>
+
+        <button
+          onClick={onClose}
+          style={{
+            width: '100%', padding: '11px', background: '#0F1E38', color: '#fff',
+            border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700,
+            cursor: 'pointer', fontFamily: 'inherit',
+          }}
+        >
+          Done
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ─── Root ─────────────────────────────────────────────────────────────────────
 export default function App() {
   const [session, setSession]   = useState(null)
@@ -73,6 +190,7 @@ export default function App() {
   const [tab, setTabRaw]        = useState('home')
   const [projId, setProjId]     = useState(null)
   const [showMore, setShowMore] = useState(false)
+  const [showQR, setShowQR] = useState(false)
 
   // ── Auth state ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -225,6 +343,26 @@ export default function App() {
                 })}
               </div>
               <div style={{ padding: '12px 8px', borderTop: '1px solid rgba(255,255,255,.08)' }}>
+                <button
+                  onClick={() => setShowQR(true)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    width: '100%', padding: '9px 10px',
+                    background: 'transparent', border: 'none',
+                    borderRadius: 8, cursor: 'pointer',
+                    fontSize: 13, fontWeight: 500,
+                    color: 'rgba(203,213,225,.6)',
+                    fontFamily: 'inherit', marginBottom: 4,
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.color = '#fff'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'rgba(203,213,225,.6)'}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                    <rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/>
+                  </svg>
+                  Share Portfolio
+                </button>
                 <a
                   href="/portfolio"
                   target="_blank"
@@ -323,6 +461,9 @@ export default function App() {
           </div>
         </div>
 
+        {/* QR Code modal */}
+        {showQR && <QRModal onClose={() => setShowQR(false)} />}
+
         {/* More sheet (mobile) */}
         {showMore && (
           <div
@@ -343,6 +484,18 @@ export default function App() {
               </div>
               <div className="sheet-body">
                 <div className="form-group">
+                  <div
+                    className="more-item"
+                    style={{ borderBottom: '1px solid var(--border-2)' }}
+                    onClick={() => { setShowMore(false); setShowQR(true) }}
+                    role="button" tabIndex={0}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                      <rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/>
+                    </svg>
+                    <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>Share Portfolio</span>
+                  </div>
                   {[...MAIN_NAV.slice(2), ...GALLERY_NAV].map((t, i, arr) => {
                     const badge = badgeFor(t.id)
                     return (

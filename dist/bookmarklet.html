@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JDH Woodworks — Save Resource Bookmarklet</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif; max-width: 600px; margin: 60px auto; padding: 0 24px; color: #1a1a1a; line-height: 1.6; }
+  h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+  p { color: #555; margin-bottom: 24px; }
+  .bookmarklet { display: inline-block; background: #007AFF; color: #fff; padding: 12px 24px; border-radius: 10px; font-size: 16px; font-weight: 600; text-decoration: none; cursor: grab; border: none; }
+  .bookmarklet:active { opacity: .8; }
+  .step { background: #f5f5f7; border-radius: 12px; padding: 16px 20px; margin-bottom: 16px; }
+  .step h3 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .step p { font-size: 14px; color: #666; margin: 0; }
+  .num { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; background: #007AFF; color: #fff; border-radius: 50%; font-size: 12px; font-weight: 700; margin-right: 8px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+<h1>🔖 Save Resource Bookmarklet</h1>
+<p>Drag the button below to your bookmarks bar. Then whenever you find a useful woodworking page, click it to save it to JDH Woodworks.</p>
+
+<div class="step">
+  <h3><span class="num">1</span> Drag this to your bookmarks bar</h3>
+  <div style="margin-top: 12px;">
+    <a class="bookmarklet" href="javascript:(function(){var t=encodeURIComponent(document.title);var u=encodeURIComponent(location.href);window.open('https://woodshop-pdd2.vercel.app/?save=1&title='+t+'&url='+u,'_blank');})();">
+      📚 Save to Workshop
+    </a>
+  </div>
+  <p style="margin-top: 10px; font-size: 13px; color: #999;">On Mac: drag it to the bookmarks bar. On Windows: right-click and choose "Add to favorites".</p>
+</div>
+
+<div class="step">
+  <h3><span class="num">2</span> Use it on any page</h3>
+  <p>Navigate to any woodworking resource — article, video, supplier — and click the bookmarklet. It opens JDH Woodworks and pre-fills the title and URL for you to save.</p>
+</div>
+
+<div class="step">
+  <h3><span class="num">3</span> Name and categorize</h3>
+  <p>You can edit the title and pick a category (Finishing, Joinery, Wood Species, Tools, etc.) before saving.</p>
+</div>
+</body>
+</html>
