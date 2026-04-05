@@ -66,61 +66,8 @@ const MOBILE_TABS = [
 
 // ── QR Code Modal ─────────────────────────────────────────────────────────────
 function QRModal({ onClose }) {
-  const canvasRef = React.useRef(null)
-
-  React.useEffect(() => {
-    // Load qrcode.js dynamically
-    const PORTFOLIO_URL = 'https://woodshop-pdd2.vercel.app/portfolio'
-    const SIZE = 260
-
-    const loadAndDraw = () => {
-      const canvas = canvasRef.current
-      if (!canvas) return
-      const ctx = canvas.getContext('2d')
-      canvas.width = SIZE
-      canvas.height = SIZE
-
-      // Use QRCode library to generate
-      const tmp = document.createElement('div')
-      tmp.style.display = 'none'
-      document.body.appendChild(tmp)
-
-      // eslint-disable-next-line no-undef
-      new QRCode(tmp, {
-        text: PORTFOLIO_URL,
-        width: SIZE, height: SIZE,
-        colorDark: '#0F1E38',
-        colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.H,
-      })
-
-      setTimeout(() => {
-        const el = tmp.querySelector('img') || tmp.querySelector('canvas')
-        if (!el) { tmp.remove(); return }
-        const src = el.tagName === 'CANVAS' ? el.toDataURL() : el.src
-        const qrImg = new Image()
-        qrImg.onload = () => {
-          ctx.drawImage(qrImg, 0, 0, SIZE, SIZE)
-          // White circle for logo
-          ctx.beginPath()
-          ctx.arc(SIZE/2, SIZE/2, 30, 0, Math.PI*2)
-          ctx.fillStyle = '#ffffff'
-          ctx.fill()
-          tmp.remove()
-        }
-        qrImg.src = src
-      }, 100)
-    }
-
-    if (window.QRCode) {
-      loadAndDraw()
-    } else {
-      const script = document.createElement('script')
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'
-      script.onload = loadAndDraw
-      document.head.appendChild(script)
-    }
-  }, [])
+  const PORTFOLIO_URL = 'https://woodshop-pdd2.vercel.app/portfolio'
+  const qrSrc = 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&color=0F1E38&bgcolor=ffffff&qzone=1&data=' + encodeURIComponent(PORTFOLIO_URL)
 
   return (
     <div
@@ -140,7 +87,6 @@ function QRModal({ onClose }) {
           boxShadow: '0 24px 60px rgba(0,0,0,.4)',
         }}
       >
-        {/* Logo */}
         <svg width="36" height="32" viewBox="0 0 80 72" fill="none">
           <path d="M10 52 L28 24 L40 38 L52 18 L70 52 Z" fill="#2D5A3D" opacity="0.85"/>
           <path d="M10 52 L28 24 L40 38" fill="#1C3A2A"/>
@@ -156,8 +102,10 @@ function QRModal({ onClose }) {
           <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>Scan to view portfolio</div>
         </div>
 
-        <canvas
-          ref={canvasRef}
+        <img
+          src={qrSrc}
+          alt="QR code for JDH Woodworks portfolio"
+          width={260} height={260}
           style={{ borderRadius: 12, border: '1px solid #E2E8F0', display: 'block' }}
         />
 
