@@ -27,6 +27,9 @@ import YearReview      from './pages/YearReview.jsx'
 import Settings       from './pages/Settings.jsx'
 import BulkImport     from './pages/BulkImport.jsx'
 import Audit          from './pages/Audit.jsx'
+import Help           from './pages/Help.jsx'
+import SmokeTest      from './pages/SmokeTest.jsx'
+import CutCalculator  from './pages/CutCalculator.jsx'
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 const AppCtx = createContext(null)
@@ -45,6 +48,9 @@ const MAIN_NAV = [
   { id: 'brainstorm',  label: 'Brainstorm',        Icon: IBulb    },
   { id: 'yearreview',  label: 'Year in Review',    Icon: IBulb    },
   { id: 'audit',       label: 'Data Audit',         Icon: IWrench  },
+  { id: 'help',         label: 'Help',               Icon: IBook    },
+  { id: 'smoketest',    label: 'Smoke Test',         Icon: IWrench  },
+  { id: 'cutcalc',      label: 'Cut Calculator',     Icon: IWrench  },
   { id: 'settings',    label: 'Settings',          Icon: IWrench  },
   { id: 'import',      label: 'Bulk Import',       Icon: ICamera  },
 ]
@@ -403,6 +409,9 @@ export default function App() {
                   {tab === 'settings'    && <Settings />}
                   {tab === 'import'      && <BulkImport />}
                   {tab === 'audit'       && <Audit />}
+                  {tab === 'help'        && <Help />}
+                  {tab === 'smoketest'   && <SmokeTest />}
+                  {tab === 'cutcalc'     && <CutCalculator />}
                 </>
               )}
 
