@@ -113,16 +113,38 @@ function QRModal({ onClose }) {
           woodshop-pdd2.vercel.app/portfolio
         </div>
 
-        <button
-          onClick={onClose}
-          style={{
-            width: '100%', padding: '11px', background: '#0F1E38', color: '#fff',
-            border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700,
-            cursor: 'pointer', fontFamily: 'inherit',
-          }}
-        >
-          Done
-        </button>
+        <div style={{ display: 'flex', gap: 10, width: '100%' }}>
+          <button
+            onClick={async () => {
+              const url = 'https://woodshop-pdd2.vercel.app/portfolio'
+              if (navigator.share) {
+                try {
+                  await navigator.share({ title: 'JDH Woodworks', text: 'Handcrafted woodworking — bowls, furniture, turning & hand tools.', url })
+                } catch (e) { /* cancelled */ }
+              } else {
+                await navigator.clipboard.writeText(url)
+                alert('Link copied to clipboard!')
+              }
+            }}
+            style={{
+              flex: 1, padding: '11px', background: '#2D5A3D', color: '#fff',
+              border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700,
+              cursor: 'pointer', fontFamily: 'inherit',
+            }}
+          >
+            Share
+          </button>
+          <button
+            onClick={onClose}
+            style={{
+              flex: 1, padding: '11px', background: '#0F1E38', color: '#fff',
+              border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700,
+              cursor: 'pointer', fontFamily: 'inherit',
+            }}
+          >
+            Done
+          </button>
+        </div>
       </div>
     </div>
   )

@@ -6,8 +6,8 @@ function RonSplash({ onDone }) {
   const [fade, setFade] = useState(false)
 
   useEffect(() => {
-    const fadeTimer = setTimeout(() => setFade(true), 1800)
-    const doneTimer = setTimeout(() => onDone(), 2400)
+    const fadeTimer = setTimeout(() => setFade(true), 4600)
+    const doneTimer = setTimeout(() => onDone(), 5200)
     return () => { clearTimeout(fadeTimer); clearTimeout(doneTimer) }
   }, [onDone])
 
