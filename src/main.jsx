@@ -14,5 +14,5 @@ if (isPortfolio) {
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  {isPortfolio ? <Portfolio /> : <App />}
+  isPortfolio ? <Portfolio /> : <App />
 )
