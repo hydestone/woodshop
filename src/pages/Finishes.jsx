@@ -2,7 +2,94 @@ import { useState, useRef } from 'react'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
-import { Sheet, FormCell, ConfirmSheet, IPlus, ITrash, IEdit } from '../components/Shared.jsx'
+import { Sheet, FormCell, ConfirmSheet, IPlus, ITrash, IEdit, ICheck } from '../components/Shared.jsx'
+
+
+// ── Finish dropdown manager — manages the project "finish used" dropdown ─────
+function FinishDropdownManager() {
+  const { data, mutate } = useCtx()
+  const toast = useToast()
+  const finishes = data.finishes || []
+  const [newName, setNewName]   = useState('')
+  const [editItem, setEditItem] = useState(null)
+  const [editVal, setEditVal]   = useState('')
+  const [expanded, setExpanded] = useState(false)
+
+  const add = async () => {
+    const name = newName.trim(); if (!name) return
+    try {
+      const item = await db.addFinish(name)
+      mutate(d => ({ ...d, finishes: [...(d.finishes||[]), item].sort((a,b)=>a.name.localeCompare(b.name)) }))
+      setNewName('')
+      toast(`${name} added to dropdown`, 'success')
+    } catch(e) { toast(e.message, 'error') }
+  }
+
+  const rename = async () => {
+    const name = editVal.trim(); if (!name) return
+    try {
+      await db.updateFinish(editItem.id, name)
+      const old = finishes.find(f => f.id === editItem.id)
+      mutate(d => ({
+        ...d,
+        finishes: d.finishes.map(f => f.id === editItem.id ? { ...f, name } : f),
+        projects: old ? d.projects.map(p => p.finish_used === old.name ? { ...p, finish_used: name } : p) : d.projects,
+      }))
+      setEditItem(null)
+      toast('Renamed', 'success')
+    } catch(e) { toast(e.message, 'error') }
+  }
+
+  const remove = async id => {
+    await db.deleteFinish(id).catch(e => toast(e.message, 'error'))
+    mutate(d => ({ ...d, finishes: d.finishes.filter(f => f.id !== id) }))
+  }
+
+  return (
+    <div style={{ margin: '0 20px 24px', background: 'var(--surface)', borderRadius: 12, border: '1px solid var(--border-2)', overflow: 'hidden' }}>
+      <button
+        onClick={() => setExpanded(e => !e)}
+        style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: 'var(--fill)', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
+      >
+        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.8px' }}>
+          Project Dropdown ({finishes.length} entries)
+        </span>
+        <span style={{ fontSize: 11, color: 'var(--text-4)' }}>{expanded ? '▲' : '▼'} manage</span>
+      </button>
+      {expanded && (
+        <div style={{ padding: '0 0 12px' }}>
+          <p style={{ fontSize: 12, color: 'var(--text-3)', padding: '8px 16px 4px' }}>
+            These names appear in the project finish dropdown.
+          </p>
+          {finishes.map((f, i) => (
+            <div key={f.id} style={{ display: 'flex', alignItems: 'center', padding: '8px 16px', borderBottom: i < finishes.length - 1 ? '1px solid var(--border-2)' : 'none' }}>
+              {editItem?.id === f.id ? (
+                <>
+                  <input className="form-input" style={{ flex: 1, fontSize: 13 }} value={editVal} onChange={e => setEditVal(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') rename(); if (e.key === 'Escape') setEditItem(null) }} autoFocus />
+                  <button className="btn-text" style={{ marginLeft: 8, fontSize: 12 }} onClick={rename}>Save</button>
+                  <button className="btn-text" style={{ marginLeft: 4, fontSize: 12, color: 'var(--text-3)' }} onClick={() => setEditItem(null)}>Cancel</button>
+                </>
+              ) : (
+                <>
+                  <span style={{ flex: 1, fontSize: 14, color: 'var(--text)' }}>{f.name}</span>
+                  <button className="icon-btn" onClick={() => { setEditItem(f); setEditVal(f.name) }}><IEdit size={13} /></button>
+                  <button className="icon-btn" onClick={() => remove(f.id)} style={{ color: 'var(--red)' }}><ITrash size={13} /></button>
+                </>
+              )}
+            </div>
+          ))}
+          {finishes.length === 0 && <div style={{ padding: '10px 16px', fontSize: 13, color: 'var(--text-4)' }}>No entries yet</div>}
+          <div style={{ display: 'flex', gap: 8, padding: '10px 16px 0' }}>
+            <input className="form-input" style={{ flex: 1, fontSize: 13 }} placeholder="Add finish name to dropdown…"
+              value={newName} onChange={e => setNewName(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} />
+            <button className="btn-secondary" style={{ padding: '0 14px', flexShrink: 0, fontSize: 13 }} onClick={add}>Add</button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 const CATEGORIES = ['Topcoat', 'Sealer', 'Oil', 'Wax', 'Stain', 'Dye', 'Paint', 'Other']
 
@@ -46,7 +133,11 @@ export default function Finishes() {
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
       <div className="scroll-page" style={{ paddingBottom: 80 }}>
-        <div className="page-header"><h1 className="page-title">Finishes</h1></div>
+        <div className="page-header">
+          <h1 className="page-title">Finishes</h1>
+          <p className="page-subtitle">Your finish products library and project dropdown list.</p>
+        </div>
+        <FinishDropdownManager />
         <div style={{ paddingBottom: 24 }}>
           {byCat.map(({ cat, items }) => (
             <div key={cat}>

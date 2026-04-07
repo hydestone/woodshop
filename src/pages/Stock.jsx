@@ -3,7 +3,7 @@ import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
 import { addToGoogleCalendar, addToAppleReminders } from '../supabase.js'
-import { Sheet, FormCell, ConfirmSheet, STOCK_STATUS, fmt, IPlus, ITrash, IEdit, ICal, IBell } from '../components/Shared.jsx'
+import { Sheet, FormCell, ConfirmSheet, DropZone, STOCK_STATUS, fmt, IPlus, ITrash, IEdit, ICal, IBell, ICamera } from '../components/Shared.jsx'
 
 const STATUS_ORDER = ['Freshly cut','Drying','Ready to use','Used up']
 
@@ -33,6 +33,89 @@ function emcCalc(tempF, rh) {
   const W=rh/100, h=330+0.452*tempF+0.00415*tempF*tempF, k=0.791+0.000463*tempF-0.000000844*tempF*tempF
   const k1=6.34+0.000775*tempF-0.0000935*tempF*tempF, k2=1.09+0.0284*tempF-0.0000904*tempF*tempF, kW=k*W
   return Math.round(1800/W*(kW/(1-kW)+k1*kW+2*k1*k2*kW*kW)/(h*(1+k1*kW+k1*k2*kW*kW))*10)/10
+}
+
+
+// ── Species manager ───────────────────────────────────────────────────────────
+function SpeciesManager() {
+  const { data, mutate } = useCtx()
+  const toast = useToast()
+  const species = data.species || []
+  const [newName, setNewName]   = useState('')
+  const [editItem, setEditItem] = useState(null)
+  const [editVal, setEditVal]   = useState('')
+  const [expanded, setExpanded] = useState(false)
+
+  const add = async () => {
+    const name = newName.trim(); if (!name) return
+    try {
+      const item = await db.addSpecies(name)
+      mutate(d => ({ ...d, species: [...(d.species||[]), item].sort((a,b)=>a.name.localeCompare(b.name)) }))
+      setNewName(''); toast(`${name} added`, 'success')
+    } catch(e) { toast(e.message, 'error') }
+  }
+
+  const rename = async () => {
+    const name = editVal.trim(); if (!name) return
+    try {
+      await db.updateSpecies(editItem.id, name)
+      const old = species.find(s => s.id === editItem.id)
+      mutate(d => ({
+        ...d,
+        species: d.species.map(s => s.id === editItem.id ? { ...s, name } : s),
+        projects: old ? d.projects.map(p => p.wood_type === old.name ? { ...p, wood_type: name } : p) : d.projects,
+      }))
+      setEditItem(null); toast('Renamed', 'success')
+    } catch(e) { toast(e.message, 'error') }
+  }
+
+  const remove = async id => {
+    await db.deleteSpecies(id).catch(e => toast(e.message, 'error'))
+    mutate(d => ({ ...d, species: d.species.filter(s => s.id !== id) }))
+  }
+
+  return (
+    <div style={{ margin: '8px 20px 16px', background: 'var(--surface)', borderRadius: 12, border: '1px solid var(--border-2)', overflow: 'hidden' }}>
+      <button
+        onClick={() => setExpanded(e => !e)}
+        style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: 'var(--fill)', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
+      >
+        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.8px' }}>
+          Wood Species ({species.length})
+        </span>
+        <span style={{ fontSize: 11, color: 'var(--text-4)' }}>{expanded ? '▲' : '▼'} manage</span>
+      </button>
+      {expanded && (
+        <div style={{ padding: '0 0 12px' }}>
+          <p style={{ fontSize: 12, color: 'var(--text-3)', padding: '8px 16px 4px' }}>Species names used in project dropdowns.</p>
+          {species.map((s, i) => (
+            <div key={s.id} style={{ display: 'flex', alignItems: 'center', padding: '8px 16px', borderBottom: i < species.length-1 ? '1px solid var(--border-2)' : 'none' }}>
+              {editItem?.id === s.id ? (
+                <>
+                  <input className="form-input" style={{ flex: 1, fontSize: 13 }} value={editVal} onChange={e => setEditVal(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') rename(); if (e.key === 'Escape') setEditItem(null) }} autoFocus />
+                  <button className="btn-text" style={{ marginLeft: 8, fontSize: 12 }} onClick={rename}>Save</button>
+                  <button className="btn-text" style={{ marginLeft: 4, fontSize: 12, color: 'var(--text-3)' }} onClick={() => setEditItem(null)}>Cancel</button>
+                </>
+              ) : (
+                <>
+                  <span style={{ flex: 1, fontSize: 14, color: 'var(--text)' }}>{s.name}</span>
+                  <button className="icon-btn" onClick={() => { setEditItem(s); setEditVal(s.name) }}><IEdit size={13} /></button>
+                  <button className="icon-btn" onClick={() => remove(s.id)} style={{ color: 'var(--red)' }}><ITrash size={13} /></button>
+                </>
+              )}
+            </div>
+          ))}
+          {species.length === 0 && <div style={{ padding: '10px 16px', fontSize: 13, color: 'var(--text-4)' }}>No species yet</div>}
+          <div style={{ display: 'flex', gap: 8, padding: '10px 16px 0' }}>
+            <input className="form-input" style={{ flex: 1, fontSize: 13 }} placeholder="Add species…"
+              value={newName} onChange={e => setNewName(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} />
+            <button className="btn-secondary" style={{ padding: '0 14px', flexShrink: 0, fontSize: 13 }} onClick={add}>Add</button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 function ToolsPanel() {
@@ -117,6 +200,7 @@ function LocationsSection({ locations, woodStock, mutate }) {
                   <div style={{flex:1}}>
                     <div style={{fontWeight:600,fontSize:15}}>{loc.name}</div>
                     {loc.address && <div style={{fontSize:13,color:'var(--text-3)',marginTop:2}}>📍 {loc.address}</div>}
+                    {loc.notes && <div style={{fontSize:13,color:'var(--text-3)',marginTop:2,fontStyle:'italic'}}>{loc.notes}</div>}
                     <div style={{fontSize:12,color:'var(--text-3)',marginTop:3}}>{stock.length} stock entr{stock.length===1?'y':'ies'}{stock.length>0?' · '+[...new Set(stock.map(s=>s.species).filter(Boolean))].slice(0,3).join(', '):''}</div>
                   </div>
                   <div style={{display:'flex',gap:4}}>
@@ -145,6 +229,7 @@ function LocationSheet({ loc, onSave, onClose }) {
   const [pinLat, setPinLat]         = useState(loc?.lat || null)
   const [pinLng, setPinLng]         = useState(loc?.lng || null)
   const [pinLabel, setPinLabel]     = useState(loc?.address || '')
+  const [notes, setNotes]           = useState(loc?.notes || '')
   const mapRef     = useRef()
   const mapInst    = useRef()
   const markerInst = useRef()
@@ -218,7 +303,7 @@ function LocationSheet({ loc, onSave, onClose }) {
     const name = nameRef.current?.value.trim()
     if (!name) return
     if (!pinLat || !pinLng) { toast('Click on the map to place a pin first', 'error'); return }
-    await onSave({ name, address: cityState.trim() || pinLabel, lat: pinLat, lng: pinLng })
+    await onSave({ name, address: cityState.trim() || pinLabel, lat: pinLat, lng: pinLng, notes: notes.trim() })
   }
 
   return (
@@ -226,6 +311,9 @@ function LocationSheet({ loc, onSave, onClose }) {
       <div className="form-group" style={{marginBottom:12}}>
         <FormCell label="Name">
           <input ref={nameRef} className="form-input" placeholder="Sherborn Back Lot" defaultValue={loc?.name||''} autoFocus/>
+        </FormCell>
+        <FormCell label="Notes">
+          <input className="form-input" placeholder="e.g. Contacted Mike, back 40 near stream, ask in spring" value={notes} onChange={e=>setNotes(e.target.value)}/>
         </FormCell>
         <FormCell label="Street, city, state" last>
           <input
@@ -396,6 +484,9 @@ export default function Stock() {
                             {item.notes&&<div style={{fontSize:13,color:'var(--text-3)',marginTop:4}}>{item.notes}</div>}
                             <div style={{display:'flex',gap:8,marginTop:10,flexWrap:'wrap'}}>
                               <button className="btn-secondary" onClick={()=>setDetail(item)}>Moisture log</button>
+                              <button className="btn-secondary" onClick={()=>setStockPhotoItem(item)} style={{display:'flex',alignItems:'center',gap:5}}>
+                                <ICamera size={12} color="currentColor"/> Photos
+                              </button>
                               {(status==='Freshly cut'||status==='Drying')&&<>
                                 <button className="btn-cal" onClick={()=>calReminder(item)}><ICal size={13} color="currentColor"/> Google Cal</button>
                                 <button className="btn-reminder" onClick={()=>appleReminder(item)}><IBell size={13} color="currentColor"/> Reminders</button>
@@ -427,7 +518,63 @@ export default function Stock() {
       {editItem   &&<StockSheet locations={locations} item={editItem} onSave={f=>handleSave(editItem.id,f)} onClose={()=>setEditItem(null)}/>}
       {deleteItem &&<ConfirmSheet message={`Delete "${deleteItem.species}"?`} onConfirm={()=>del(deleteItem.id)} onClose={()=>setDeleteItem(null)}/>}
       {detail     &&<MoistureLog item={detail} onClose={()=>setDetail(null)} onAdded={rows=>setLogCache(prev=>({...prev,[detail.id]:rows}))}/>}
+      {stockPhotoItem&&<StockPhotoSheet item={stockPhotoItem} onClose={()=>setStockPhotoItem(null)}/>}
     </div>
+  )
+}
+
+
+// ── Wood stock photo sheet ────────────────────────────────────────────────────
+function StockPhotoSheet({ item, onClose }) {
+  const { data, mutate } = useCtx()
+  const toast = useToast()
+  const fileRef = useRef()
+  const [uploading, setUploading] = useState(false)
+
+  // Photos tagged with this stock item
+  const photos = (data.photos || []).filter(p => p.caption?.startsWith(`stock:${item.id}`))
+
+  const handleUpload = async files => {
+    for (const file of Array.from(files)) {
+      setUploading(true)
+      try {
+        const photo = await db.uploadPhoto(null, file, `stock:${item.id}`, 'wood_stock', 'wood_stock')
+        mutate(d => ({ ...d, photos: [photo, ...d.photos] }))
+        toast('Photo added', 'success')
+      } catch(e) { toast(e.message, 'error') }
+      setUploading(false)
+    }
+  }
+
+  const deletePhoto = async photo => {
+    mutate(d => ({ ...d, photos: d.photos.filter(p => p.id !== photo.id) }))
+    await db.deletePhoto(photo).catch(e => toast(e.message, 'error'))
+  }
+
+  return (
+    <Sheet title={`Photos — ${item.species}`} onClose={onClose}>
+      <div style={{padding:'0 16px 16px'}}>
+        <input ref={fileRef} type="file" accept="image/*" multiple style={{display:'none'}} onChange={e=>handleUpload(e.target.files)}/>
+        <button className="btn-primary" style={{width:'100%',justifyContent:'center',marginBottom:16}} onClick={()=>fileRef.current?.click()} disabled={uploading}>
+          {uploading ? 'Uploading…' : '+ Add Photo'}
+        </button>
+        {photos.length === 0
+          ? <div style={{textAlign:'center',color:'var(--text-4)',fontSize:13,padding:'32px 0'}}>No photos yet — add some to document this stock</div>
+          : <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+              {photos.map(p => (
+                <div key={p.id} style={{position:'relative',borderRadius:8,overflow:'hidden',aspectRatio:'1',background:'var(--fill)'}}>
+                  <img src={p.url} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+                  <button onClick={()=>deletePhoto(p)} style={{
+                    position:'absolute',top:4,right:4,background:'rgba(0,0,0,.6)',border:'none',
+                    borderRadius:'50%',width:24,height:24,cursor:'pointer',color:'#fff',fontSize:14,
+                    display:'flex',alignItems:'center',justifyContent:'center',
+                  }}>×</button>
+                </div>
+              ))}
+            </div>
+        }
+      </div>
+    </Sheet>
   )
 }
 

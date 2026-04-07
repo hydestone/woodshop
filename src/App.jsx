@@ -5,7 +5,8 @@ import Auth from './pages/Auth.jsx'
 import { ToastProvider } from './components/Toast.jsx'
 import GlobalSearch from './components/Search.jsx'
 import {
-  IFolder, ICart, IWrench, ICamera, ITree, IBulb,
+  IFolder, ICart, IWrench, ICamera, ITree, IBulb, ISaw,
+  IStar, ICheck, IGrid,
   IBook, IHouse, IImage, ILayers, IMore, IClose,
   coatStatus, maintStatus,
 } from './components/Shared.jsx'
@@ -36,30 +37,58 @@ const AppCtx = createContext(null)
 export const useCtx = () => useContext(AppCtx)
 
 // ─── Navigation config ────────────────────────────────────────────────────────
-const MAIN_NAV = [
-  { id: 'home',        label: 'Home',             Icon: IHouse   },
-  { id: 'projects',    label: 'Projects',          Icon: IFolder  },
-  { id: 'stock',       label: 'Wood Stock',        Icon: ITree    },
-  { id: 'finishes',    label: 'Finishes',          Icon: ILayers  },
-  { id: 'maintenance', label: 'Maintenance',       Icon: IWrench  },
-  { id: 'shop',        label: 'Shop Improvements', Icon: IHouse   },
-  { id: 'shopping',    label: 'Shopping List',     Icon: ICart    },
-  { id: 'resources',   label: 'Resources',         Icon: IBook    },
-  { id: 'brainstorm',  label: 'Brainstorm',        Icon: IBulb    },
-  { id: 'yearreview',  label: 'Year in Review',    Icon: IBulb    },
-  { id: 'audit',       label: 'Data Audit',         Icon: IWrench  },
-  { id: 'help',         label: 'Help',               Icon: IBook    },
-  { id: 'smoketest',    label: 'Smoke Test',         Icon: IWrench  },
-  { id: 'cutcalc',      label: 'Cut Calculator',     Icon: IWrench  },
-  { id: 'settings',    label: 'Settings',          Icon: IWrench  },
-  { id: 'import',      label: 'Bulk Import',       Icon: ICamera  },
+// ── Sectioned navigation ────────────────────────────────────────────────────
+const NAV_SECTIONS = [
+  {
+    label: null,
+    items: [
+      { id: 'home',        label: 'Home',             Icon: IHouse  },
+      { id: 'projects',    label: 'Projects',          Icon: IFolder },
+      { id: 'stock',       label: 'Wood Stock',        Icon: ITree   },
+      { id: 'maintenance', label: 'Shop Maintenance',  Icon: IWrench },
+      { id: 'shop',        label: 'Shop Improvements', Icon: IHouse  },
+      { id: 'shopping',    label: 'Shopping List',     Icon: ICart   },
+    ],
+  },
+  {
+    label: 'Creative',
+    items: [
+      { id: 'brainstorm',  label: 'Brainstorm',        Icon: IBulb   },
+      { id: 'cutcalc',     label: 'Cut Calculator',    Icon: ISaw    },
+      { id: 'yearreview',  label: 'Year in Review',    Icon: IStar   },
+    ],
+  },
+  {
+    label: 'Gallery',
+    items: [
+      { id: 'photos',      label: 'All Photos',        Icon: ICamera },
+      { id: 'finished',    label: 'Finished Work',     Icon: IImage  },
+      { id: 'inspiration', label: 'Inspiration',       Icon: IBulb   },
+    ],
+  },
+  {
+    label: 'Library',
+    items: [
+      { id: 'finishes',    label: 'Finishes',          Icon: ILayers },
+      { id: 'resources',   label: 'Resources',         Icon: IBook   },
+    ],
+  },
+  {
+    label: 'Tools',
+    items: [
+      { id: 'audit',       label: 'Data Audit',        Icon: IGrid   },
+      { id: 'smoketest',   label: 'Smoke Test',        Icon: ICheck  },
+      { id: 'settings',    label: 'Settings',          Icon: IWrench },
+      { id: 'import',      label: 'Bulk Import',       Icon: ICamera },
+    ],
+  },
 ]
 
-const GALLERY_NAV = [
-  { id: 'photos',      label: 'All Photos',    Icon: ICamera },
-  { id: 'finished',    label: 'Finished Work', Icon: IImage  },
-  { id: 'inspiration', label: 'Inspiration',   Icon: IBulb   },
-]
+// Flat list for mobile "more" menu and badge lookups
+const ALL_NAV = NAV_SECTIONS.flatMap(s => s.items)
+
+// Legacy aliases kept for mobile tabbar
+const MAIN_NAV = NAV_SECTIONS[0].items
 
 const MOBILE_TABS = [
   { id: 'home',     label: 'Home',     Icon: IHouse  },
@@ -93,13 +122,7 @@ function QRModal({ onClose }) {
           boxShadow: '0 24px 60px rgba(0,0,0,.4)',
         }}
       >
-        <svg width="36" height="32" viewBox="0 0 80 72" fill="none">
-          <path d="M10 52 L28 24 L40 38 L52 18 L70 52 Z" fill="#2D5A3D" opacity="0.85"/>
-          <path d="M10 52 L28 24 L40 38" fill="#1C3A2A"/>
-          <path d="M15 60 Q40 52 65 60" stroke="#4A7A5A" strokeWidth="1.2" fill="none" opacity="0.6"/>
-          <path d="M12 65 Q40 57 68 65" stroke="#4A7A5A" strokeWidth="1.2" fill="none" opacity="0.45"/>
-          <path d="M10 70 Q40 62 70 70" stroke="#4A7A5A" strokeWidth="1.2" fill="none" opacity="0.3"/>
-        </svg>
+        <img src="/New_Logo.png" alt="JDH Woodworks" style={{width:56,height:56,objectFit:'contain'}} />
 
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: 18, fontWeight: 800, color: '#0F1E38', letterSpacing: '-.3px' }}>
@@ -295,40 +318,32 @@ export default function App() {
             {/* ── Sidebar ── */}
             <nav className="sidebar" aria-label="Main navigation">
               <div className="sidebar-nav">
-                {MAIN_NAV.map(t => {
-                  const badge  = badgeFor(t.id)
-                  const active = tab === t.id && !projId
-                  return (
-                    <button
-                      key={t.id}
-                      className={`sidebar-item ${active ? 'active' : ''}`}
-                      onClick={() => setTab(t.id)}
-                      aria-current={active ? 'page' : undefined}
-                    >
-                      <t.Icon size={16} color={active ? "#0F172A" : "currentColor"} sw={active ? 2.2 : 1.6} />
-                      {t.label}
-                      {badge > 0 && <span className="sidebar-badge" aria-label={`${badge} urgent`}>{badge}</span>}
-                    </button>
-                  )
-                })}
-
-                <div className="sidebar-divider" role="separator" />
-                <span className="sidebar-section-label">Gallery</span>
-
-                {GALLERY_NAV.map(t => {
-                  const active = tab === t.id && !projId
-                  return (
-                    <button
-                      key={t.id}
-                      className={`sidebar-item ${active ? 'active' : ''}`}
-                      onClick={() => setTab(t.id)}
-                      aria-current={active ? 'page' : undefined}
-                    >
-                      <t.Icon size={16} color={active ? "#0F172A" : "currentColor"} sw={active ? 2.2 : 1.6} />
-                      {t.label}
-                    </button>
-                  )
-                })}
+                {NAV_SECTIONS.map((section, si) => (
+                  <div key={si}>
+                    {section.label && (
+                      <>
+                        <div className="sidebar-divider" role="separator" />
+                        <span className="sidebar-section-label">{section.label}</span>
+                      </>
+                    )}
+                    {section.items.map(t => {
+                      const badge  = badgeFor(t.id)
+                      const active = tab === t.id && !projId
+                      return (
+                        <button
+                          key={t.id}
+                          className={`sidebar-item ${active ? 'active' : ''}`}
+                          onClick={() => setTab(t.id)}
+                          aria-current={active ? 'page' : undefined}
+                        >
+                          <t.Icon size={16} color={active ? '#0F172A' : 'currentColor'} sw={active ? 2.2 : 1.6} />
+                          {t.label}
+                          {badge > 0 && <span className="sidebar-badge" aria-label={`${badge} urgent`}>{badge}</span>}
+                        </button>
+                      )
+                    })}
+                  </div>
+                ))}
               </div>
               <div style={{ padding: '12px 8px', borderTop: '1px solid rgba(255,255,255,.08)' }}>
                 <button
@@ -492,7 +507,7 @@ export default function App() {
                     </svg>
                     <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>Share Portfolio</span>
                   </div>
-                  {[...MAIN_NAV.slice(2), ...GALLERY_NAV].map((t, i, arr) => {
+                  {ALL_NAV.filter(t => !['home','projects','shopping','photos'].includes(t.id)).map((t, i, arr) => {
                     const badge = badgeFor(t.id)
                     return (
                       <div

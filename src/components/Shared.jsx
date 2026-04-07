@@ -42,6 +42,7 @@ export const ILayers   = p => <I {...p} d={['M12 2L2 7l10 5 10-5-10-5','M2 17l10
 export const IMore     = p => <I {...p} d="M5 12h.01M12 12h.01M19 12h.01" sw={3} />
 export const IBell     = p => <I {...p} d={['M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9','M13.73 21a2 2 0 0 1-3.46 0']} />
 export const ISearch   = p => <I {...p} d={['M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z','M21 21l-4.35-4.35']} />
+export const ISaw      = p => <I {...p} d={['M3 9h13l4 3-4 3H3V9z','M7 9v6','M10 9v6','M13 9v6','M1 12h2']} />
 export const IStar     = p => <I {...p} d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill={p.fill||'none'} />
 
 // ─── Status palettes ──────────────────────────────────────────────────────────
@@ -109,7 +110,9 @@ export function Sheet({ title, onClose, onSave, saveLabel = 'Save', children }) 
       role="dialog"
       aria-modal="true"
       aria-label={title}
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+      onMouseDown={e => { if (e.target === e.currentTarget) e.currentTarget._shouldClose = true }}
+      onMouseUp={e => { if (e.currentTarget._shouldClose && e.target === e.currentTarget) { onClose(); } e.currentTarget._shouldClose = false }}
+      onClick={e => e.stopPropagation()}
     >
       <div className="sheet">
         <div className="sheet-handle" />
@@ -235,7 +238,7 @@ export function TagInput({ tags, onChange }) {
 }
 
 // ─── Lightbox ─────────────────────────────────────────────────────────────────
-function Lightbox({ photos, index, onClose }) {
+export function Lightbox({ photos, index, onClose }) {
   const [cur, setCur]           = useState(index)
   const [scale, setScale]       = useState(1)
   const [rotation, setRotation] = useState(0)

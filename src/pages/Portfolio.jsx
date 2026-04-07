@@ -195,73 +195,137 @@ function Lightbox({ photos, projects, idx, onClose, onNav }) {
   )
 }
 
+// Category sort priority — Bowls first, then Spoons, Kitchen Utensils, then others
+const CAT_PRIORITY = ['Bowls', 'Spoons', 'Kitchen Utensils', 'Furniture', 'Turning', 'Carving', 'Boxes', 'Signs', 'Other']
+
+function catPriority(cat) {
+  const idx = CAT_PRIORITY.indexOf(cat)
+  return idx >= 0 ? idx : CAT_PRIORITY.length
+}
+
 export default function Portfolio() {
-  const [photos, setPhotos]       = useState([])
-  const [projects, setProjects]   = useState([])
-  const [loading, setLoading]     = useState(true)
+  const [photos, setPhotos]           = useState([])
+  const [projects, setProjects]       = useState([])
+  const [loading, setLoading]         = useState(true)
   const [lightboxIdx, setLightboxIdx] = useState(null)
-  const [showSplash, setShowSplash] = useState(true)
+  const [showSplash, setShowSplash]   = useState(true)
+  const [activeFilter, setActiveFilter] = useState('All')
 
   useEffect(() => {
     Promise.all([
       supabase.from('photos').select('*').ilike('tags','%portfolio%').order('created_at',{ascending:false}),
-      supabase.from('projects').select('*').eq('status','complete'),
+      supabase.from('projects').select('*'),
     ]).then(([ph, pr]) => {
-      setPhotos((ph.data||[]).map(p=>({...p,url:photoUrl(p.storage_path)})))
+      setPhotos((ph.data||[]).map(p => ({ ...p, url: photoUrl(p.storage_path) })))
       setProjects(pr.data||[])
       setLoading(false)
-    }).catch(()=>setLoading(false))
-  },[])
+    }).catch(() => setLoading(false))
+  }, [])
 
-  const projFor = id => projects.find(p=>p.id===id)
+  const projFor = id => projects.find(p => p.id === id)
+
+  // Build category list from actual project categories, sorted by priority
+  const usedCats = [...new Set(
+    photos.map(p => projFor(p.project_id)?.category).filter(Boolean)
+  )].sort((a, b) => catPriority(a) - catPriority(b))
+
+  // Filter then sort photos by project category priority
+  const filtered = (activeFilter === 'All' ? photos : photos.filter(p => projFor(p.project_id)?.category === activeFilter))
+    .slice()
+    .sort((a, b) => {
+      const ca = projFor(a.project_id)?.category || ''
+      const cb = projFor(b.project_id)?.category || ''
+      return catPriority(ca) - catPriority(cb)
+    })
 
   return (
     <>
       {showSplash && <RonSplash onDone={() => setShowSplash(false)} />}
 
       <div style={{
-        minHeight:'100vh', background:'#F0F4F8',
-        fontFamily:'-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif',
+        minHeight: '100vh', background: '#F0F4F8',
+        fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif',
         opacity: showSplash ? 0 : 1,
         transition: 'opacity 400ms ease',
       }}>
+        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
         {/* Header */}
-        <div style={{background:'#0F1E38',padding:'48px 24px 40px',textAlign:'center'}}>
-          <div style={{fontSize:13,fontWeight:600,letterSpacing:2,color:'#BFDBFE',textTransform:'uppercase',marginBottom:12}}>Handcrafted in Sherborn, MA</div>
-          <h1 style={{fontSize:32,fontWeight:700,color:'#fff',margin:0}}>JDH Woodworks</h1>
-          <p style={{color:'#8BA8D0',marginTop:8,fontSize:15}}>Bowls · Furniture · Turning · Hand Tools</p>
-          <div style={{marginTop:16,fontSize:13,color:'#64748B'}}>{photos.length} finished piece{photos.length!==1?'s':''}</div>
+        <div style={{ background: '#0F1E38', padding: '48px 24px 32px', textAlign: 'center' }}>
+          <img
+            src="/New_Logo.png" alt="JDH WOODWORKS"
+            style={{ width: 80, height: 80, objectFit: 'contain', filter: 'brightness(0) invert(1)', marginBottom: 16 }}
+          />
+          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 3, color: '#BFDBFE', textTransform: 'uppercase', marginBottom: 10 }}>
+            Handcrafted in Sherborn, MA
+          </div>
+          <h1 style={{ fontSize: 32, fontWeight: 900, color: '#fff', margin: 0, letterSpacing: -0.5 }}>
+            JDH <span style={{ color: '#4ADE80' }}>WOODWORKS</span>
+          </h1>
+          <p style={{ color: '#8BA8D0', marginTop: 10, fontSize: 15 }}>
+            Bowls · Spoons · Furniture · Turning · Hand Tools
+          </p>
+          <div style={{ marginTop: 12, fontSize: 13, color: '#475569' }}>
+            {photos.length} finished piece{photos.length !== 1 ? 's' : ''}
+          </div>
         </div>
+
+        {/* Category filter tabs */}
+        {usedCats.length > 0 && (
+          <div style={{ background: '#0F1E38', paddingBottom: 20 }}>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', padding: '0 20px' }}>
+              {['All', ...usedCats].map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setActiveFilter(cat)}
+                  style={{
+                    padding: '6px 16px', borderRadius: 99, border: 'none', cursor: 'pointer',
+                    fontSize: 13, fontWeight: 600, fontFamily: 'inherit',
+                    background: activeFilter === cat ? '#fff' : 'rgba(255,255,255,.1)',
+                    color: activeFilter === cat ? '#0F1E38' : 'rgba(255,255,255,.7)',
+                    transition: 'all 150ms ease',
+                  }}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Grid */}
         {loading ? (
-          <div style={{textAlign:'center',padding:'80px 24px',color:'#64748B'}}>
-            <div style={{width:32,height:32,border:'3px solid #0F1E38',borderTopColor:'transparent',borderRadius:'50%',animation:'spin 1s linear infinite',margin:'0 auto 16px'}}/>
-            <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+          <div style={{ textAlign: 'center', padding: '80px 24px', color: '#64748B' }}>
+            <div style={{ width: 32, height: 32, border: '3px solid #0F1E38', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }} />
           </div>
-        ) : photos.length===0 ? (
-          <div style={{textAlign:'center',padding:'80px 24px',color:'#64748B'}}>
-            <div style={{fontSize:48,marginBottom:16}}>🪵</div>
-            <div style={{fontSize:18,fontWeight:600,color:'#1E293B',marginBottom:8}}>No pieces yet</div>
-            <p>Tag photos "portfolio" in JDH Woodworks to populate this page.</p>
+        ) : filtered.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '80px 24px', color: '#64748B' }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>🪵</div>
+            <div style={{ fontSize: 18, fontWeight: 600, color: '#1E293B', marginBottom: 8 }}>
+              {photos.length === 0 ? 'No pieces yet' : `No ${activeFilter} pieces`}
+            </div>
+            <p>{photos.length === 0 ? 'Tag photos "portfolio" in JDH Woodworks to populate this page.' : 'Try a different filter above.'}</p>
           </div>
         ) : (
-          <div style={{maxWidth:1100,margin:'0 auto',padding:'32px 16px'}}>
-            <div style={{columns:'280px',columnGap:16}}>
-              {photos.map(photo=>{
+          <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 16px' }}>
+            <div style={{ columns: '280px', columnGap: 16 }}>
+              {filtered.map(photo => {
                 const proj = projFor(photo.project_id)
                 return (
-                  <div key={photo.id} style={{breakInside:'avoid',marginBottom:16,background:'#fff',borderRadius:12,overflow:'hidden',boxShadow:'0 1px 3px rgba(0,0,0,.08)',cursor:'pointer'}} onClick={()=>setLightboxIdx(photos.indexOf(photo))}>
-                    <img src={photo.url} alt={photo.caption||proj?.name||'Finished piece'} loading="lazy" style={{width:'100%',display:'block',objectFit:'cover'}}/>
-                    {(photo.caption||proj) && (
-                      <div style={{padding:'12px 14px'}}>
-                        {photo.caption&&<div style={{fontWeight:500,fontSize:14,color:'#0F172A'}}>{photo.caption}</div>}
-                        {proj&&<div style={{fontSize:12,color:'#64748B',marginTop:2}}>
-                          {proj.wood_type&&<span>{proj.wood_type}</span>}
-                          {proj.year_completed&&<span> · {proj.year_completed}</span>}
-                          {proj.finish_used&&<span> · {proj.finish_used}</span>}
-                        </div>}
+                  <div
+                    key={photo.id}
+                    style={{ breakInside: 'avoid', marginBottom: 16, background: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,.08)', cursor: 'pointer' }}
+                    onClick={() => setLightboxIdx(filtered.indexOf(photo))}
+                  >
+                    <img src={photo.url} alt={photo.caption || proj?.name || 'Finished piece'} loading="lazy" style={{ width: '100%', display: 'block', objectFit: 'cover' }} />
+                    {(photo.caption || proj) && (
+                      <div style={{ padding: '12px 14px' }}>
+                        {photo.caption && <div style={{ fontWeight: 500, fontSize: 14, color: '#0F172A' }}>{photo.caption}</div>}
+                        {proj && (
+                          <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>
+                            {[proj.wood_type, proj.year_completed, proj.finish_used].filter(Boolean).join(' · ')}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -272,8 +336,9 @@ export default function Portfolio() {
         )}
 
         {/* Footer */}
-        <div style={{background:'#0F1E38',padding:'24px',textAlign:'center',marginTop:32}}>
-          <p style={{color:'#64748B',fontSize:13,margin:0}}>JDH Woodworks · All pieces handcrafted in Sherborn, MA</p>
+        <div style={{ background: '#0F1E38', padding: '24px', textAlign: 'center', marginTop: 32 }}>
+          <img src="/New_Logo.png" alt="" style={{ width: 32, height: 32, objectFit: 'contain', filter: 'brightness(0) invert(1)', marginBottom: 8, opacity: 0.5, display: 'block', margin: '0 auto 8px' }} />
+          <p style={{ color: '#475569', fontSize: 13, margin: 0 }}>JDH WOODWORKS · All pieces handcrafted in Sherborn, MA</p>
         </div>
 
         {/* Lightbox */}

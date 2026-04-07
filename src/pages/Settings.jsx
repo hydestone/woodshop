@@ -64,19 +64,20 @@ function ManagedList({ title, items, onAdd, onRename, onDelete }) {
 
 export default function Settings() {
   const { data, mutate } = useCtx()
-  const categories  = data.categories  || []
-  const species     = data.species     || []
-  const finishes    = data.finishes    || []
+  const categories = data.categories || []
 
   return (
     <div className="scroll-page">
       <div className="page-header">
         <h1 className="page-title">Settings</h1>
+        <p className="page-subtitle">
+          Manage project categories. Finishes are managed in the Library → Finishes page.
+          Wood species are managed in Wood Stock.
+        </p>
       </div>
       <div style={{ paddingBottom: 40 }}>
-
         <ManagedList
-          title="Categories"
+          title="Project Categories"
           items={categories}
           onAdd={async name => {
             const item = await db.addCategory(name)
@@ -84,14 +85,11 @@ export default function Settings() {
           }}
           onRename={async (id, name) => {
             await db.updateCategory(id, name)
-            mutate(d => ({ ...d, categories: d.categories.map(c => c.id === id ? { ...c, name } : c) }))
-            // Update all projects using this category name
+            const old = data.categories.find(c => c.id === id)
             mutate(d => ({
               ...d,
-              projects: d.projects.map(p => {
-                const old = d.categories.find(c => c.id === id)
-                return old && p.category === old.name ? { ...p, category: name } : p
-              })
+              categories: d.categories.map(c => c.id === id ? { ...c, name } : c),
+              projects: old ? d.projects.map(p => p.category === old.name ? { ...p, category: name } : p) : d.projects,
             }))
           }}
           onDelete={async id => {
@@ -99,55 +97,6 @@ export default function Settings() {
             mutate(d => ({ ...d, categories: d.categories.filter(c => c.id !== id) }))
           }}
         />
-
-        <ManagedList
-          title="Wood Species"
-          items={species}
-          onAdd={async name => {
-            const item = await db.addSpecies(name)
-            mutate(d => ({ ...d, species: [...(d.species||[]), item].sort((a,b)=>a.name.localeCompare(b.name)) }))
-          }}
-          onRename={async (id, name) => {
-            await db.updateSpecies(id, name)
-            // Update species in db for all projects with this species_id
-            mutate(d => ({
-              ...d,
-              species: d.species.map(s => s.id === id ? { ...s, name } : s),
-              projects: d.projects.map(p => p.species_id === id ? { ...p, wood_type: name } : p)
-            }))
-            // Persist to projects table
-            const affected = data.projects.filter(p => p.species_id === id)
-            await Promise.all(affected.map(p => db.updateProject(p.id, { wood_type: name })))
-          }}
-          onDelete={async id => {
-            await db.deleteSpecies(id)
-            mutate(d => ({ ...d, species: d.species.filter(s => s.id !== id) }))
-          }}
-        />
-
-        <ManagedList
-          title="Finishes"
-          items={finishes}
-          onAdd={async name => {
-            const item = await db.addFinish(name)
-            mutate(d => ({ ...d, finishes: [...(d.finishes||[]), item].sort((a,b)=>a.name.localeCompare(b.name)) }))
-          }}
-          onRename={async (id, name) => {
-            await db.updateFinish(id, name)
-            mutate(d => ({
-              ...d,
-              finishes: d.finishes.map(f => f.id === id ? { ...f, name } : f),
-              projects: d.projects.map(p => p.finish_id === id ? { ...p, finish_used: name } : p)
-            }))
-            const affected = data.projects.filter(p => p.finish_id === id)
-            await Promise.all(affected.map(p => db.updateProject(p.id, { finish_used: name })))
-          }}
-          onDelete={async id => {
-            await db.deleteFinish(id)
-            mutate(d => ({ ...d, finishes: d.finishes.filter(f => f.id !== id) }))
-          }}
-        />
-
       </div>
     </div>
   )
