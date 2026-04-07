@@ -16,7 +16,7 @@ import Dashboard        from './pages/Dashboard.jsx'
 import Projects, { ProjectDetail } from './pages/Projects.jsx'
 import Shopping         from './pages/Shopping.jsx'
 import Maintenance      from './pages/Maintenance.jsx'
-import Stock            from './pages/Stock.jsx'
+import Stock, { WoodStockGallery } from './pages/Stock.jsx'
 import Brainstorm       from './pages/Brainstorm.jsx'
 import Finishes         from './pages/Finishes.jsx'
 import Resources        from './pages/Resources.jsx'
@@ -64,6 +64,7 @@ const NAV_SECTIONS = [
       { id: 'photos',      label: 'All Photos',        Icon: ICamera },
       { id: 'finished',    label: 'Finished Work',     Icon: IImage  },
       { id: 'inspiration', label: 'Inspiration',       Icon: IBulb   },
+      { id: 'stockgallery', label: 'Stock Gallery',      Icon: ITree   },
     ],
   },
   {
@@ -270,7 +271,7 @@ export default function App() {
   // ── Loading ────────────────────────────────────────────────────────────────
   if (loading) return (
     <div className="center-screen">
-      <img src="/New_Logo.png" style={{ width: 64, height: 64, marginBottom: 12, opacity: .5, objectFit: "contain" }} alt="" />
+      <img src="/New_Logo.png" style={{ width: 140, height: 140, marginBottom: 24, objectFit: "contain", filter: "brightness(0) invert(0.9)" }} alt="" />
       <div className="spinner" />
       <p style={{ color: 'var(--text-3)', fontSize: 14 }}>Loading workshop…</p>
     </div>
@@ -309,6 +310,8 @@ export default function App() {
       <ToastProvider>
         <div className="app-wrapper">
 
+          {/* Status bar spacer — fills the iOS status bar area on PWA */}
+          <div className="status-bar-spacer" aria-hidden="true" />
           {/* ── Top bar ── */}
           <header className="top-bar" role="banner">
             <div className="top-bar-brand">
@@ -404,6 +407,7 @@ export default function App() {
                   {tab === 'photos'      && <AllPhotos />}
                   {tab === 'finished'    && <FinishedProducts />}
                   {tab === 'inspiration' && <Inspiration />}
+                  {tab === 'stockgallery' && <div className="scroll-page" style={{paddingBottom:40}}><div className="page-header"><h1 className="page-title">Stock Gallery</h1><p className="page-subtitle">Photos of raw lumber, blanks, and prep work</p></div><WoodStockGallery /></div>}
                   {tab === 'yearreview'  && <YearReview />}
                   {tab === 'settings'    && <Settings />}
                   {tab === 'import'      && <BulkImport />}
@@ -492,13 +496,13 @@ export default function App() {
                 {NAV_SECTIONS.map(section => {
                   const items = section.items.filter(t => !['home','projects','shopping','photos'].includes(t.id))
                   if (!items.length) return null
+                  // Give the first (null-label) section a "Workshop" heading in mobile more menu
+                  const label = section.label || 'Workshop'
                   return (
-                    <div key={section.label || 'main'} style={{ marginBottom: 8 }}>
-                      {section.label && (
-                        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-4)', textTransform: 'uppercase', letterSpacing: '.8px', padding: '4px 16px 6px' }}>
-                          {section.label}
-                        </div>
-                      )}
+                    <div key={label} style={{ marginBottom: 8 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-4)', textTransform: 'uppercase', letterSpacing: '.8px', padding: '4px 16px 6px' }}>
+                        {label}
+                      </div>
                       <div className="form-group">
                         {items.map((t, i) => {
                           const badge = badgeFor(t.id)

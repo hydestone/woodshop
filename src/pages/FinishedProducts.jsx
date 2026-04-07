@@ -8,10 +8,17 @@ export default function FinishedWork() {
   const { data, mutate, setTab } = useCtx()
   const toast = useToast()
   const [editMode, setEditMode] = useState(false)
+  const [catFilter, setCatFilter] = useState('all')
 
-  const photos = data.photos.filter(p =>
-    p.tags?.split(',').map(t => t.trim()).includes('finished')
-  )
+  const allFinished = data.photos.filter(p => p.tags?.split(',').map(t => t.trim()).includes('finished'))
+
+  const projectCategories = [...new Set(
+    allFinished.map(p => data.projects.find(proj => proj.id === p.project_id)?.category).filter(Boolean)
+  )].sort()
+
+  const photos = catFilter === 'all'
+    ? allFinished
+    : allFinished.filter(p => data.projects.find(proj => proj.id === p.project_id)?.category === catFilter)
 
   const edit = async (id, fields) => {
     if (fields._delete) {
@@ -46,6 +53,15 @@ export default function FinishedWork() {
           </div>
         </div>
 
+        {projectCategories.length > 0 && (
+          <div style={{ display: 'flex', gap: 6, padding: '0 20px 12px', overflowX: 'auto', scrollbarWidth: 'none' }}>
+            {['all', ...projectCategories].map(cat => (
+              <button key={cat} onClick={() => setCatFilter(cat)} className={`pill-tab${catFilter === cat ? ' active' : ''}`} style={{ flexShrink: 0 }}>
+                {cat === 'all' ? 'All' : cat}
+              </button>
+            ))}
+          </div>
+        )}
         {photos.length === 0 ? (
           <div className="empty" style={{ paddingTop: 60 }}>
             <div className="empty-icon">🏆</div>

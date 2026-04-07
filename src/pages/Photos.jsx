@@ -8,6 +8,7 @@ export default function AllPhotos() {
   const { data, mutate } = useCtx()
   const toast = useToast()
   const [uploading, setUploading]       = useState(false)
+  const [filter, setFilter]             = useState('all')
   const [pendingFiles, setPendingFiles] = useState([])
   const [showTag, setShowTag]           = useState(false)
   const fileRef = useRef()
@@ -45,6 +46,29 @@ export default function AllPhotos() {
     toast('Saved', 'success')
   }
 
+  // Build category list from projects that have photos
+  const projectCategories = [...new Set(
+    data.photos
+      .map(p => data.projects.find(proj => proj.id === p.project_id)?.category)
+      .filter(Boolean)
+  )].sort()
+
+  const getFiltered = () => {
+    let photos = filter === 'all' ? data.photos
+      : filter.startsWith('cat:')
+        ? data.photos.filter(p => data.projects.find(proj => proj.id === p.project_id)?.category === filter.slice(4))
+        : data.photos.filter(p => p.tags?.split(',').map(t => t.trim()).includes(filter))
+
+    if (filter.startsWith('cat:')) {
+      photos = photos.slice().sort((a, b) => {
+        const ca = data.projects.find(p => p.id === a.project_id)?.name || ''
+        const cb = data.projects.find(p => p.id === b.project_id)?.name || ''
+        return ca.localeCompare(cb)
+      })
+    }
+    return photos
+  }
+
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
       <div className="scroll-page" style={{ paddingBottom: 80 }}>
@@ -54,15 +78,39 @@ export default function AllPhotos() {
             <span style={{ fontSize: 13, color: 'var(--text-3)' }}>{data.photos.length} photo{data.photos.length !== 1 ? 's' : ''}</span>
           </div>
         </div>
+        {/* Tag filter tabs */}
+        <div style={{ display: 'flex', gap: 6, padding: '0 20px 8px', overflowX: 'auto', scrollbarWidth: 'none' }}>
+          {['all','finished','portfolio','progress','inspiration','before','after'].map(tag => {
+            const count = tag === 'all' ? data.photos.length : data.photos.filter(p => p.tags?.split(',').map(t=>t.trim()).includes(tag)).length
+            return (
+              <button key={tag} onClick={() => setFilter(tag)} className={`pill-tab${filter === tag ? ' active' : ''}`} style={{ flexShrink: 0 }}>
+                {tag === 'all' ? 'All' : tag.charAt(0).toUpperCase() + tag.slice(1)}{count > 0 && tag !== 'all' ? ` (${count})` : ''}
+              </button>
+            )
+          })}
+        </div>
+        {/* Category filter tabs */}
+        {projectCategories.length > 0 && (
+          <div style={{ display: 'flex', gap: 6, padding: '0 20px 12px', overflowX: 'auto', scrollbarWidth: 'none', borderBottom: '1px solid var(--border-2)', marginBottom: 4 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-4)', alignSelf: 'center', flexShrink: 0, paddingRight: 2 }}>Category:</span>
+            {projectCategories.map(cat => (
+              <button key={cat} onClick={() => setFilter(filter === 'cat:' + cat ? 'all' : 'cat:' + cat)} className={`pill-tab${filter === 'cat:' + cat ? ' active' : ''}`} style={{ flexShrink: 0 }}>
+                {cat}
+              </button>
+            ))}
+          </div>
+        )}
         <DropZone onFiles={handleFiles} uploading={uploading} />
-        {data.photos.length > 0
-          ? <PhotoGrid photos={data.photos} onEdit={edit} showProject projects={data.projects} />
-          : <div className="empty" style={{ paddingTop: 60 }}>
-              <div className="empty-icon">📷</div>
-              <div className="empty-title">No photos yet</div>
-              <p className="empty-sub">Drop photos above or tap the camera button to start your shop gallery</p>
-            </div>
-        }
+        {(() => {
+          const filtered = getFiltered()
+          return filtered.length > 0
+            ? <PhotoGrid photos={filtered} onEdit={edit} showProject projects={data.projects} />
+            : <div className="empty" style={{ paddingTop: 60 }}>
+                <div className="empty-icon">📷</div>
+                <div className="empty-title">{filter === 'all' ? 'No photos yet' : 'No photos in this filter'}</div>
+                <p className="empty-sub">{filter === 'all' ? 'Drop photos above or tap the camera button' : 'Try a different filter above'}</p>
+              </div>
+        })()}
       </div>
       <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => handleFiles(e.target.files)} />
       <button className="fab" onClick={() => fileRef.current?.click()} disabled={uploading} aria-label="Upload photos">
