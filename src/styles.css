@@ -113,6 +113,68 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* ─── Native PWA feel ─────────────────────────────────────────────────────── */
+
+/* Remove tap highlight flash on iOS */
+* { -webkit-tap-highlight-color: transparent; }
+
+/* Prevent accidental text selection while scrolling */
+.app-wrapper, .sidebar, .tabbar, .nav-item, .tab-btn,
+.proj-card, .cell, button, .back-btn, .icon-btn, .fab,
+.sheet-header, .sheet-cancel, .badge-pill, .check-btn {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Allow selection in inputs and content areas */
+input, textarea, .scroll-page, .sheet-body, p, .page-subtitle {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Prevent rubber-band bounce on app shell (not scroll areas) */
+body {
+  overscroll-behavior: none;
+}
+
+/* Smooth momentum scrolling on all scroll areas */
+.scroll-page, .sheet-body, .sheet {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+/* Handle rotation — ensure layout reflows cleanly */
+@media screen and (orientation: landscape) {
+  .tabbar { padding-bottom: env(safe-area-inset-bottom); }
+  .sidebar { padding-bottom: env(safe-area-inset-bottom); }
+}
+
+/* Status bar safe area — top */
+.top-bar {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Home indicator safe area — bottom */
+.tabbar {
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+
+/* Offline indicator */
+.offline-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: #B45309;
+  color: #fff;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 16px;
+  padding-top: calc(6px + env(safe-area-inset-top));
+}
+
 /* ─── App shell ──────────────────────────────────────────────────────────── */
 .app-wrapper { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
 

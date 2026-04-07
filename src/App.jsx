@@ -167,6 +167,18 @@ export default function App() {
   const [projId, setProjId]     = useState(null)
   const [showMore, setShowMore] = useState(false)
   const [showQR, setShowQR] = useState(false)
+  const [isOffline, setIsOffline] = useState(!navigator.onLine)
+
+  useEffect(() => {
+    const goOffline = () => setIsOffline(true)
+    const goOnline  = () => setIsOffline(false)
+    window.addEventListener('offline', goOffline)
+    window.addEventListener('online',  goOnline)
+    return () => {
+      window.removeEventListener('offline', goOffline)
+      window.removeEventListener('online',  goOnline)
+    }
+  }, [])
 
   // ── Auth state ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -442,6 +454,11 @@ export default function App() {
 
         {/* QR Code modal */}
         {showQR && <QRModal onClose={() => setShowQR(false)} />}
+      {isOffline && (
+        <div className="offline-banner">
+          ⚡ Offline — showing cached data
+        </div>
+      )}
 
         {/* More sheet (mobile) */}
         {showMore && (
