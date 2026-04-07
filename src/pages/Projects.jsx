@@ -764,16 +764,14 @@ function TimeTracker({ project, onSave }) {
       {show && (
         <div style={{ marginBottom: 12 }}>
           <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
-            <input className="form-input" type="date" value={date} onChange={e => setDate(e.target.value)}
-              className="cell-input" />
+            <input className="cell-input" type="date" value={date} onChange={e => setDate(e.target.value)} />
             <input className="form-input" type="number" min="0" placeholder="0h" value={hrs} onChange={e => setHrs(e.target.value)}
               style={{ width: 52, background: 'var(--fill)', borderRadius: 8, padding: '7px 8px', border: '1px solid var(--border-2)', fontSize: 13, textAlign: 'center' }} />
             <input className="form-input" type="number" min="0" max="59" placeholder="00m" value={mins} onChange={e => setMins(e.target.value)}
               style={{ width: 52, background: 'var(--fill)', borderRadius: 8, padding: '7px 8px', border: '1px solid var(--border-2)', fontSize: 13, textAlign: 'center' }} />
           </div>
           <div style={{ display: 'flex', gap: 6 }}>
-            <input className="form-input" placeholder="Note (optional)" value={note} onChange={e => setNote(e.target.value)}
-              className="cell-input" />
+            <input className="cell-input" placeholder="Note (optional)" value={note} onChange={e => setNote(e.target.value)} />
             <button className="btn-primary" style={{ padding: '0 14px', fontSize: 13, flexShrink: 0 }} onClick={save}>Log</button>
             <button className="btn-text" style={{ fontSize: 13 }} onClick={() => setShow(false)}>✕</button>
           </div>
@@ -836,8 +834,7 @@ function CostTracker({ project, onSave }) {
       {show && (
         <div style={{ marginBottom: 12 }}>
           <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
-            <input className="form-input" placeholder="Item (e.g. Lumber)" value={label} onChange={e => setLabel(e.target.value)}
-              className="cell-input" />
+            <input className="cell-input" placeholder="Item (e.g. Lumber)" value={label} onChange={e => setLabel(e.target.value)} />
             <div style={{ display: 'flex', alignItems: 'center', background: 'var(--fill)', borderRadius: 8, border: '1px solid var(--border-2)', paddingLeft: 8 }}>
               <span style={{ fontSize: 13, color: 'var(--text-3)' }}>$</span>
               <input className="form-input" type="number" min="0" step="0.01" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)}
