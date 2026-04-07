@@ -78,7 +78,7 @@ const NAV_SECTIONS = [
     items: [
       { id: 'audit',       label: 'Data Audit',        Icon: IGrid   },
       { id: 'smoketest',   label: 'Smoke Test',        Icon: ICheck  },
-      { id: 'settings',    label: 'Settings',          Icon: IWrench },
+      { id: 'settings',    label: 'Categories',         Icon: IWrench },
       { id: 'import',      label: 'Bulk Import',       Icon: ICamera },
     ],
   },
@@ -311,15 +311,8 @@ export default function App() {
 
           {/* ── Top bar ── */}
           <header className="top-bar" role="banner">
-            <div className="top-bar-brand" style={{flex:1}}>
-              {/* Mountain Grain logo - L12 */}
-              <svg width="48" height="48" viewBox="0 0 80 72" fill="none" aria-hidden="true" style={{flexShrink:0}}>
-                <path d="M10 52 L28 24 L40 38 L52 18 L70 52 Z" fill="#2D5A3D" opacity="0.85"/>
-                <path d="M10 52 L28 24 L40 38" fill="#1C3A2A"/>
-                <path d="M15 60 Q40 52 65 60" stroke="#4A7A5A" strokeWidth="0.9" fill="none" opacity="0.6"/>
-                <path d="M12 65 Q40 57 68 65" stroke="#4A7A5A" strokeWidth="0.9" fill="none" opacity="0.45"/>
-                <path d="M10 70 Q40 62 70 70" stroke="#4A7A5A" strokeWidth="0.9" fill="none" opacity="0.3"/>
-              </svg>
+            <div className="top-bar-brand">
+              <img src="/New_Logo.png" alt="" aria-hidden="true" className="top-bar-logo" />
               <div className="top-bar-title">JDH <span className="top-bar-accent">WOODWORKS</span></div>
             </div>
             <GlobalSearch />

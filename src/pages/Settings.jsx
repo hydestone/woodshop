@@ -53,8 +53,14 @@ function ManagedList({ title, items, onAdd, onRename, onDelete }) {
         {items.length === 0 && <div style={{ padding: '12px 16px', fontSize: 13, color: 'var(--text-3)', background: 'var(--surface)' }}>None yet</div>}
       </div>
       <div style={{ display: 'flex', gap: 8, padding: '10px 20px 0' }}>
-        <input className="form-input" style={{ flex: 1 }} placeholder={`Add ${title.toLowerCase()}…`} value={newName}
-          onChange={e => setNewName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAdd()} />
+        <input
+          className="calc-input"
+          style={{ flex: 1 }}
+          placeholder={`Add ${title.toLowerCase()}…`}
+          value={newName}
+          onChange={e => setNewName(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && handleAdd()}
+        />
         <button className="btn-secondary" style={{ padding: '0 16px', flexShrink: 0 }} onClick={handleAdd}>Add</button>
       </div>
       {delItem && <ConfirmSheet message={`Delete "${delItem.name}"? Projects using this won't be affected.`} onConfirm={handleDelete} onClose={() => setDelItem(null)} />}
@@ -69,10 +75,9 @@ export default function Settings() {
   return (
     <div className="scroll-page">
       <div className="page-header">
-        <h1 className="page-title">Settings</h1>
+        <h1 className="page-title">Categories</h1>
         <p className="page-subtitle">
-          Manage project categories. Finishes are managed in the Library → Finishes page.
-          Wood species are managed in Wood Stock.
+          Project categories used to organise your work. Finishes are in Library → Finishes. Species are in Wood Stock.
         </p>
       </div>
       <div style={{ paddingBottom: 40 }}>

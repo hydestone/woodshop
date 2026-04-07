@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { useCtx } from '../App.jsx'
+import { Lightbox } from '../components/Shared.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
 
@@ -97,13 +98,15 @@ function PhotosAudit() {
   const { data, mutate } = useCtx()
   const toast = useToast()
   const [filter, setFilter] = useState('all')
+  const [lightbox, setLightbox] = useState(null)
 
   const projects = data.projects || []
-  const photos = (data.photos || []).slice().sort((a, b) => {
+
+  const photos = useMemo(() => (data.photos || []).slice().sort((a, b) => {
     const ap = projects.find(p => p.id === a.project_id)?.name || ''
     const bp = projects.find(p => p.id === b.project_id)?.name || ''
     return ap.localeCompare(bp)
-  })
+  }), [data.photos, data.projects])
 
   const save = useCallback(async (id, fields) => {
     mutate(d => ({ ...d, photos: d.photos.map(p => p.id === id ? { ...p, ...fields } : p) }))
@@ -166,7 +169,7 @@ function PhotosAudit() {
                   <td style={{ padding: '6px 12px' }}>
                     <img
                       src={photo.url} alt=""
-                      style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 6, display: 'block', cursor: 'pointer' }}
+                      loading="lazy" style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 6, display: 'block', cursor: 'pointer' }}
                       onClick={() => setLightbox({ photos: filtered, idx: i })}
                     />
                   </td>
@@ -227,12 +230,12 @@ function ProjectsAudit() {
   const categories = data.categories || []
   const finishes = data.finishes || []
 
-  const projectsWithSource = (data.projects || []).map(p => {
+  const projectsWithSource = useMemo(() => (data.projects || []).map(p => {
     const pws = (data.projectWoodSources || []).find(x => x.project_id === p.id)
     const stock = pws ? woodStock.find(w => w.id === pws.wood_stock_id) : null
     const loc = stock ? woodLocations.find(l => l.id === stock?.location_id) : null
     return { ...p, _stock: stock, _loc: loc }
-  })
+  }), [data.projects, data.projectWoodSources, woodStock, woodLocations])
 
   const save = useCallback(async (id, fields) => {
     mutate(d => ({ ...d, projects: d.projects.map(p => p.id === id ? { ...p, ...fields } : p) }))
