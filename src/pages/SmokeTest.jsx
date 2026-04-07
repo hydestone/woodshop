@@ -150,13 +150,21 @@ const STATUS_COLOR = { untested: 'var(--text-4)', pass: 'var(--forest)', fail: '
 const STATUS_BG = { untested: 'transparent', pass: 'var(--green-dim)', fail: 'var(--red-dim)', skip: 'var(--fill)' }
 
 export default function SmokeTest() {
-  const [results, setResults] = useState({})
-  const [notes, setNotes] = useState({})
+  const [results, setResults] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('smoketest-results') || '{}') } catch { return {} }
+  })
+  const [notes, setNotes] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('smoketest-notes') || '{}') } catch { return {} }
+  })
   const [showOnlyFails, setShowOnlyFails] = useState(false)
   const [deployInfo, setDeployInfo] = useState('')
 
   const setResult = (id, status) => {
-    setResults(r => ({ ...r, [id]: status }))
+    setResults(r => {
+      const next = { ...r, [id]: status }
+      try { localStorage.setItem('smoketest-results', JSON.stringify(next)) } catch {}
+      return next
+    })
   }
 
   const allTests = TESTS.flatMap(s => s.tests)
@@ -167,7 +175,10 @@ export default function SmokeTest() {
   const total = allTests.length
   const pct = Math.round((passed / total) * 100)
 
-  const reset = () => { setResults({}); setNotes({}) }
+  const reset = () => {
+    setResults({}); setNotes({})
+    try { localStorage.removeItem('smoketest-results'); localStorage.removeItem('smoketest-notes') } catch {}
+  }
 
   const exportResults = () => {
     const lines = [`JDH Woodworks Smoke Test — ${new Date().toLocaleDateString()}`,
@@ -293,7 +304,11 @@ export default function SmokeTest() {
                             className="edit-input"
                             placeholder="Describe the failure…"
                             value={notes[test.id] || ''}
-                            onChange={e => setNotes(n => ({ ...n, [test.id]: e.target.value }))}
+                            onChange={e => setNotes(n => {
+                            const next = { ...n, [test.id]: e.target.value }
+                            try { localStorage.setItem('smoketest-notes', JSON.stringify(next)) } catch {}
+                            return next
+                          })}
                             style={{ marginTop: 6, fontSize: 12, width: '100%' }}
                           />
                         )}

@@ -7,6 +7,83 @@ import { Sheet, FormCell, ConfirmSheet, maintStatus, fmtShort, localDt, IPlus, I
 
 const CATEGORIES = ['Sharpening', 'Lathe', 'Bandsaw', 'Router Table', 'Shop', 'General']
 
+// ─── Sharpening log per maintenance item ─────────────────────────────────────
+function SharpeningLog({ item, onUpdate }) {
+  const toast = useToast()
+  const [show, setShow]   = useState(false)
+  const [date, setDate]   = useState(new Date().toISOString().slice(0,10))
+  const [angle, setAngle] = useState('')
+  const [note, setNote]   = useState('')
+
+  const log = (() => { try { return JSON.parse(item.sharpening_log || '[]') } catch { return [] } })()
+
+  const addEntry = async () => {
+    const entry = { id: Math.random().toString(36).slice(2), date, angle: angle.trim(), note: note.trim() }
+    const next = [entry, ...log]
+    await db.updateMaint(item.id, { sharpening_log: JSON.stringify(next) })
+      .then(() => onUpdate(item.id, { sharpening_log: JSON.stringify(next) }))
+      .catch(e => toast(e.message, 'error'))
+    toast('Logged', 'success')
+    setAngle(''); setNote(''); setShow(false)
+  }
+
+  const remove = async (id) => {
+    const next = log.filter(e => e.id !== id)
+    await db.updateMaint(item.id, { sharpening_log: JSON.stringify(next) })
+      .then(() => onUpdate(item.id, { sharpening_log: JSON.stringify(next) }))
+      .catch(e => toast(e.message, 'error'))
+  }
+
+  return (
+    <div style={{ padding: '0 16px 12px', borderTop: '1px solid var(--border-2)', background: 'var(--fill-2)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 10, marginBottom: show || log.length ? 8 : 0 }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-4)', textTransform: 'uppercase', letterSpacing: '.6px' }}>
+          Sharpening Log {log.length > 0 ? `· ${log.length} entries` : ''}
+        </span>
+        <button className="btn-text" style={{ fontSize: 12 }} onClick={() => setShow(s => !s)}>
+          {show ? 'Cancel' : '+ Log session'}
+        </button>
+      </div>
+      {show && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 8 }}>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <input
+              className="form-input" type="date" value={date} onChange={e => setDate(e.target.value)}
+              style={{ flex: 2, background: 'var(--surface)', borderRadius: 8, padding: '7px 10px', border: '1px solid var(--border-2)', fontSize: 13 }}
+            />
+            <input
+              className="form-input" placeholder="Angle (e.g. 40°)" value={angle} onChange={e => setAngle(e.target.value)}
+              style={{ flex: 1, background: 'var(--surface)', borderRadius: 8, padding: '7px 10px', border: '1px solid var(--border-2)', fontSize: 13 }}
+            />
+          </div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <input
+              className="form-input" placeholder="Note (grit, technique, result…)" value={note} onChange={e => setNote(e.target.value)}
+              style={{ flex: 1, background: 'var(--surface)', borderRadius: 8, padding: '7px 10px', border: '1px solid var(--border-2)', fontSize: 13 }}
+              onKeyDown={e => e.key === 'Enter' && addEntry()}
+            />
+            <button className="btn-primary" style={{ padding: '0 14px', fontSize: 13, flexShrink: 0 }} onClick={addEntry}>Save</button>
+          </div>
+        </div>
+      )}
+      {log.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {log.map(e => (
+            <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', fontSize: 12 }}>
+              <div>
+                <span style={{ color: 'var(--text-3)', fontWeight: 600 }}>{e.date}</span>
+                {e.angle && <span style={{ color: 'var(--accent)', marginLeft: 8 }}>{e.angle}</span>}
+                {e.note && <span style={{ color: 'var(--text-4)', marginLeft: 8 }}>{e.note}</span>}
+              </div>
+              <button className="icon-btn" onClick={() => remove(e.id)} style={{ color: 'var(--red)', padding: 0, marginTop: -1 }}><ITrash size={12} /></button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Maintenance() {
   const { data, mutate } = useCtx()
   const toast = useToast()
@@ -14,6 +91,7 @@ export default function Maintenance() {
   const [editItem, setEditItem]     = useState(null)
   const [markItem, setMarkItem]     = useState(null)
   const [deleteItem, setDeleteItem] = useState(null)
+  const [expanded, setExpanded]     = useState({})
 
   const del = async id => {
     mutate(d => ({ ...d, maintenance: d.maintenance.filter(m => m.id !== id) }))
@@ -45,6 +123,10 @@ export default function Maintenance() {
     }
   }
 
+  const handleLogUpdate = (id, fields) => {
+    mutate(d => ({ ...d, maintenance: d.maintenance.map(m => m.id === id ? { ...m, ...fields } : m) }))
+  }
+
   const calReminder = m => {
     const next = m.last_done
       ? new Date(new Date(m.last_done).getTime() + m.interval_days * 86_400_000)
@@ -72,7 +154,7 @@ export default function Maintenance() {
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
       <div className="scroll-page" style={{ paddingBottom: 80 }}>
-        <div className="page-header"><h1 className="page-title">Maintenance</h1></div>
+        <div className="page-header"><h1 className="page-title">Shop Maintenance</h1></div>
         <div style={{ paddingBottom: 24 }}>
           {cats.map(cat => (
             <div key={cat}>
@@ -81,6 +163,8 @@ export default function Maintenance() {
                 {sorted.filter(m => (m.category || 'General') === cat).map((m, i, arr) => {
                   const st   = maintStatus(m)
                   const last = i === arr.length - 1
+                  const isExp = expanded[m.id]
+                  const hasSharpLog = m.category === 'Sharpening'
                   return (
                     <div key={m.id} style={{ borderBottom: last ? 'none' : '1px solid var(--border-2)', background: 'var(--surface)' }}>
                       <div style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -94,16 +178,19 @@ export default function Maintenance() {
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
                           <span style={{ fontSize: 13, fontWeight: 600, color: st.color, whiteSpace: 'nowrap' }}>{st.label}</span>
                           <div style={{ display: 'flex', gap: 4 }}>
+                            {hasSharpLog && (
+                              <button className="icon-btn" onClick={() => setExpanded(e => ({ ...e, [m.id]: !e[m.id] }))}
+                                aria-label="Sharpening log" title="Sharpening log" style={{ fontSize: 14 }}>
+                                🪨
+                              </button>
+                            )}
                             <button className="icon-btn" onClick={() => setEditItem(m)} aria-label={`Edit ${m.name}`}><IEdit size={14} /></button>
                             <button className="icon-btn" onClick={() => setDeleteItem(m)} aria-label={`Delete ${m.name}`}><ITrash size={14} /></button>
                           </div>
                         </div>
                       </div>
                       <div style={{ padding: '0 16px 12px', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                        <button
-                          className={st.urgent ? 'btn-primary' : 'btn-secondary'}
-                          onClick={() => setMarkItem(m)}
-                        >
+                        <button className={st.urgent ? 'btn-primary' : 'btn-secondary'} onClick={() => setMarkItem(m)}>
                           {st.urgent ? 'Mark done' : 'Log done'}
                         </button>
                         <button className="btn-cal" onClick={() => calReminder(m)}>
@@ -113,6 +200,9 @@ export default function Maintenance() {
                           <IBell size={13} color="currentColor" /> Add to Reminders
                         </button>
                       </div>
+                      {hasSharpLog && isExp && (
+                        <SharpeningLog item={m} onUpdate={handleLogUpdate} />
+                      )}
                     </div>
                   )
                 })}

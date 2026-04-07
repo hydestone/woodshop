@@ -134,7 +134,7 @@ function PhotosAudit() {
           { id: 'no-tags', label: `No tags (${counts.noTags})`, warn: counts.noTags > 0 },
           { id: 'no-finished', label: `Missing finished (${counts.noFinished})`, warn: counts.noFinished > 0 },
           { id: 'no-portfolio', label: `Not in portfolio (${counts.noPortfolio})` },
-          { id: 'no-project', label: `No project (${counts.noProject})`, warn: counts.noProject > 0 },
+          { id: 'no-project', label: `Orphaned — no project (${counts.noProject})`, warn: counts.noProject > 0 },
         ].map(f => (
           <button key={f.id} onClick={() => setFilter(f.id)} style={{
             padding: '4px 12px', borderRadius: 99, border: 'none', cursor: 'pointer',
@@ -164,7 +164,11 @@ function PhotosAudit() {
               return (
                 <tr key={photo.id} style={{ borderBottom: '1px solid var(--border-2)', background: i % 2 === 0 ? 'transparent' : 'var(--fill)' }}>
                   <td style={{ padding: '6px 12px' }}>
-                    <img src={photo.url} alt="" style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 6, display: 'block' }} />
+                    <img
+                      src={photo.url} alt=""
+                      style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 6, display: 'block', cursor: 'pointer' }}
+                      onClick={() => setLightbox({ photos: filtered, idx: i })}
+                    />
                   </td>
                   <td style={{ padding: '6px 12px' }}>
                     <Cell value={photo.caption} missing={!photo.caption}
@@ -176,7 +180,7 @@ function PhotosAudit() {
                   </td>
                   <td style={{ padding: '6px 12px' }}>
                     <Cell value={proj?.name} missing={!photo.project_id}
-                      type="select" options={projects.map(p => p.name)}
+                      type="select" options={[...projects].sort((a,b) => a.name.localeCompare(b.name)).map(p => p.name)}
                       onSave={v => {
                         const p = projects.find(x => x.name === v)
                         if (p) save(photo.id, { project_id: p.id })
@@ -199,6 +203,13 @@ function PhotosAudit() {
           <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-4)' }}>Nothing to show</div>
         )}
       </div>
+      {lightbox && (
+        <Lightbox
+          photos={lightbox.photos}
+          index={lightbox.idx}
+          onClose={() => setLightbox(null)}
+        />
+      )}
     </div>
   )
 }
@@ -207,7 +218,9 @@ function PhotosAudit() {
 function ProjectsAudit() {
   const { data, mutate } = useCtx()
   const toast = useToast()
-  const [filter, setFilter] = useState('all')
+  const [filter, setFilter]     = useState('all')
+  const [addingNew, setAddingNew] = useState(false)
+  const [newName, setNewName]     = useState('')
 
   const woodStock = data.woodStock || []
   const woodLocations = data.woodLocations || []
@@ -225,6 +238,16 @@ function ProjectsAudit() {
     mutate(d => ({ ...d, projects: d.projects.map(p => p.id === id ? { ...p, ...fields } : p) }))
     await db.updateProject(id, fields).catch(e => toast(e.message, 'error'))
   }, [mutate, toast])
+
+  const addProject = async () => {
+    if (!newName.trim()) return
+    try {
+      const proj = await db.addProject({ name: newName.trim(), status: 'planning' })
+      mutate(d => ({ ...d, projects: [proj, ...d.projects] }))
+      setNewName(''); setAddingNew(false)
+      toast('Project added', 'success')
+    } catch(e) { toast(e.message, 'error') }
+  }
 
   const counts = {
     total: projectsWithSource.length,
@@ -244,7 +267,24 @@ function ProjectsAudit() {
   return (
     <div>
       {/* Summary pills */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', padding: '12px 20px', borderBottom: '1px solid var(--border-2)' }}>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', padding: '12px 20px', borderBottom: '1px solid var(--border-2)', alignItems: 'center' }}>
+        {addingNew ? (
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <input autoFocus className="form-input" placeholder="Project name" value={newName}
+              onChange={e => setNewName(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') addProject(); if (e.key === 'Escape') { setAddingNew(false); setNewName('') } }}
+              style={{ fontSize: 13, padding: '4px 10px', width: 200 }}
+            />
+            <button className="btn-primary" style={{ padding: '4px 12px', fontSize: 12 }} onClick={addProject}>Add</button>
+            <button className="btn-secondary" style={{ padding: '4px 12px', fontSize: 12 }} onClick={() => { setAddingNew(false); setNewName('') }}>Cancel</button>
+          </div>
+        ) : (
+          <button onClick={() => setAddingNew(true)} style={{
+            padding: '4px 12px', borderRadius: 99, border: 'none', cursor: 'pointer',
+            fontSize: 12, fontWeight: 600, fontFamily: 'inherit',
+            background: '#0F1E38', color: '#fff',
+          }}>+ New Project</button>
+        )}
         {[
           { id: 'all', label: `All (${counts.total})` },
           { id: 'no-wood', label: `No wood source (${counts.noWood})`, warn: counts.noWood > 0 },

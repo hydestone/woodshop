@@ -332,6 +332,67 @@ export function ProjectDetail() {
     }
   }
 
+  const handleShare = () => {
+    const url = `${window.location.origin}/portfolio?project=${projId}`
+    if (navigator.share) {
+      navigator.share({ title: project.name, url }).catch(() => {})
+    } else {
+      navigator.clipboard?.writeText(url).then(() => toast('Link copied', 'success')).catch(() => toast(url, 'success'))
+    }
+  }
+
+  const handlePrint = () => {
+    const photos = data.photos.filter(p => p.project_id === projId)
+    const steps = data.steps.filter(s => s.project_id === projId)
+    const coats = data.coats.filter(c => c.project_id === projId)
+    const timeEntries = project.time_entries ? JSON.parse(project.time_entries) : []
+    const costEntries = project.cost_entries ? JSON.parse(project.cost_entries) : []
+    const totalMins = timeEntries.reduce((s, e) => s + (e.minutes || 0), 0)
+    const totalCost = costEntries.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0)
+    const win = window.open('', '_blank')
+    win.document.write(`<!DOCTYPE html><html><head><title>${project.name} — JDH Woodworks</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body { font-family: -apple-system, sans-serif; color: #0F172A; padding: 32px; max-width: 800px; margin: 0 auto; }
+      h1 { font-size: 28px; font-weight: 800; margin-bottom: 4px; }
+      .meta { font-size: 13px; color: #64748B; margin-bottom: 24px; display: flex; gap: 12px; flex-wrap: wrap; }
+      .pill { background: #DBEAFE; color: #1D4ED8; padding: 2px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; }
+      h2 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: #64748B; margin: 24px 0 8px; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+      .cell { background: #F0F4F8; border-radius: 8px; padding: 10px 14px; font-size: 13px; }
+      .cell b { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #94A3B8; margin-bottom: 2px; }
+      table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      td, th { padding: 8px 10px; border-bottom: 1px solid #E2E8F0; text-align: left; }
+      th { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #94A3B8; }
+      .photos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+      .photos img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; }
+      .footer { margin-top: 32px; font-size: 11px; color: #94A3B8; text-align: center; border-top: 1px solid #E2E8F0; padding-top: 16px; }
+      @media print { body { padding: 0; } }
+    </style></head><body>
+    <div class="pill">${project.status || 'planning'}</div>
+    <h1 style="margin-top:8px">${project.name}</h1>
+    <div class="meta">
+      ${project.wood_type ? `<span>🪵 ${project.wood_type}</span>` : ''}
+      ${project.finish_used ? `<span>🎨 ${project.finish_used}</span>` : ''}
+      ${project.year_completed ? `<span>📅 ${project.year_completed}</span>` : ''}
+      ${project.category ? `<span>📁 ${project.category}</span>` : ''}
+    </div>
+    ${project.description ? `<p style="font-size:14px;color:#334155;margin-bottom:16px">${project.description}</p>` : ''}
+    <div class="grid">
+      ${totalMins > 0 ? `<div class="cell"><b>Total Time</b>${totalMins >= 60 ? Math.floor(totalMins/60)+'h '+(totalMins%60)+'m' : totalMins+'m'}</div>` : ''}
+      ${totalCost > 0 ? `<div class="cell"><b>Material Cost</b>$${totalCost.toFixed(2)}</div>` : ''}
+    </div>
+    ${steps.length > 0 ? `<h2>Build Steps</h2><table><thead><tr><th>Step</th><th>Status</th></tr></thead><tbody>${steps.map(s => `<tr><td>${s.content || s.description || ''}</td><td>${s.completed ? '✓ Done' : 'Open'}</td></tr>`).join('')}</tbody></table>` : ''}
+    ${coats.length > 0 ? `<h2>Finishing</h2><table><thead><tr><th>Product</th><th>Coat</th><th>Notes</th></tr></thead><tbody>${coats.map(c => `<tr><td>${c.product || ''}</td><td>#${c.coat_number || 1}</td><td>${c.notes || ''}</td></tr>`).join('')}</tbody></table>` : ''}
+    ${timeEntries.length > 0 ? `<h2>Time Log</h2><table><thead><tr><th>Date</th><th>Duration</th><th>Note</th></tr></thead><tbody>${timeEntries.map(e => `<tr><td>${e.date || ''}</td><td>${e.minutes >= 60 ? Math.floor(e.minutes/60)+'h '+(e.minutes%60)+'m' : e.minutes+'m'}</td><td>${e.note || ''}</td></tr>`).join('')}</tbody></table>` : ''}
+    ${costEntries.length > 0 ? `<h2>Cost Breakdown</h2><table><thead><tr><th>Item</th><th>Amount</th></tr></thead><tbody>${costEntries.map(e => `<tr><td>${e.label || ''}</td><td>$${parseFloat(e.amount || 0).toFixed(2)}</td></tr>`).join('')}</tbody></table>` : ''}
+    ${photos.length > 0 ? `<h2>Photos</h2><div class="photos">${photos.slice(0,9).map(p => `<img src="${p.url}" alt="${p.caption || ''}"/>`).join('')}</div>` : ''}
+    <div class="footer">JDH Woodworks · ${project.name} · Printed ${new Date().toLocaleDateString()}</div>
+    </body></html>`)
+    win.document.close()
+    setTimeout(() => win.print(), 400)
+  }
+
   const handleDelete = async () => {
     try {
       mutate(d => ({
@@ -360,7 +421,35 @@ export function ProjectDetail() {
             <IChevL size={16} color="currentColor" sw={2.2} />
             Projects
           </button>
+          <div style={{ display: 'flex', gap: 2 }}>
+            {(() => {
+              const sorted = data.projects.slice().sort((a,b) => a.name.localeCompare(b.name))
+              const idx = sorted.findIndex(p => p.id === projId)
+              return (
+                <>
+                  <button className="icon-btn" disabled={idx <= 0} onClick={() => setProjId(sorted[idx-1].id)} aria-label="Previous project" style={{ opacity: idx <= 0 ? .3 : 1 }}>
+                    <IChevL size={16} color="var(--text-3)" sw={2} />
+                  </button>
+                  <button className="icon-btn" disabled={idx >= sorted.length - 1} onClick={() => setProjId(sorted[idx+1].id)} aria-label="Next project" style={{ opacity: idx >= sorted.length - 1 ? .3 : 1 }}>
+                    <IChevR size={16} color="var(--text-3)" sw={2} />
+                  </button>
+                </>
+              )
+            })()}
+          </div>
           <div style={{ display: 'flex', gap: 4 }}>
+            <button className="icon-btn" onClick={handleShare} aria-label="Share project" title="Copy share link">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+              </svg>
+            </button>
+            <button className="icon-btn" onClick={handlePrint} aria-label="Print / PDF" title="Print or save as PDF">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                <rect x="6" y="14" width="12" height="8"/>
+              </svg>
+            </button>
             <button className="icon-btn" onClick={() => setEditing(true)} aria-label="Edit project"><IEdit size={17} /></button>
             <button className="icon-btn" onClick={() => setConfirming(true)} aria-label="Delete project" style={{ color: 'var(--red)' }}><ITrash size={17} /></button>
           </div>
@@ -379,7 +468,7 @@ export function ProjectDetail() {
 
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           {project.built_with    && <span style={{ fontSize: 12, color: 'var(--text-3)' }}>👤 {project.built_with}</span>}
-          {project.finish_used   && <span style={{ fontSize: 12, color: 'var(--text-3)' }}>🎨 {project.finish_used}</span>}
+          {project.finish_used   && <span style={{ fontSize: 12, color: 'var(--text-3)' }}>{project.finish_used}</span>}
           {project.gift_recipient&& <span style={{ fontSize: 12, color: 'var(--text-3)' }}>🎁 {project.gift_recipient}</span>}
           {project.description   && <span style={{ fontSize: 12, color: 'var(--text-3)' }}>{project.description}</span>}
         </div>
@@ -392,7 +481,7 @@ export function ProjectDetail() {
         <div style={{ background: 'var(--surface)', padding: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.8px' }}>Build Steps</div>
+              <div className="label-caps">Build Steps</div>
               {steps.length > 0 && <div style={{ fontSize: 12, color: 'var(--text-4)', marginTop: 2 }}>{stepsDone} of {steps.length} complete</div>}
             </div>
             <button className="icon-btn" onClick={() => setSub('steps-add')} aria-label="Add step"><IPlus size={18} color="var(--accent)" /></button>
@@ -403,23 +492,28 @@ export function ProjectDetail() {
         {/* Right — Finishing */}
         <div style={{ background: 'var(--surface)', padding: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.8px' }}>Finishing</div>
+            <div className="label-caps">Finishing</div>
             <button className="icon-btn" onClick={() => setSub('finish-add')} aria-label="Add coat"><IPlus size={18} color="var(--accent)" /></button>
           </div>
           <FinishingList projId={projId} sub={sub} setSub={setSub} />
         </div>
       </div>
 
+      {/* ── Time & Cost ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'var(--border-2)', marginTop: 1 }}>
+        <TimeTracker project={project} onSave={handleUpdate} />
+        <CostTracker project={project} onSave={handleUpdate} />
+      </div>
+
       {/* ── Photos full-width ── */}
       <div style={{ background: 'var(--surface)', marginTop: 1, padding: '20px' }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.8px', marginBottom: 12 }}>Photos</div>
-        <PhotoPane projId={projId} type="progress" showAll inline />
+        <PhotoTimeline projId={projId} />
       </div>
 
       {/* ── Inspiration ── */}
       {data.photos.filter(p => p.project_id === projId && p.photo_type === 'inspiration').length > 0 && (
         <div style={{ background: 'var(--surface)', marginTop: 1, padding: '20px' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.8px', marginBottom: 12 }}>Inspiration</div>
+          <div className="label-caps" style={{ marginBottom: 12 }}>Inspiration</div>
           <PhotoPane projId={projId} type="inspiration" inline />
         </div>
       )}
@@ -627,6 +721,239 @@ function FinishingList({ projId, sub, setSub }) {
 
 // StepsPane removed — replaced by StepsList
 
+// ─── Time Tracker ────────────────────────────────────────────────────────────
+function TimeTracker({ project, onSave }) {
+  const toast = useToast()
+  const [show, setShow] = useState(false)
+  const [date, setDate] = useState(new Date().toISOString().slice(0,10))
+  const [hrs, setHrs]   = useState('')
+  const [mins, setMins] = useState('')
+  const [note, setNote] = useState('')
+
+  const entries = (() => { try { return JSON.parse(project.time_entries || '[]') } catch { return [] } })()
+  const totalMins = entries.reduce((s, e) => s + (e.minutes || 0), 0)
+
+  const save = async () => {
+    const m = (parseInt(hrs)||0)*60 + (parseInt(mins)||0)
+    if (!m) { toast('Enter a duration', 'error'); return }
+    const entry = { id: Math.random().toString(36).slice(2), date, minutes: m, note: note.trim() }
+    const next = [...entries, entry]
+    await onSave({ time_entries: JSON.stringify(next) })
+    setHrs(''); setMins(''); setNote(''); setShow(false)
+    toast('Time logged', 'success')
+  }
+
+  const remove = async (id) => {
+    const next = entries.filter(e => e.id !== id)
+    await onSave({ time_entries: JSON.stringify(next) })
+    toast('Removed', 'success')
+  }
+
+  const fmtMins = m => m >= 60 ? `${Math.floor(m/60)}h ${m%60 > 0 ? m%60+'m' : ''}`.trim() : `${m}m`
+
+  return (
+    <div style={{ background: 'var(--surface)', padding: '16px 20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+        <div>
+          <div className="label-caps">Time</div>
+          {totalMins > 0 && <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', marginTop: 2 }}>{fmtMins(totalMins)}</div>}
+        </div>
+        <button className="icon-btn" onClick={() => setShow(s => !s)} aria-label="Log time"><IPlus size={18} color="var(--accent)" /></button>
+      </div>
+
+      {show && (
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
+            <input className="form-input" type="date" value={date} onChange={e => setDate(e.target.value)}
+              className="cell-input" />
+            <input className="form-input" type="number" min="0" placeholder="0h" value={hrs} onChange={e => setHrs(e.target.value)}
+              style={{ width: 52, background: 'var(--fill)', borderRadius: 8, padding: '7px 8px', border: '1px solid var(--border-2)', fontSize: 13, textAlign: 'center' }} />
+            <input className="form-input" type="number" min="0" max="59" placeholder="00m" value={mins} onChange={e => setMins(e.target.value)}
+              style={{ width: 52, background: 'var(--fill)', borderRadius: 8, padding: '7px 8px', border: '1px solid var(--border-2)', fontSize: 13, textAlign: 'center' }} />
+          </div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <input className="form-input" placeholder="Note (optional)" value={note} onChange={e => setNote(e.target.value)}
+              className="cell-input" />
+            <button className="btn-primary" style={{ padding: '0 14px', fontSize: 13, flexShrink: 0 }} onClick={save}>Log</button>
+            <button className="btn-text" style={{ fontSize: 13 }} onClick={() => setShow(false)}>✕</button>
+          </div>
+        </div>
+      )}
+
+      {entries.length > 0 ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {entries.slice().sort((a,b) => b.date?.localeCompare(a.date)).map(e => (
+            <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12 }}>
+              <div style={{ color: 'var(--text-3)' }}>{e.date} {e.note && <span style={{ color: 'var(--text-4)' }}>· {e.note}</span>}</div>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <span style={{ fontWeight: 700, color: 'var(--text)' }}>{fmtMins(e.minutes)}</span>
+                <button className="icon-btn" onClick={() => remove(e.id)} style={{ color: 'var(--red)', padding: 0 }}><ITrash size={12} /></button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div style={{ fontSize: 12, color: 'var(--text-4)', fontStyle: 'italic' }}>No time logged yet</div>
+      )}
+    </div>
+  )
+}
+
+// ─── Cost Tracker ─────────────────────────────────────────────────────────────
+function CostTracker({ project, onSave }) {
+  const toast = useToast()
+  const [show, setShow] = useState(false)
+  const [label, setLabel] = useState('')
+  const [amount, setAmount] = useState('')
+
+  const entries = (() => { try { return JSON.parse(project.cost_entries || '[]') } catch { return [] } })()
+  const total = entries.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0)
+
+  const save = async () => {
+    if (!label.trim() || !amount) { toast('Enter item and amount', 'error'); return }
+    const entry = { id: Math.random().toString(36).slice(2), label: label.trim(), amount: parseFloat(amount) }
+    const next = [...entries, entry]
+    await onSave({ cost_entries: JSON.stringify(next) })
+    setLabel(''); setAmount(''); setShow(false)
+    toast('Cost added', 'success')
+  }
+
+  const remove = async (id) => {
+    const next = entries.filter(e => e.id !== id)
+    await onSave({ cost_entries: JSON.stringify(next) })
+  }
+
+  return (
+    <div style={{ background: 'var(--surface)', padding: '16px 20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+        <div>
+          <div className="label-caps">Cost</div>
+          {total > 0 && <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', marginTop: 2 }}>${total.toFixed(2)}</div>}
+        </div>
+        <button className="icon-btn" onClick={() => setShow(s => !s)} aria-label="Add cost"><IPlus size={18} color="var(--accent)" /></button>
+      </div>
+
+      {show && (
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
+            <input className="form-input" placeholder="Item (e.g. Lumber)" value={label} onChange={e => setLabel(e.target.value)}
+              className="cell-input" />
+            <div style={{ display: 'flex', alignItems: 'center', background: 'var(--fill)', borderRadius: 8, border: '1px solid var(--border-2)', paddingLeft: 8 }}>
+              <span style={{ fontSize: 13, color: 'var(--text-3)' }}>$</span>
+              <input className="form-input" type="number" min="0" step="0.01" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)}
+                style={{ width: 72, padding: '7px 8px', fontSize: 13, textAlign: 'right' }} />
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button className="btn-primary" style={{ flex: 1, justifyContent: 'center', fontSize: 13 }} onClick={save}>Add</button>
+            <button className="btn-text" style={{ fontSize: 13 }} onClick={() => setShow(false)}>✕</button>
+          </div>
+        </div>
+      )}
+
+      {entries.length > 0 ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {entries.map(e => (
+            <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12 }}>
+              <span style={{ color: 'var(--text-3)' }}>{e.label}</span>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <span style={{ fontWeight: 700, color: 'var(--text)' }}>${parseFloat(e.amount||0).toFixed(2)}</span>
+                <button className="icon-btn" onClick={() => remove(e.id)} style={{ color: 'var(--red)', padding: 0 }}><ITrash size={12} /></button>
+              </div>
+            </div>
+          ))}
+          {entries.length > 1 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700, paddingTop: 4, borderTop: '1px solid var(--border-2)', marginTop: 2 }}>
+              <span>Total</span><span>${total.toFixed(2)}</span>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div style={{ fontSize: 12, color: 'var(--text-4)', fontStyle: 'italic' }}>No costs logged yet</div>
+      )}
+    </div>
+  )
+}
+
+// ─── Photo Timeline ───────────────────────────────────────────────────────────
+function PhotoTimeline({ projId }) {
+  const { data, mutate } = useCtx()
+  const toast = useToast()
+  const [viewMode, setViewMode] = useState('grid') // 'grid' | 'timeline'
+
+  const photos = data.photos
+    .filter(p => p.project_id === projId)
+    .slice()
+    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+
+  const edit = async (id, fields) => {
+    if (fields._delete) {
+      const photo = data.photos.find(p => p.id === id)
+      mutate(d => ({ ...d, photos: d.photos.filter(p => p.id !== id) }))
+      if (photo) await db.deletePhoto(photo).catch(e => toast(e.message, 'error'))
+      return
+    }
+    mutate(d => ({ ...d, photos: d.photos.map(p => p.id === id ? { ...p, ...fields } : p) }))
+    await db.updatePhoto(id, fields).catch(e => toast(e.message, 'error'))
+  }
+
+  // Group by date for timeline view
+  const byDate = photos.reduce((acc, p) => {
+    const d = p.created_at ? new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Unknown'
+    if (!acc[d]) acc[d] = []
+    acc[d].push(p)
+    return acc
+  }, {})
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <div className="label-caps">
+          Photos{photos.length > 0 ? ` · ${photos.length}` : ''}
+        </div>
+        {photos.length > 0 && (
+          <div style={{ display: 'flex', gap: 4 }}>
+            <button onClick={() => setViewMode('grid')} style={{
+              padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+              fontSize: 12, fontWeight: 600,
+              background: viewMode === 'grid' ? 'var(--accent)' : 'var(--fill)',
+              color: viewMode === 'grid' ? '#fff' : 'var(--text-3)',
+            }}>Grid</button>
+            <button onClick={() => setViewMode('timeline')} style={{
+              padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+              fontSize: 12, fontWeight: 600,
+              background: viewMode === 'timeline' ? 'var(--accent)' : 'var(--fill)',
+              color: viewMode === 'timeline' ? '#fff' : 'var(--text-3)',
+            }}>Timeline</button>
+          </div>
+        )}
+      </div>
+
+      {viewMode === 'grid' ? (
+        <PhotoPaneInline projId={projId} />
+      ) : (
+        <div>
+          {Object.entries(byDate).map(([date, datePhs]) => (
+            <div key={date} style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-4)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ height: 1, flex: 1, background: 'var(--border-2)' }} />
+                {date}
+                <div style={{ height: 1, flex: 1, background: 'var(--border-2)' }} />
+              </div>
+              <PhotoGrid photos={datePhs} onEdit={edit} />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Thin wrapper so PhotoPane can be used inline from PhotoTimeline
+function PhotoPaneInline({ projId }) {
+  return <PhotoPane projId={projId} type="progress" showAll inline />
+}
+
 // ─── Photo pane ───────────────────────────────────────────────────────────────
 function PhotoPane({ projId, type, showAll, inline }) {
   const { data, mutate } = useCtx()
@@ -634,7 +961,6 @@ function PhotoPane({ projId, type, showAll, inline }) {
   const [uploading, setUploading]       = useState(false)
   const [pendingFiles, setPendingFiles] = useState([])
   const [showTag, setShowTag]           = useState(false)
-  const [lightboxIdx, setLightboxIdx]   = useState(null)
   const fileRef = useRef()
 
   const photos = data.photos.filter(p => p.project_id === projId && (showAll ? true : p.photo_type === type))
@@ -687,7 +1013,7 @@ function PhotoPane({ projId, type, showAll, inline }) {
         style={{
           display: 'flex', alignItems: 'center', gap: 6,
           marginTop: 12, padding: '8px 14px',
-          background: 'var(--accent)', color: '#fff',
+          background: 'var(--accent)', color: 'var(--white)',
           border: 'none', borderRadius: 8, cursor: 'pointer',
           fontSize: 13, fontWeight: 600, fontFamily: 'inherit',
           opacity: uploading ? .6 : 1,
@@ -913,13 +1239,13 @@ function CoatSheet({ nextNum, defaultCoat, isEdit, onSave, onClose }) {
 function RonSwansonModal({ onClose }) {
   return (
     <div className="overlay" onClick={onClose} style={{ alignItems: 'center', justifyContent: 'center' }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: '#0F1E38', borderRadius: 16, overflow: 'hidden', maxWidth: 380, width: '90%', boxShadow: '0 24px 60px rgba(0,0,0,.5)', animation: 'slideUp .3s cubic-bezier(.32,.72,0,1)' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--navy)', borderRadius: 16, overflow: 'hidden', maxWidth: 380, width: '90%', boxShadow: '0 24px 60px rgba(0,0,0,.5)', animation: 'slideUp .3s cubic-bezier(.32,.72,0,1)' }}>
         <img src="/ronswanson.webp" alt="Ron Swanson" style={{ width: '100%', display: 'block', maxHeight: 280, objectFit: 'cover', objectPosition: 'top' }} />
         <div style={{ padding: '20px 24px 24px', textAlign: 'center' }}>
           <p style={{ color: '#F0F4F8', fontSize: 18, fontWeight: 700, lineHeight: 1.4, marginBottom: 16 }}>
             "A real man always cleans his shop after every project."
           </p>
-          <button onClick={onClose} style={{ background: '#1D4ED8', color: '#fff', border: 'none', borderRadius: 10, padding: '11px 32px', fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+          <button onClick={onClose} style={{ background: '#1D4ED8', color: 'var(--white)', border: 'none', borderRadius: 10, padding: '11px 32px', fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
             Got it
           </button>
         </div>

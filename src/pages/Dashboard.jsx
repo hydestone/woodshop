@@ -6,8 +6,8 @@ import * as db from '../db.js'
 const SC = { active:'#1D4ED8', planning:'#7C3AED', paused:'#B45309', complete:'#166534' }
 const SL = { active:'Active', planning:'Planning', paused:'Paused', complete:'Complete' }
 const SO = ['complete','active','planning','paused']
-const CARD = { background:'var(--surface)', borderRadius:'var(--r-md)', border:'1px solid var(--border-2)', padding:'16px 20px', boxShadow:'var(--shadow-sm)' }
-const CARD_TITLE = { fontSize:12, fontWeight:600, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:12 }
+
+
 
 // ── Year Carousel overlay ─────────────────────────────────────────────────────
 function YearCarousel({ year, projects, photos, onClose }) {
@@ -49,15 +49,15 @@ function YearCarousel({ year, projects, photos, onClose }) {
   )
 
   return (
-    <div style={{position:'fixed',inset:0,background:'#000',zIndex:1000,display:'flex',flexDirection:'column'}}>
+    <div className="fs-overlay">
       {/* Header */}
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 16px',background:'rgba(0,0,0,.6)',position:'absolute',top:0,left:0,right:0,zIndex:2}}>
-        <button onClick={onClose} style={{display:'flex',alignItems:'center',gap:6,background:'none',border:'none',color:'#fff',cursor:'pointer',fontSize:14,fontFamily:'inherit',fontWeight:500,padding:'4px 0'}}>
+      <div className="fs-overlay-bar">
+        <button onClick={onClose} className="fs-back-btn">
           <IChevL size={16} color="#fff" sw={2}/> Back
         </button>
         <div style={{textAlign:'center'}}>
-          <div style={{color:'#fff',fontWeight:700,fontSize:15}}>{year}</div>
-          <div style={{color:'rgba(255,255,255,.6)',fontSize:12}}>{cur+1} of {carouselPhotos.length}</div>
+          <div style={{color:'var(--white)',fontWeight:700,fontSize:15}}>{year}</div>
+          <div style={{color:'rgba(var(--white-rgb),.6)',fontSize:12}}>{cur+1} of {carouselPhotos.length}</div>
         </div>
         <div style={{width:60}}/>
       </div>
@@ -68,21 +68,21 @@ function YearCarousel({ year, projects, photos, onClose }) {
 
         {/* Prev/next arrows */}
         {cur > 0 && (
-          <button onClick={()=>setCur(i=>i-1)} style={{position:'absolute',left:12,background:'rgba(0,0,0,.5)',border:'none',borderRadius:'50%',width:40,height:40,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}}>
+          <button onClick={()=>setCur(i=>i-1)} className="fs-nav-btn prev">
             <IChevL size={20} color="#fff" sw={2}/>
           </button>
         )}
         {cur < carouselPhotos.length - 1 && (
-          <button onClick={()=>setCur(i=>i+1)} style={{position:'absolute',right:12,background:'rgba(0,0,0,.5)',border:'none',borderRadius:'50%',width:40,height:40,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}}>
+          <button onClick={()=>setCur(i=>i+1)} className="fs-nav-btn next">
             <IChevR size={20} color="#fff" sw={2}/>
           </button>
         )}
       </div>
 
       {/* Caption */}
-      <div style={{padding:'12px 20px 24px',background:'rgba(0,0,0,.6)',position:'absolute',bottom:0,left:0,right:0}}>
-        <div style={{color:'#fff',fontWeight:600,fontSize:15}}>{photo._projName}</div>
-        <div style={{color:'rgba(255,255,255,.6)',fontSize:13,marginTop:2}}>{[photo._projWood,photo._projCat,photo.caption].filter(Boolean).join(' · ')}</div>
+      <div className="fs-overlay-caption">
+        <div style={{color:'var(--white)',fontWeight:600,fontSize:15}}>{photo._projName}</div>
+        <div style={{color:'rgba(var(--white-rgb),.6)',fontSize:13,marginTop:2}}>{[photo._projWood,photo._projCat,photo.caption].filter(Boolean).join(' · ')}</div>
         {/* Strip thumbnails */}
         {carouselPhotos.length > 1 && (
           <div style={{display:'flex',gap:6,marginTop:10,overflowX:'auto',scrollbarWidth:'none',paddingBottom:2}}>
@@ -246,7 +246,7 @@ function FinishUsage({ projects }) {
             <span style={{fontSize:12,color:'var(--text-3)',flexShrink:0,marginLeft:8}}>{count}</span>
           </div>
           <div style={{height:6,borderRadius:3,background:'var(--fill)'}}>
-            <div style={{height:6,borderRadius:3,background:'#166534',width:(count/max*100)+'%'}}/>
+            <div style={{height:6,borderRadius:3,background:'var(--green)',width:(count/max*100)+'%'}}/>
           </div>
         </div>
       ))}
@@ -408,10 +408,10 @@ function MapModal({ locations, sourceCounts, onClose }) {
   return (
     <div ref={containerRef} onClick={e=>{if(e.target===e.currentTarget)onClose()}}
       style={{position:'fixed',inset:0,background:'rgba(0,0,0,.7)',zIndex:2000,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:16}}>
-      <div style={{width:'100%',maxWidth:800,height:'80vh',display:'flex',flexDirection:'column',borderRadius:12,overflow:'hidden',background:'#fff'}}>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'12px 16px',background:'#0F1E38'}}>
-          <span style={{color:'#fff',fontWeight:600,fontSize:15}}>Wood Source Locations</span>
-          <button onClick={onClose} style={{background:'rgba(255,255,255,.15)',border:'none',borderRadius:8,color:'#fff',width:32,height:32,cursor:'pointer',fontSize:18,display:'flex',alignItems:'center',justifyContent:'center'}}>×</button>
+      <div className="map-modal-card">
+        <div className="map-modal-header">
+          <span style={{color:'var(--white)',fontWeight:600,fontSize:15}}>Wood Source Locations</span>
+          <button onClick={onClose} className="map-modal-close">×</button>
         </div>
         <div ref={mapRef} style={{flex:1}}/>
       </div>
@@ -545,7 +545,7 @@ export default function Dashboard() {
           <div className="group">
             {urgCoats.map(c=>(
               <div key={c.id} className="cell" style={{cursor:'pointer'}} onClick={()=>setProjId(c.project_id)}>
-                <span style={{fontSize:11,fontWeight:700,color:'#fff',background:'var(--orange)',borderRadius:6,padding:'2px 8px',flexShrink:0}}>Now</span>
+                <span style={{fontSize:11,fontWeight:700,color:'var(--white)',background:'var(--orange)',borderRadius:6,padding:'2px 8px',flexShrink:0}}>Now</span>
                 <div style={{flex:1}}><div style={{fontWeight:500}}>{c.product}</div><div style={{fontSize:13,color:'var(--text-3)'}}>Coat {c.coat_number} · {c.proj?.name}</div></div>
                 <IChevR size={14} color="var(--text-4)"/>
               </div>
@@ -580,13 +580,13 @@ export default function Dashboard() {
         {!hasUrgent&&<div className="empty" style={{paddingTop:32,paddingBottom:0}}><div className="empty-icon">🪵</div><div className="empty-title">All clear</div><p className="empty-sub">Nothing urgent today.</p></div>}
 
         <span className="section-label" style={{marginTop:28}}>Analytics</span>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',gap:12,padding:'0 20px'}}>
-          <div style={CARD}><div style={CARD_TITLE}>Projects by Year</div><ProjectsByYear projects={data.projects} photos={data.photos} onOpen={setProjId}/></div>
-          <div style={CARD}><div style={CARD_TITLE}>Species Breakdown</div><SpeciesDonut projects={data.projects}/></div>
-          <div style={CARD}><div style={CARD_TITLE}>Category Heatmap</div><CategoryHeatmap projects={data.projects} categories={cats}/></div>
-          <div style={CARD}><div style={CARD_TITLE}>Finish Usage</div><FinishUsage projects={data.projects}/></div>
-          <div style={CARD}><div style={CARD_TITLE}>Project Status</div><StatusPipeline projects={data.projects}/></div>
-          <div style={{...CARD,gridColumn:'span 1'}}><div style={CARD_TITLE}>Wood Source Map</div><WoodSourceMap locations={locations} woodStock={data.woodStock} projectWoodSources={data.projectWoodSources}/></div>
+        <div className="dash-grid">
+          <div className="card"><div className="label-caps-sm">Projects by Year</div><ProjectsByYear projects={data.projects} photos={data.photos} onOpen={setProjId}/></div>
+          <div className="card"><div className="label-caps-sm">Species Breakdown</div><SpeciesDonut projects={data.projects}/></div>
+          <div className="card"><div className="label-caps-sm">Category Heatmap</div><CategoryHeatmap projects={data.projects} categories={cats}/></div>
+          <div className="card"><div className="label-caps-sm">Finish Usage</div><FinishUsage projects={data.projects}/></div>
+          <div className="card"><div className="label-caps-sm">Project Status</div><StatusPipeline projects={data.projects}/></div>
+          <div className="card"><div className="label-caps-sm">Wood Source Map</div><WoodSourceMap locations={locations} woodStock={data.woodStock} projectWoodSources={data.projectWoodSources}/></div>
         </div>
 
         {data.photos.length>0&&<>

@@ -7,10 +7,14 @@ import { Sheet, FormCell, ConfirmSheet, IPlus, ITrash, IEdit, ILink } from '../c
 const CATEGORIES = ['General', 'Finishing', 'Joinery', 'Wood Species', 'Turning', 'Carving', 'Tools', 'Safety', 'Business', 'Other']
 
 const DEFAULT_GUIDES = [
-  { title: 'Wood Database',                       url: 'https://www.wood-database.com/',                                         category: 'Wood Species', desc: 'Species guide — hardness, grain, workability' },
-  { title: 'Fine Woodworking — Finishing',        url: 'https://www.finewoodworking.com/finishing',                              category: 'Finishing',    desc: 'Finishing reference articles' },
+  { title: 'Wood Database',                       url: 'https://www.wood-database.com/',                                         category: 'Wood Species', desc: 'Species guide — Janka hardness, grain, workability, typical uses' },
+  { title: 'Fine Woodworking — Finishing',        url: 'https://www.finewoodworking.com/finishing',                              category: 'Finishing',    desc: 'Finishing reference articles from Fine Woodworking' },
   { title: 'Lumber Calculator',                   url: 'https://www.thecalculatorsite.com/construction/boards.php',              category: 'General',      desc: 'Board feet and lumber estimates' },
-  { title: 'American Association of Woodturners', url: 'https://www.woodturner.org/',                                            category: 'Turning',      desc: 'Turning resources and community' },
+  { title: 'American Association of Woodturners', url: 'https://www.woodturner.org/',                                            category: 'Turning',      desc: 'AAW turning resources, community, and symposium info' },
+  { title: 'Blocklayer — Segmented Turning',      url: 'https://www.blocklayer.com/woodturning-segments',                        category: 'Turning',      desc: 'Free online segmented turning calculator — segments, angles, dimensions' },
+  { title: 'Wood Species Explorer — USDA',        url: 'https://www.fpl.fs.usda.gov/documnts/FPLGTR/fplgtr190.pdf',             category: 'Wood Species', desc: 'USDA Forest Products Lab wood handbook — definitive species reference' },
+  { title: 'Finishing Reference — Bob Flexner',   url: 'https://www.popularwoodworking.com/finishing/',                          category: 'Finishing',    desc: 'Practical finishing advice from Popular Woodworking' },
+  { title: 'Sharpening Angles Reference',         url: 'https://www.worksharpening.com/sharpening-angles.html',                  category: 'Tools',        desc: 'Correct sharpening angles for chisels, plane irons, gouges, and more' },
 ]
 
 export default function Resources() {
