@@ -378,7 +378,8 @@ export default function Stock() {
   const toast = useToast()
   const [showAdd, setShowAdd]       = useState(false)
   const [editItem, setEditItem]     = useState(null)
-  const [detail, setDetail]         = useState(null)
+  const [detail,         setDetail]        = useState(null)
+  const [stockPhotoItem, setStockPhotoItem] = useState(null)
   const [deleteItem, setDeleteItem] = useState(null)
   const [showTools, setShowTools]   = useState(false)
   const [logCache, setLogCache]     = useState({})
@@ -445,6 +446,8 @@ export default function Stock() {
 
         {/* Locations section */}
         <LocationsSection locations={locations} woodStock={data.woodStock} mutate={mutate}/>
+
+        <SpeciesManager />
 
         {/* Stock section */}
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'12px 20px 6px',marginTop:8}}>
