@@ -54,7 +54,7 @@
 
   /* Layout */
   --topbar-h:    84px;
-  --tabbar-h:    56px;
+  --tabbar-h:    44px;
   --safe-b:      env(safe-area-inset-bottom, 0px);
 
   /* Extended palette */
@@ -310,7 +310,7 @@ body {
 
 /* Handle rotation — ensure layout reflows cleanly */
 @media screen and (orientation: landscape) {
-  .tabbar { padding-bottom: max(6px, env(safe-area-inset-bottom, 0px)); }
+  .tabbar { padding-bottom: max(2px, env(safe-area-inset-bottom, 0px)); }
   .sidebar { padding-bottom: env(safe-area-inset-bottom); }
 }
 
@@ -459,6 +459,7 @@ body {
 .scroll-page {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
 }
 .scroll-page::-webkit-scrollbar { width: 5px; }
@@ -474,8 +475,8 @@ body {
   border-top: 1px solid var(--border);
   display: flex;
   align-items: center;
-  padding-top: 6px;
-  padding-bottom: max(6px, env(safe-area-inset-bottom, 0px));
+  padding-top: 4px;
+  padding-bottom: max(2px, env(safe-area-inset-bottom, 0px));
   z-index: 50;
 }
 .tab-btn {
@@ -1354,6 +1355,7 @@ body {
   border: 1px solid var(--border-2);
   padding: 16px 20px;
   box-shadow: var(--shadow-sm);
+  overflow: hidden;
 }
 .card-navy {
   background: var(--navy);
@@ -1451,6 +1453,7 @@ body {
 }
 .calc-input {
   flex: 1;
+  min-width: 0;
   background: var(--fill);
   border: 1px solid var(--border-2);
   border-radius: var(--r-sm);
@@ -1460,10 +1463,27 @@ body {
   color: var(--text);
   outline: none;
   text-align: center;
+  width: 100%;
   transition: border-color 150ms;
 }
 .calc-input:focus { border-color: var(--accent); }
 .calc-input::placeholder { color: var(--text-4); }
+.calc-input-sm {
+  background: var(--fill);
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-sm);
+  padding: 6px 6px;
+  font-size: 13px;
+  font-family: var(--font);
+  color: var(--text);
+  outline: none;
+  text-align: center;
+  width: 100%;
+  transition: border-color 150ms;
+  min-width: 0;
+}
+.calc-input-sm:focus { border-color: var(--accent); }
+.calc-input-sm::placeholder { color: var(--text-4); }
 .calc-input-sm {
   background: var(--fill);
   border: 1px solid var(--border-2);
@@ -1988,7 +2008,7 @@ body {
 /* ─── Mobile ─────────────────────────────────────────────────────────────── */
 @media (max-width: 767px) {
   .sidebar { display: none; }
-  .scroll-page { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 8px); }
+  .scroll-page { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 4px); }
   .toast { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 10px); }
   /* Mobile top bar: search moves to second row, safe area at top */
   .top-bar { flex-direction: column; gap: 8px; padding-top: max(env(safe-area-inset-top, 0px), 47px); padding-bottom: 10px; }

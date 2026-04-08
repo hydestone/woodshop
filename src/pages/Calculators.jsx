@@ -531,13 +531,13 @@ function TrimCuts() {
 
       {/* Cut list */}
       <SectionCard>
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 44px 2fr 28px', gap: 5, marginBottom: 6 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) 44px minmax(0,2fr) 28px', gap: 5, marginBottom: 6 }}>
           {['Length', 'Qty', 'Label', ''].map(h => (
             <div key={h} className="calc-label" style={{ marginBottom: 0, textAlign: 'center' }}>{h}</div>
           ))}
         </div>
         {cuts.map((c, i) => (
-          <div key={c.id} style={{ display: 'grid', gridTemplateColumns: '2fr 44px 2fr 28px', gap: 5, marginBottom: 6, alignItems: 'center' }}>
+          <div key={c.id} style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) 44px minmax(0,2fr) 28px', gap: 5, marginBottom: 6, alignItems: 'center' }}>
             <input
               className="calc-input"
               value={c.len}
@@ -755,11 +755,11 @@ function SheetGoods() {
       </div>
 
       <SectionCard>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 44px 1fr 28px', gap:5, marginBottom:6 }}>
+        <div style={{ display:'grid', gridTemplateColumns:'minmax(0,1fr) minmax(0,1fr) 44px minmax(0,1fr) 28px', gap:5, marginBottom:6 }}>
           {['Width','Height','Qty','Label',''].map(h => <div key={h} className="calc-label" style={{ marginBottom:0, textAlign:'center' }}>{h}</div>)}
         </div>
         {cuts.map((c,i) => (
-          <div key={c.id} style={{ display:'grid', gridTemplateColumns:'1fr 1fr 44px 1fr 28px', gap:5, marginBottom:6, alignItems:'center' }}>
+          <div key={c.id} style={{ display:'grid', gridTemplateColumns:'minmax(0,1fr) minmax(0,1fr) 44px minmax(0,1fr) 28px', gap:5, marginBottom:6, alignItems:'center' }}>
             <input className="calc-input" value={c.w} onChange={e=>upd(c.id,'w',e.target.value)} placeholder='12"' />
             <input className="calc-input" value={c.h} onChange={e=>upd(c.id,'h',e.target.value)} placeholder='24"' />
             <input className="calc-input" type="number" min="1" value={c.qty} onChange={e=>upd(c.id,'qty',e.target.value)} style={{ textAlign:'center' }} />

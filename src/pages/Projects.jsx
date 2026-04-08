@@ -96,7 +96,7 @@ export default function Projects() {
               {groups.map(({ status, items }) => (
                 <div key={status}>
                   <span className="section-label">{STATUS_LABEL[status]}</span>
-                  {items.map(p => <ProjectCard key={p.id} project={p} onOpen={() => setProjId(p.id)} data={data} />)}
+                  {items.map(p => <ProjectCard key={p.id} project={p} onOpen={() => setProjId(p.id)} data={data} stepCounts={stepCountMap[p.id]} urgentCoats={urgentCoatMap[p.id] || 0} />)}
                 </div>
               ))}
               {!filtered.length && (
@@ -234,11 +234,10 @@ function ProjectTable({ projects, categories, statusFilter, setStatusFilter }) {
 }
 
 // ─── Project card ─────────────────────────────────────────────────────────────
-function ProjectCard({ project, onOpen, data }) {
-  const ps    = data.steps.filter(s => s.project_id === project.id)
-  const done  = ps.filter(s => s.completed).length
-  const total = ps.length
-  const rc    = data.coats.filter(c => c.project_id === project.id && coatStatus(c).urgent).length
+function ProjectCard({ project, onOpen, data, stepCounts, urgentCoats = 0 }) {
+  const total = stepCounts?.total || 0
+  const done  = stepCounts?.done  || 0
+  const rc    = urgentCoats
   const ss    = STATUS[project.status] || STATUS.planning
 
   return (

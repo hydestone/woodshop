@@ -59,13 +59,17 @@ export default function AllPhotos() {
         ? data.photos.filter(p => data.projects.find(proj => proj.id === p.project_id)?.category === filter.slice(4))
         : data.photos.filter(p => p.tags?.split(',').map(t => t.trim()).includes(filter))
 
-    if (filter.startsWith('cat:')) {
-      photos = photos.slice().sort((a, b) => {
-        const ca = data.projects.find(p => p.id === a.project_id)?.name || ''
-        const cb = data.projects.find(p => p.id === b.project_id)?.name || ''
-        return ca.localeCompare(cb)
-      })
-    }
+    // Always sort by project category, then by project name within category
+    photos = photos.slice().sort((a, b) => {
+      const projA = data.projects.find(p => p.id === a.project_id)
+      const projB = data.projects.find(p => p.id === b.project_id)
+      const catA = projA?.category || 'zzz'  // uncategorised sorts last
+      const catB = projB?.category || 'zzz'
+      if (catA !== catB) return catA.localeCompare(catB)
+      const nameA = projA?.name || ''
+      const nameB = projB?.name || ''
+      return nameA.localeCompare(nameB)
+    })
     return photos
   }
 

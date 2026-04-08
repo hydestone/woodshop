@@ -139,7 +139,7 @@ export default function YearReview() {
             {/* KPI grid — each card clickable */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: 10, marginBottom: 16 }}>
               {[
-                { label: 'Species used',  value: Object.keys(stats.species).length,   type: 'species',  val: null },
+                { label: 'Species used',  value: Object.keys(stats.species).length,   type: 'projects', val: null },
                 { label: 'Top finish',    value: stats.topFinishes[0]?.[0] || '—',    type: 'finish',   val: stats.topFinishes[0]?.[0] },
                 { label: 'Top category',  value: stats.topCats[0]?.[0] || '—',        type: 'category', val: stats.topCats[0]?.[0] },
                 { label: 'Gifts given',   value: stats.recipients.length,             type: 'gifts',    val: null },
@@ -147,11 +147,11 @@ export default function YearReview() {
               ].map(s => (
                 <button
                   key={s.label}
-                  onClick={s.type && (s.val || s.type === 'gifts') ? () => drill(s.type, s.val) : undefined}
+                  onClick={s.type && (s.val !== undefined || s.type === 'gifts' || s.type === 'projects') ? () => drill(s.type, s.val) : undefined}
                   style={{
                     background: 'var(--surface)', borderRadius: 'var(--r-md)', border: '1px solid var(--border-2)',
                     padding: '14px 16px', textAlign: 'left', fontFamily: 'inherit',
-                    cursor: s.type && (s.val || s.type === 'gifts') ? 'pointer' : 'default',
+                    cursor: s.type && (s.val !== undefined || s.type === 'gifts' || s.type === 'projects') ? 'pointer' : 'default',
                     transition: 'box-shadow 150ms',
                   }}
                   onMouseEnter={e => { if (s.type) e.currentTarget.style.boxShadow = 'var(--shadow-md)' }}

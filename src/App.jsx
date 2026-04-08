@@ -64,7 +64,7 @@ const NAV_SECTIONS = [
       { id: 'photos',      label: 'All Photos',        Icon: ICamera },
       { id: 'finished',    label: 'Finished Work',     Icon: IImage  },
       { id: 'inspiration', label: 'Inspiration',       Icon: IBulb   },
-      { id: 'stockgallery', label: 'Stock Gallery',      Icon: ITree   },
+      { id: 'stockgallery', label: 'Wood Stock Gallery', Icon: ITree   },
     ],
   },
   {
@@ -410,7 +410,7 @@ export default function App() {
                   {tab === 'photos'      && <AllPhotos />}
                   {tab === 'finished'    && <FinishedProducts />}
                   {tab === 'inspiration' && <Inspiration />}
-                  {tab === 'stockgallery' && <div className="scroll-page" style={{paddingBottom:40}}><div className="page-header"><h1 className="page-title">Stock Gallery</h1><p className="page-subtitle">Photos of raw lumber, blanks, and prep work</p></div><WoodStockGallery /></div>}
+                  {tab === 'stockgallery' && <div className="scroll-page" style={{paddingBottom:40}}><div className="page-header"><h1 className="page-title">Wood Stock Gallery</h1><p className="page-subtitle">Photos of raw lumber, blanks, and prep work</p></div><WoodStockGallery /></div>}
                   {tab === 'yearreview'  && <YearReview />}
                   {tab === 'settings'    && <Settings />}
                   {tab === 'import'      && <BulkImport />}
