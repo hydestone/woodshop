@@ -527,6 +527,66 @@ export default function Stock() {
 }
 
 
+
+// ── Wood Stock Gallery ────────────────────────────────────────────────────────
+export function WoodStockGallery() {
+  const { data } = useCtx()
+  const [lightbox, setLightbox] = useState(null)
+
+  const stockPhotos = (data.photos || [])
+    .filter(p => p.photo_type === 'wood_stock' || p.caption?.startsWith('stock:'))
+    .slice()
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+
+  const byStock = stockPhotos.reduce((acc, photo) => {
+    const stockId = photo.caption?.startsWith('stock:') ? photo.caption.slice(6) : null
+    const stock = stockId ? (data.woodStock || []).find(w => w.id === stockId) : null
+    const label = stock
+      ? `${stock.species}${stock.source ? ' — ' + stock.source : ''}`
+      : 'Unlinked'
+    if (!acc[label]) acc[label] = []
+    acc[label].push(photo)
+    return acc
+  }, {})
+
+  if (stockPhotos.length === 0) return (
+    <div className="empty" style={{ paddingTop: 40 }}>
+      <div className="empty-icon">🪵</div>
+      <div className="empty-title">No stock photos yet</div>
+      <p className="empty-sub">Add photos to your wood stock entries to build a gallery of raw lumber and blanks</p>
+    </div>
+  )
+
+  return (
+    <div style={{ paddingBottom: 24 }}>
+      {Object.entries(byStock).map(([label, photos]) => (
+        <div key={label}>
+          <span className="section-label">{label}</span>
+          <div className="photo-grid">
+            {photos.map((photo, i) => (
+              <div key={photo.id} className="photo-card" onClick={() => setLightbox({ photos, idx: i })}>
+                <img src={photo.url} alt={photo.caption || label} loading="lazy" />
+                {photo.caption && !photo.caption.startsWith('stock:') && (
+                  <div className="photo-footer">
+                    <div className="photo-caption-text">{photo.caption}</div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+      {lightbox && (
+        <Lightbox
+          photos={lightbox.photos}
+          index={lightbox.idx}
+          onClose={() => setLightbox(null)}
+        />
+      )}
+    </div>
+  )
+}
+
 // ── Wood stock photo sheet ────────────────────────────────────────────────────
 function StockPhotoSheet({ item, onClose }) {
   const { data, mutate } = useCtx()
