@@ -106,7 +106,7 @@ function LenInput({ label, value, onChange, placeholder }) {
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder || '0'}
         inputMode="decimal"
-        style={{ width: '100%' }}
+        style={{ width: '100%', textAlign: 'center' }}
       />
     </div>
   )
@@ -131,7 +131,7 @@ function BoardFoot() {
   }
 
   return (
-    <div style={{ padding: '0 20px 40px' }}>
+    <div style={{ padding: '0 20px 40px', maxWidth: 640, margin: '0 auto' }}>
       <p style={{ fontSize: 12, color: 'var(--text-4)', margin: '12px 0' }}>BF = T × W × L ÷ 144 · Accepts fractions: 3/4, 1 3/8</p>
       <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
         <LenInput label="Thickness (in)" value={t} onChange={setT} placeholder="3/4" />
@@ -465,7 +465,7 @@ function ConverterColumn({ title, cfg, catKey }) {
 
 function UnitConverter() {
   return (
-    <div style={{ padding: '12px 20px 40px' }}>
+    <div style={{ padding: '12px 20px 40px', maxWidth: 640, margin: '0 auto' }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
         {Object.entries(CONV).map(([title, cfg]) => (
           <ConverterColumn key={title} title={title} cfg={cfg} catKey={title} />
@@ -522,7 +522,7 @@ function TrimCuts() {
   }
 
   return (
-    <div style={{ padding: '0 20px 40px' }}>
+    <div style={{ padding: '0 20px 40px', maxWidth: 640, margin: '0 auto' }}>
       <p style={{ fontSize: 12, color: 'var(--text-4)', margin: '12px 0' }}>
         Enter lengths in inches (48), feet (4'), or ft/in (4'6"). Fractions OK: 3 7/8
       </p>
@@ -531,7 +531,7 @@ function TrimCuts() {
       <SectionCard>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 56px 1fr 32px', gap: 6, marginBottom: 6 }}>
           {['Length', 'Qty', 'Label', ''].map(h => (
-            <div key={h} className="calc-label" style={{ marginBottom: 0 }}>{h}</div>
+            <div key={h} className="calc-label" style={{ marginBottom: 0, textAlign: 'center' }}>{h}</div>
           ))}
         </div>
         {cuts.map((c, i) => (
@@ -738,7 +738,7 @@ function SheetGoods() {
   }
 
   return (
-    <div style={{ padding: '0 20px 40px' }}>
+    <div style={{ padding: '0 20px 40px', maxWidth: 640, margin: '0 auto' }}>
       <p style={{ fontSize: 12, color: 'var(--text-4)', margin: '12px 0' }}>
         Optimize cuts from full sheets. Default: 4×8 plywood (48"×96").
       </p>
@@ -871,7 +871,7 @@ function AdvancedCalc() {
   )
 
   return (
-    <div style={{ padding: '0 20px 40px' }}>
+    <div style={{ padding: '0 20px 40px', maxWidth: 640, margin: '0 auto' }}>
 
       <Section title="Pitch · Rise · Run" hint="Enter any two values. Lengths: 48, 4', 3'6&quot;">
         <div style={{ display:'flex', gap:8 }}>
@@ -957,7 +957,7 @@ function CalcNotes() {
   })
   const save = v => { setNotes(v); try { localStorage.setItem('calc-notes', v) } catch {} }
   return (
-    <div style={{ padding: '4px 20px 40px' }}>
+    <div style={{ padding: '4px 20px 40px', maxWidth: 640, margin: '0 auto' }}>
       <p style={{ fontSize: 12, color: 'var(--text-4)', marginBottom: 12 }}>Scratch pad — saves locally.</p>
       <textarea
         className="form-textarea"
