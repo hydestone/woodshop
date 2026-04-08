@@ -54,7 +54,7 @@
 
   /* Layout */
   --topbar-h:    84px;
-  --tabbar-h:    44px;
+  --tabbar-h:    50px;
   --safe-b:      env(safe-area-inset-bottom, 0px);
 
   /* Extended palette */
@@ -148,6 +148,9 @@
 [data-theme="dark"] .tabbar {
   background: rgba(22,27,34,.95);
   border-top-color: rgba(240,246,252,.08);
+}
+[data-theme="dark"] .tabbar-bg-fill {
+  background: rgba(22,27,34,.95);
 }
 
 /* Dark mode: form cells and groups */
@@ -310,7 +313,7 @@ body {
 
 /* Handle rotation — ensure layout reflows cleanly */
 @media screen and (orientation: landscape) {
-  .tabbar { padding-bottom: max(2px, env(safe-area-inset-bottom, 0px)); }
+  .tabbar { padding-bottom: 6px; }
   .sidebar { padding-bottom: env(safe-area-inset-bottom); }
 }
 
@@ -468,16 +471,29 @@ body {
 /* ─── Tab bar (mobile) ───────────────────────────────────────────────────── */
 .tabbar {
   position: fixed;
-  bottom: 0; left: 0; right: 0;
+  bottom: env(safe-area-inset-bottom, 0px);
+  left: 0; right: 0;
   background: rgba(255,255,255,.96);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   border-top: 1px solid var(--border);
   display: flex;
-  align-items: center;
-  padding-top: 4px;
-  padding-bottom: max(2px, env(safe-area-inset-bottom, 0px));
+  align-items: flex-start;
+  padding-top: 6px;
+  padding-bottom: 6px;
   z-index: 50;
+}
+
+/* Fill the safe area below the tab bar with matching background */
+.tabbar-bg-fill {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: env(safe-area-inset-bottom, 0px);
+  background: rgba(255,255,255,.96);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  z-index: 49;
+  pointer-events: none;
 }
 .tab-btn {
   flex: 1;
@@ -1995,7 +2011,7 @@ body {
 /* ─── Mobile ─────────────────────────────────────────────────────────────── */
 @media (max-width: 767px) {
   .sidebar { display: none; }
-  .scroll-page { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 4px); }
+  .scroll-page { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 8px); }
   .toast { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 10px); }
   /* Mobile top bar: flex-wrap pushes search to second row */
   .top-bar {
