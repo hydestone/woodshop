@@ -344,8 +344,7 @@ body {
 .top-bar {
   display: flex;
   align-items: center;
-  /* Safe area absorbed here — works even if env() resolves to 0 */
-  padding-top: max(env(safe-area-inset-top, 0px), 47px);
+  padding-top: 10px;
   padding-bottom: 10px;
   padding-left: 20px;
   padding-right: 20px;
@@ -1991,8 +1990,8 @@ body {
   .sidebar { display: none; }
   .scroll-page { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 8px); }
   .toast { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 10px); }
-  /* Mobile top bar: search moves to second row */
-  .top-bar { flex-direction: column; gap: 8px; padding-bottom: 10px; }
+  /* Mobile top bar: search moves to second row, safe area at top */
+  .top-bar { flex-direction: column; gap: 8px; padding-top: max(env(safe-area-inset-top, 0px), 47px); padding-bottom: 10px; }
   .top-bar-brand { justify-content: flex-start; flex: 1; }
   .top-bar-title { font-size: 28px; }
   .top-bar-logo { height: 40px; width: 40px; }
