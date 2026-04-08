@@ -76,17 +76,14 @@ export default function Projects() {
           </div>
           {/* Category filter */}
           {categories.length > 0 && (
-            <div style={{ display: 'flex', gap: 6, marginTop: 10, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 2 }}>
-              {['all', ...categories.map(c => c.name)].map(cat => (
-                <button key={cat} onClick={() => setFilter(cat)} style={{
-                  padding: '4px 12px', borderRadius: 99, border: 'none', cursor: 'pointer', flexShrink: 0,
-                  fontSize: 13, fontWeight: 500, fontFamily: 'inherit',
-                  background: filter === cat ? '#0F1E38' : 'var(--fill)',
-                  color: filter === cat ? '#fff' : 'var(--text-2)',
-                }}>
-                  {cat === 'all' ? 'All' : cat}
-                </button>
-              ))}
+            <div style={{ marginTop: 10 }}>
+              <FilterSelect
+                value={filter}
+                onChange={setFilter}
+                options={categories.map(c => ({ value: c.name, label: c.name }))}
+                allLabel="All Categories"
+                label="Filter by category"
+              />
             </div>
           )}
         </div>
@@ -156,18 +153,15 @@ function ProjectTable({ projects, categories, statusFilter, setStatusFilter }) {
 
   return (
     <div>
-      {/* Status filter chips */}
-      <div style={{ display: 'flex', gap: 6, padding: '12px 20px 4px', overflowX: 'auto', scrollbarWidth: 'none' }}>
-        {STATUS_FILTERS.map(f => (
-          <button key={f.id} style={chipStyle(f.id)} onClick={() => setStatusFilter(f.id)}>
-            {f.label}
-            {f.id !== 'all' && (
-              <span style={{ marginLeft: 5, opacity: .65, fontSize: 11 }}>
-                ({data.projects.filter(p => p.status === f.id).length})
-              </span>
-            )}
-          </button>
-        ))}
+      {/* Status filter */}
+      <div style={{ padding: '12px 20px 4px' }}>
+        <FilterSelect
+          value={statusFilter}
+          onChange={setStatusFilter}
+          options={STATUS_FILTERS.filter(f => f.id !== 'all').map(f => ({ value: f.id, label: f.label }))}
+          allLabel="All Statuses"
+          label="Filter by status"
+        />
       </div>
 
       <div className="proj-table-wrap">
@@ -281,7 +275,7 @@ function ProjectCard({ project, onOpen, data }) {
 
 // ─── Project detail ───────────────────────────────────────────────────────────
 export function ProjectDetail() {
-  const { data, mutate, projId, setProjId } = useCtx()
+  const { data, mutate, projId, setProjId, setTab } = useCtx()
   const toast = useToast()
   const [sub, setSub]           = useState(null)
   const [editing, setEditing]   = useState(false)
@@ -468,7 +462,16 @@ export function ProjectDetail() {
 
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           {project.built_with    && <span style={{ fontSize: 12, color: 'var(--text-3)' }}>👤 {project.built_with}</span>}
-          {project.finish_used   && <span style={{ fontSize: 12, color: 'var(--text-3)' }}>{project.finish_used}</span>}
+          {project.finish_used   && (
+            <button
+              className="btn-text"
+              style={{ fontSize: 12, color: 'var(--accent)', padding: 0 }}
+              onClick={() => setTab('finishes')}
+              title="View finish details"
+            >
+              {project.finish_used} ↗
+            </button>
+          )}
           {project.gift_recipient&& <span style={{ fontSize: 12, color: 'var(--text-3)' }}>🎁 {project.gift_recipient}</span>}
           {project.description   && <span style={{ fontSize: 12, color: 'var(--text-3)' }}>{project.description}</span>}
         </div>

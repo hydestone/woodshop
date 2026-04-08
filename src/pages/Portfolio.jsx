@@ -242,6 +242,18 @@ export default function Portfolio() {
     <>
       {showSplash && <RonSplash onDone={() => setShowSplash(false)} />}
 
+      {/* Back to Workshop — only visible in PWA standalone mode (CSS handles show/hide) */}
+      <button
+        className="portfolio-back-btn"
+        onClick={() => window.location.href = '/'}
+        aria-label="Back to Workshop"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+        Workshop
+      </button>
+
       <div style={{
         minHeight: '100vh', background: '#F0F4F8',
         fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif',

@@ -145,7 +145,7 @@ function BoardFoot() {
 
       <div className="result-box" style={{ marginBottom: 12 }}>
         <div>
-          <div className="metric-num">{bfQty ?? '—'}</div>
+          <div key={bfQty} className={`metric-num${bfQty ? ' result-appear' : ''}`}>{bfQty ?? '—'}</div>
           <div className="metric-sub">board feet{bf && bfQty !== bf ? ` (${q}× ${bf} BF)` : ''}</div>
         </div>
         {estCost && (
@@ -305,13 +305,15 @@ function FractionCalc() {
         {/* Main value */}
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, flexWrap: 'wrap' }}>
           {result
-            ? fracToHTML(result, { fontSize: 36, color: '#4ADE80', fontWeight: 800 })
+            ? <span key={`${result.n}/${result.d}`} className="result-pop">
+                {fracToHTML(result, { fontSize: 36, color: '#4ADE80', fontWeight: 800 })}
+              </span>
             : display
               ? <span style={{ fontSize: 28, color: '#fff', fontWeight: 700 }}>{display}</span>
               : <span style={{ fontSize: 28, color: 'rgba(255,255,255,.25)' }}>0</span>
           }
           {result && (
-            <span style={{ fontSize: 13, color: '#8BA8D0' }}>
+            <span className="result-appear" style={{ fontSize: 13, color: '#8BA8D0' }}>
               {fracToDecimal(result).toFixed(4)}" · {(fracToDecimal(result) * 25.4).toFixed(2)} mm
             </span>
           )}
@@ -529,13 +531,13 @@ function TrimCuts() {
 
       {/* Cut list */}
       <SectionCard>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 56px 1fr 32px', gap: 6, marginBottom: 6 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 44px 2fr 28px', gap: 5, marginBottom: 6 }}>
           {['Length', 'Qty', 'Label', ''].map(h => (
             <div key={h} className="calc-label" style={{ marginBottom: 0, textAlign: 'center' }}>{h}</div>
           ))}
         </div>
         {cuts.map((c, i) => (
-          <div key={c.id} style={{ display: 'grid', gridTemplateColumns: '1fr 56px 1fr 32px', gap: 6, marginBottom: 6, alignItems: 'center' }}>
+          <div key={c.id} style={{ display: 'grid', gridTemplateColumns: '2fr 44px 2fr 28px', gap: 5, marginBottom: 6, alignItems: 'center' }}>
             <input
               className="calc-input"
               value={c.len}
@@ -753,11 +755,11 @@ function SheetGoods() {
       </div>
 
       <SectionCard>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 52px 1fr 32px', gap:6, marginBottom:6 }}>
-          {['Width','Height','Qty','Label',''].map(h => <div key={h} className="calc-label" style={{ marginBottom:0 }}>{h}</div>)}
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 44px 1fr 28px', gap:5, marginBottom:6 }}>
+          {['Width','Height','Qty','Label',''].map(h => <div key={h} className="calc-label" style={{ marginBottom:0, textAlign:'center' }}>{h}</div>)}
         </div>
         {cuts.map((c,i) => (
-          <div key={c.id} style={{ display:'grid', gridTemplateColumns:'1fr 1fr 52px 1fr 32px', gap:6, marginBottom:6, alignItems:'center' }}>
+          <div key={c.id} style={{ display:'grid', gridTemplateColumns:'1fr 1fr 44px 1fr 28px', gap:5, marginBottom:6, alignItems:'center' }}>
             <input className="calc-input" value={c.w} onChange={e=>upd(c.id,'w',e.target.value)} placeholder='12"' />
             <input className="calc-input" value={c.h} onChange={e=>upd(c.id,'h',e.target.value)} placeholder='24"' />
             <input className="calc-input" type="number" min="1" value={c.qty} onChange={e=>upd(c.id,'qty',e.target.value)} style={{ textAlign:'center' }} />
@@ -1000,6 +1002,21 @@ export default function Calculators() {
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div className="page-header" style={{ paddingBottom: 0 }}>
         <h1 className="page-title">Calculators</h1>
+        {/* Mobile: dropdown */}
+        <div className="calc-tab-select-wrap">
+          <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', width: '100%' }}>
+            <select
+              className="filter-select"
+              value={tab}
+              onChange={e => switchTab(e.target.value)}
+              style={{ width: '100%' }}
+            >
+              {TABS.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
+            </select>
+            <span className="filter-select-chevron" aria-hidden="true">▾</span>
+          </div>
+        </div>
+        {/* Desktop: tabs */}
         <div className="page-tabs" style={{ marginTop: 12 }}>
           {TABS.map(t => (
             <button key={t.id} onClick={() => switchTab(t.id)} className={`page-tab${tab === t.id ? ' active' : ''}`}>

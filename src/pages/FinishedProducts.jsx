@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useCtx } from '../App.jsx'
-import { PhotoGrid } from '../components/Shared.jsx'
+import { PhotoGrid, FilterSelect } from '../components/Shared.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
 
@@ -54,12 +54,14 @@ export default function FinishedWork() {
         </div>
 
         {projectCategories.length > 0 && (
-          <div style={{ display: 'flex', gap: 6, padding: '0 20px 12px', overflowX: 'auto', scrollbarWidth: 'none' }}>
-            {['all', ...projectCategories].map(cat => (
-              <button key={cat} onClick={() => setCatFilter(cat)} className={`pill-tab${catFilter === cat ? ' active' : ''}`} style={{ flexShrink: 0 }}>
-                {cat === 'all' ? 'All' : cat}
-              </button>
-            ))}
+          <div className="filter-bar" style={{ paddingBottom: 8 }}>
+            <FilterSelect
+              value={catFilter}
+              onChange={setCatFilter}
+              options={projectCategories.map(c => ({ value: c, label: c }))}
+              allLabel="All Categories"
+              label="Filter by category"
+            />
           </div>
         )}
         {photos.length === 0 ? (

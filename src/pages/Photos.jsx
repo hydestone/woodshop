@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
-import { DropZone, PhotoGrid, Sheet, FormCell, TagInput, ICamera } from '../components/Shared.jsx'
+import { DropZone, PhotoGrid, Sheet, FormCell, TagInput, ICamera, FilterSelect } from '../components/Shared.jsx'
 
 export default function AllPhotos() {
   const { data, mutate } = useCtx()
@@ -78,28 +78,25 @@ export default function AllPhotos() {
             <span style={{ fontSize: 13, color: 'var(--text-3)' }}>{data.photos.length} photo{data.photos.length !== 1 ? 's' : ''}</span>
           </div>
         </div>
-        {/* Tag filter tabs */}
-        <div style={{ display: 'flex', gap: 6, padding: '0 20px 8px', overflowX: 'auto', scrollbarWidth: 'none' }}>
-          {['all','finished','portfolio','progress','inspiration','before','after'].map(tag => {
-            const count = tag === 'all' ? data.photos.length : data.photos.filter(p => p.tags?.split(',').map(t=>t.trim()).includes(tag)).length
-            return (
-              <button key={tag} onClick={() => setFilter(tag)} className={`pill-tab${filter === tag ? ' active' : ''}`} style={{ flexShrink: 0 }}>
-                {tag === 'all' ? 'All' : tag.charAt(0).toUpperCase() + tag.slice(1)}{count > 0 && tag !== 'all' ? ` (${count})` : ''}
-              </button>
-            )
-          })}
+        {/* Filters */}
+        <div className="filter-bar" style={{ paddingBottom: 8 }}>
+          <FilterSelect
+            value={filter.startsWith('cat:') ? 'all' : filter}
+            onChange={v => setFilter(v)}
+            options={['finished','portfolio','progress','inspiration','before','after'].map(t => ({ value: t, label: t.charAt(0).toUpperCase()+t.slice(1) }))}
+            allLabel="All Types"
+            label="Filter by type"
+          />
+          {projectCategories.length > 0 && (
+            <FilterSelect
+              value={filter.startsWith('cat:') ? filter.slice(4) : 'all'}
+              onChange={v => setFilter(v === 'all' ? 'all' : 'cat:' + v)}
+              options={projectCategories.map(c => ({ value: c, label: c }))}
+              allLabel="All Categories"
+              label="Filter by category"
+            />
+          )}
         </div>
-        {/* Category filter tabs */}
-        {projectCategories.length > 0 && (
-          <div style={{ display: 'flex', gap: 6, padding: '0 20px 12px', overflowX: 'auto', scrollbarWidth: 'none', borderBottom: '1px solid var(--border-2)', marginBottom: 4 }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-4)', alignSelf: 'center', flexShrink: 0, paddingRight: 2 }}>Category:</span>
-            {projectCategories.map(cat => (
-              <button key={cat} onClick={() => setFilter(filter === 'cat:' + cat ? 'all' : 'cat:' + cat)} className={`pill-tab${filter === 'cat:' + cat ? ' active' : ''}`} style={{ flexShrink: 0 }}>
-                {cat}
-              </button>
-            ))}
-          </div>
-        )}
         <DropZone onFiles={handleFiles} uploading={uploading} />
         {(() => {
           const filtered = getFiltered()

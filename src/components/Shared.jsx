@@ -565,6 +565,29 @@ function PhotoEditSheet({ photo, onSave, onDelete, onClose }) {
 }
 
 // ─── DropZone ─────────────────────────────────────────────────────────────────
+
+// ─── FilterSelect — consistent native dropdown filter ────────────────────────
+export function FilterSelect({ value, onChange, options, allLabel = 'All', label }) {
+  const isActive = value !== 'all'
+  return (
+    <div className="filter-select-wrap" aria-label={label}>
+      <select
+        className={`filter-select${isActive ? ' active' : ''}`}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+      >
+        <option value="all">{allLabel}</option>
+        {options.map(o => {
+          const val = typeof o === 'string' ? o : o.value
+          const lbl = typeof o === 'string' ? o : o.label
+          return <option key={val} value={val}>{lbl}</option>
+        })}
+      </select>
+      <span className="filter-select-chevron" aria-hidden="true">▾</span>
+    </div>
+  )
+}
+
 export function DropZone({ onFiles, uploading }) {
   const [drag, setDrag] = useState(false)
   const ref = useRef()
