@@ -444,8 +444,6 @@ export default function App() {
                   )
                 })}
               </nav>
-              {/* Safe area fill — matches tab bar background, covers home indicator zone */}
-              <div className="tabbar-bg-fill" aria-hidden="true" />
             </main>
           </div>
         </div>
