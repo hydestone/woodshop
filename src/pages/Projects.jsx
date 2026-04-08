@@ -14,7 +14,7 @@ const STATUS_LABEL = { active: 'Active', planning: 'Planning', paused: 'Paused',
 
 // ─── Projects list ────────────────────────────────────────────────────────────
 export default function Projects() {
-  const { data, mutate, setProjId } = useCtx()
+  const { data, mutate, projId, setProjId } = useCtx()
   const toast   = useToast()
   const [showAdd, setShowAdd]   = useState(false)
   const [viewMode, setViewMode] = useState('cards') // 'cards' | 'table'
@@ -156,11 +156,13 @@ export default function Projects() {
         {viewMode === 'table'
           ? <ProjectTable projects={filtered} categories={categories} statusFilter={statusFilter} setStatusFilter={setStatusFilter} />
           : (
-            <div style={{ paddingTop: 8, paddingBottom: 24 }}>
+            <div>
               {groups.map(({ status, items }) => (
                 <div key={status}>
                   <span className="section-label">{STATUS_LABEL[status]}</span>
-                  {items.map(p => <MemoCard key={p.id} project={p} openProject={openProject} onFavorite={handleFavorite} onDelete={handleDelete} data={data} stepCounts={stepCountMap[p.id]} urgentCoats={urgentCoatMap[p.id] || 0} />)}
+                  <div className="proj-cards-grid">
+                    {items.map(p => <MemoCard key={p.id} project={p} openProject={openProject} onFavorite={handleFavorite} onDelete={handleDelete} data={data} stepCounts={stepCountMap[p.id]} urgentCoats={urgentCoatMap[p.id] || 0} />)}
+                  </div>
                 </div>
               ))}
               {!filtered.length && (
@@ -359,6 +361,7 @@ export function ProjectDetail() {
   const [confirming, setConfirming] = useState(false)
   const [showRon, setShowRon]   = useState(false)
   const [showQRLabel, setShowQRLabel] = useState(false)
+  const [showReminder, setShowReminder] = useState(false)
 
   const project = data.projects.find(p => p.id === projId)
   if (!project) return null
@@ -605,6 +608,7 @@ export function ProjectDetail() {
       {confirming && <ConfirmSheet message={`Delete "${project.name}"? All steps, coats, and photos will be removed. This cannot be undone.`} onConfirm={handleDelete} onClose={() => setConfirming(false)} />}
       {showRon    && <RonSwansonModal onClose={() => setShowRon(false)} />}
       {showQRLabel && <QRLabelSheet project={project} onClose={() => setShowQRLabel(false)} />}
+      {showReminder && <ReminderSheet project={project} onClose={() => setShowReminder(false)} />}
 
       {/* Add steps sheet */}
       {sub === 'steps-add' && (
@@ -1396,6 +1400,53 @@ function QRLabelSheet({ project, onClose }) {
         <div style={{ display:'flex', gap:10 }}>
           <button className="btn-secondary" style={{ flex:1 }} onClick={onClose}>Cancel</button>
           <button className="btn-primary" style={{ flex:1 }} onClick={handlePrint}>Print Label</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Reminder Sheet ────────────────────────────────────────────────────────────
+function ReminderSheet({ project, onClose }) {
+  const [date, setDate] = useState(() => {
+    const d = new Date(); d.setDate(d.getDate() + 1); d.setHours(9,0,0,0)
+    return d.toISOString().slice(0,16)
+  })
+  const [note, setNote] = useState(`Work on: ${project.name}`)
+
+  const addGoogle = () => {
+    const start = new Date(date)
+    const end   = new Date(start.getTime() + 3600000)
+    addToGoogleCalendar({ title: note, start, end, description: `Project: ${project.name}` })
+    onClose()
+  }
+  const addApple = () => {
+    const start = new Date(date)
+    addToAppleReminders({ title: note, notes: `Project: ${project.name}`, dueDate: start })
+    onClose()
+  }
+
+  return (
+    <div className="overlay" onClick={onClose} style={{ alignItems:'center', justifyContent:'center' }}>
+      <div style={{ background:'var(--surface)', borderRadius:16, padding:'28px 24px', maxWidth:340, width:'90%' }}
+        onClick={e => e.stopPropagation()}>
+        <div style={{ fontWeight:700, fontSize:16, marginBottom:16 }}>Add Reminder</div>
+        <div style={{ marginBottom:12 }}>
+          <div className="calc-label" style={{ marginBottom:4 }}>Note</div>
+          <input className="form-input" value={note} onChange={e => setNote(e.target.value)} style={{ width:'100%' }} />
+        </div>
+        <div style={{ marginBottom:20 }}>
+          <div className="calc-label" style={{ marginBottom:4 }}>Date &amp; Time</div>
+          <input className="form-input" type="datetime-local" value={date} onChange={e => setDate(e.target.value)} style={{ width:'100%' }} />
+        </div>
+        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+          <button className="btn-primary" style={{ width:'100%', justifyContent:'center' }} onClick={addGoogle}>
+            <ICal size={15} color="#fff" /> Add to Google Calendar
+          </button>
+          <button className="btn-secondary" style={{ width:'100%', justifyContent:'center' }} onClick={addApple}>
+            <IBell size={15} color="var(--accent)" /> Add to Apple Reminders
+          </button>
+          <button className="btn-secondary" style={{ width:'100%', justifyContent:'center' }} onClick={onClose}>Cancel</button>
         </div>
       </div>
     </div>
