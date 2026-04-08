@@ -31,6 +31,7 @@ import Audit          from './pages/Audit.jsx'
 import Help           from './pages/Help.jsx'
 import SmokeTest      from './pages/SmokeTest.jsx'
 import Calculators    from './pages/Calculators.jsx'
+import ErrorBoundary  from './components/ErrorBoundary.jsx'
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 const AppCtx = createContext(null)
@@ -77,8 +78,6 @@ const NAV_SECTIONS = [
   {
     label: 'Tools',
     items: [
-      { id: 'audit',       label: 'Data Audit',        Icon: IGrid   },
-      { id: 'smoketest',   label: 'Smoke Test',        Icon: ICheck  },
       { id: 'settings',    label: 'Categories',         Icon: IWrench },
       { id: 'import',      label: 'Bulk Import',       Icon: ICamera },
     ],
@@ -88,8 +87,6 @@ const NAV_SECTIONS = [
 // Flat list for mobile "more" menu and badge lookups
 const ALL_NAV = NAV_SECTIONS.flatMap(s => s.items)
 
-// Legacy aliases kept for mobile tabbar
-const MAIN_NAV = NAV_SECTIONS[0].items
 
 const MOBILE_TABS = [
   { id: 'home',     label: 'Home',     Icon: IHouse  },
@@ -361,6 +358,14 @@ export default function App() {
                   </div>
                 ))}
               </div>
+              {/* Dev tools — sidebar only, not in mobile More menu */}
+              <div style={{ padding: '4px 8px 0' }}>
+                {[{ id: 'audit', label: 'Data Audit' }, { id: 'smoketest', label: 'Smoke Test' }].map(t => (
+                  <button key={t.id} className={`sidebar-item ${tab === t.id ? 'active' : ''}`} onClick={() => setTab(t.id)} style={{ fontSize: 12, opacity: 0.5 }}>
+                    <span style={{ fontSize: 11 }}>⚙</span> {t.label}
+                  </button>
+                ))}
+              </div>
               <div style={{ padding: '12px 8px', borderTop: '1px solid var(--sb-divider)' }}>
                 <button className="sidebar-footer-btn" onClick={() => setShowQR(true)}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -389,6 +394,7 @@ export default function App() {
 
             {/* ── Content ── */}
             <main className="main-area" id="main-content">
+              <ErrorBoundary>
               {projId ? (
                 <ProjectDetail />
               ) : (
@@ -415,6 +421,7 @@ export default function App() {
                   {tab === 'calculators' && <Calculators />}
                 </>
               )}
+              </ErrorBoundary>
 
               {/* Mobile tab bar */}
               <nav className="tabbar" aria-label="Mobile navigation">

@@ -19,11 +19,11 @@ export async function loadAll() {
   const [projects, steps, coats, maintenance, shopping, photos,
          woodStock, brainstorming, finishProducts, resources, shopImprovements, categories, woodLocations, projectWoodSources, species, finishes] = await Promise.all([
     safe(supabase.from('projects').select('*').order('created_at')),
-    safe(supabase.from('steps').select('*').order('sort_order')),
-    safe(supabase.from('coats').select('*').order('coat_number')),
+    safe(supabase.from('steps').select('*').limit(1000).order('sort_order')),
+    safe(supabase.from('coats').select('*').limit(500).order('coat_number')),
     safe(supabase.from('maintenance').select('*').order('name')),
     safe(supabase.from('shopping').select('*').order('created_at')),
-    safe(supabase.from('photos').select('*').order('created_at', { ascending: false })),
+    safe(supabase.from('photos').select('*').limit(500).order('created_at', { ascending: false })),
     safe(supabase.from('wood_stock').select('*').order('created_at')),
     safe(supabase.from('brainstorming').select('*').order('created_at', { ascending: false })),
     safe(supabase.from('finish_products').select('*').order('name')),
@@ -119,7 +119,7 @@ export async function clearDoneItems() {
 }
 
 // ── Photos ────────────────────────────────────────────────────────────────────
-async function compressImage(file, maxPx = 1600, quality = 0.85) {
+async function compressImage(file, maxPx = 2400, quality = 0.92) {
   // HEIC and non-image types fall through uncompressed
   if (!file.type.startsWith('image/') || file.type === 'image/gif') return file
   return new Promise((resolve) => {
@@ -297,3 +297,9 @@ export async function deleteFinish(id) {
   return q(supabase.from('finishes').delete().eq('id', id))
 }
 
+
+// Toggle project favorite
+export async function toggleFavorite(id, value) {
+  const { error } = await supabase.from('projects').update({ is_favorite: value }).eq('id', id)
+  if (error) throw error
+}

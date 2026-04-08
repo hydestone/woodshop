@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
 import { useCtx } from '../App.jsx'
 import { coatStatus, maintStatus, fmtShort, fmt, IChevR, IChevL, PhotoGrid } from '../components/Shared.jsx'
+import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
 
 const SC = { active:'var(--accent)', planning:'#7C3AED', paused:'var(--orange)', complete:'var(--green)' }
@@ -491,6 +492,28 @@ export default function Dashboard() {
 
         {!hasUrgent && <div className="empty" style={{ paddingTop: 32, paddingBottom: 0 }}><div className="empty-icon">🪵</div><div className="empty-title">All clear</div><p className="empty-sub">Nothing urgent today.</p></div>}
 
+        {(() => {
+          const recent = [...data.projects]
+            .filter(p => p.status !== 'complete')
+            .sort((a, b) => new Date(b.updated_at || b.created_at || 0) - new Date(a.updated_at || a.created_at || 0))
+            .slice(0, 3)
+          if (!recent.length) return null
+          return (<>
+            <span className="section-label" style={{ marginTop: 20 }}>Continue Working</span>
+            <div className="group">
+              {recent.map(p => (
+                <div key={p.id} className="cell" style={{ cursor:'pointer' }} onClick={() => setProjId(p.id)}>
+                  <div style={{ width:9, height:9, borderRadius:2, background:SC[p.status]||'var(--text-4)', flexShrink:0 }}/>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontWeight:600, fontSize:15 }}>{p.name}</div>
+                    <div style={{ fontSize:12, color:'var(--text-3)' }}>{[p.wood_type, p.category].filter(Boolean).join(' · ')}</div>
+                  </div>
+                  <IChevR size={14} color="var(--text-4)" />
+                </div>
+              ))}
+            </div>
+          </>)
+        })()}
         <span className="section-label" style={{ marginTop: 28 }}>Analytics</span>
         <div className="dash-grid">
           <div className="card"><div className="label-caps-sm">Projects by Year</div><ProjectsByYear projects={data.projects} photos={data.photos} onDrill={handleDrill} /></div>
@@ -521,6 +544,40 @@ export default function Dashboard() {
           </div>
         </>}
       </div>
+      <AddPhotoFAB />
     </div>
   )
 }
+
+function AddPhotoFAB() {
+  const { mutate } = useCtx()
+  const toast = useToast()
+  const [uploading, setUploading] = useState(false)
+  const inputRef = useRef()
+  const handleFile = async (e) => {
+    const file = e.target.files?.[0]; if (!file) return
+    setUploading(true)
+    try {
+      const photo = await db.uploadPhoto(null, file, '', 'progress', '')
+      mutate(d => ({ ...d, photos: [photo, ...d.photos] }))
+      toast('Photo added', 'success')
+    } catch(err) { toast(err.message, 'error') }
+    finally { setUploading(false); e.target.value = '' }
+  }
+  return (<>
+    <input ref={inputRef} type="file" accept="image/*" capture="environment"
+      style={{ display:'none' }} onChange={handleFile} />
+    <button className="fab" onClick={() => inputRef.current?.click()}
+      aria-label="Add photo"
+      style={{ bottom: 'calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 16px)' }}>
+      {uploading
+        ? <div className="spinner" style={{ width:22, height:22, borderWidth:2 }}/>
+        : <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+      }
+    </button>
+  </>)
+}
+

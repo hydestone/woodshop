@@ -1,12 +1,12 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useRef, useEffect, useMemo, memo, useCallback } from 'react'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
 import { addToGoogleCalendar, addToAppleReminders } from '../supabase.js'
 import {
   Sheet, FormCell, BulkAddSheet, ConfirmSheet, DropZone, PhotoGrid, TagInput, FilterSelect,
-  STATUS, coatStatus, fmtShort, localDt,
-  IPlus, ITrash, ICircle, ICheck, IChevR, IChevL, IEdit, ICal, ICamera, IBell, IGrid,
+  STATUS, coatStatus, fmtShort, localDt, useLongPress,
+  IPlus, ITrash, ICircle, ICheck, IChevR, IChevL, IEdit, ICal, ICamera, IBell, IGrid, IStar,
 } from '../components/Shared.jsx'
 
 const STATUS_ORDER = ['active', 'planning', 'paused', 'complete']
@@ -19,7 +19,23 @@ export default function Projects() {
   const [showAdd, setShowAdd]   = useState(false)
   const [viewMode, setViewMode] = useState('cards') // 'cards' | 'table'
   const [filter, setFilter]         = useState('all')
+  const [showFavOnly, setShowFavOnly] = useState(false)
   const [statusFilter, setStatusFilter] = useState('all')
+  const scrollRef  = useRef(null)
+  const savedScroll = useRef(0)
+
+  // Save scroll position when navigating into a project
+  const openProject = useCallback((id) => {
+    if (scrollRef.current) savedScroll.current = scrollRef.current.scrollTop
+    setProjId(id)
+  }, [setProjId])
+
+  // Restore scroll position when returning from a project
+  useEffect(() => {
+    if (!projId && scrollRef.current && savedScroll.current > 0) {
+      scrollRef.current.scrollTop = savedScroll.current
+    }
+  }, [projId])
 
   const handleAdd = async (fields, woodStockId) => {
     try {
@@ -36,7 +52,7 @@ export default function Projects() {
           ? [...d.projectWoodSources, pws]
           : d.projectWoodSources
       }))
-      toast('Project added', 'success')
+      toast(`${fields.name || 'Project'} added`, 'success')
       setShowAdd(false)
     } catch (e) { toast(e.message, 'error') }
   }
@@ -44,9 +60,10 @@ export default function Projects() {
   const categories = data.categories || []
   const filtered = useMemo(() =>
     data.projects
+      .filter(p => !showFavOnly || p.is_favorite)
       .filter(p => filter === 'all' || p.category === filter)
       .filter(p => statusFilter === 'all' || p.status === statusFilter),
-    [data.projects, filter, statusFilter]
+    [data.projects, filter, statusFilter, showFavOnly]
   )
 
   const groups = useMemo(() =>
@@ -78,12 +95,39 @@ export default function Projects() {
     return m
   }, [data.coats])
 
+  // Stable card wrapper avoids re-creating inline arrow functions in map
+  const MemoCard = useCallback(({ project, openProject: op, onFavorite, onDelete, ...rest }) =>
+    <ProjectCard project={project} onOpen={() => op(project.id)} onFavorite={onFavorite} onDelete={onDelete} {...rest} />
+  , [])
+
+  const handleFavorite = useCallback(async (id, value) => {
+    mutate(d => ({ ...d, projects: d.projects.map(p => p.id === id ? { ...p, is_favorite: value } : p) }))
+    await db.toggleFavorite(id, value).catch(e => toast(e.message, 'error'))
+    toast(value ? '⭐ Added to favorites' : 'Removed from favorites', 'success')
+  }, [mutate, toast])
+
+  const handleDelete = useCallback(async (id) => {
+    const p = data.projects.find(pr => pr.id === id)
+    mutate(d => ({ ...d, projects: d.projects.filter(pr => pr.id !== id) }))
+    await db.deleteProject(id).catch(e => toast(e.message, 'error'))
+    toast(`${p?.name || 'Project'} deleted`, 'success')
+  }, [mutate, data.projects, toast])
+
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
-      <div className="scroll-page" style={{ paddingBottom: 80 }}>
+      <div ref={scrollRef} className="scroll-page" style={{ paddingBottom: 80 }}>
         <div className="page-header">
           <div className="page-header-row">
             <h1 className="page-title">Projects</h1>
+            <button
+              onClick={() => setShowFavOnly(f => !f)}
+              className={showFavOnly ? 'btn-primary' : 'btn-secondary'}
+              style={{ padding:'5px 10px', fontSize:13, display:'flex', alignItems:'center', gap:5 }}
+              title={showFavOnly ? 'Show all projects' : 'Show favorites only'}
+            >
+              <IStar size={14} fill={showFavOnly ? '#fff' : 'none'} color={showFavOnly ? '#fff' : 'currentColor'} />
+              {showFavOnly ? 'Favorites' : '⭐'}
+            </button>
             {/* Table view toggle — desktop only */}
             <button
               className={viewMode === 'table' ? 'btn-primary' : 'btn-secondary'}
@@ -116,7 +160,7 @@ export default function Projects() {
               {groups.map(({ status, items }) => (
                 <div key={status}>
                   <span className="section-label">{STATUS_LABEL[status]}</span>
-                  {items.map(p => <ProjectCard key={p.id} project={p} onOpen={() => setProjId(p.id)} data={data} stepCounts={stepCountMap[p.id]} urgentCoats={urgentCoatMap[p.id] || 0} />)}
+                  {items.map(p => <MemoCard key={p.id} project={p} openProject={openProject} onFavorite={handleFavorite} onDelete={handleDelete} data={data} stepCounts={stepCountMap[p.id]} urgentCoats={urgentCoatMap[p.id] || 0} />)}
                 </div>
               ))}
               {!filtered.length && (
@@ -247,14 +291,25 @@ function ProjectTable({ projects, categories, statusFilter, setStatusFilter }) {
 }
 
 // ─── Project card ─────────────────────────────────────────────────────────────
-function ProjectCard({ project, onOpen, data, stepCounts, urgentCoats = 0 }) {
+const ProjectCard = memo(function ProjectCard({ project, onOpen, data, stepCounts, urgentCoats = 0, onFavorite, onDelete }) {
   const total = stepCounts?.total || 0
   const done  = stepCounts?.done  || 0
   const rc    = urgentCoats
   const ss    = STATUS[project.status] || STATUS.planning
+  const [showDelete, setShowDelete] = useState(false)
+  const longPress = useLongPress(() => setShowDelete(true))
 
   return (
-    <button className="proj-card" onClick={onOpen}>
+    <>
+    {showDelete && (
+      <ConfirmSheet
+        message={`Delete "${project.name}"? This cannot be undone.`}
+        confirmLabel="Delete"
+        onConfirm={() => { setShowDelete(false); onDelete?.(project.id) }}
+        onClose={() => setShowDelete(false)}
+      />
+    )}
+    <button className="proj-card" onClick={onOpen} {...longPress}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: total ? 10 : 0 }}>
         <div style={{ flex: 1, paddingRight: 12, minWidth: 0 }}>
           <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 2 }}>{project.name}</div>
@@ -268,6 +323,15 @@ function ProjectCard({ project, onOpen, data, stepCounts, urgentCoats = 0 }) {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
           {rc > 0 && <span className="badge-pill" style={{ background: 'var(--orange-dim)', color: 'var(--orange)' }}>coat ready</span>}
+          {onFavorite && (
+            <button
+              onClick={e => { e.stopPropagation(); onFavorite(project.id, !project.is_favorite) }}
+              style={{ background:'none', border:'none', padding:2, cursor:'pointer', lineHeight:1 }}
+              aria-label={project.is_favorite ? 'Remove from favorites' : 'Add to favorites'}
+            >
+              <IStar size={16} fill={project.is_favorite ? 'var(--yellow, #F59E0B)' : 'none'} color={project.is_favorite ? 'var(--yellow, #F59E0B)' : 'var(--text-4)'} />
+            </button>
+          )}
         </div>
       </div>
       {total > 0 && (
@@ -282,8 +346,9 @@ function ProjectCard({ project, onOpen, data, stepCounts, urgentCoats = 0 }) {
         </>
       )}
     </button>
+    </>
   )
-}
+})
 
 // ─── Project detail ───────────────────────────────────────────────────────────
 export function ProjectDetail() {
@@ -293,6 +358,7 @@ export function ProjectDetail() {
   const [editing, setEditing]   = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [showRon, setShowRon]   = useState(false)
+  const [showQRLabel, setShowQRLabel] = useState(false)
 
   const project = data.projects.find(p => p.id === projId)
   if (!project) return null
@@ -538,6 +604,7 @@ export function ProjectDetail() {
       {editing    && <ProjectSheet project={project} categories={categories} onSave={handleUpdate} onClose={() => setEditing(false)} mutate={mutate} />}
       {confirming && <ConfirmSheet message={`Delete "${project.name}"? All steps, coats, and photos will be removed. This cannot be undone.`} onConfirm={handleDelete} onClose={() => setConfirming(false)} />}
       {showRon    && <RonSwansonModal onClose={() => setShowRon(false)} />}
+      {showQRLabel && <QRLabelSheet project={project} onClose={() => setShowQRLabel(false)} />}
 
       {/* Add steps sheet */}
       {sub === 'steps-add' && (
@@ -917,8 +984,23 @@ function PhotoTimeline({ projId }) {
     return acc
   }, {})
 
+  // Before/After compare — find photos tagged 'before' and 'after'
+  const beforePhoto = photos.find(p => p.tags?.split(',').map(t=>t.trim()).includes('before'))
+  const afterPhoto  = photos.find(p => p.tags?.split(',').map(t=>t.trim()).includes('after'))
+
   return (
     <div>
+      {beforePhoto && afterPhoto && (
+        <div style={{ padding: '0 20px 16px' }}>
+          <div className="label-caps" style={{ marginBottom: 8 }}>Before / After</div>
+          <BeforeAfterCompare
+            beforeUrl={beforePhoto.url}
+            afterUrl={afterPhoto.url}
+            label={data.projects.find(p => p.id === projId)?.name}
+          />
+        </div>
+      )}
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <div className="label-caps">
           Photos{photos.length > 0 ? ` · ${photos.length}` : ''}
@@ -1044,9 +1126,27 @@ function PhotoPane({ projId, type, showAll, inline }) {
     </div>
   )
 
+  // Stable card wrapper avoids re-creating inline arrow functions in map
+  const MemoCard = useCallback(({ project, openProject: op, onFavorite, onDelete, ...rest }) =>
+    <ProjectCard project={project} onOpen={() => op(project.id)} onFavorite={onFavorite} onDelete={onDelete} {...rest} />
+  , [])
+
+  const handleFavorite = useCallback(async (id, value) => {
+    mutate(d => ({ ...d, projects: d.projects.map(p => p.id === id ? { ...p, is_favorite: value } : p) }))
+    await db.toggleFavorite(id, value).catch(e => toast(e.message, 'error'))
+    toast(value ? '⭐ Added to favorites' : 'Removed from favorites', 'success')
+  }, [mutate, toast])
+
+  const handleDelete = useCallback(async (id) => {
+    const p = data.projects.find(pr => pr.id === id)
+    mutate(d => ({ ...d, projects: d.projects.filter(pr => pr.id !== id) }))
+    await db.deleteProject(id).catch(e => toast(e.message, 'error'))
+    toast(`${p?.name || 'Project'} deleted`, 'success')
+  }, [mutate, data.projects, toast])
+
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
-      <div className="scroll-page" style={{ paddingBottom: 80 }}>
+      <div ref={scrollRef} className="scroll-page" style={{ paddingBottom: 80 }}>
         <DropZone onFiles={handleFiles} uploading={uploading} />
         {photos.length > 0
           ? <PhotoGrid photos={photos} onEdit={edit} />
@@ -1260,6 +1360,42 @@ function RonSwansonModal({ onClose }) {
           <button onClick={onClose} style={{ background: '#1D4ED8', color: 'var(--white)', border: 'none', borderRadius: 10, padding: '11px 32px', fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
             Got it
           </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── QR Label Sheet ────────────────────────────────────────────────────────────
+function QRLabelSheet({ project, onClose }) {
+  const url = window.location.origin
+  const handlePrint = () => {
+    const label = [project.wood_type, project.category, project.year_completed].filter(Boolean).join(' · ')
+    const win = window.open('', '_blank')
+    win.document.write('<!DOCTYPE html><html><head><title>Label: ' + project.name + '</title>' +
+      '<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><' + '/script>' +
+      '<style>body{font-family:-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#fff}.label{border:2px solid #0F1E38;border-radius:12px;padding:20px 24px;max-width:280px;text-align:center}.name{font-size:18px;font-weight:800;color:#0F1E38;margin-bottom:4px}.meta{font-size:12px;color:#64748B;margin-bottom:16px}#qr{display:flex;justify-content:center;margin-bottom:12px}.brand{font-size:10px;font-weight:700;letter-spacing:2px;color:#94A3B8;text-transform:uppercase}@media print{body{min-height:auto}}</style></head>' +
+      '<body><div class="label"><div class="name">' + project.name + '</div>' +
+      '<div class="meta">' + label + '</div>' +
+      '<div id="qr"></div><div class="brand">JDH Woodworks</div></div>' +
+      '<script>new QRCode(document.getElementById("qr"),{text:"' + url + '",width:160,height:160,colorDark:"#0F1E38",colorLight:"#ffffff"});setTimeout(function(){window.print()},800)<' + '/script></body></html>')
+    win.document.close()
+  }
+  return (
+    <div className="overlay" onClick={onClose} style={{ alignItems:'center', justifyContent:'center' }}>
+      <div style={{ background:'var(--surface)', borderRadius:16, padding:'28px 24px', maxWidth:320, width:'90%', textAlign:'center' }}
+        onClick={e => e.stopPropagation()}>
+        <div style={{ fontSize:32, marginBottom:8 }}>🏷️</div>
+        <div style={{ fontWeight:700, fontSize:16, marginBottom:4 }}>{project.name}</div>
+        <div style={{ fontSize:13, color:'var(--text-3)', marginBottom:20 }}>
+          {[project.wood_type, project.category].filter(Boolean).join(' · ')}
+        </div>
+        <p style={{ fontSize:13, color:'var(--text-2)', marginBottom:20, lineHeight:1.5 }}>
+          Prints a compact label with a QR code linking back to your workshop.
+        </p>
+        <div style={{ display:'flex', gap:10 }}>
+          <button className="btn-secondary" style={{ flex:1 }} onClick={onClose}>Cancel</button>
+          <button className="btn-primary" style={{ flex:1 }} onClick={handlePrint}>Print Label</button>
         </div>
       </div>
     </div>

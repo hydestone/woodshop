@@ -1,3 +1,4 @@
+import React from 'react'
 import { useState, useRef, useEffect, useCallback } from 'react'
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
@@ -177,7 +178,7 @@ export function ConfirmSheet({ message, confirmLabel = 'Delete', onConfirm, onCl
 }
 
 // ─── TagInput ─────────────────────────────────────────────────────────────────
-const PRESETS = ['finished', 'portfolio', 'inspiration', 'progress', 'before', 'after']
+const PRESETS = ['finished', 'portfolio', 'inspiration', 'progress', 'before', 'after', 'refinished']
 
 export function TagInput({ tags, onChange }) {
   const [input, setInput] = useState('')
@@ -584,6 +585,72 @@ export function FilterSelect({ value, onChange, options, allLabel = 'All', label
         })}
       </select>
       <span className="filter-select-chevron" aria-hidden="true">▾</span>
+    </div>
+  )
+}
+
+
+// ─── Long-press hook (600ms → callback) ──────────────────────────────────────
+export function useLongPress(onLongPress, ms = 600) {
+  const timerRef = React.useRef(null)
+  const start = React.useCallback((e) => {
+    // prevent context menu on long press
+    e.preventDefault()
+    timerRef.current = setTimeout(() => onLongPress(), ms)
+  }, [onLongPress, ms])
+  const cancel = React.useCallback(() => {
+    clearTimeout(timerRef.current)
+  }, [])
+  return {
+    onPointerDown:   start,
+    onPointerUp:     cancel,
+    onPointerLeave:  cancel,
+    onPointerCancel: cancel,
+  }
+}
+
+
+// ─── Before / After swipe comparison ─────────────────────────────────────────
+export function BeforeAfterCompare({ beforeUrl, afterUrl, label }) {
+  const [split, setSplit] = React.useState(50)
+  const containerRef = React.useRef()
+
+  const move = React.useCallback((clientX) => {
+    const rect = containerRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const pct = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100))
+    setSplit(pct)
+  }, [])
+
+  const onMouseMove = e => { if (e.buttons === 1) move(e.clientX) }
+  const onTouchMove = e => {
+    e.preventDefault()
+    move(e.touches[0].clientX)
+  }
+
+  return (
+    <div ref={containerRef}
+      style={{ position:'relative', width:'100%', aspectRatio:'4/3', overflow:'hidden', borderRadius:'var(--r-md)', userSelect:'none', touchAction:'none', cursor:'ew-resize' }}
+      onMouseMove={onMouseMove}
+      onTouchMove={onTouchMove}
+      onTouchStart={e => move(e.touches[0].clientX)}
+    >
+      {/* After (full width, base layer) */}
+      <img src={afterUrl} alt="After" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', pointerEvents:'none' }} />
+      {/* Before (clipped to split%) */}
+      <div style={{ position:'absolute', inset:0, overflow:'hidden', width: split + '%' }}>
+        <img src={beforeUrl} alt="Before" style={{ position:'absolute', inset:0, width: containerRef.current?.getBoundingClientRect().width + 'px' || '100%', height:'100%', objectFit:'cover', maxWidth:'none', pointerEvents:'none' }} />
+      </div>
+      {/* Divider */}
+      <div style={{ position:'absolute', top:0, bottom:0, left: split + '%', transform:'translateX(-50%)', width:3, background:'#fff', boxShadow:'0 0 6px rgba(0,0,0,.5)', pointerEvents:'none' }}>
+        <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:32, height:32, borderRadius:'50%', background:'#fff', boxShadow:'0 2px 8px rgba(0,0,0,.3)', display:'flex', alignItems:'center', justifyContent:'center', gap:2 }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l-6-6 6-6"/><path d="M15 6l6 6-6 6"/></svg>
+        </div>
+      </div>
+      {/* Labels */}
+      <span style={{ position:'absolute', top:8, left:8, background:'rgba(0,0,0,.6)', color:'#fff', fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:99 }}>BEFORE</span>
+      <span style={{ position:'absolute', top:8, right:8, background:'rgba(0,0,0,.6)', color:'#fff', fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:99 }}>AFTER</span>
+      {label && <div style={{ position:'absolute', bottom:8, left:0, right:0, textAlign:'center', color:'#fff', fontSize:12, fontWeight:600, textShadow:'0 1px 4px rgba(0,0,0,.6)' }}>{label}</div>}
     </div>
   )
 }
