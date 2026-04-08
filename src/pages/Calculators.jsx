@@ -293,7 +293,7 @@ function FractionCalc() {
   const DENS = [2, 4, 8, 16, 32, 64]
 
   return (
-    <div style={{ padding: '0 16px 40px' }}>
+    <div style={{ padding: '0 16px 40px', maxWidth: 480, margin: '0 auto' }}>
       {/* Display */}
       <div style={{ background: 'var(--navy)', borderRadius: 'var(--r-md)', padding: '14px 18px', marginBottom: 12, minHeight: 96 }}>
         {/* Equation line */}
