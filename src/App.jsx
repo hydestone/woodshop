@@ -310,8 +310,6 @@ export default function App() {
       <ToastProvider>
         <div className="app-wrapper">
 
-          {/* Status bar spacer — fills the iOS status bar area on PWA */}
-          <div className="status-bar-spacer" aria-hidden="true" />
           {/* ── Top bar ── */}
           <header className="top-bar" role="banner">
             <div className="top-bar-brand">
