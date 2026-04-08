@@ -4,7 +4,7 @@ import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
 import { addToGoogleCalendar, addToAppleReminders } from '../supabase.js'
 import {
-  Sheet, FormCell, BulkAddSheet, ConfirmSheet, DropZone, PhotoGrid, TagInput,
+  Sheet, FormCell, BulkAddSheet, ConfirmSheet, DropZone, PhotoGrid, TagInput, FilterSelect,
   STATUS, coatStatus, fmtShort, localDt,
   IPlus, ITrash, ICircle, ICheck, IChevR, IChevL, IEdit, ICal, ICamera, IBell, IGrid,
 } from '../components/Shared.jsx'
@@ -57,6 +57,26 @@ export default function Projects() {
     }, []),
     [filtered]
   )
+
+  // Pre-computed lookup maps — O(1) per card instead of O(n) inline filter
+  const stepCountMap = useMemo(() => {
+    const m = {}
+    data.steps.forEach(s => {
+      if (!m[s.project_id]) m[s.project_id] = { total: 0, done: 0 }
+      m[s.project_id].total++
+      if (s.completed) m[s.project_id].done++
+    })
+    return m
+  }, [data.steps])
+
+  const urgentCoatMap = useMemo(() => {
+    const m = {}
+    data.coats.forEach(c => {
+      if (c.project_id && c.applied_at && coatStatus(c).urgent)
+        m[c.project_id] = (m[c.project_id] || 0) + 1
+    })
+    return m
+  }, [data.coats])
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
@@ -143,13 +163,6 @@ function ProjectTable({ projects, categories, statusFilter, setStatusFilter }) {
     { id: 'paused',   label: 'Paused' },
     { id: 'complete', label: 'Complete' },
   ]
-
-  const chipStyle = (id) => ({
-    padding: '4px 12px', borderRadius: 99, border: 'none', cursor: 'pointer', flexShrink: 0,
-    fontSize: 13, fontWeight: 500, fontFamily: 'inherit',
-    background: statusFilter === id ? '#0F1E38' : 'var(--fill)',
-    color: statusFilter === id ? '#fff' : 'var(--text-2)',
-  })
 
   return (
     <div>

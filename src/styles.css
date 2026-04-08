@@ -1793,23 +1793,10 @@ body {
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 
 
-/* ─── Top bar two-row layout ────────────────────────────────────────────────── */
-.top-bar-main-row {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  gap: 10px;
+/* ─── Top bar search wrapper ────────────────────────────────────────────────── */
+.top-bar-search-wrap {
+  flex: 1;
 }
-.top-bar-search-row {
-  width: 100%;
-}
-.top-bar-search-row .search-wrap { width: 100%; }
-.top-bar-search-row .search-input-wrap {
-  width: 100%;
-  height: 38px;
-}
-.top-bar-search-row .search-input-wrap.focused { width: 100%; }
-.top-bar-search-row .search-results { width: 100%; right: 0; left: 0; }
 
 /* ─── Filter select (consistent across all list pages) ──────────────────────── */
 .filter-bar {
@@ -1990,9 +1977,9 @@ body {
 }
 
 @media (min-width: 768px) {
-  .top-bar { flex-direction: row; }
-  .top-bar-search-row { display: none; }
-  .top-bar-desktop-search { display: block; }
+  .top-bar { flex-wrap: nowrap; }
+  .top-bar-search-wrap { flex: 1; order: 0; width: auto; }
+  .theme-toggle { margin-left: 0; order: 0; }
 }
 
 /* ─── Calculator tab dropdown on mobile ─────────────────────────────────────── */
@@ -2010,14 +1997,28 @@ body {
   .sidebar { display: none; }
   .scroll-page { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 4px); }
   .toast { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 10px); }
-  /* Mobile top bar: search moves to second row, safe area at top */
-  .top-bar { flex-direction: column; gap: 8px; padding-top: max(env(safe-area-inset-top, 0px), 47px); padding-bottom: 10px; }
-  .top-bar-brand { justify-content: flex-start; flex: 1; }
+  /* Mobile top bar: flex-wrap pushes search to second row */
+  .top-bar {
+    flex-wrap: wrap;
+    padding-top: max(env(safe-area-inset-top, 0px), 47px);
+    padding-bottom: 10px;
+    gap: 8px 10px;
+  }
+  .top-bar-brand { flex: 1; min-width: 0; }
   .top-bar-title { font-size: 28px; }
   .top-bar-logo { height: 40px; width: 40px; }
-  /* Hide search from main row on mobile — shown in search row instead */
-  .top-bar-desktop-search { display: none; }
-  .top-bar-search-row { display: block; }
+  /* Search wraps to full-width second row on mobile */
+  .top-bar-search-wrap {
+    order: 3;
+    flex-basis: 100%;
+    flex: none;
+    width: 100%;
+  }
+  .top-bar-search-wrap .search-input-wrap { width: 100%; }
+  .top-bar-search-wrap .search-input-wrap.focused { width: 100%; }
+  .top-bar-search-wrap .search-results { width: 100%; right: 0; left: 0; }
+  /* Theme toggle stays on first row, right side */
+  .theme-toggle { order: 2; margin-left: auto; }
 }
 
 /* ─── Keyframes ──────────────────────────────────────────────────────────── */
