@@ -256,6 +256,13 @@ export default function App() {
     setTabRaw(id)
   }, [])
 
+  // navigate(tab, projId) — sets tab AND project without the null reset
+  const navigate = useCallback((id, pid = null) => {
+    setProjId(pid)
+    setShowMore(false)
+    setTabRaw(id)
+  }, [])
+
   // ── Auth gate ─────────────────────────────────────────────────────────────
   if (!authChecked) return (
     <div className="center-screen">
@@ -299,7 +306,7 @@ export default function App() {
     return 0
   }
 
-  const ctx = { data, mutate, reload, tab, setTab, projId, setProjId }
+  const ctx = { data, mutate, reload, tab, setTab, navigate, projId, setProjId }
 
   return (
     <AppCtx.Provider value={ctx}>

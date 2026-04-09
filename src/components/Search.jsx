@@ -25,7 +25,7 @@ function useDebounce(value, delay) {
 }
 
 export default function GlobalSearch() {
-  const { data, setTab, setProjId } = useCtx()
+  const { data, setTab, navigate } = useCtx()
   const [query, setQuery]           = useState('')
   const [open, setOpen]             = useState(false)
   const [cursor, setCursor]         = useState(-1)
@@ -54,12 +54,12 @@ export default function GlobalSearch() {
 
     data.projects.forEach(p => {
       if (match(p.name, p.wood_type, p.description, p.dimensions_final, p.built_with, p.finish_used, p.category))
-        hits.push({ type: 'Project', title: p.name, sub: `${p.wood_type || ''} · ${p.status}`.replace(/^ · /, ''), action: () => { setProjId(p.id); setTab('projects') } })
+        hits.push({ type: 'Project', title: p.name, sub: `${p.wood_type || ''} · ${p.status}`.replace(/^ · /, ''), action: () => navigate('projects', p.id) })
     })
     data.steps.forEach(s => {
       if (match(s.title, s.note)) {
         const proj = data.projects.find(p => p.id === s.project_id)
-        hits.push({ type: 'Step', title: s.title, sub: proj?.name || '', action: () => { setProjId(s.project_id); setTab('projects') } })
+        hits.push({ type: 'Step', title: s.title, sub: proj?.name || '', action: () => navigate('projects', s.project_id) })
       }
     })
     data.shopping.forEach(s => {
@@ -96,7 +96,7 @@ export default function GlobalSearch() {
     })
 
     return hits.slice(0, 20)
-  }, [debounced, data, setTab, setProjId])
+  }, [debounced, data, setTab, navigate])
 
   useEffect(() => { setCursor(-1) }, [results])
 
@@ -105,7 +105,7 @@ export default function GlobalSearch() {
     setQuery('')
     setOpen(false)
     inputRef.current?.blur()
-  }, [setTab, setProjId])
+  }, [setTab, navigate])
 
   const onKeyDown = e => {
     if (!open || !results.length) return
