@@ -641,6 +641,7 @@ body {
   box-shadow: var(--shadow-sm);
   cursor: pointer;
   text-align: left;
+  color: var(--text);
   transition: box-shadow 150ms ease, transform 150ms ease;
 }
 .proj-card:hover {

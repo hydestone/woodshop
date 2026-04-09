@@ -105,7 +105,7 @@ export default function GlobalSearch() {
     setQuery('')
     setOpen(false)
     inputRef.current?.blur()
-  }, [])
+  }, [setTab, setProjId])
 
   const onKeyDown = e => {
     if (!open || !results.length) return
@@ -152,6 +152,8 @@ export default function GlobalSearch() {
                 role="option"
                 aria-selected={i === cursor}
                 onMouseDown={e => { e.preventDefault(); select(hit) }}
+                onTouchEnd={e => { e.preventDefault(); select(hit) }}
+                onClick={() => select(hit)}
                 onMouseEnter={() => setCursor(i)}
               >
                 <span className="search-result-type" style={{ color: TYPE_COLOR[hit.type] || 'var(--text-4)' }}>

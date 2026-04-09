@@ -20,6 +20,7 @@ export default function Projects() {
   const [viewMode, setViewMode] = useState('cards') // 'cards' | 'table'
   const [filter, setFilter]         = useState('all')
   const [showFavOnly, setShowFavOnly] = useState(false)
+  const [sortBy, setSortBy]           = useState('status')
   const [statusFilter, setStatusFilter] = useState('all')
   const scrollRef  = useRef(null)
   const savedScroll = useRef(0)
@@ -66,13 +67,21 @@ export default function Projects() {
     [data.projects, filter, statusFilter, showFavOnly]
   )
 
+  const sorted = useMemo(() => {
+    const s = [...filtered]
+    if (sortBy === 'name')     s.sort((a, b) => a.name.localeCompare(b.name))
+    if (sortBy === 'category') s.sort((a, b) => (a.category||'').localeCompare(b.category||''))
+    if (sortBy === 'year')     s.sort((a, b) => (b.year_completed||0) - (a.year_completed||0))
+    return s
+  }, [filtered, sortBy])
+
   const groups = useMemo(() =>
     STATUS_ORDER.reduce((acc, s) => {
-      const items = filtered.filter(p => p.status === s)
+      const items = sorted.filter(p => p.status === s)
       if (items.length) acc.push({ status: s, items })
       return acc
     }, []),
-    [filtered]
+    [sorted]
   )
 
   // Pre-computed lookup maps — O(1) per card instead of O(n) inline filter
@@ -119,8 +128,21 @@ export default function Projects() {
         <div className="page-header">
           <div className="page-header-row">
             <h1 className="page-title">Projects</h1>
-            <button
-              onClick={() => setShowFavOnly(f => !f)}
+            <div style={{ display:'flex', gap:6, alignItems:'center' }}>
+              <div className="filter-select-wrap">
+                <select className={`filter-select${sortBy !== 'status' ? ' active' : ''}`}
+                  value={sortBy} onChange={e => setSortBy(e.target.value)}
+                  title="Sort projects"
+                >
+                  <option value="status">By Status</option>
+                  <option value="name">By Name</option>
+                  <option value="category">By Category</option>
+                  <option value="year">By Year</option>
+                </select>
+                <span className="filter-select-chevron" aria-hidden="true">▾</span>
+              </div>
+              <button
+                onClick={() => setShowFavOnly(f => !f)}
               className={showFavOnly ? 'btn-primary' : 'btn-secondary'}
               style={{ padding:'5px 10px', fontSize:13, display:'flex', alignItems:'center', gap:5 }}
               title={showFavOnly ? 'Show all projects' : 'Show favorites only'}
@@ -128,6 +150,7 @@ export default function Projects() {
               <IStar size={14} fill={showFavOnly ? '#fff' : 'none'} color={showFavOnly ? '#fff' : 'currentColor'} />
               {showFavOnly ? 'Favorites' : '⭐'}
             </button>
+            </div>
             {/* Table view toggle — desktop only */}
             <button
               className={viewMode === 'table' ? 'btn-primary' : 'btn-secondary'}
@@ -1098,10 +1121,11 @@ function PhotoPane({ projId, type, showAll, inline }) {
 
   if (inline) return (
     <div style={{ position: 'relative' }}>
+      <DropZone onFiles={handleFiles} uploading={uploading} />
       <PhotoGrid photos={photos} onEdit={edit} />
       {photos.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-4)', fontSize: 13 }}>
-          No photos yet — tap + to add
+        <div style={{ textAlign: 'center', padding: '8px 0 24px', color: 'var(--text-4)', fontSize: 13 }}>
+          No photos yet — drag here or tap + to add
         </div>
       )}
       <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => handleFiles(e.target.files)} />
