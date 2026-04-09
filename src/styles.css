@@ -1476,7 +1476,7 @@ body {
   border-radius: var(--r-md);
   box-shadow: var(--shadow-xl);
   overflow-y: auto;
-  z-index: 200;
+  z-index: 1000;
   animation: fadeIn 150ms ease;
 }
 .search-results::-webkit-scrollbar { display: none; }
