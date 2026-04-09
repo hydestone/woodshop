@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo, memo, useCallback } from 'react'
+import React, { useState, useRef, useEffect, useMemo, memo, useCallback } from 'react'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
@@ -128,42 +128,11 @@ export default function Projects() {
         <div className="page-header">
           <div className="page-header-row">
             <h1 className="page-title">Projects</h1>
-            <div style={{ display:'flex', gap:6, alignItems:'center' }}>
-              <div className="filter-select-wrap">
-                <select className={`filter-select${sortBy !== 'status' ? ' active' : ''}`}
-                  value={sortBy} onChange={e => setSortBy(e.target.value)}
-                  title="Sort projects"
-                >
-                  <option value="status">By Status</option>
-                  <option value="name">By Name</option>
-                  <option value="category">By Category</option>
-                  <option value="year">By Year</option>
-                </select>
-                <span className="filter-select-chevron" aria-hidden="true">▾</span>
-              </div>
-              <button
-                onClick={() => setShowFavOnly(f => !f)}
-              className={showFavOnly ? 'btn-primary' : 'btn-secondary'}
-              style={{ padding:'5px 10px', fontSize:13, display:'flex', alignItems:'center', gap:5 }}
-              title={showFavOnly ? 'Show all projects' : 'Show favorites only'}
-            >
-              <IStar size={14} fill={showFavOnly ? '#fff' : 'none'} color={showFavOnly ? '#fff' : 'currentColor'} />
-              {showFavOnly ? 'Favorites' : '⭐'}
-            </button>
-            </div>
-            {/* Table view toggle — desktop only */}
-            <button
-              className={viewMode === 'table' ? 'btn-primary' : 'btn-secondary'}
-              style={{ padding: '5px 12px', fontSize: 13, display: 'none' }}
-              id="table-toggle-btn"
-              onClick={() => setViewMode(v => v === 'cards' ? 'table' : 'cards')}
-            >
-              {viewMode === 'table' ? 'Card view' : 'Table view'}
-            </button>
           </div>
-          {/* Category filter */}
-          {categories.length > 0 && (
-            <div style={{ marginTop: 10 }}>
+          {/* Filter + sort + favorites + table — single row */}
+          <div style={{ display:'flex', gap:6, alignItems:'center', marginTop:10, flexWrap:'wrap' }}>
+            {/* Category */}
+            {categories.length > 0 && (
               <FilterSelect
                 value={filter}
                 onChange={setFilter}
@@ -171,8 +140,39 @@ export default function Projects() {
                 allLabel="All Categories"
                 label="Filter by category"
               />
+            )}
+            {/* Sort */}
+            <div className="filter-select-wrap">
+              <select className={`filter-select${sortBy !== 'status' ? ' active' : ''}`}
+                value={sortBy} onChange={e => setSortBy(e.target.value)}
+              >
+                <option value="status">By Status</option>
+                <option value="name">By Name</option>
+                <option value="category">By Category</option>
+                <option value="year">By Year</option>
+              </select>
+              <span className="filter-select-chevron" aria-hidden="true">▾</span>
             </div>
-          )}
+            {/* Favorites toggle */}
+            <button
+              onClick={() => setShowFavOnly(f => !f)}
+              className={showFavOnly ? 'btn-primary' : 'btn-secondary'}
+              style={{ padding:'5px 10px', fontSize:13, display:'flex', alignItems:'center', gap:5 }}
+              title={showFavOnly ? 'Show all' : 'Favorites only'}
+            >
+              <IStar size={14} fill={showFavOnly ? '#fff' : 'none'} color={showFavOnly ? '#fff' : '#F59E0B'} />
+              {showFavOnly ? 'Favorites' : 'Favorites'}
+            </button>
+            {/* Table view — desktop only */}
+            <button
+              className={viewMode === 'table' ? 'btn-primary' : 'btn-secondary'}
+              style={{ padding:'5px 12px', fontSize:13, marginLeft:'auto' }}
+              id="table-toggle-btn"
+              onClick={() => setViewMode(v => v === 'cards' ? 'table' : 'cards')}
+            >
+              {viewMode === 'table' ? 'Card view' : 'Table view'}
+            </button>
+          </div>
         </div>
 
         {/* Desktop table view */}
@@ -322,7 +322,22 @@ const ProjectCard = memo(function ProjectCard({ project, onOpen, data, stepCount
   const rc    = urgentCoats
   const ss    = STATUS[project.status] || STATUS.planning
   const [showDelete, setShowDelete] = useState(false)
+  const [starBurst, setStarBurst]   = useState(false)
   const longPress = useLongPress(() => setShowDelete(true))
+
+  // Thumbnail: prefer 'finished' tagged photo, fall back to any
+  const thumb = useMemo(() => {
+    const photos = data.photos.filter(p => p.project_id === project.id)
+    const fin = photos.find(p => p.tags?.split(',').map(t => t.trim()).includes('finished'))
+    return (fin || photos[0])?.url || null
+  }, [data.photos, project.id])
+
+  const handleFavoriteClick = (e) => {
+    e.stopPropagation()
+    const newVal = !project.is_favorite
+    if (newVal) setStarBurst(true)
+    onFavorite?.(project.id, newVal)
+  }
 
   return (
     <>
@@ -346,17 +361,37 @@ const ProjectCard = memo(function ProjectCard({ project, onOpen, data, stepCount
           </div>
           {project.description && <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>{project.description}</div>}
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
-          {rc > 0 && <span className="badge-pill" style={{ background: 'var(--orange-dim)', color: 'var(--orange)' }}>coat ready</span>}
-          {onFavorite && (
-            <button
-              onClick={e => { e.stopPropagation(); onFavorite(project.id, !project.is_favorite) }}
-              style={{ background:'none', border:'none', padding:2, cursor:'pointer', lineHeight:1 }}
-              aria-label={project.is_favorite ? 'Remove from favorites' : 'Add to favorites'}
-            >
-              <IStar size={16} fill={project.is_favorite ? 'var(--yellow, #F59E0B)' : 'none'} color={project.is_favorite ? 'var(--yellow, #F59E0B)' : 'var(--text-4)'} />
-            </button>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, flexShrink: 0 }}>
+          {/* Thumbnail */}
+          {thumb && (
+            <img
+              src={thumb}
+              alt=""
+              loading="lazy"
+              style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8, flexShrink: 0, border: '1px solid var(--border-2)' }}
+            />
           )}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+            {rc > 0 && <span className="badge-pill" style={{ background: 'var(--orange-dim)', color: 'var(--orange)' }}>coat ready</span>}
+            {onFavorite && (
+              <div style={{ position: 'relative' }}>
+                <button
+                  onClick={handleFavoriteClick}
+                  style={{ background:'none', border:'none', padding:2, cursor:'pointer', lineHeight:1, position:'relative', zIndex:1 }}
+                  aria-label={project.is_favorite ? 'Remove from favorites' : 'Add to favorites'}
+                >
+                  <IStar size={18}
+                    fill={project.is_favorite ? '#F59E0B' : 'none'}
+                    color={project.is_favorite ? '#F59E0B' : 'var(--text-4)'}
+                    style={{ transition: 'transform 200ms', transform: project.is_favorite ? 'scale(1.2)' : 'scale(1)' }}
+                  />
+                </button>
+                {starBurst && (
+                  <StarBurst onDone={() => setStarBurst(false)} />
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
       {total > 0 && (
@@ -536,6 +571,9 @@ export function ProjectDetail() {
             })()}
           </div>
           <div style={{ display: 'flex', gap: 4 }}>
+            <button className="icon-btn" onClick={() => setShowReminder(true)} aria-label="Add reminder" title="Add to calendar / reminders">
+              <IBell size={17} color="var(--accent)" />
+            </button>
             <button className="icon-btn" onClick={handleShare} aria-label="Share project" title="Copy share link">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
@@ -1430,6 +1468,120 @@ function QRLabelSheet({ project, onClose }) {
   )
 }
 
+
+// ─── Star burst animation (canvas particles on favorite) ─────────────────────
+function StarBurst({ onDone }) {
+  const canvasRef = React.useRef()
+
+  React.useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    const W = canvas.width = 120
+    const H = canvas.height = 120
+    const cx = W / 2, cy = H / 2
+
+    // Create particles
+    const particles = Array.from({ length: 16 }, (_, i) => {
+      const angle = (i / 16) * Math.PI * 2
+      const speed = 1.5 + Math.random() * 2
+      const colors = ['#F59E0B','#FCD34D','#FDE68A','#FF6B35','#FFD700','#FFF']
+      return {
+        x: cx, y: cy,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        r: 2 + Math.random() * 3,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        life: 1,
+        decay: 0.04 + Math.random() * 0.03,
+      }
+    })
+
+    // Add a few trailing stars
+    const stars = Array.from({ length: 6 }, (_, i) => {
+      const angle = (i / 6) * Math.PI * 2 + Math.PI / 6
+      const speed = 0.8 + Math.random()
+      return {
+        x: cx, y: cy,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 1.5,
+        size: 3 + Math.random() * 2,
+        life: 1,
+        decay: 0.025 + Math.random() * 0.02,
+        color: '#F59E0B',
+        trail: [],
+      }
+    })
+
+    let raf
+    const animate = () => {
+      ctx.clearRect(0, 0, W, H)
+
+      // Draw particles
+      let anyAlive = false
+      particles.forEach(p => {
+        p.x += p.vx; p.y += p.vy
+        p.vy += 0.08  // gravity
+        p.vx *= 0.96  // friction
+        p.life -= p.decay
+        if (p.life <= 0) return
+        anyAlive = true
+        ctx.globalAlpha = Math.max(0, p.life)
+        ctx.beginPath()
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
+        ctx.fillStyle = p.color
+        ctx.fill()
+      })
+
+      // Draw trailing stars
+      stars.forEach(s => {
+        s.trail.push({ x: s.x, y: s.y })
+        if (s.trail.length > 6) s.trail.shift()
+        s.x += s.vx; s.y += s.vy
+        s.vy += 0.05
+        s.life -= s.decay
+        if (s.life <= 0) return
+        anyAlive = true
+        // Draw trail
+        s.trail.forEach((pt, i) => {
+          ctx.globalAlpha = (i / s.trail.length) * s.life * 0.5
+          ctx.beginPath()
+          ctx.arc(pt.x, pt.y, s.size * 0.4, 0, Math.PI * 2)
+          ctx.fillStyle = '#FDE68A'
+          ctx.fill()
+        })
+        // Draw star point
+        ctx.globalAlpha = s.life
+        ctx.fillStyle = s.color
+        ctx.font = `${s.size * 2}px serif`
+        ctx.fillText('★', s.x - s.size, s.y + s.size)
+      })
+
+      ctx.globalAlpha = 1
+      if (anyAlive) {
+        raf = requestAnimationFrame(animate)
+      } else {
+        onDone()
+      }
+    }
+    raf = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(raf)
+  }, [onDone])
+
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{
+        position: 'absolute',
+        top: '50%', left: '50%',
+        transform: 'translate(-50%, -50%)',
+        pointerEvents: 'none',
+        zIndex: 100,
+        width: 120, height: 120,
+      }}
+    />
+  )
+}
 // ── Reminder Sheet ────────────────────────────────────────────────────────────
 function ReminderSheet({ project, onClose }) {
   const [date, setDate] = useState(() => {
