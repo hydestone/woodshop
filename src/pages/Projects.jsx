@@ -14,7 +14,7 @@ const STATUS_LABEL = { active: 'Active', planning: 'Planning', paused: 'Paused',
 
 // ─── Projects list ────────────────────────────────────────────────────────────
 export default function Projects() {
-  const { data, mutate, projId, setProjId } = useCtx()
+  const { data, mutate, projId, setProjId, navigate } = useCtx()
   const toast   = useToast()
   const [showAdd, setShowAdd]   = useState(false)
   const [viewMode, setViewMode] = useState('cards') // 'cards' | 'table'
@@ -60,6 +60,7 @@ export default function Projects() {
       }))
       toast(`${fields.name || 'Project'} added`, 'success')
       setShowAdd(false)
+      navigate('projects', proj.id)
     } catch (e) { toast(e.message, 'error') }
   }
 

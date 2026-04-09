@@ -5,7 +5,7 @@ import * as db from '../db.js'
 import { DropZone, PhotoGrid, Sheet, FormCell, TagInput, ICamera, FilterSelect } from '../components/Shared.jsx'
 
 export default function AllPhotos() {
-  const { data, mutate } = useCtx()
+  const { navigate, data, mutate } = useCtx()
   const toast = useToast()
   const [uploading, setUploading]       = useState(false)
   const [filter, setFilter]             = useState('all')
@@ -105,7 +105,7 @@ export default function AllPhotos() {
         {(() => {
           const filtered = getFiltered()
           return filtered.length > 0
-            ? <PhotoGrid photos={filtered} onEdit={edit} showProject projects={data.projects} />
+            ? <PhotoGrid photos={filtered} onEdit={edit} showProject projects={data.projects} onNavigateProject={id => navigate('projects', id)} />
             : <div className="empty" style={{ paddingTop: 60 }}>
                 <div className="empty-icon">📷</div>
                 <div className="empty-title">{filter === 'all' ? 'No photos yet' : 'No photos in this filter'}</div>

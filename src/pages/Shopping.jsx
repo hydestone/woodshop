@@ -109,7 +109,7 @@ export default function Shopping() {
         <IPlus size={22} color="#fff" sw={2.5} />
       </button>
       {showAdd    && <BulkAddSheet title="Add Items" hint="Enter one item per line" onSave={handleBulkAdd} onClose={() => setShowAdd(false)} />}
-      {editItem   && <EditShopSheet item={editItem} onSave={f => handleEdit(editItem.id, f)} onClose={() => setEditItem(null)} />}
+      {editItem   && <EditShopSheet item={editItem} projects={data.projects} onSave={f => handleEdit(editItem.id, f)} onClose={() => setEditItem(null)} />}
       {deleteItem && <ConfirmSheet message={`Delete "${deleteItem.name}"?`} onConfirm={() => del(deleteItem.id)} onClose={() => setDeleteItem(null)} />}
     </div>
   )
@@ -137,8 +137,9 @@ function ShopRow({ item, onToggle, onEdit, onDelete, last }) {
   )
 }
 
-function EditShopSheet({ item, onSave, onClose }) {
+function EditShopSheet({ item, onSave, onClose, projects = [] }) {
   const refs = { name: useRef(), qty: useRef(), unit: useRef(), store: useRef(), notes: useRef(), cost: useRef() }
+  const [projectId, setProjectId] = useState(item.project_id || '')
   const handleSave = async () => {
     const name = refs.name.current?.value.trim()
     if (!name) return
@@ -150,6 +151,7 @@ function EditShopSheet({ item, onSave, onClose }) {
       store: refs.store.current?.value.trim() || '',
       notes: refs.notes.current?.value.trim() || '',
       cost:  costVal ? parseFloat(costVal) : null,
+      project_id: projectId || null,
     })
   }
   return (
@@ -160,8 +162,20 @@ function EditShopSheet({ item, onSave, onClose }) {
         <FormCell label="Unit"><input ref={refs.unit} className="form-input" defaultValue={item.unit} placeholder="qt" /></FormCell>
         <FormCell label="Store"><input ref={refs.store} className="form-input" defaultValue={item.store} placeholder="Woodcraft" /></FormCell>
         <FormCell label="Notes"><input ref={refs.notes} className="form-input" defaultValue={item.notes} placeholder="Optional" /></FormCell>
-        <FormCell label="Cost (USD)" last>
+        <FormCell label="Cost (USD)">
           <input ref={refs.cost} className="form-input" type="number" step="0.01" defaultValue={item.cost || ''} placeholder="0.00" />
+        </FormCell>
+        <FormCell label="Project" last>
+          <select
+            className="form-input"
+            value={projectId}
+            onChange={e => setProjectId(e.target.value)}
+          >
+            <option value="">— General shop —</option>
+            {projects.filter(p => p.status !== 'complete').sort((a,b) => a.name.localeCompare(b.name)).map(p => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
         </FormCell>
       </div>
       <p className="form-hint">Cost logs to your total when you check the item as purchased.</p>

@@ -450,7 +450,7 @@ export function Lightbox({ photos, index, onClose }) {
 }
 
 // ─── PhotoGrid ────────────────────────────────────────────────────────────────
-export function PhotoGrid({ photos, onEdit, showProject, projects }) {
+export function PhotoGrid({ photos, onEdit, showProject, projects, onNavigateProject }) {
   const [lightboxIdx, setLightboxIdx] = useState(null)
 
   if (!photos.length) return null
@@ -458,14 +458,16 @@ export function PhotoGrid({ photos, onEdit, showProject, projects }) {
   return (
     <>
       <div className="photo-grid">
-        {photos.map((photo, idx) => (
+        {photos.map((photo, i) => (
           <PhotoCard
             key={photo.id}
             photo={photo}
+            tileIndex={i}
             onEdit={onEdit}
             showProject={showProject}
             projects={projects}
-            onOpen={() => setLightboxIdx(idx)}
+            onOpen={() => setLightboxIdx(i)}
+            onNavigateProject={onNavigateProject}
           />
         ))}
       </div>
@@ -477,7 +479,7 @@ export function PhotoGrid({ photos, onEdit, showProject, projects }) {
 }
 
 // ─── PhotoCard ────────────────────────────────────────────────────────────────
-export function PhotoCard({ photo, onEdit, onOpen, showProject, projects, tileIndex = 0 }) {
+export function PhotoCard({ photo, onEdit, onOpen, showProject, projects, tileIndex = 0, onNavigateProject }) {
   const cardRef = React.useRef()
   const onMove = React.useCallback(e => {
     const el = cardRef.current; if (!el) return
@@ -518,7 +520,15 @@ export function PhotoCard({ photo, onEdit, onOpen, showProject, projects, tileIn
 
       {(photo.caption || proj || tags.length > 0) && (
         <div className="photo-footer">
-          {proj && <div style={{ fontSize: 11, color: 'var(--text-4)', marginBottom: 2 }}>{proj.name}</div>}
+          {proj && (
+            <div
+              style={{ fontSize: 11, color: 'var(--accent)', marginBottom: 2, cursor: 'pointer', fontWeight: 500 }}
+              onClick={e => { e.stopPropagation(); onNavigateProject && onNavigateProject(proj.id) }}
+              title={`Open ${proj.name}`}
+            >
+              ↗ {proj.name}
+            </div>
+          )}
           {photo.caption && <div className="photo-caption-text">{photo.caption}</div>}
           {tags.length > 0 && (
             <div className="photo-tags-row">
