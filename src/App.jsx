@@ -106,7 +106,7 @@ const MOBILE_TABS = [
 // ── Feedback Modal ─────────────────────────────────────────────────────────────
 // Posts to a Google Apps Script webhook → Google Sheet
 // Deploy your own: https://script.google.com → new project → paste handler below
-const FEEDBACK_WEBHOOK = 'https://script.google.com/macros/s/https://script.google.com/macros/s/AKfycbzyB_ThPvl4xc8DDEwE7_QwjmGBlAsXwerQTnqw8N45pLAIgBsW3uBQ7RSkUZzz4E0/exec'
+const FEEDBACK_WEBHOOK = 'https://script.google.com/macros/s/AKfycbzyB_ThPvl4xc8DDEwE7_QwjmGBlAsXwerQTnqw8N45pLAIgBsW3uBQ7RSkUZzz4E0/exec'
 
 function FeedbackModal({ session, onClose }) {
   const [msg, setMsg]       = useState('')
