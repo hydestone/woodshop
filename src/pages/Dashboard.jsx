@@ -1,3 +1,4 @@
+import * as echarts from 'echarts'
 import { useMemo, useState, useEffect, useRef } from 'react'
 import { useCtx } from '../App.jsx'
 import { coatStatus, maintStatus, fmtShort, fmt, IChevR, IChevL, PhotoGrid, KineticTitle } from '../components/Shared.jsx'
@@ -181,8 +182,8 @@ function ProjectsByYear({ projects, photos, onDrill }) {
   // Handle click on bar to open year carousel
   useEffect(() => {
     const el = chartRef.current
-    if (!el || !window.echarts) return
-    const chart = window.echarts.getInstanceByDom(el)
+    if (!el) return
+    const chart = echarts.getInstanceByDom(el)
     if (!chart) return
     const handler = (params) => setCarouselYear(String(params.name || grouped[params.dataIndex]?.[0]))
     chart.on('click', handler)
@@ -240,8 +241,8 @@ function SpeciesDonut({ projects, onDrill }) {
 
   useEffect(() => {
     const el = chartRef.current
-    if (!el || !window.echarts) return
-    const chart = window.echarts.getInstanceByDom(el)
+    if (!el) return
+    const chart = echarts.getInstanceByDom(el)
     if (!chart) return
     const handler = (p) => onDrill('species', p.name)
     chart.on('click', handler)
@@ -329,8 +330,8 @@ function CategoryHeatmap({ projects, categories, onDrill }) {
   useECharts(chartRef, getOption, [data, cats, years], isDark)
 
   useEffect(() => {
-    const el = chartRef.current; if (!el || !window.echarts) return
-    const chart = window.echarts.getInstanceByDom(el); if (!chart) return
+    const el = chartRef.current; if (!el) return
+    const chart = echarts.getInstanceByDom(el); if (!chart) return
     const handler = (p) => onDrill('category', cats[p.value[1]])
     chart.on('click', handler)
     return () => chart.off('click', handler)
@@ -380,8 +381,8 @@ function FinishUsage({ projects, onDrill }) {
   useECharts(chartRef, getOption, [data], isDark)
 
   useEffect(()=>{
-    const el=chartRef.current; if(!el||!window.echarts) return
-    const chart=window.echarts.getInstanceByDom(el); if(!chart) return
+    const el=chartRef.current; if (!el) return
+    const chart=echarts.getInstanceByDom(el); if(!chart) return
     const handler=(p)=>onDrill('finish', data[data.length-1-p.dataIndex]?.[0])
     chart.on('click',handler)
     return ()=>chart.off('click',handler)
@@ -442,8 +443,8 @@ function StatusPipeline({ projects, onDrill }) {
   useECharts(chartRef, getOption, [counts], isDark)
 
   useEffect(() => {
-    const el = chartRef.current; if (!el || !window.echarts) return
-    const chart = window.echarts.getInstanceByDom(el); if (!chart) return
+    const el = chartRef.current; if (!el) return
+    const chart = echarts.getInstanceByDom(el); if (!chart) return
     const handler = (p) => {
       const status = SO[SO.map(s => SL[s]).indexOf(p.name)]
       if (status) onDrill('status', status)
@@ -487,7 +488,7 @@ function WoodSourceMap({ locations, woodStock, projectWoodSources }) {
     const lats = mappable.map(l => l.lat), lngs = mappable.map(l => l.lng)
     const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2
     const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2
-    const map = L.map(mapRef.current, { zoomControl: true, scrollWheelZoom: false }).setView([centerLat || 43.5, centerLng || -71.5], mappable.length === 1 ? 10 : 7)
+    const map = L.map(mapRef.current, { zoomControl: true, scrollWheelZoom: true }).setView([centerLat || 43.5, centerLng || -71.5], mappable.length === 1 ? 10 : 7)
     mapInstance.current = map
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{ attribution:'© CartoDB', maxZoom:19, subdomains:'abcd' }).addTo(map)
     mappable.forEach(loc => {
@@ -540,25 +541,28 @@ function WoodSourceMap({ locations, woodStock, projectWoodSources }) {
 // ── ECharts hook ──────────────────────────────────────────────────────────────
 function useECharts(ref, getOption, deps, isDark) {
   useEffect(() => {
-    let chart = null
-    let attempts = 0
-    const init = () => {
-      if (!ref.current || !window.echarts) {
-        if (++attempts < 20) setTimeout(init, 200)
-        return
-      }
-      chart = window.echarts.getInstanceByDom(ref.current) ||
-              window.echarts.init(ref.current, isDark ? 'dark' : null, { renderer: 'svg' })
-      chart.setOption(getOption(isDark), true)
-      const onResize = () => chart?.resize()
-      window.addEventListener('resize', onResize)
-      return () => window.removeEventListener('resize', onResize)
+    if (!ref.current) return
+    let chart = echarts.getInstanceByDom(ref.current) ||
+                echarts.init(ref.current, null, { renderer: 'svg' })
+
+    const applyTheme = (dark) => {
+      if (!chart) return
+      chart.setOption(getOption(dark), { notMerge: true })
+      setTimeout(() => chart?.resize(), 50)
     }
-    const cleanup = init()
-    return () => { cleanup?.(); chart?.dispose() }
-  // eslint-disable-next-line
+    applyTheme(isDark)
+
+    const onResize = () => chart?.resize()
+    window.addEventListener('resize', onResize)
+    return () => {
+      window.removeEventListener('resize', onResize)
+      chart?.dispose()
+      chart = null
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [...deps, isDark])
 }
+
 
 // ── Theme colours ──────────────────────────────────────────────────────────────
 const EC = {
