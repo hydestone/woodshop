@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo, memo, useCallback } from '
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
-import { addToGoogleCalendar, addToAppleReminders } from '../supabase.js'
+import { addToGoogleCalendar } from '../supabase.js'
 import {
   Sheet, FormCell, BulkAddSheet, ConfirmSheet, DropZone, PhotoGrid, TagInput, FilterSelect,
   STATUS, coatStatus, fmtShort, localDt, useLongPress,
@@ -60,6 +60,7 @@ export default function Projects() {
       }))
       toast(`${fields.name || 'Project'} added`, 'success')
       setShowAdd(false)
+      navigate('projects', proj.id)
       navigate('projects', proj.id)
     } catch (e) { toast(e.message, 'error') }
   }
@@ -674,7 +675,7 @@ export function ProjectDetail() {
       {/* ── Time & Cost ── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'var(--border-2)', marginTop: 1 }}>
         <TimeTracker project={project} onSave={handleUpdate} />
-        <CostTracker project={project} onSave={handleUpdate} />
+        <CostTracker project={project} onSave={handleUpdate} projId={projId} shopping={data.shopping} />
       </div>
 
       {/* ── Photos full-width ── */}
@@ -862,11 +863,7 @@ function FinishingList({ projId, sub, setSub }) {
                         const readyAt = new Date(new Date(coat.applied_at).getTime()+ms)
                         addToGoogleCalendar({ title: `Apply coat ${coat.coat_number+1} — ${coat.product}${proj?` (${proj.name})`:''}`, start: readyAt, end: new Date(readyAt.getTime()+3600000), description: `Coat ${coat.coat_number} is ready.` })
                       }}><ICal size={12} color="currentColor" /> Calendar</button>
-                      <button className="btn-reminder" onClick={() => {
-                        const ms = coat.interval_unit==='hours' ? coat.interval_value*3600000 : coat.interval_value*86400000
-                        const readyAt = new Date(new Date(coat.applied_at).getTime()+ms)
-                        addToAppleReminders({ title: `Apply coat ${coat.coat_number+1} — ${coat.product}`, notes: `Coat ${coat.coat_number} is ready.`, dueDate: readyAt })
-                      }}><IBell size={12} color="currentColor" /> Reminders</button>
+
                     </>}
                   </div>
                 )}
@@ -952,7 +949,7 @@ function TimeTracker({ project, onSave }) {
         </div>
       )}
 
-      {entries.length > 0 ? (
+      {(entries.length > 0 || shopItems.length > 0) ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           {entries.slice().sort((a,b) => b.date?.localeCompare(a.date)).map(e => (
             <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12 }}>
@@ -972,14 +969,17 @@ function TimeTracker({ project, onSave }) {
 }
 
 // ─── Cost Tracker ─────────────────────────────────────────────────────────────
-function CostTracker({ project, onSave }) {
+function CostTracker({ project, onSave, projId, shopping = [] }) {
   const toast = useToast()
   const [show, setShow] = useState(false)
   const [label, setLabel] = useState('')
   const [amount, setAmount] = useState('')
 
   const entries = (() => { try { return JSON.parse(project.cost_entries || '[]') } catch { return [] } })()
-  const total = entries.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0)
+  const shopItems   = shopping.filter(s => s.project_id === projId && s.cost > 0)
+  const shopTotal   = shopItems.reduce((s, i) => s + (parseFloat(i.cost) || 0), 0)
+  const manualTotal = entries.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0)
+  const grandTotal  = manualTotal + shopTotal
 
   const save = async () => {
     if (!label.trim() || !amount) { toast('Enter item and amount', 'error'); return }
@@ -1000,7 +1000,7 @@ function CostTracker({ project, onSave }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
         <div>
           <div className="label-caps">Cost</div>
-          {total > 0 && <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', marginTop: 2 }}>${total.toFixed(2)}</div>}
+          {grandTotal > 0 && <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', marginTop: 2 }}>${grandTotal.toFixed(2)}</div>}
         </div>
         <button className="icon-btn" onClick={() => setShow(s => !s)} aria-label="Add cost"><IPlus size={18} color="var(--accent)" /></button>
       </div>
@@ -1022,7 +1022,7 @@ function CostTracker({ project, onSave }) {
         </div>
       )}
 
-      {entries.length > 0 ? (
+      {(entries.length > 0 || shopItems.length > 0) ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           {entries.map(e => (
             <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12 }}>
@@ -1033,9 +1033,15 @@ function CostTracker({ project, onSave }) {
               </div>
             </div>
           ))}
-          {entries.length > 1 && (
+          {shopItems.map(i => (
+            <div key={i.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12 }}>
+              <span style={{ color: 'var(--text-3)' }}>🛒 {i.name}{i.store ? <span style={{ color: 'var(--text-4)' }}> · {i.store}</span> : ''}</span>
+              <span style={{ fontWeight: 700, color: 'var(--text)' }}>${parseFloat(i.cost||0).toFixed(2)}</span>
+            </div>
+          ))}
+          {(entries.length + shopItems.length) > 1 && (
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700, paddingTop: 4, borderTop: '1px solid var(--border-2)', marginTop: 2 }}>
-              <span>Total</span><span>${total.toFixed(2)}</span>
+              <span>Total</span><span>${grandTotal.toFixed(2)}</span>
             </div>
           )}
         </div>
@@ -1623,12 +1629,6 @@ function ReminderSheet({ project, onClose }) {
     addToGoogleCalendar({ title: note, start, end, description: `Project: ${project.name}` })
     onClose()
   }
-  const addApple = () => {
-    const start = new Date(date)
-    addToAppleReminders({ title: note, notes: `Project: ${project.name}`, dueDate: start })
-    onClose()
-  }
-
   return (
     <div className="overlay" onClick={onClose} style={{ alignItems:'center', justifyContent:'center' }}>
       <div style={{ background:'var(--surface)', borderRadius:16, padding:'28px 24px', maxWidth:340, width:'90%' }}
@@ -1645,9 +1645,6 @@ function ReminderSheet({ project, onClose }) {
         <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
           <button className="btn-primary" style={{ width:'100%', justifyContent:'center' }} onClick={addGoogle}>
             <ICal size={15} color="#fff" /> Add to Google Calendar
-          </button>
-          <button className="btn-secondary" style={{ width:'100%', justifyContent:'center' }} onClick={addApple}>
-            <IBell size={15} color="var(--accent)" /> Add to Apple Reminders
           </button>
           <button className="btn-secondary" style={{ width:'100%', justifyContent:'center' }} onClick={onClose}>Cancel</button>
         </div>
