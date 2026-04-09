@@ -76,9 +76,9 @@ const NAV_SECTIONS = [
     ],
   },
   {
-    label: 'Tools',
+    label: 'Admin',
     items: [
-      { id: 'settings',    label: 'Categories',         Icon: IWrench },
+      { id: 'settings',    label: 'Settings',           Icon: IWrench },
       { id: 'import',      label: 'Bulk Import',       Icon: ICamera },
     ],
   },
