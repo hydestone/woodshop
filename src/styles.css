@@ -54,7 +54,7 @@
 
   /* Layout */
   --topbar-h:    84px;
-  --tabbar-h:    44px;
+  --tabbar-h:    49px;
   --safe-b:      env(safe-area-inset-bottom, 0px);
 
   /* Extended palette */
@@ -310,7 +310,7 @@ body {
 
 /* Handle rotation — ensure layout reflows cleanly */
 @media screen and (orientation: landscape) {
-  .tabbar { padding-bottom: 0; }
+  .tabbar { padding-bottom: env(safe-area-inset-bottom, 0px); }
   .sidebar { padding-bottom: env(safe-area-inset-bottom); }
 }
 
@@ -475,9 +475,9 @@ body {
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   border-top: 1px solid var(--border);
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;
   padding-top: 6px;
-  padding-bottom: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   z-index: 50;
 }
 
@@ -1954,6 +1954,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 24px;
+  z-index: 9999;
 }
 .loading-logo-img {
   width: 130px;
