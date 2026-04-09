@@ -653,6 +653,11 @@ export default function App() {
                 {/* Portfolio links */}
                 <div className="form-group" style={{ marginBottom: 8 }}>
                   <div className="more-item" style={{ borderBottom: '1px solid var(--border-2)', padding: '13px 16px' }}
+                    onClick={() => { setShowMore(false); setShowFeedback(true) }} role="button" tabIndex={0}>
+                    <IBrain size={20} color="var(--accent)" sw={1.8} />
+                    <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>Send Feedback</span>
+                  </div>
+                  <div className="more-item" style={{ borderBottom: '1px solid var(--border-2)', padding: '13px 16px' }}
                     onClick={() => { setShowMore(false); setShowQR(true) }} role="button" tabIndex={0}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
