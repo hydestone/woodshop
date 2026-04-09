@@ -494,7 +494,10 @@ function WoodSourceMap({ locations, woodStock, projectWoodSources }) {
     mappable.forEach(loc => {
       const count = sourceCounts[loc.id] || 0
       const size = Math.max(24, Math.min(40, 24 + count * 4))
-      const icon = L.divIcon({ className: '', html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:rgba(74,222,128,0.9);border:2px solid rgba(74,222,128,0.4);box-shadow:0 0 ${size/2}px rgba(74,222,128,0.5);display:flex;align-items:center;justify-content:center;color:#0F1E38;font-size:${count > 0 ? 11 : 9}px;font-weight:800;font-family:system-ui">${count > 0 ? count : '📍'}</div>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] })
+      const icon = L.divIcon({ className: '', html: `
+  <style>@keyframes markerPulse{0%,100%{box-shadow:0 0 ${size/2}px ${size/3}px rgba(74,222,128,0.6)}50%{box-shadow:0 0 ${size}px ${size/2}px rgba(74,222,128,0.3)}}</style>
+  <div style="width:${size}px;height:${size}px;border-radius:50%;background:rgba(74,222,128,0.9);border:2px solid rgba(255,255,255,0.6);animation:markerPulse 2.4s ease-in-out infinite;display:flex;align-items:center;justify-content:center;color:#0F1E38;font-size:${count > 0 ? 11 : 9}px;font-weight:800;font-family:system-ui">${count > 0 ? count : '•'}</div>
+`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] })
       L.marker([loc.lat, loc.lng], { icon }).addTo(map).bindPopup(`<strong>${loc.name}</strong>${loc.address ? '<br>' + loc.address : ''}${count ? '<br>' + count + ' project' + (count > 1 ? 's' : '') : ''}`)
     })
     return () => { if (mapInstance.current) { mapInstance.current.remove(); mapInstance.current = null } }
@@ -831,9 +834,7 @@ export default function Dashboard() {
           <div className="card"><div className="label-caps-sm">Species Breakdown</div><SpeciesDonut projects={data.projects} onDrill={handleDrill} /></div>
           <div className="card"><div className="label-caps-sm">Category Heatmap</div><CategoryHeatmap projects={data.projects} categories={cats} onDrill={handleDrill} /></div>
           <div className="card"><div className="label-caps-sm">Finish Usage</div><FinishUsage projects={data.projects} onDrill={handleDrill} /></div>
-          <div className="card"><div className="label-caps-sm">Project Status</div><StatusPipeline projects={data.projects} onDrill={handleDrill} /></div>
           <div className="card"><div className="label-caps-sm">Wood Source Map</div><WoodSourceMap locations={locations} woodStock={data.woodStock} projectWoodSources={data.projectWoodSources} /></div>
-          <div className="card" style={{gridColumn:'1/-1'}}><div className="label-caps-sm">Workshop Activity {new Date().getFullYear()}</div><ActivityCalendar projects={data.projects} photos={data.photos} /></div>
           <div className="card" style={{gridColumn:'1/-1'}}><div className="label-caps-sm">Material Flow — Species → Category → Finish</div><MaterialFlow projects={data.projects} /></div>
         </div>
 

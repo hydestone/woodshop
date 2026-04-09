@@ -7,7 +7,7 @@ import { ToastProvider } from './components/Toast.jsx'
 import GlobalSearch from './components/Search.jsx'
 import {
   IFolder, ICart, IWrench, ICamera, ITree, IBulb, ISaw,
-  IStar, ICheck, IGrid,
+  IStar, ICheck, IGrid, IIdea,
   IBook, IHouse, IImage, ILayers, IMore, IClose,
   coatStatus, maintStatus,
 } from './components/Shared.jsx'
@@ -27,6 +27,7 @@ import FinishedProducts from './pages/FinishedProducts.jsx'
 import Inspiration      from './pages/Inspiration.jsx'
 import YearReview      from './pages/YearReview.jsx'
 import Settings       from './pages/Settings.jsx'
+import ProjectIdeas   from './pages/ProjectIdeas.jsx'
 import BulkImport     from './pages/BulkImport.jsx'
 import Audit          from './pages/Audit.jsx'
 import Help           from './pages/Help.jsx'
@@ -46,6 +47,7 @@ const NAV_SECTIONS = [
     items: [
       { id: 'home',        label: 'Home',             Icon: IHouse  },
       { id: 'projects',    label: 'Projects',          Icon: IFolder },
+      { id: 'ideas',       label: 'Project Ideas',     Icon: IIdea   },
       { id: 'stock',       label: 'Wood Stock',        Icon: ITree   },
       { id: 'maintenance', label: 'Shop Maintenance',  Icon: IWrench },
       { id: 'shop',        label: 'Shop Improvements', Icon: IHouse  },
@@ -496,6 +498,7 @@ export default function App() {
                   {tab === 'stockgallery' && <div className="scroll-page" style={{paddingBottom:40}}><div className="page-header"><h1 className="page-title">Wood Stock Gallery</h1><p className="page-subtitle">Photos of raw lumber, blanks, and prep work</p></div><WoodStockGallery /></div>}
                   {tab === 'yearreview'  && <YearReview />}
                   {tab === 'settings'    && <Settings />}
+                  {tab === 'ideas'       && <ProjectIdeas />}
                   {tab === 'import'      && <BulkImport />}
                   {tab === 'audit'       && <Audit />}
                   {tab === 'help'        && <Help />}
