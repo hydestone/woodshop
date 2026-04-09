@@ -118,10 +118,9 @@ function YearCarousel({ year, projects, photos, onClose }) {
 }
 
 // ── Projects by Year — ECharts stacked bar ───────────────────────────────────
-function ProjectsByYear({ projects, photos, onDrill }) {
+function ProjectsByYear({ projects, photos, onDrill , isDark = false }) {
   const [carouselYear, setCarouselYear] = useState(null)
   const chartRef = useRef()
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
 
   const grouped = useMemo(() => {
     const m = {}
@@ -202,9 +201,8 @@ function ProjectsByYear({ projects, photos, onDrill }) {
 }
 
 // ── Species Breakdown — ECharts radial ring ──────────────────────────────────
-function SpeciesDonut({ projects, onDrill }) {
+function SpeciesDonut({ projects, onDrill , isDark = false }) {
   const chartRef = useRef()
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
 
   const data = useMemo(() => {
     const m = {}
@@ -255,9 +253,8 @@ function SpeciesDonut({ projects, onDrill }) {
 
 
 // ── Category Heatmap — ECharts ───────────────────────────────────────────────
-function CategoryHeatmap({ projects, categories, onDrill }) {
+function CategoryHeatmap({ projects, categories, onDrill , isDark = false }) {
   const chartRef = useRef()
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
 
   const { years, cats, grid } = useMemo(() => {
     const ySet = new Set(), cSet = new Set()
@@ -347,9 +344,8 @@ function CategoryHeatmap({ projects, categories, onDrill }) {
 
 
 // ── Finish Usage — ECharts horizontal bar ────────────────────────────────────
-function FinishUsage({ projects, onDrill }) {
+function FinishUsage({ projects, onDrill , isDark = false }) {
   const chartRef = useRef()
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
 
   const data = useMemo(() => {
     const m={}
@@ -393,76 +389,6 @@ function FinishUsage({ projects, onDrill }) {
 }
 
 
-// ── Status Pipeline — ECharts radial bar ─────────────────────────────────────
-function StatusPipeline({ projects, onDrill }) {
-  const chartRef = useRef()
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
-
-  const counts = useMemo(() =>
-    SO.reduce((acc, s) => ({ ...acc, [s]: projects.filter(p => p.status === s).length }), {}),
-    [projects]
-  )
-
-  const getOption = (dark) => ({
-    backgroundColor: 'transparent',
-    tooltip: {
-      trigger: 'item',
-      backgroundColor: dark ? '#1C2333' : '#fff',
-      borderColor: dark ? 'rgba(240,246,252,.1)' : '#E2E8F0',
-      textStyle: { color: EC.text(dark), fontSize: 12 },
-      formatter: p => `${p.name}: ${p.value}`,
-    },
-    polar: { radius: ['30%', '85%'] },
-    angleAxis: {
-      max: Math.max(1, ...Object.values(counts)),
-      startAngle: 90,
-      axisLine: { show: false }, axisTick: { show: false },
-      axisLabel: { show: false }, splitLine: { show: false },
-      splitArea: { show: false },
-    },
-    radiusAxis: {
-      type: 'category',
-      data: SO.map(s => SL[s]),
-      axisLine: { show: false }, axisTick: { show: false },
-      axisLabel: { color: EC.text(dark), fontSize: 10 },
-    },
-    series: [{
-      type: 'bar', data: SO.map((s,i) => ({
-        value: counts[s],
-        name: SL[s],
-        itemStyle: { color: SC[s], borderRadius: 4 },
-      })),
-      coordinateSystem: 'polar',
-      roundCap: true,
-      label: { show: true, position: 'middle', formatter: p => p.value || '', color: '#fff', fontSize: 11, fontWeight: 700 },
-      animationDelay: (i) => i * 120,
-      animationEasing: 'elasticOut',
-    }],
-  })
-
-  useECharts(chartRef, getOption, [counts], isDark)
-
-  useEffect(() => {
-    const el = chartRef.current; if (!el) return
-    const chart = echarts.getInstanceByDom(el); if (!chart) return
-    const handler = (p) => {
-      const status = SO[SO.map(s => SL[s]).indexOf(p.name)]
-      if (status) onDrill('status', status)
-    }
-    chart.on('click', handler)
-    return () => chart.off('click', handler)
-  }, [onDrill])
-
-  return (
-    <div>
-      <div ref={chartRef} style={{ width:'100%', height: 180 }} />
-      <div style={{ textAlign:'center', fontSize: 12, color:'var(--text-4)', marginTop: -8 }}>
-        {projects.length} projects total · click to filter
-      </div>
-    </div>
-  )
-}
-
 
 // ── Wood Source Map ───────────────────────────────────────────────────────────
 function WoodSourceMap({ locations, woodStock, projectWoodSources }) {
@@ -494,10 +420,7 @@ function WoodSourceMap({ locations, woodStock, projectWoodSources }) {
     mappable.forEach(loc => {
       const count = sourceCounts[loc.id] || 0
       const size = Math.max(24, Math.min(40, 24 + count * 4))
-      const icon = L.divIcon({ className: '', html: `
-  <style>@keyframes markerPulse{0%,100%{box-shadow:0 0 ${size/2}px ${size/3}px rgba(74,222,128,0.6)}50%{box-shadow:0 0 ${size}px ${size/2}px rgba(74,222,128,0.3)}}</style>
-  <div style="width:${size}px;height:${size}px;border-radius:50%;background:rgba(74,222,128,0.9);border:2px solid rgba(255,255,255,0.6);animation:markerPulse 2.4s ease-in-out infinite;display:flex;align-items:center;justify-content:center;color:#0F1E38;font-size:${count > 0 ? 11 : 9}px;font-weight:800;font-family:system-ui">${count > 0 ? count : '•'}</div>
-`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] })
+      const icon = L.divIcon({ className: '', html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:rgba(74,222,128,0.9);border:2px solid rgba(255,255,255,0.6);animation:markerPulse 2.4s ease-in-out infinite;display:flex;align-items:center;justify-content:center;color:#0F1E38;font-size:${count > 0 ? 11 : 9}px;font-weight:800;font-family:system-ui">${count > 0 ? count : '•'}</div>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] })
       L.marker([loc.lat, loc.lng], { icon }).addTo(map).bindPopup(`<strong>${loc.name}</strong>${loc.address ? '<br>' + loc.address : ''}${count ? '<br>' + count + ' project' + (count > 1 ? 's' : '') : ''}`)
     })
     return () => { if (mapInstance.current) { mapInstance.current.remove(); mapInstance.current = null } }
@@ -581,72 +504,10 @@ const EC = {
   palette: ['#1D4ED8','#166534','#B45309','#7C3AED','#0891B2','#BE185D','#15803D','#9333EA'],
 }
 
-// ── Workshop Activity Calendar (NEW) — GitHub-style heatmap ─────────────────
-function ActivityCalendar({ projects, photos }) {
-  const chartRef = useRef()
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
-
-  const data = useMemo(() => {
-    const counts = {}
-    // Count project creations + photo uploads by date
-    projects.forEach(p => {
-      if (p.created_at) {
-        const d = p.created_at.slice(0,10)
-        counts[d] = (counts[d]||0) + 2
-      }
-    })
-    photos.forEach(p => {
-      if (p.created_at) {
-        const d = p.created_at.slice(0,10)
-        counts[d] = (counts[d]||0) + 1
-      }
-    })
-    return Object.entries(counts).map(([date,value]) => [date, value])
-  }, [projects, photos])
-
-  const thisYear = new Date().getFullYear()
-
-  const getOption = (dark) => ({
-    backgroundColor: 'transparent',
-    tooltip: {
-      formatter: p => p.value ? `${p.value[0]}: ${p.value[1]} action${p.value[1]>1?'s':''}` : '',
-      backgroundColor: dark ? '#1C2333' : '#fff',
-      borderColor: dark ? 'rgba(240,246,252,.1)' : '#E2E8F0',
-      textStyle: { color: EC.text(dark), fontSize: 12 },
-    },
-    visualMap: {
-      min:0, max:5, show:false,
-      inRange: { color: dark
-        ? ['#161B22','#0D4429','#006D32','#26A641','#39D353']
-        : ['#F0F4F8','#B6E3B6','#6ECB6E','#26A641','#166534']
-      },
-    },
-    calendar: {
-      top:20, left:24, right:8,
-      range: String(thisYear),
-      cellSize: ['auto', 12],
-      splitLine: { show:false },
-      itemStyle: { borderWidth:2, borderColor: dark ? '#161B22' : '#F0F4F8', borderRadius:2 },
-      dayLabel: { color:EC.text2(dark), fontSize:9, firstDay:1 },
-      monthLabel: { color:EC.text2(dark), fontSize:10 },
-      yearLabel: { show:false },
-    },
-    series: [{
-      type:'heatmap', coordinateSystem:'calendar',
-      data: data.length ? data : [[String(thisYear)+'-01-01', 0]],
-      animationDelay: (i)=>i*2,
-    }],
-  })
-
-  useECharts(chartRef, getOption, [data, thisYear], isDark)
-  if (!data.length) return <div style={{textAlign:'center',padding:'16px 0',color:'var(--text-3)',fontSize:13}}>No activity yet this year</div>
-  return <div ref={chartRef} style={{ width:'100%', height: 130 }} />
-}
 
 // ── Material Flow Sankey (NEW) — species → category → finish ─────────────────
-function MaterialFlow({ projects }) {
+function MaterialFlow({ projects , isDark = false }) {
   const chartRef = useRef()
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
 
   const { nodes, links } = useMemo(() => {
     const nodeSet = new Set()
@@ -708,7 +569,7 @@ function MaterialFlow({ projects }) {
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 export default function Dashboard() {
-  const { data, setProjId, setTab } = useCtx()
+  const { data, setProjId, setTab, theme } = useCtx()
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
   const locations = data.woodLocations || []
 
@@ -830,12 +691,12 @@ export default function Dashboard() {
         })()}
         <span className="section-label" style={{ marginTop: 28 }}>Analytics</span>
         <div className="dash-grid">
-          <div className="card"><div className="label-caps-sm">Projects by Year</div><ProjectsByYear projects={data.projects} photos={data.photos} onDrill={handleDrill} /></div>
-          <div className="card"><div className="label-caps-sm">Species Breakdown</div><SpeciesDonut projects={data.projects} onDrill={handleDrill} /></div>
-          <div className="card"><div className="label-caps-sm">Category Heatmap</div><CategoryHeatmap projects={data.projects} categories={cats} onDrill={handleDrill} /></div>
-          <div className="card"><div className="label-caps-sm">Finish Usage</div><FinishUsage projects={data.projects} onDrill={handleDrill} /></div>
+          <div className="card"><div className="label-caps-sm">Projects by Year</div><ProjectsByYear projects={data.projects} photos={data.photos} onDrill={handleDrill} isDark={theme === 'dark'} /></div>
+          <div className="card"><div className="label-caps-sm">Species Breakdown</div><SpeciesDonut projects={data.projects} onDrill={handleDrill} isDark={theme === 'dark'} /></div>
+          <div className="card"><div className="label-caps-sm">Category Heatmap</div><CategoryHeatmap projects={data.projects} categories={cats} onDrill={handleDrill} isDark={theme === 'dark'} /></div>
+          <div className="card"><div className="label-caps-sm">Finish Usage</div><FinishUsage projects={data.projects} onDrill={handleDrill} isDark={theme === 'dark'} /></div>
           <div className="card"><div className="label-caps-sm">Wood Source Map</div><WoodSourceMap locations={locations} woodStock={data.woodStock} projectWoodSources={data.projectWoodSources} /></div>
-          <div className="card" style={{gridColumn:'1/-1'}}><div className="label-caps-sm">Material Flow — Species → Category → Finish</div><MaterialFlow projects={data.projects} /></div>
+          <div className="card" style={{gridColumn:'1/-1'}}><div className="label-caps-sm">Material Flow — Species → Category → Finish</div><MaterialFlow projects={data.projects} isDark={theme === 'dark'} /></div>
         </div>
 
         {data.photos.length > 0 && <>

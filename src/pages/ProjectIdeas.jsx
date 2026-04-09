@@ -1,12 +1,12 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
-import { Sheet, FormCell, TagInput, ConfirmSheet, IPlus, ITrash, IChevR } from '../components/Shared.jsx'
+import { Sheet, FormCell, TagInput, ConfirmSheet, IPlus, ITrash } from '../components/Shared.jsx'
 import * as db from '../db.js'
-import { supabase } from '../supabase.js'
+import { supabase, getCurrentUserId } from '../supabase.js'
 
 export default function ProjectIdeas() {
-  const { data, mutate, setProjId, setTab } = useCtx()
+  const { data, mutate, navigate } = useCtx()
   const toast = useToast()
   const [ideas, setIdeas]       = useState([])
   const [loading, setLoading]   = useState(true)
@@ -28,21 +28,29 @@ export default function ProjectIdeas() {
   useEffect(() => { load() }, [])
 
   const save = async (fields) => {
-    if (editing) {
-      const { data: row } = await supabase.from('project_ideas').update(fields).eq('id', editing.id).select().single()
-      setIdeas(prev => prev.map(i => i.id === editing.id ? row : i))
-      toast('Idea updated', 'success')
-    } else {
-      const { data: row } = await supabase.from('project_ideas').insert({ ...fields, status: 'idea' }).select().single()
-      setIdeas(prev => [row, ...prev])
-      toast('Idea saved', 'success')
+    try {
+      const user_id = await getCurrentUserId()
+      if (editing) {
+        const { data: row, error } = await supabase.from('project_ideas').update(fields).eq('id', editing.id).select().single()
+        if (error) throw new Error(error.message)
+        if (row) setIdeas(prev => prev.map(i => i.id === editing.id ? row : i))
+        toast('Idea updated', 'success')
+      } else {
+        const { data: row, error } = await supabase.from('project_ideas').insert({ ...fields, status: 'idea', user_id }).select().single()
+        if (error) throw new Error(error.message)
+        if (row) setIdeas(prev => [row, ...prev])
+        toast('Idea saved', 'success')
+      }
+      setShowAdd(false)
+      setEditing(null)
+    } catch (e) {
+      toast(e.message, 'error')
     }
-    setShowAdd(false)
-    setEditing(null)
   }
 
   const remove = async (id) => {
-    await supabase.from('project_ideas').delete().eq('id', id)
+    const { error } = await supabase.from('project_ideas').delete().eq('id', id)
+    if (error) { toast(error.message, 'error'); return }
     setIdeas(prev => prev.filter(i => i.id !== id))
     setConfirming(null)
     toast('Idea removed', 'success')
@@ -55,8 +63,7 @@ export default function ProjectIdeas() {
       mutate(d => ({ ...d, projects: [proj, ...d.projects] }))
       await supabase.from('project_ideas').update({ status: 'converted' }).eq('id', idea.id)
       setIdeas(prev => prev.filter(i => i.id !== idea.id))
-      setProjId(proj.id)
-      setTab('projects')
+      navigate('projects', proj.id)
       toast(`"${idea.title}" converted to project`, 'success')
     } catch (e) { toast(e.message, 'error') }
   }
@@ -100,7 +107,7 @@ export default function ProjectIdeas() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 2 }}>{idea.title}</div>
                     {idea.notes && (
-                      <div style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                      <div style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 6, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineClamp: 2 }}>
                         {idea.notes}
                       </div>
                     )}

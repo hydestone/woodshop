@@ -195,6 +195,7 @@ function ParticleNebula({ isDark }) {
     const resize = () => {
       canvas.width  = canvas.offsetWidth  * window.devicePixelRatio
       canvas.height = canvas.offsetHeight * window.devicePixelRatio
+      ctx.setTransform(1, 0, 0, 1, 0, 0)   // reset before scale to prevent accumulation
       ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
     }
     resize()
@@ -383,7 +384,7 @@ export default function App() {
     return 0
   }
 
-  const ctx = { data, mutate, reload, tab, setTab, navigate, projId, setProjId }
+  const ctx = { data, mutate, reload, tab, setTab, navigate, projId, setProjId, theme }
 
   return (
     <AppCtx.Provider value={ctx}>

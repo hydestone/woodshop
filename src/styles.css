@@ -46,7 +46,7 @@
 }
 
 /* Ensure content sits above the atmospheric layer */
-.app, .sidebar, .top-bar, .main-area, .tabbar, .tabbar-bg-fill {
+.app, .sidebar, .top-bar, .main-area, .tabbar {
   position: relative;
   z-index: 1;
 }
@@ -158,6 +158,13 @@
 }
 /* Chart resize smoothly */
 [data-theme='dark'] .ec-legend-item text { fill: #8B949E !important; }
+
+
+/* ─── Leaflet map marker pulse animation ────────────────────────────────────── */
+@keyframes markerPulse {
+  0%, 100% { box-shadow: 0 0 8px 4px rgba(74,222,128,0.6); }
+  50%       { box-shadow: 0 0 16px 8px rgba(74,222,128,0.3); }
+}
 
 /* ─── Reset ──────────────────────────────────────────────────────────────── */
 *, *::before, *::after {
