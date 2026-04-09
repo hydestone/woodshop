@@ -1,8 +1,28 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useCtx } from '../App.jsx'
 
 const STATUS_COLORS = { active:'var(--accent)', planning:'#7C3AED', paused:'var(--orange)', complete:'var(--green)' }
 const CAT_COLORS = ['#1D4ED8','#166534','#B45309','#7C3AED','#0891B2','#BE185D','#15803D','#9333EA']
+
+
+// ── Animated count-up for hero stat ──────────────────────────────────────────
+function HeroCount({ value, duration = 1000 }) {
+  const [display, setDisplay] = useState(0)
+  useEffect(() => {
+    if (!value) { setDisplay(0); return }
+    let start = null
+    const step = (ts) => {
+      if (!start) start = ts
+      const progress = Math.min((ts - start) / duration, 1)
+      const ease = 1 - Math.pow(1 - progress, 3)
+      setDisplay(Math.round(ease * value))
+      if (progress < 1) requestAnimationFrame(step)
+    }
+    const raf = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(raf)
+  }, [value, duration])
+  return <>{display}</>
+}
 
 export default function YearReview() {
   const { data, setProjId } = useCtx()

@@ -221,12 +221,12 @@ function SpeciesDonut({ projects, onDrill , isDark = false }) {
       textStyle: { color: EC.text(dark), fontSize: 12 },
     },
     legend: {
-      type: 'scroll', orient: 'vertical', right: 0, top: 'center',
-      textStyle: { color: EC.text2(dark), fontSize: 11 },
+      type: 'scroll', orient: 'horizontal', bottom: 0, left: 'center',
+      textStyle: { color: EC.text2(dark), fontSize: 10 },
       icon: 'roundRect', itemWidth: 8, itemHeight: 8,
     },
     series: [{
-      type: 'pie', radius: ['42%','68%'], center: ['35%','50%'],
+      type: 'pie', radius: ['38%','62%'], center: ['50%','44%'],
       avoidLabelOverlap: false,
       label: { show: false },
       emphasis: { label: { show: true, fontSize: 12, fontWeight: 700 }, scaleSize: 6 },
@@ -248,7 +248,7 @@ function SpeciesDonut({ projects, onDrill , isDark = false }) {
   }, [data, onDrill])
 
   if (!data.length) return <div style={{textAlign:'center',padding:'24px 0',color:'var(--text-3)',fontSize:13}}>No species logged yet</div>
-  return <div ref={chartRef} style={{ width:'100%', height: 180 }} />
+  return <div ref={chartRef} style={{ width:'100%', height: 220 }} />
 }
 
 
@@ -391,7 +391,7 @@ function FinishUsage({ projects, onDrill , isDark = false }) {
 
 
 // ── Wood Source Map ───────────────────────────────────────────────────────────
-function WoodSourceMap({ locations, woodStock, projectWoodSources }) {
+function WoodSourceMap({ locations, woodStock, projectWoodSources, onLocationClick }) {
   const mapRef = useRef(null)
   const mapInstance = useRef(null)
   const [expanded, setExpanded] = useState(false)
@@ -421,7 +421,11 @@ function WoodSourceMap({ locations, woodStock, projectWoodSources }) {
       const count = sourceCounts[loc.id] || 0
       const size = Math.max(24, Math.min(40, 24 + count * 4))
       const icon = L.divIcon({ className: '', html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:rgba(74,222,128,0.9);border:2px solid rgba(255,255,255,0.6);animation:markerPulse 2.4s ease-in-out infinite;display:flex;align-items:center;justify-content:center;color:#0F1E38;font-size:${count > 0 ? 11 : 9}px;font-weight:800;font-family:system-ui">${count > 0 ? count : '•'}</div>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] })
-      L.marker([loc.lat, loc.lng], { icon }).addTo(map).bindPopup(`<strong>${loc.name}</strong>${loc.address ? '<br>' + loc.address : ''}${count ? '<br>' + count + ' project' + (count > 1 ? 's' : '') : ''}`)
+      const marker = L.marker([loc.lat, loc.lng], { icon }).addTo(map)
+      marker.bindPopup(`<strong>${loc.name}</strong>${loc.address ? '<br>' + loc.address : ''}${count ? '<br>' + count + ' project' + (count > 1 ? 's' : '') + ' — click to view' : ''}`)
+      if (onLocationClick && count > 0) {
+        marker.on('click', () => { setTimeout(() => onLocationClick(loc.name), 200) })
+      }
     })
     return () => { if (mapInstance.current) { mapInstance.current.remove(); mapInstance.current = null } }
   }, [mappable, sourceCounts])
@@ -569,7 +573,7 @@ function MaterialFlow({ projects , isDark = false }) {
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 export default function Dashboard() {
-  const { data, setProjId, setTab, theme } = useCtx()
+  const { data, setProjId, setTab, navigate, theme } = useCtx()
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
   const locations = data.woodLocations || []
 
@@ -695,7 +699,7 @@ export default function Dashboard() {
           <div className="card"><div className="label-caps-sm">Species Breakdown</div><SpeciesDonut projects={data.projects} onDrill={handleDrill} isDark={theme === 'dark'} /></div>
           <div className="card"><div className="label-caps-sm">Category Heatmap</div><CategoryHeatmap projects={data.projects} categories={cats} onDrill={handleDrill} isDark={theme === 'dark'} /></div>
           <div className="card"><div className="label-caps-sm">Finish Usage</div><FinishUsage projects={data.projects} onDrill={handleDrill} isDark={theme === 'dark'} /></div>
-          <div className="card"><div className="label-caps-sm">Wood Source Map</div><WoodSourceMap locations={locations} woodStock={data.woodStock} projectWoodSources={data.projectWoodSources} /></div>
+          <div className="card"><div className="label-caps-sm">Wood Source Map</div><WoodSourceMap locations={locations} woodStock={data.woodStock} projectWoodSources={data.projectWoodSources} onLocationClick={(locName) => { setTab('projects'); window.__woodLocationFilter = locName; }} /></div>
           <div className="card" style={{gridColumn:'1/-1'}}><div className="label-caps-sm">Material Flow — Species → Category → Finish</div><MaterialFlow projects={data.projects} isDark={theme === 'dark'} /></div>
         </div>
 

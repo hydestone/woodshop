@@ -22,6 +22,11 @@ export default function Projects() {
   const [showFavOnly, setShowFavOnly] = useState(false)
   const [sortBy, setSortBy]           = useState('status')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [locationFilter, setLocationFilter] = useState(() => {
+    const v = window.__woodLocationFilter || ''
+    window.__woodLocationFilter = ''
+    return v
+  })
   const scrollRef  = useRef(null)
   const savedScroll = useRef(0)
 
@@ -127,7 +132,15 @@ export default function Projects() {
       <div ref={scrollRef} className="scroll-page" style={{ paddingBottom: 80 }}>
         <div className="page-header">
           <div className="page-header-row">
-            <h1 className="page-title">Projects</h1>
+            <div style={{ display:'flex', alignItems:'center', gap:8, minWidth:0 }}>
+              <h1 className="page-title">Projects</h1>
+              {locationFilter && (
+                <span style={{ fontSize:11, background:'var(--green-dim,rgba(22,101,52,.12))', color:'var(--green)', borderRadius:99, padding:'2px 8px', fontWeight:600, whiteSpace:'nowrap', display:'flex', alignItems:'center', gap:4 }}>
+                  📍{locationFilter}
+                  <button onClick={() => setLocationFilter('')} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--green)', fontSize:14, lineHeight:1, padding:'0 0 0 2px' }} aria-label="Clear location filter">×</button>
+                </span>
+              )}
+            </div>
           </div>
           {/* Filter + sort + favorites + table — single row */}
           <div style={{ display:'flex', gap:6, alignItems:'center', marginTop:10, flexWrap:'wrap' }}>
