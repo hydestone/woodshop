@@ -474,14 +474,34 @@ export function PhotoGrid({ photos, onEdit, showProject, projects }) {
 }
 
 // ─── PhotoCard ────────────────────────────────────────────────────────────────
-export function PhotoCard({ photo, onEdit, onOpen, showProject, projects }) {
+export function PhotoCard({ photo, onEdit, onOpen, showProject, projects, tileIndex = 0 }) {
+  const cardRef = React.useRef()
+  const onMove = React.useCallback(e => {
+    const el = cardRef.current; if (!el) return
+    const r = el.getBoundingClientRect()
+    const x = (e.clientX - r.left) / r.width  - 0.5
+    const y = (e.clientY - r.top)  / r.height - 0.5
+    el.style.transform = `perspective(600px) rotateY(${x*7}deg) rotateX(${-y*7}deg) scale(1.03)`
+    el.style.boxShadow = `${-x*8}px ${y*8}px 24px rgba(0,0,0,.18)`
+  }, [])
+  const onLeave = React.useCallback(() => {
+    const el = cardRef.current; if (!el) return
+    el.style.transform = ''
+    el.style.boxShadow = ''
+  }, [])
   const [err, setErr]           = useState(false)
   const [showEdit, setShowEdit] = useState(false)
   const proj = showProject && projects ? projects.find(p => p.id === photo.project_id) : null
   const tags = photo.tags ? photo.tags.split(',').map(t => t.trim()).filter(Boolean) : []
 
   return (
-    <div className="photo-card">
+    <div
+      ref={cardRef}
+      className="photo-card"
+      onMouseMove={onMove}
+      onMouseLeave={onLeave}
+      style={{ animationDelay: `${Math.min(tileIndex * 35, 400)}ms`, animation: 'photoEnter 380ms cubic-bezier(.34,1.1,.64,1) both', willChange: 'transform', transition: 'transform 200ms cubic-bezier(.25,.46,.45,.94), box-shadow 200ms ease' }}
+    >
       {!err ? (
         <img
           src={photo.url}
@@ -652,6 +672,43 @@ export function BeforeAfterCompare({ beforeUrl, afterUrl, label }) {
       <span style={{ position:'absolute', top:8, right:8, background:'rgba(0,0,0,.6)', color:'#fff', fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:99 }}>AFTER</span>
       {label && <div style={{ position:'absolute', bottom:8, left:0, right:0, textAlign:'center', color:'#fff', fontSize:12, fontWeight:600, textShadow:'0 1px 4px rgba(0,0,0,.6)' }}>{label}</div>}
     </div>
+  )
+}
+
+
+// ─── Count-up number animation ───────────────────────────────────────────────
+export function useCountUp(target, duration = 1200, enabled = true) {
+  const [val, setVal] = React.useState(0)
+  React.useEffect(() => {
+    if (!enabled || !target) { setVal(target); return }
+    let start = null
+    const step = ts => {
+      if (!start) start = ts
+      const progress = Math.min((ts - start) / duration, 1)
+      // ease-out cubic
+      const ease = 1 - Math.pow(1 - progress, 3)
+      setVal(Math.round(ease * target))
+      if (progress < 1) requestAnimationFrame(step)
+    }
+    const raf = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(raf)
+  }, [target, duration, enabled])
+  return val
+}
+
+// ─── Kinetic title — letter-by-letter stagger ────────────────────────────────
+export function KineticTitle({ text, className, style, tag: Tag = 'h1', delay = 0 }) {
+  return (
+    <Tag className={className} style={{ ...style, overflow: 'hidden' }}>
+      {text.split('').map((ch, i) => (
+        <span key={i} style={{
+          display: 'inline-block',
+          animation: `letterIn 400ms cubic-bezier(.34,1.56,.64,1) both`,
+          animationDelay: `${delay + i * 35}ms`,
+          whiteSpace: ch === ' ' ? 'pre' : undefined,
+        }}>{ch}</span>
+      ))}
+    </Tag>
   )
 }
 

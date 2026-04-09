@@ -130,7 +130,7 @@ export default function YearReview() {
               onClick={() => drill('projects')}
               style={{ width: '100%', background: 'var(--navy)', borderRadius: 16, padding: '28px 24px', marginBottom: 12, textAlign: 'center', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
             >
-              <div style={{ fontSize: 56, fontWeight: 800, color: 'var(--white)', lineHeight: 1 }}>{stats.projs.length}</div>
+              <div style={{ fontSize: 56, fontWeight: 800, color: 'var(--white)', lineHeight: 1 }}><HeroCount value={stats.projs.length} /></div>
               <div style={{ fontSize: 16, color: 'var(--sb-text)', marginTop: 4 }}>piece{stats.projs.length !== 1 ? 's' : ''} completed in {year}</div>
               {stats.topSpecies[0] && <div style={{ fontSize: 13, color: 'var(--accent-light)', marginTop: 8 }}>Favourite wood: {stats.topSpecies[0][0]}</div>}
               <div style={{ fontSize: 12, color: 'rgba(255,255,255,.3)', marginTop: 10 }}>Tap to see all →</div>

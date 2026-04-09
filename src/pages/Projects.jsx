@@ -571,6 +571,19 @@ export function ProjectDetail() {
             })()}
           </div>
           <div style={{ display: 'flex', gap: 4 }}>
+            <button
+              className="icon-btn"
+              onClick={() => {
+                const next = !project.is_favorite
+                mutate(d => ({ ...d, projects: d.projects.map(p => p.id === projId ? { ...p, is_favorite: next } : p) }))
+                db.toggleFavorite(projId, next).catch(e => toast(e.message, 'error'))
+                toast(next ? '⭐ Added to favorites' : 'Removed from favorites', 'success')
+              }}
+              aria-label={project.is_favorite ? 'Remove from favorites' : 'Add to favorites'}
+              title={project.is_favorite ? 'Remove from favorites' : 'Add to favorites'}
+            >
+              <IStar size={17} fill={project.is_favorite ? 'var(--yellow,#F59E0B)' : 'none'} color={project.is_favorite ? 'var(--yellow,#F59E0B)' : 'var(--text-3)'} />
+            </button>
             <button className="icon-btn" onClick={() => setShowReminder(true)} aria-label="Add reminder" title="Add to calendar / reminders">
               <IBell size={17} color="var(--accent)" />
             </button>

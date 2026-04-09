@@ -1,3 +1,4 @@
+import React from 'react'
 import { useState, useEffect, useCallback, createContext, useContext } from 'react'
 import * as db from './db.js'
 import { getSession, signOut, onAuthStateChange } from './supabase.js'
@@ -78,7 +79,7 @@ const NAV_SECTIONS = [
   {
     label: 'Admin',
     items: [
-      { id: 'settings',    label: 'Settings',           Icon: IWrench },
+      { id: 'settings',    label: 'Categories',         Icon: IWrench },
       { id: 'import',      label: 'Bulk Import',       Icon: ICamera },
     ],
   },
@@ -178,6 +179,80 @@ function QRModal({ onClose }) {
 }
 
 // ─── Root ─────────────────────────────────────────────────────────────────────
+
+// ── Particle nebula — desktop only ────────────────────────────────────────────
+function ParticleNebula({ isDark }) {
+  const canvasRef = React.useRef()
+
+  React.useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    let raf
+
+    const resize = () => {
+      canvas.width  = canvas.offsetWidth  * window.devicePixelRatio
+      canvas.height = canvas.offsetHeight * window.devicePixelRatio
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
+    }
+    resize()
+    window.addEventListener('resize', resize)
+
+    const W = () => canvas.offsetWidth
+    const H = () => canvas.offsetHeight
+
+    // Particle colours adapt to theme
+    const colours = isDark
+      ? ['rgba(139,168,208,', 'rgba(74,222,128,', 'rgba(167,139,250,', 'rgba(255,255,255,']
+      : ['rgba(29,78,216,',   'rgba(22,101,52,',  'rgba(124,58,237,',  'rgba(180,83,9,']
+
+    const particles = Array.from({ length: 38 }, (_, i) => ({
+      x: Math.random() * 100,  // percent
+      y: Math.random() * 100,
+      vx: (Math.random() - 0.5) * 0.012,
+      vy: (Math.random() - 0.5) * 0.008,
+      r: 0.6 + Math.random() * 1.4,
+      a: 0.08 + Math.random() * 0.18,
+      col: colours[i % colours.length],
+      phase: Math.random() * Math.PI * 2,
+    }))
+
+    const draw = (ts) => {
+      ctx.clearRect(0, 0, W(), H())
+      const t = ts / 1000
+      particles.forEach(p => {
+        p.x += p.vx
+        p.y += p.vy
+        if (p.x < -2) p.x = 102
+        if (p.x > 102) p.x = -2
+        if (p.y < -5) p.y = 105
+        if (p.y > 105) p.y = -5
+        // gentle breathing opacity
+        const opacity = p.a * (0.6 + 0.4 * Math.sin(t * 0.7 + p.phase))
+        ctx.beginPath()
+        ctx.arc(p.x / 100 * W(), p.y / 100 * H(), p.r, 0, Math.PI * 2)
+        ctx.fillStyle = p.col + opacity + ')'
+        ctx.fill()
+      })
+      raf = requestAnimationFrame(draw)
+    }
+
+    raf = requestAnimationFrame(draw)
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize) }
+  }, [isDark])
+
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{
+        position: 'absolute', inset: 0, width: '100%', height: '100%',
+        pointerEvents: 'none', opacity: 0.9,
+      }}
+      aria-hidden="true"
+    />
+  )
+}
+
 export default function App() {
   const [session, setSession]   = useState(null)
   const [authChecked, setAuthChecked] = useState(false)
@@ -314,13 +389,13 @@ export default function App() {
         <div className="app-wrapper">
 
           {/* ── Top bar ── */}
-          <header className="top-bar" role="banner">
+          <header className="top-bar" role="banner" style={{ position: 'relative', overflow: 'hidden' }}>
+            {window.matchMedia && window.matchMedia('(pointer: fine)').matches && <ParticleNebula isDark={theme === 'dark'} />}
             <div className="top-bar-brand">
               <img src="/New_Logo.png" alt="" aria-hidden="true" className="top-bar-logo" />
               <div className="top-bar-title">JDH <span className="top-bar-accent">WOODWORKS</span></div>
             </div>
-            {/* Single GlobalSearch instance — CSS wraps it below title on mobile */}
-            <div className="top-bar-search-wrap"><GlobalSearch /></div>
+            <div className="top-bar-search-right"><GlobalSearch /></div>
             <button
               className="theme-toggle"
               onClick={toggleTheme}
