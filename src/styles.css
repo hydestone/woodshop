@@ -1024,8 +1024,9 @@ body {
   font-family: var(--font);
   color: var(--text);
   text-align: right;
+  color-scheme: light dark;
 }
-.form-input::placeholder { color: var(--text-4); }
+.form-input::placeholder { color: var(--text-3); }
 .form-select {
   flex: 1;
   background: transparent;
@@ -1059,7 +1060,7 @@ body {
   transition: border-color 150ms;
   field-sizing: content;
 }
-.form-textarea::placeholder { color: var(--text-4); }
+.form-textarea::placeholder { color: var(--text-3); }
 .form-textarea:focus { border-color: var(--accent); }
 .form-hint { font-size: 12px; color: var(--text-3); margin-top: 6px; padding: 0 2px; }
 
@@ -1495,7 +1496,7 @@ body {
   font-family: var(--font);
   color: var(--text);
 }
-.search-input::placeholder { color: var(--text-4); }
+.search-input::placeholder { color: var(--text-3); }
 .search-results {
   position: fixed;
   max-height: 440px;
@@ -1726,7 +1727,7 @@ body {
   transition: border-color 150ms;
 }
 .calc-input:focus { border-color: var(--accent); }
-.calc-input::placeholder { color: var(--text-4); }
+.calc-input::placeholder { color: var(--text-3); }
 .calc-input-sm {
   background: var(--fill);
   border: 1px solid var(--border-2);
@@ -1742,7 +1743,7 @@ body {
   min-width: 0;
 }
 .calc-input-sm:focus { border-color: var(--accent); }
-.calc-input-sm::placeholder { color: var(--text-4); }
+.calc-input-sm::placeholder { color: var(--text-3); }
 .calc-input-sm {
   background: var(--fill);
   border: 1px solid var(--border-2);
@@ -2007,7 +2008,7 @@ body {
   transition: border-color 150ms;
 }
 .cell-input:focus { border-color: var(--accent); }
-.cell-input::placeholder { color: var(--text-4); }
+.cell-input::placeholder { color: var(--text-3); }
 
 /* ─── Calc keypad button ─────────────────────────────────────────────────── */
 .key-btn {
