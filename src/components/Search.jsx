@@ -30,9 +30,37 @@ export default function GlobalSearch() {
   const [open, setOpen]             = useState(false)
   const [cursor, setCursor]         = useState(-1)
   const [focused, setFocused]       = useState(false)
-  const inputRef    = useRef()
+  const [dropdownStyle, setDropdownStyle] = useState({})
+  const inputRef     = useRef()
   const containerRef = useRef()
-  const debounced   = useDebounce(query, 160)
+  const debounced    = useDebounce(query, 160)
+
+  // Position the dropdown using fixed coordinates — escapes all stacking contexts
+  const updateDropdownPosition = useCallback(() => {
+    if (!containerRef.current) return
+    const rect = containerRef.current.getBoundingClientRect()
+    const isMobile = window.innerWidth < 768
+    if (isMobile) {
+      setDropdownStyle({
+        position: 'fixed',
+        top: rect.bottom + 4,
+        left: 8,
+        right: 8,
+        width: 'auto',
+        zIndex: 9999,
+      })
+    } else {
+      const width = Math.max(360, rect.width)
+      const rightEdge = window.innerWidth - rect.right
+      setDropdownStyle({
+        position: 'fixed',
+        top: rect.bottom + 4,
+        right: Math.max(8, rightEdge),
+        width,
+        zIndex: 9999,
+      })
+    }
+  }, [])
 
   // Close on outside click
   useEffect(() => {
@@ -42,14 +70,17 @@ export default function GlobalSearch() {
       }
     }
     document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+    document.addEventListener('touchstart', handler)
+    return () => {
+      document.removeEventListener('mousedown', handler)
+      document.removeEventListener('touchstart', handler)
+    }
   }, [])
 
   const results = useMemo(() => {
     const q = debounced.trim().toLowerCase()
     if (q.length < 2) return []
     const hits = []
-
     const match = (...fields) => fields.some(f => f?.toLowerCase().includes(q))
 
     data.projects.forEach(p => {
@@ -94,7 +125,6 @@ export default function GlobalSearch() {
       if (match(p.caption, p.tags))
         hits.push({ type: 'Photo', title: p.caption || p.tags || 'Photo', sub: p.photo_type || '', action: () => setTab('photos') })
     })
-
     return hits.slice(0, 20)
   }, [debounced, data, setTab, navigate])
 
@@ -133,15 +163,28 @@ export default function GlobalSearch() {
           aria-label="Search all content"
           aria-expanded={showResults}
           aria-haspopup="listbox"
-          onChange={e => { setQuery(e.target.value); setOpen(true) }}
-          onFocus={() => { setFocused(true); if (query.length >= 2) setOpen(true) }}
+          onChange={e => {
+            setQuery(e.target.value)
+            setOpen(true)
+            updateDropdownPosition()
+          }}
+          onFocus={() => {
+            setFocused(true)
+            updateDropdownPosition()
+            if (query.length >= 2) setOpen(true)
+          }}
           onBlur={() => setFocused(false)}
           onKeyDown={onKeyDown}
         />
       </div>
 
       {showResults && (
-        <div className="search-results" role="listbox" aria-label="Search results">
+        <div
+          className="search-results"
+          style={dropdownStyle}
+          role="listbox"
+          aria-label="Search results"
+        >
           {results.length === 0 ? (
             <div className="search-empty">No results for "{debounced}"</div>
           ) : (

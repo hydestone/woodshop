@@ -1492,17 +1492,14 @@ body {
 }
 .search-input::placeholder { color: var(--text-4); }
 .search-results {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  width: 340px;
+  position: fixed;
   max-height: 440px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   box-shadow: var(--shadow-xl);
   overflow-y: auto;
-  z-index: 1000;
+  z-index: 9999;
   animation: fadeIn 150ms ease;
 }
 .search-results::-webkit-scrollbar { display: none; }
@@ -2269,7 +2266,7 @@ body {
   /* Mobile top bar: single row, search below */
   .top-bar {
     flex-wrap: wrap;
-    padding-top: max(env(safe-area-inset-top, 0px), 47px);
+    padding-top: env(safe-area-inset-top, 12px);
     padding-bottom: 10px;
     gap: 8px 10px;
     align-items: center;

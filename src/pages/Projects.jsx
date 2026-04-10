@@ -61,8 +61,7 @@ export default function Projects() {
       toast(`${fields.name || 'Project'} added`, 'success')
       setShowAdd(false)
       navigate('projects', proj.id)
-      navigate('projects', proj.id)
-    } catch (e) { toast(e.message, 'error') }
+          } catch (e) { toast(e.message, 'error') }
   }
 
   const categories = data.categories || []
@@ -79,6 +78,8 @@ export default function Projects() {
     if (sortBy === 'name')     s.sort((a, b) => a.name.localeCompare(b.name))
     if (sortBy === 'category') s.sort((a, b) => (a.category||'').localeCompare(b.category||''))
     if (sortBy === 'year')     s.sort((a, b) => (b.year_completed||0) - (a.year_completed||0))
+    if (sortBy === 'recent')   s.sort((a, b) => new Date(b.created_at||0) - new Date(a.created_at||0))
+    if (sortBy === 'recent')   s.sort((a, b) => new Date(b.created_at||0) - new Date(a.created_at||0))
     return s
   }, [filtered, sortBy])
 
@@ -165,6 +166,7 @@ export default function Projects() {
                 <option value="name">By Name</option>
                 <option value="category">By Category</option>
                 <option value="year">By Year</option>
+                <option value="recent">Recently Added</option>
               </select>
               <span className="filter-select-chevron" aria-hidden="true">▾</span>
             </div>
@@ -949,7 +951,7 @@ function TimeTracker({ project, onSave }) {
         </div>
       )}
 
-      {(entries.length > 0 || shopItems.length > 0) ? (
+      {entries.length > 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           {entries.slice().sort((a,b) => b.date?.localeCompare(a.date)).map(e => (
             <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12 }}>
