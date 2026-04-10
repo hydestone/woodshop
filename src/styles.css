@@ -363,7 +363,7 @@
 }
 [data-theme="dark"] .form-input,
 [data-theme="dark"] .form-select {
-  color: var(--text-2);
+  color: var(--text);
   background: transparent;
 }
 
@@ -1006,6 +1006,7 @@ body {
   padding: 12px 16px;
   border-bottom: 1px solid var(--border-2);
   min-height: 48px;
+  overflow: hidden;
 }
 .form-cell:last-child { border-bottom: none; }
 .form-label {
@@ -1021,7 +1022,7 @@ body {
   outline: none;
   font-size: 16px;
   font-family: var(--font);
-  color: var(--text-2);
+  color: var(--text);
   text-align: right;
 }
 .form-input::placeholder { color: var(--text-4); }
@@ -1032,7 +1033,10 @@ body {
   outline: none;
   font-size: 16px;
   font-family: var(--font);
-  color: var(--text-2);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text);
   text-align: right;
   appearance: none;
   -webkit-appearance: none;
@@ -2265,29 +2269,28 @@ body {
   .sidebar { display: none; }
   .scroll-page { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 8px); }
   .toast { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 10px); }
-  /* Mobile top bar: single row, search below */
+  /* Mobile top bar: single compact row */
   .top-bar {
-    flex-wrap: wrap;
-    padding-top: 12px;
-    padding-top: max(env(safe-area-inset-top), 12px);
-    padding-bottom: 10px;
-    gap: 8px 10px;
+    flex-wrap: nowrap;
+    padding-top: 8px;
+    padding-top: max(env(safe-area-inset-top), 8px);
+    padding-bottom: 8px;
+    gap: 8px;
     align-items: center;
   }
-  .top-bar-brand { flex: 1; min-width: 0; }
-  .top-bar-title { font-size: 28px; }
-  .top-bar-logo { height: 40px; width: 40px; }
-  /* Mobile search: full-width second row */
+  .top-bar-brand { flex-shrink: 1; min-width: 0; }
+  .top-bar-title { font-size: 20px; }
+  .top-bar-logo { height: 32px; width: 32px; }
+  /* Search: compact inline on mobile */
   .top-bar-search-right {
     display: block;
-    order: 3;
-    flex-basis: 100%;
-    width: 100%;
+    flex: 1;
+    min-width: 0;
+    order: 2;
   }
-  .top-bar-search-right .search-input-wrap { width: 100%; }
+  .top-bar-search-right .search-input-wrap { width: 100%; min-width: 0; }
   .top-bar-search-right .search-input-wrap.focused { width: 100%; }
-  .top-bar-search-right .search-results { width: 100%; right: 0; left: 0; }
-  .theme-toggle { order: 2; }
+  .theme-toggle { order: 3; flex-shrink: 0; }
 }
 
 /* ─── Keyframes ──────────────────────────────────────────────────────────── */

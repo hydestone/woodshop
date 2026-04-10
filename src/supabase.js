@@ -16,9 +16,17 @@ export async function getSession() {
   return session
 }
 
+// Cache user ID from the existing session — avoids network round-trip on every write
+let _cachedUserId = null
+supabase.auth.onAuthStateChange((_event, session) => {
+  _cachedUserId = session?.user?.id || null
+})
+
 export async function getCurrentUserId() {
-  const { data: { user } } = await supabase.auth.getUser()
-  return user?.id || null
+  if (_cachedUserId) return _cachedUserId
+  const { data: { session } } = await supabase.auth.getSession()
+  _cachedUserId = session?.user?.id || null
+  return _cachedUserId
 }
 
 export async function signOut() {
