@@ -909,6 +909,7 @@ body {
   position: fixed;
   bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 16px);
   right: 20px;
+  isolation: isolate;
   width: 52px;
   height: 52px;
   border-radius: 26px;
@@ -2238,6 +2239,7 @@ body {
 @media (min-width: 768px) {
   .top-bar { flex-wrap: nowrap; align-items: center; }
   .top-bar-brand { flex: 1; }
+  .fab { bottom: 24px; }
   .top-bar-search-right {
     display: block;
     position: relative;
@@ -2266,7 +2268,8 @@ body {
   /* Mobile top bar: single row, search below */
   .top-bar {
     flex-wrap: wrap;
-    padding-top: env(safe-area-inset-top, 12px);
+    padding-top: 12px;
+    padding-top: max(env(safe-area-inset-top), 12px);
     padding-bottom: 10px;
     gap: 8px 10px;
     align-items: center;

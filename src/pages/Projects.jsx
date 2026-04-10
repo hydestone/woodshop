@@ -131,8 +131,8 @@ export default function Projects() {
   }, [mutate, data.projects, toast])
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
-      <div ref={scrollRef} className="scroll-page" style={{ paddingBottom: 80 }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <div ref={scrollRef} className="scroll-page" style={{ paddingBottom: 100 }}>
         <div className="page-header">
           <div className="page-header-row">
             <div style={{ display:'flex', alignItems:'center', gap:8, minWidth:0 }}>
@@ -1246,8 +1246,8 @@ function PhotoPane({ projId, type, showAll, inline }) {
   }, [mutate, data.projects, toast])
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
-      <div ref={scrollRef} className="scroll-page" style={{ paddingBottom: 80 }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <div ref={scrollRef} className="scroll-page" style={{ paddingBottom: 100 }}>
         <DropZone onFiles={handleFiles} uploading={uploading} />
         {photos.length > 0
           ? <PhotoGrid photos={photos} onEdit={edit} />
