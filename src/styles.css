@@ -346,9 +346,9 @@
   background: var(--surface);
   border-color: var(--border-2);
 }
-[data-theme="dark"] .form-input,
+.form-input,
 .form-select {
-  color: #000000;
+  color: var(--text);
   background: transparent;
 }
 
@@ -990,10 +990,10 @@ body {
   outline: none;
   font-size: 16px;
   font-family: var(--font);
-  color: #000000;
+  color: var(--text);
   text-align: right;
 }
-.form-input::placeholder { color: #555555; }
+.form-input::placeholder { color: var(--text-3); }
 .form-select {
   flex: 1;
   background: transparent;
@@ -1004,7 +1004,7 @@ body {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #000000;
+  color: var(--text);
   text-align: right;
   appearance: none;
   -webkit-appearance: none;
