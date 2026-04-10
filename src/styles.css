@@ -347,7 +347,7 @@
   border-color: var(--border-2);
 }
 [data-theme="dark"] .form-input,
-[data-theme="dark"] .form-select {
+.form-select {
   color: var(--text);
   background: transparent;
 }
@@ -992,7 +992,6 @@ body {
   font-family: var(--font);
   color: var(--text);
   text-align: right;
-  color-scheme: light dark;
 }
 .form-input::placeholder { color: var(--text-3); }
 .form-select {
