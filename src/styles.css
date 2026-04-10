@@ -990,7 +990,7 @@ body {
   outline: none;
   font-size: 16px;
   font-family: var(--font);
-  color: var(--text);
+  color: #000000;
   text-align: right;
 }
 .form-input::placeholder { color: #555555; }
@@ -1004,7 +1004,7 @@ body {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: var(--text);
+  color: #000000;
   text-align: right;
   appearance: none;
   -webkit-appearance: none;
