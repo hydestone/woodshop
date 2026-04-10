@@ -1,5 +1,5 @@
 import React from 'react'
-import { useState, useEffect, useCallback, createContext, useContext } from 'react'
+import { useState, useEffect, useCallback, createContext, useContext, lazy, Suspense } from 'react'
 import * as db from './db.js'
 import { getSession, signOut, onAuthStateChange } from './supabase.js'
 import Auth from './pages/Auth.jsx'
