@@ -1193,7 +1193,7 @@ function PhotoPane({ projId, type, showAll, inline }) {
   }
 
   if (inline) return (
-    <div style={{ position: 'relative' }}>
+    <div>
       <DropZone onFiles={handleFiles} uploading={uploading} />
       <PhotoGrid photos={photos} onEdit={edit} />
       {photos.length === 0 && (
