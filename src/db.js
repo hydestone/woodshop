@@ -1,4 +1,4 @@
-import { supabase, BUCKET, photoUrl, photoThumb, getCurrentUserId } from './supabase.js'
+import { supabase, BUCKET, photoUrl, getCurrentUserId } from './supabase.js'
 
 export const uid = () => Math.random().toString(36).slice(2, 10)
 export const isoNow = () => new Date().toISOString()
@@ -67,7 +67,7 @@ export async function loadAll() {
     coats,
     maintenance,
     shopping,
-    photos: photos.map(p => ({ ...p, url: photoUrl(p.storage_path), thumbUrl: photoThumb(p.storage_path, 400) })),
+    photos: photos.map(p => ({ ...p, url: photoUrl(p.storage_path) })),
     woodStock,
     brainstorming,
     finishProducts,
