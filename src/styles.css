@@ -1275,11 +1275,14 @@ body {
   position: relative;
   background: var(--fill);
   cursor: pointer;
+  aspect-ratio: 1 / 1;
 }
 /* Clip the photo image itself to the card radius, not the whole card */
 .photo-card img {
+  position: absolute;
+  inset: 0;
   width: 100%;
-  aspect-ratio: 1;
+  height: 100%;
   object-fit: cover;
   display: block;
   transition: transform 200ms ease;
