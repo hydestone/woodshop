@@ -13,7 +13,7 @@ import {
 } from './components/Shared.jsx'
 
 // Pages
-import Dashboard        from './pages/Dashboard.jsx'
+const Dashboard = lazy(() => import('./pages/Dashboard.jsx'))
 import Projects, { ProjectDetail } from './pages/Projects.jsx'
 import Shopping         from './pages/Shopping.jsx'
 import Maintenance      from './pages/Maintenance.jsx'
@@ -571,7 +571,7 @@ export default function App() {
                 <ProjectDetail />
               ) : (
                 <>
-                  {tab === 'home'        && <Dashboard />}
+                  {tab === 'home'        && <Suspense fallback={<div className="loading-skeleton-dashboard" />}><Dashboard /></Suspense>}
                   {tab === 'projects'    && <Projects />}
                   {tab === 'shopping'    && <Shopping />}
                   {tab === 'maintenance' && <Maintenance />}

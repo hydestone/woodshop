@@ -39,10 +39,19 @@ export function onAuthStateChange(callback) {
   })
 }
 
-export function photoUrl(storagePath) {
+export function photoUrl(storagePath, opts = {}) {
   if (!storagePath) return null
-  const { data } = supabase.storage.from(BUCKET).getPublicUrl(storagePath)
+  const { data } = supabase.storage.from(BUCKET).getPublicUrl(storagePath, {
+    transform: opts.thumb
+      ? { width: opts.width || 400, quality: 75, format: 'origin' }
+      : undefined
+  })
   return data.publicUrl
+}
+
+// Thumbnail URL — used in grids (smaller, faster)
+export function photoThumb(storagePath, width = 400) {
+  return photoUrl(storagePath, { thumb: true, width })
 }
 
 export function addToGoogleCalendar({ title, start, end, description }) {

@@ -1,4 +1,4 @@
-import { supabase, BUCKET, photoUrl, getCurrentUserId } from './supabase.js'
+import { supabase, BUCKET, photoUrl, photoThumb, getCurrentUserId } from './supabase.js'
 
 export const uid = () => Math.random().toString(36).slice(2, 10)
 export const isoNow = () => new Date().toISOString()
@@ -6,6 +6,32 @@ export const isoNow = () => new Date().toISOString()
 // Returns current authenticated user ID - null if not logged in
 // Used to stamp user_id on all writes
 export const getUserId = () => getCurrentUserId()
+
+
+// ── Session cache for rarely-changing reference tables ───────────────────────
+const CACHE_TTL_MS = 10 * 60 * 1000 // 10 minutes
+
+function cacheGet(key) {
+  try {
+    const item = sessionStorage.getItem('jdh_cache_' + key)
+    if (!item) return null
+    const { ts, data } = JSON.parse(item)
+    if (Date.now() - ts > CACHE_TTL_MS) { sessionStorage.removeItem('jdh_cache_' + key); return null }
+    return data
+  } catch { return null }
+}
+
+function cacheSet(key, data) {
+  try { sessionStorage.setItem('jdh_cache_' + key, JSON.stringify({ ts: Date.now(), data })) } catch {}
+}
+
+async function safeWithCache(key, promise, fallback = []) {
+  const cached = cacheGet(key)
+  if (cached) return cached
+  const result = await promise.then(r => r.data ?? fallback).catch(() => fallback)
+  if (result.length) cacheSet(key, result)
+  return result
+}
 
 async function q(promise) {
   const { data, error } = await promise
@@ -29,11 +55,11 @@ export async function loadAll() {
     safe(supabase.from('finish_products').select('*').order('name')),
     safe(supabase.from('resources').select('*').order('created_at', { ascending: false })),
     safe(supabase.from('shop_improvements').select('*').order('created_at')),
-    safe(supabase.from('categories').select('*').eq('type', 'project').order('name')),
-    safe(supabase.from('wood_locations').select('*').order('name')),
+    safeWithCache('categories', supabase.from('categories').select('*').eq('type', 'project').order('name')),
+    safeWithCache('wood_locations', supabase.from('wood_locations').select('*').order('name')),
     safe(supabase.from('project_wood_sources').select('*')),
-    safe(supabase.from('species').select('*').order('name')),
-    safe(supabase.from('finishes').select('*').order('name')),
+    safeWithCache('species', supabase.from('species').select('*').order('name')),
+    safeWithCache('finishes', supabase.from('finishes').select('*').order('name')),
   ])
   return {
     projects,
@@ -41,7 +67,7 @@ export async function loadAll() {
     coats,
     maintenance,
     shopping,
-    photos: photos.map(p => ({ ...p, url: photoUrl(p.storage_path) })),
+    photos: photos.map(p => ({ ...p, url: photoUrl(p.storage_path), thumbUrl: photoThumb(p.storage_path, 400) })),
     woodStock,
     brainstorming,
     finishProducts,
@@ -238,25 +264,31 @@ export async function deleteShopImprovement(id) {
 
 // ── Categories ────────────────────────────────────────────────────────────────
 export async function updateCategory(id, name) {
+  try { sessionStorage.removeItem('jdh_cache_categories') } catch {}
   return q(supabase.from('categories').update({ name }).eq('id', id).select().single())
 }
 export async function addCategory(name) {
   const user_id = await getCurrentUserId()
+  try { sessionStorage.removeItem('jdh_cache_categories') } catch {}
   return q(supabase.from('categories').insert({ id: uid(), name, type: 'project', created_at: isoNow(), user_id }).select().single())
 }
 export async function deleteCategory(id) {
+  try { sessionStorage.removeItem('jdh_cache_categories') } catch {}
   return q(supabase.from('categories').delete().eq('id', id))
 }
 
 // ── Wood Locations ────────────────────────────────────────────────────────────
 export async function addWoodLocation(fields) {
   const user_id = await getCurrentUserId()
+  try { sessionStorage.removeItem('jdh_cache_wood_locations') } catch {}
   return q(supabase.from('wood_locations').insert({ id: uid(), ...fields, created_at: isoNow(), user_id }).select().single())
 }
 export async function updateWoodLocation(id, fields) {
+  try { sessionStorage.removeItem('jdh_cache_wood_locations') } catch {}
   return q(supabase.from('wood_locations').update(fields).eq('id', id).select().single())
 }
 export async function deleteWoodLocation(id) {
+  try { sessionStorage.removeItem('jdh_cache_wood_locations') } catch {}
   return q(supabase.from('wood_locations').delete().eq('id', id))
 }
 
@@ -276,24 +308,30 @@ export async function removeProjectWoodSources(projectId) {
 // ── Species ───────────────────────────────────────────────────────────────────
 export async function addSpecies(name) {
   const user_id = await getCurrentUserId()
+  try { sessionStorage.removeItem('jdh_cache_species') } catch {}
   return q(supabase.from('species').insert({ id: uid(), name, created_at: isoNow(), user_id }).select().single())
 }
 export async function updateSpecies(id, name) {
+  try { sessionStorage.removeItem('jdh_cache_species') } catch {}
   return q(supabase.from('species').update({ name }).eq('id', id).select().single())
 }
 export async function deleteSpecies(id) {
+  try { sessionStorage.removeItem('jdh_cache_species') } catch {}
   return q(supabase.from('species').delete().eq('id', id))
 }
 
 // ── Finishes ──────────────────────────────────────────────────────────────────
 export async function addFinish(name) {
   const user_id = await getCurrentUserId()
+  try { sessionStorage.removeItem('jdh_cache_finishes') } catch {}
   return q(supabase.from('finishes').insert({ id: uid(), name, created_at: isoNow(), user_id }).select().single())
 }
 export async function updateFinish(id, name) {
+  try { sessionStorage.removeItem('jdh_cache_finishes') } catch {}
   return q(supabase.from('finishes').update({ name }).eq('id', id).select().single())
 }
 export async function deleteFinish(id) {
+  try { sessionStorage.removeItem('jdh_cache_finishes') } catch {}
   return q(supabase.from('finishes').delete().eq('id', id))
 }
 

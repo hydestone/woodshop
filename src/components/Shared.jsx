@@ -509,7 +509,7 @@ export function PhotoCard({ photo, onEdit, onOpen, showProject, projects, tileIn
     >
       {!err ? (
         <img
-          src={photo.url}
+          src={photo.thumbUrl || photo.url}
           alt={photo.caption || 'Workshop photo'}
           onError={() => setErr(true)}
           onClick={onOpen}

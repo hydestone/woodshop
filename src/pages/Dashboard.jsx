@@ -469,23 +469,32 @@ function WoodSourceMap({ locations, woodStock, projectWoodSources, onLocationCli
 
 
 // ── ECharts hook ──────────────────────────────────────────────────────────────
+// Shared debounced ResizeObserver — one observer for all charts
+const _chartRefs = new Set()
+let _roTimer = null
+const _ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => {
+  clearTimeout(_roTimer)
+  _roTimer = setTimeout(() => {
+    _chartRefs.forEach(el => {
+      const c = echarts.getInstanceByDom(el)
+      if (c) c.resize()
+    })
+  }, 150)
+}) : null
+
 function useECharts(ref, getOption, deps, isDark) {
   useEffect(() => {
     if (!ref.current) return
     let chart = echarts.getInstanceByDom(ref.current) ||
                 echarts.init(ref.current, null, { renderer: 'svg' })
 
-    const applyTheme = (dark) => {
-      if (!chart) return
-      chart.setOption(getOption(dark), { notMerge: true })
-      setTimeout(() => chart?.resize(), 50)
-    }
-    applyTheme(isDark)
+    chart.setOption(getOption(isDark), { notMerge: true })
 
-    const onResize = () => chart?.resize()
-    window.addEventListener('resize', onResize)
+    // Register with shared observer
+    if (_ro) { _ro.observe(ref.current); _chartRefs.add(ref.current) }
+
     return () => {
-      window.removeEventListener('resize', onResize)
+      if (_ro && ref.current) { _ro.unobserve(ref.current); _chartRefs.delete(ref.current) }
       chart?.dispose()
       chart = null
     }
