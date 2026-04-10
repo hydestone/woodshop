@@ -475,7 +475,7 @@ export default function App() {
         <div className="app-wrapper">
 
           {/* ── Top bar ── */}
-          <header className="top-bar" role="banner" style={{ position: 'relative', overflow: 'hidden' }}>
+          <header className="top-bar" role="banner" style={{ position: 'relative' }}>
             {window.matchMedia && window.matchMedia('(pointer: fine)').matches && <ParticleNebula isDark={theme === 'dark'} />}
             <div className="top-bar-brand">
               <img src="/New_Logo.png" alt="" aria-hidden="true" className="top-bar-logo" />

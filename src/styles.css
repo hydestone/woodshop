@@ -46,9 +46,14 @@
 }
 
 /* Ensure content sits above the atmospheric layer */
-.app, .sidebar, .top-bar, .main-area, .tabbar {
+.app, .sidebar, .main-area, .tabbar {
   position: relative;
   z-index: 1;
+}
+/* top-bar must sit above main-area so search dropdown overflows above page content */
+.top-bar {
+  position: relative;
+  z-index: 20;
 }
 
 
@@ -183,6 +188,16 @@
   .proj-header-controls .filter-select-wrap { flex-shrink: 0; }
   .proj-header-controls .filter-select { font-size: 11px; padding: 4px 20px 4px 7px; }
   .proj-header-controls .icon-btn { flex-shrink: 0; width: 30px; height: 30px; }
+}
+
+/* ─── Particle nebula canvas clipped to navbar ──────────────────────────────── */
+.top-bar canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  clip-path: inset(0);
 }
 
 /* ─── Reset ──────────────────────────────────────────────────────────────── */
@@ -674,8 +689,10 @@ body {
 }
 /* Override for pages that set their own padding */
 .scroll-page[style*="paddingBottom"] { padding-bottom: unset; }
-.scroll-page::-webkit-scrollbar { width: 5px; }
-.scroll-page::-webkit-scrollbar-thumb { background: rgba(26,18,8,.12); border-radius: 3px; }
+.scroll-page::-webkit-scrollbar { width: 4px; }
+.scroll-page::-webkit-scrollbar-track { background: transparent; }
+.scroll-page::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+.scroll-page { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
 
 /* ─── Tab bar (mobile) ───────────────────────────────────────────────────── */
 .tabbar {
@@ -1281,10 +1298,19 @@ body {
 }
 .photo-card {
   border-radius: var(--r-md);
-  overflow: hidden;
+  overflow: visible;
   position: relative;
   background: var(--fill);
   cursor: pointer;
+}
+/* Clip the photo image itself to the card radius, not the whole card */
+.photo-card > img {
+  border-radius: var(--r-md);
+  overflow: hidden;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .photo-card img {
   width: 100%;
@@ -2300,3 +2326,10 @@ body {
 
 /* Table view toggle — desktop only */
 @media (min-width: 768px) { #table-toggle-btn { display: inline-flex !important; } }
+
+/* ─── Save button dimmed when disabled / inactive ───────────────────────────── */
+.sheet-save:disabled,
+.btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
