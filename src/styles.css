@@ -1280,7 +1280,7 @@ body {
 .photo-card img {
   width: 100%;
   aspect-ratio: 1;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
   transition: transform 200ms ease;
 }
