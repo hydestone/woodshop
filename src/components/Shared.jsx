@@ -375,7 +375,7 @@ export function Lightbox({ photos, index, onClose }) {
     <div
       ref={containerRef}
       role="dialog"
-      aria-label="Photo viewer"
+      aria-label={`Photo ${cur + 1} of ${photos.length}`}
       aria-modal="true"
       style={{ position: 'fixed', inset: 0, background: 'rgba(26,18,8,.96)', zIndex: 200, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', cursor: scale > 1 ? 'grab' : 'default', touchAction: 'none' }}
       onClick={e => { if (e.target === e.currentTarget && scale === 1) onClose() }}
@@ -516,7 +516,7 @@ export function PhotoCard({ photo, onEdit, onOpen, showProject, projects, tileIn
       className="photo-card"
       onMouseMove={onMove}
       onMouseLeave={onLeave}
-      style={{ animationDelay: `${Math.min(tileIndex * 35, 400)}ms`, animation: 'photoEnter 380ms cubic-bezier(.34,1.1,.64,1) both', willChange: 'transform', transition: 'transform 200ms cubic-bezier(.25,.46,.45,.94), box-shadow 200ms ease' }}
+      style={{ animationDelay: `${Math.min(tileIndex * 35, 400)}ms`, animation: 'photoEnter 380ms cubic-bezier(.34,1.1,.64,1) both', transition: 'transform 200ms cubic-bezier(.25,.46,.45,.94), box-shadow 200ms ease' }}
     >
       {!err ? (
         <img

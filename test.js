@@ -21,7 +21,7 @@ try {
 
 const SUPABASE_URL  = env.VITE_SUPABASE_URL  || process.env.VITE_SUPABASE_URL
 const SUPABASE_KEY  = env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
-const TEST_EMAIL    = env.TEST_EMAIL    || process.env.TEST_EMAIL    || 'johnhyde23@gmail.com'
+const TEST_EMAIL    = env.TEST_EMAIL    || process.env.TEST_EMAIL    || ''
 const TEST_PASSWORD = env.TEST_PASSWORD || process.env.TEST_PASSWORD || ''
 
 if (!SUPABASE_URL || !SUPABASE_KEY) {

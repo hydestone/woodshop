@@ -92,7 +92,7 @@ export default function Inspiration() {
       </button>
 
       {showTag && (
-        <Sheet title="Add to Inspiration" onClose={() => { setShowTag(false); setPendingFiles([]) }} onSave={async () => {}}>
+        <Sheet title="Add to Inspiration" onClose={() => { setShowTag(false); setPendingFiles([]) }}>
           <InspirationTagBody count={pendingFiles.length} onSave={doUpload} />
         </Sheet>
       )}
