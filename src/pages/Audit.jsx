@@ -32,8 +32,8 @@ function Cell({ value, onSave, type = 'text', options, missing }) {
 
   if (type === 'select') return (
     <select autoFocus className="form-select" style={{ fontSize: 13, padding: '3px 6px', minWidth: 100 }}
-      value={val} onChange={e => setVal(e.target.value)}
-      onBlur={commit}>
+      value={val} onChange={e => { setVal(e.target.value); setEditing(false); if (e.target.value !== (value || '')) onSave(e.target.value) }}
+      onBlur={() => setEditing(false)}>
       <option value="">—</option>
       {options.map(o => <option key={o} value={o}>{o}</option>)}
     </select>
