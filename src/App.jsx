@@ -1,7 +1,7 @@
 import React from 'react'
 import { useState, useEffect, useCallback, createContext, useContext, lazy, Suspense } from 'react'
 import * as db from './db.js'
-import { getSession, signOut, onAuthStateChange } from './supabase.js'
+import { supabase, getSession, signOut, onAuthStateChange } from './supabase.js'
 import Auth from './pages/Auth.jsx'
 import { ToastProvider } from './components/Toast.jsx'
 import GlobalSearch from './components/Search.jsx'
@@ -266,6 +266,143 @@ function QRModal({ onClose }) {
   )
 }
 
+// ── Set Password Screen (for invited users) ──────────────────────────────────
+function SetPasswordScreen({ session, onComplete }) {
+  const [displayName, setDisplayName] = useState('')
+  const [pw, setPw]           = useState('')
+  const [pw2, setPw2]         = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError]     = useState(null)
+
+  const handleSubmit = async e => {
+    e.preventDefault()
+    if (!displayName.trim()) { setError('Please enter your name'); return }
+    if (pw.length < 6) { setError('Password must be at least 6 characters'); return }
+    if (pw !== pw2) { setError('Passwords do not match'); return }
+    setLoading(true)
+    setError(null)
+    const { error: err } = await supabase.auth.updateUser({
+      password: pw,
+      data: { display_name: displayName.trim() }
+    })
+    setLoading(false)
+    if (err) {
+      setError(err.message)
+    } else {
+      onComplete()
+    }
+  }
+
+  const inputStyle = {
+    width: '100%', padding: '10px 14px', fontSize: 15,
+    border: '1px solid #E2E8F0', borderRadius: 8,
+    fontFamily: 'inherit', outline: 'none',
+    background: '#fff', color: '#0F172A',
+  }
+
+  return (
+    <div style={{
+      height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'linear-gradient(rgba(15,30,56,.82), rgba(15,30,56,.88)), url(/shavings.jpg) center/cover no-repeat',
+    }}>
+      <div style={{
+        background: 'rgba(255,255,255,.97)', borderRadius: 16, padding: '40px 36px',
+        width: '100%', maxWidth: 400,
+        boxShadow: '0 8px 40px rgba(0,0,0,.25)',
+        backdropFilter: 'blur(8px)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
+          <svg width="40" height="40" viewBox="0 0 80 72" fill="none">
+            <path d="M10 52 L28 24 L40 38 L52 18 L70 52 Z" fill="#2D5A3D" opacity="0.85"/>
+            <path d="M10 52 L28 24 L40 38" fill="#1C3A2A"/>
+            <path d="M15 60 Q40 52 65 60" stroke="#4A7A5A" strokeWidth="0.9" fill="none" opacity="0.6"/>
+            <path d="M12 65 Q40 57 68 65" stroke="#4A7A5A" strokeWidth="0.9" fill="none" opacity="0.45"/>
+            <path d="M10 70 Q40 62 70 70" stroke="#4A7A5A" strokeWidth="0.9" fill="none" opacity="0.3"/>
+          </svg>
+          <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-.3px', color: '#1a1a1a' }}>
+            JDH <span style={{ color: '#2D5A3D' }}>WOODWORKS</span>
+          </div>
+        </div>
+
+        <div style={{ fontSize: 32, marginBottom: 8 }}>👋</div>
+        <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4, color: '#0F172A' }}>Welcome!</h1>
+        <p style={{ fontSize: 14, color: '#64748B', marginBottom: 24 }}>
+          Set a password to finish setting up your account.
+          {session?.user?.email && (
+            <span style={{ display: 'block', marginTop: 4, fontWeight: 600, color: '#374151' }}>{session.user.email}</span>
+          )}
+        </p>
+
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
+              Your name
+            </label>
+            <input
+              type="text" value={displayName} onChange={e => setDisplayName(e.target.value)}
+              placeholder="John Hyde"
+              autoComplete="name" autoFocus required
+              style={inputStyle}
+              onFocus={e => e.target.style.borderColor = '#2D5A3D'}
+              onBlur={e => e.target.style.borderColor = '#E2E8F0'}
+            />
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
+              Password
+            </label>
+            <input
+              type="password" value={pw} onChange={e => setPw(e.target.value)}
+              placeholder="At least 6 characters"
+              autoComplete="new-password" autoFocus required
+              style={inputStyle}
+              onFocus={e => e.target.style.borderColor = '#2D5A3D'}
+              onBlur={e => e.target.style.borderColor = '#E2E8F0'}
+            />
+          </div>
+
+          <div style={{ marginBottom: 24 }}>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
+              Confirm password
+            </label>
+            <input
+              type="password" value={pw2} onChange={e => setPw2(e.target.value)}
+              placeholder="Type it again"
+              autoComplete="new-password" required
+              style={inputStyle}
+              onFocus={e => e.target.style.borderColor = '#2D5A3D'}
+              onBlur={e => e.target.style.borderColor = '#E2E8F0'}
+            />
+          </div>
+
+          {error && (
+            <div style={{
+              background: '#FEE2E2', color: '#B91C1C', borderRadius: 8,
+              padding: '10px 14px', fontSize: 13, marginBottom: 16,
+            }}>{error}</div>
+          )}
+
+          <button type="submit" disabled={loading} style={{
+            width: '100%', padding: '12px', fontSize: 15, fontWeight: 700,
+            background: loading ? '#9CA3AF' : '#2D5A3D',
+            color: '#fff', border: 'none', borderRadius: 8,
+            cursor: loading ? 'not-allowed' : 'pointer',
+            fontFamily: 'inherit', letterSpacing: '.2px',
+            transition: 'background 150ms',
+          }}>
+            {loading ? 'Setting up…' : 'Set Password & Continue'}
+          </button>
+        </form>
+
+        <p style={{ fontSize: 12, color: '#94A3B8', marginTop: 16, textAlign: 'center' }}>
+          You'll use this email and password to sign in next time.
+        </p>
+      </div>
+    </div>
+  )
+}
+
 // ─── Root ─────────────────────────────────────────────────────────────────────
 
 // ── Particle nebula — desktop only ────────────────────────────────────────────
@@ -295,13 +432,13 @@ function ParticleNebula({ isDark }) {
       ? ['rgba(139,168,208,', 'rgba(74,222,128,', 'rgba(167,139,250,', 'rgba(255,255,255,']
       : ['rgba(29,78,216,',   'rgba(22,101,52,',  'rgba(124,58,237,',  'rgba(180,83,9,']
 
-    const particles = Array.from({ length: 110 }, (_, i) => ({
+    const particles = Array.from({ length: 38 }, (_, i) => ({
       x: Math.random() * 100,  // percent
       y: Math.random() * 100,
-      vx: (Math.random() - 0.5) * 0.015,
-      vy: (Math.random() - 0.5) * 0.01,
-      r: 0.4 + Math.random() * 1.8,
-      a: 0.12 + Math.random() * 0.28,
+      vx: (Math.random() - 0.5) * 0.012,
+      vy: (Math.random() - 0.5) * 0.008,
+      r: 0.6 + Math.random() * 1.4,
+      a: 0.08 + Math.random() * 0.18,
       col: colours[i % colours.length],
       phase: Math.random() * Math.PI * 2,
     }))
@@ -318,7 +455,7 @@ function ParticleNebula({ isDark }) {
         if (p.y < -5) p.y = 105
         if (p.y > 105) p.y = -5
         // gentle breathing opacity
-        const opacity = p.a * (0.15 + 0.85 * Math.sin(t * 1.2 + p.phase))
+        const opacity = p.a * (0.6 + 0.4 * Math.sin(t * 0.7 + p.phase))
         ctx.beginPath()
         ctx.arc(p.x / 100 * W(), p.y / 100 * H(), p.r, 0, Math.PI * 2)
         ctx.fillStyle = p.col + opacity + ')'
@@ -367,6 +504,7 @@ export default function App() {
   const [showFeedback, setShowFeedback] = useState(false)
   const [isOffline, setIsOffline] = useState(!navigator.onLine)
   const { showTutorial, dismissTutorial, launchTutorial } = useTutorialCheck()
+  const [needsPassword, setNeedsPassword] = useState(false)
 
   useEffect(() => {
     const goOffline = () => setIsOffline(true)
@@ -386,15 +524,25 @@ export default function App() {
       setSession(s)
       setAuthChecked(true)
     })
-    // Listen for auth changes (login / logout)
-    const { data: { subscription } } = onAuthStateChange(s => {
+    // Listen for auth changes (login / logout / invite)
+    const { data: { subscription } } = onAuthStateChange((s, event) => {
       setSession(s)
+      // Detect invite or recovery — user needs to set password
+      if (s && (event === 'PASSWORD_RECOVERY' || window.location.hash.includes('type=invite') || window.location.hash.includes('type=recovery'))) {
+        setNeedsPassword(true)
+        // Clean the URL hash so it doesn't re-trigger
+        window.history.replaceState({}, '', window.location.pathname)
+      }
       if (!s) {
         // Logged out — clear data
         setData(null)
         setLoading(true)
       }
     })
+    // Also check hash on initial load
+    if (window.location.hash.includes('type=invite') || window.location.hash.includes('type=recovery')) {
+      setNeedsPassword(true)
+    }
     return () => subscription.unsubscribe()
   }, [])
 
@@ -438,6 +586,14 @@ export default function App() {
   )
 
   if (!session) return <Auth onLogin={s => setSession(s)} />
+
+  // ── Invite: set password ────────────────────────────────────────────────
+  if (needsPassword) return (
+    <SetPasswordScreen
+      session={session}
+      onComplete={() => { setNeedsPassword(false); window.location.hash = '' }}
+    />
+  )
 
   // ── Loading ────────────────────────────────────────────────────────────────
   if (loading) return (
