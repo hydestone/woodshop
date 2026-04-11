@@ -123,7 +123,7 @@ export function Sheet({ title, onClose, onSave, saveLabel = 'Save', children }) 
     return () => window.removeEventListener('keydown', handler)
   }, [onClose, handleSave])
 
-  return (
+  return createPortal(
     <div
       className="overlay"
       role="dialog"
@@ -145,7 +145,8 @@ export function Sheet({ title, onClose, onSave, saveLabel = 'Save', children }) 
         </div>
         <div className="sheet-body">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 
