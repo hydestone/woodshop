@@ -371,7 +371,7 @@
   background: rgba(0,0,0,.55);
   z-index: 500;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
 }
 
@@ -902,18 +902,20 @@ body {
   background: rgba(26,18,8,.45);
   z-index: 100;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
+  justify-content: center;
   animation: fadeIn 180ms ease;
 }
 .sheet {
   width: 100%;
+  max-width: 520px;
   max-height: 92dvh;
   background: var(--bg);
-  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  border-radius: var(--r-lg);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: sheetUp 240ms cubic-bezier(.32,.72,0,1);
+  animation: sheetIn 240ms cubic-bezier(.32,.72,0,1);
   padding-bottom: var(--safe-b);
 }
 .sheet-handle {
@@ -2088,6 +2090,10 @@ body {
 @keyframes sheetUp {
   from { transform: translateY(100%); }
   to   { transform: translateY(0); }
+}
+@keyframes sheetIn {
+  from { opacity: 0; transform: scale(.96); }
+  to   { opacity: 1; transform: scale(1); }
 }
 @keyframes spin     { to { transform: rotate(360deg) } }
 @keyframes toastIn  { from { transform: translateX(-50%) translateY(8px); opacity: 0 } to { transform: translateX(-50%) translateY(0); opacity: 1 } }
