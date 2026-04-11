@@ -9,6 +9,7 @@ export default function AllPhotos() {
   const toast = useToast()
   const [uploading, setUploading]       = useState(false)
   const [filter, setFilter]             = useState('all')
+  const [sortBy, setSortBy]             = useState('date')
   const [pendingFiles, setPendingFiles] = useState([])
   const [showTag, setShowTag]           = useState(false)
   const fileRef = useRef()
@@ -69,16 +70,22 @@ export default function AllPhotos() {
         ? data.photos.filter(p => projMap[p.project_id]?.category === filter.slice(4))
         : data.photos.filter(p => p.tags?.split(',').map(t => t.trim()).includes(filter))
 
-    // Always sort by project category, then by project name within category
     photos = photos.slice().sort((a, b) => {
-      const projA = projMap[a.project_id]
-      const projB = projMap[b.project_id]
-      const catA = projA?.category || 'zzz'  // uncategorised sorts last
-      const catB = projB?.category || 'zzz'
-      if (catA !== catB) return catA.localeCompare(catB)
-      const nameA = projA?.name || ''
-      const nameB = projB?.name || ''
-      return nameA.localeCompare(nameB)
+      if (sortBy === 'date') return new Date(b.created_at || 0) - new Date(a.created_at || 0)
+      if (sortBy === 'project') {
+        const projA = projMap[a.project_id]
+        const projB = projMap[b.project_id]
+        const catA = projA?.category || 'zzz'
+        const catB = projB?.category || 'zzz'
+        if (catA !== catB) return catA.localeCompare(catB)
+        return (projA?.name || '').localeCompare(projB?.name || '')
+      }
+      if (sortBy === 'tag') {
+        const tagA = (a.tags || '').split(',')[0]?.trim() || 'zzz'
+        const tagB = (b.tags || '').split(',')[0]?.trim() || 'zzz'
+        return tagA.localeCompare(tagB)
+      }
+      return 0
     })
     return photos
   }
@@ -92,7 +99,7 @@ export default function AllPhotos() {
             <span style={{ fontSize: 13, color: 'var(--text-3)' }}>{data.photos.length} photo{data.photos.length !== 1 ? 's' : ''}</span>
           </div>
         </div>
-        {/* Filters */}
+        {/* Filters & Sort */}
         <div className="filter-bar" style={{ paddingBottom: 8 }}>
           <FilterSelect
             value={filter.startsWith('cat:') ? 'all' : filter}
@@ -110,6 +117,15 @@ export default function AllPhotos() {
               label="Filter by category"
             />
           )}
+          <div className="filter-select-wrap">
+            <select className={`filter-select${sortBy !== 'date' ? ' active' : ''}`}
+              value={sortBy} onChange={e => setSortBy(e.target.value)}>
+              <option value="date">Date Added</option>
+              <option value="project">By Project</option>
+              <option value="tag">By Tag</option>
+            </select>
+            <span className="filter-select-chevron" aria-hidden="true">▾</span>
+          </div>
         </div>
         <DropZone onFiles={handleFiles} uploading={uploading} />
         {(() => {

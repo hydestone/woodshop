@@ -104,13 +104,6 @@ export function Sheet({ title, onClose, onSave, saveLabel = 'Save', children }) 
   const [saving, setSaving] = useState(false)
   const savingRef = useRef(false)
 
-  // Close on Escape
-  useEffect(() => {
-    const handler = e => { if (e.key === 'Escape' && !savingRef.current) onClose() }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [onClose])
-
   const handleSave = useCallback(async () => {
     if (savingRef.current || !onSave) return
     savingRef.current = true
@@ -118,6 +111,16 @@ export function Sheet({ title, onClose, onSave, saveLabel = 'Save', children }) 
     try { await onSave() }
     finally { savingRef.current = false; setSaving(false) }
   }, [onSave])
+
+  // Close on Escape, save on Enter
+  useEffect(() => {
+    const handler = e => {
+      if (e.key === 'Escape' && !savingRef.current) onClose()
+      if (e.key === 'Enter' && onSave && !savingRef.current && document.activeElement?.tagName !== 'TEXTAREA') handleSave()
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [onClose, handleSave])
 
   return (
     <div
@@ -178,6 +181,12 @@ export function BulkAddSheet({ title, hint, onSave, onClose }) {
 
 // ─── ConfirmSheet — replaces window.confirm ───────────────────────────────────
 export function ConfirmSheet({ message, confirmLabel = 'Delete', onConfirm, onClose }) {
+  useEffect(() => {
+    const handler = e => { if (e.key === 'Enter') onConfirm() }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [onConfirm])
+
   return (
     <Sheet title="Confirm" onClose={onClose} onSave={null}>
       <div className="confirm-body">
@@ -377,7 +386,7 @@ export function Lightbox({ photos, index, onClose }) {
       role="dialog"
       aria-label={`Photo ${cur + 1} of ${photos.length}`}
       aria-modal="true"
-      style={{ position: 'fixed', inset: 0, background: 'rgba(26,18,8,.96)', zIndex: 200, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', cursor: scale > 1 ? 'grab' : 'default', touchAction: 'none' }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(26,18,8,.96)', zIndex: 10000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', cursor: scale > 1 ? 'grab' : 'default', touchAction: 'none' }}
       onClick={e => { if (e.target === e.currentTarget && scale === 1) onClose() }}
       onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseLeave={onMouseUp}
 
