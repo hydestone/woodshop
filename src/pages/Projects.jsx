@@ -79,7 +79,6 @@ export default function Projects() {
     if (sortBy === 'category') s.sort((a, b) => (a.category||'').localeCompare(b.category||''))
     if (sortBy === 'year')     s.sort((a, b) => (b.year_completed||0) - (a.year_completed||0))
     if (sortBy === 'recent')   s.sort((a, b) => new Date(b.created_at||0) - new Date(a.created_at||0))
-    if (sortBy === 'recent')   s.sort((a, b) => new Date(b.created_at||0) - new Date(a.created_at||0))
     return s
   }, [filtered, sortBy])
 

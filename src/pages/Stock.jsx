@@ -2,8 +2,8 @@ import { useState, useRef, useEffect } from 'react'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
-import { addToGoogleCalendar, addToAppleReminders } from '../supabase.js'
-import { Sheet, FormCell, ConfirmSheet, DropZone, STOCK_STATUS, fmt, IPlus, ITrash, IEdit, ICal, IBell, ICamera } from '../components/Shared.jsx'
+import { addToGoogleCalendar } from '../supabase.js'
+import { Sheet, FormCell, ConfirmSheet, DropZone, STOCK_STATUS, fmt, IPlus, ITrash, IEdit, ICal, ICamera } from '../components/Shared.jsx'
 
 const STATUS_ORDER = ['Freshly cut','Drying','Ready to use','Used up']
 
@@ -419,11 +419,6 @@ export default function Stock() {
     const d = new Date(new Date(item.harvested_at).getTime()+180*86_400_000)
     addToGoogleCalendar({ title:`Check ${item.species} — ready?`, start:d, end:new Date(d.getTime()+3_600_000), description:`${item.species} harvested ${fmt(item.harvested_at)}.` })
   }
-  const appleReminder = item => {
-    if (!item.harvested_at) { toast('Set a harvest date first','error'); return }
-    const d = new Date(new Date(item.harvested_at).getTime()+180*86_400_000)
-    addToAppleReminders({ title:`Check ${item.species} — ready?`, notes:`Harvested ${fmt(item.harvested_at)}.`, dueDate:d })
-  }
 
   const byStatus = STATUS_ORDER.reduce((acc,s)=>{
     const items=data.woodStock.filter(w=>(w.status||'Drying')===s)
@@ -492,7 +487,6 @@ export default function Stock() {
                               </button>
                               {(status==='Freshly cut'||status==='Drying')&&<>
                                 <button className="btn-cal" onClick={()=>calReminder(item)}><ICal size={13} color="currentColor"/> Google Cal</button>
-                                <button className="btn-reminder" onClick={()=>appleReminder(item)}><IBell size={13} color="currentColor"/> Reminders</button>
                               </>}
                             </div>
                           </div>

@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react'
 import { useCtx } from '../App.jsx'
 import * as db from '../db.js'
 import { useToast } from '../components/Toast.jsx'
-import { supabase } from '../supabase.js'
 
 export default function Costs() {
   const { data, mutate } = useCtx()

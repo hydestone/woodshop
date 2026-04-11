@@ -41,7 +41,7 @@ async function q(promise) {
 
 // ── Load all ──────────────────────────────────────────────────────────────────
 export async function loadAll() {
-  const safe = (promise, fallback = []) => promise.then(r => r.data ?? fallback).catch(() => fallback)
+  const safe = (promise, fallback = []) => promise.then(r => r.data ?? fallback).catch(e => { console.warn('[loadAll] query failed:', e.message); return fallback })
   const [projects, steps, coats, maintenance, shopping, photos,
          woodStock, brainstorming, finishProducts, resources, shopImprovements, categories, woodLocations, projectWoodSources, species, finishes] = await Promise.all([
     safe(supabase.from('projects').select('*').order('created_at')),

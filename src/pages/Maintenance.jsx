@@ -2,8 +2,8 @@ import { useState, useRef } from 'react'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
-import { addToGoogleCalendar, addToAppleReminders } from '../supabase.js'
-import { Sheet, FormCell, ConfirmSheet, maintStatus, fmtShort, localDt, IPlus, ITrash, IEdit, ICal, IBell } from '../components/Shared.jsx'
+import { addToGoogleCalendar } from '../supabase.js'
+import { Sheet, FormCell, ConfirmSheet, maintStatus, fmtShort, localDt, IPlus, ITrash, IEdit, ICal } from '../components/Shared.jsx'
 
 const CATEGORIES = ['Sharpening', 'Lathe', 'Bandsaw', 'Router Table', 'Shop', 'General']
 
@@ -140,12 +140,6 @@ export default function Maintenance() {
     })
   }
 
-  const appleReminder = m => {
-    const next = m.last_done
-      ? new Date(new Date(m.last_done).getTime() + m.interval_days * 86_400_000)
-      : new Date(Date.now() + m.interval_days * 86_400_000)
-    addToAppleReminders({ title: `${m.name} — JDH Woodworks`, notes: m.notes || '', dueDate: next })
-  }
 
   const sorted = [...data.maintenance].sort((a, b) =>
     (maintStatus(a).urgent ? 0 : 1) - (maintStatus(b).urgent ? 0 : 1)
@@ -196,9 +190,6 @@ export default function Maintenance() {
                         </button>
                         <button className="btn-cal" onClick={() => calReminder(m)}>
                           <ICal size={13} color="currentColor" /> Google Calendar
-                        </button>
-                        <button className="btn-reminder" onClick={() => appleReminder(m)}>
-                          <IBell size={13} color="currentColor" /> Add to Reminders
                         </button>
                       </div>
                       {hasSharpLog && isExp && (

@@ -303,6 +303,7 @@ function ParticleNebula({ isDark }) {
     }))
 
     const draw = (ts) => {
+      if (document.hidden) { raf = requestAnimationFrame(draw); return }
       ctx.clearRect(0, 0, W(), H())
       const t = ts / 1000
       particles.forEach(p => {

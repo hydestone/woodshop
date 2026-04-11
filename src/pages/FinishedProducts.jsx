@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useCtx } from '../App.jsx'
 import { PhotoGrid, FilterSelect } from '../components/Shared.jsx'
 import { useToast } from '../components/Toast.jsx'
@@ -12,13 +12,19 @@ export default function FinishedWork() {
 
   const allFinished = data.photos.filter(p => p.tags?.split(',').map(t => t.trim()).includes('finished'))
 
+  const projMap = useMemo(() => {
+    const m = {}
+    data.projects.forEach(p => { m[p.id] = p })
+    return m
+  }, [data.projects])
+
   const projectCategories = [...new Set(
-    allFinished.map(p => data.projects.find(proj => proj.id === p.project_id)?.category).filter(Boolean)
+    allFinished.map(p => projMap[p.project_id]?.category).filter(Boolean)
   )].sort()
 
   const photos = catFilter === 'all'
     ? allFinished
-    : allFinished.filter(p => data.projects.find(proj => proj.id === p.project_id)?.category === catFilter)
+    : allFinished.filter(p => projMap[p.project_id]?.category === catFilter)
 
   const edit = async (id, fields) => {
     if (fields._delete) {

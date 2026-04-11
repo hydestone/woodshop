@@ -348,7 +348,7 @@ export function Lightbox({ photos, index, onClose }) {
         const diff = swipeStartX.current - e.changedTouches[0].clientX
         setScale(s => {
           if (s === 1) {
-            if (diff > 60)  setCur(i => Math.min(i + 1, 999))
+            if (diff > 60)  setCur(i => Math.min(i + 1, photos.length - 1))
             if (diff < -60) setCur(i => Math.max(i - 1, 0))
           }
           return s
@@ -491,8 +491,8 @@ export function PhotoGrid({ photos, onEdit, showProject, projects, onNavigatePro
 
 // ─── PhotoCard ────────────────────────────────────────────────────────────────
 export function PhotoCard({ photo, onEdit, onOpen, showProject, projects, tileIndex = 0, onNavigateProject }) {
-  const cardRef = React.useRef()
-  const onMove = React.useCallback(e => {
+  const cardRef = useRef()
+  const onMove = useCallback(e => {
     const el = cardRef.current; if (!el) return
     const r = el.getBoundingClientRect()
     const x = (e.clientX - r.left) / r.width  - 0.5
@@ -500,7 +500,7 @@ export function PhotoCard({ photo, onEdit, onOpen, showProject, projects, tileIn
     el.style.transform = `perspective(600px) rotateY(${x*7}deg) rotateX(${-y*7}deg) scale(1.03)`
     el.style.boxShadow = `${-x*8}px ${y*8}px 24px rgba(0,0,0,.18)`
   }, [])
-  const onLeave = React.useCallback(() => {
+  const onLeave = useCallback(() => {
     const el = cardRef.current; if (!el) return
     el.style.transform = ''
     el.style.boxShadow = ''
@@ -636,13 +636,13 @@ export function FilterSelect({ value, onChange, options, allLabel = 'All', label
 
 // ─── Long-press hook (600ms → callback) ──────────────────────────────────────
 export function useLongPress(onLongPress, ms = 600) {
-  const timerRef = React.useRef(null)
-  const start = React.useCallback((e) => {
+  const timerRef = useRef(null)
+  const start = useCallback((e) => {
     // prevent context menu on long press
     e.preventDefault()
     timerRef.current = setTimeout(() => onLongPress(), ms)
   }, [onLongPress, ms])
-  const cancel = React.useCallback(() => {
+  const cancel = useCallback(() => {
     clearTimeout(timerRef.current)
   }, [])
   return {
@@ -656,10 +656,10 @@ export function useLongPress(onLongPress, ms = 600) {
 
 // ─── Before / After swipe comparison ─────────────────────────────────────────
 export function BeforeAfterCompare({ beforeUrl, afterUrl, label }) {
-  const [split, setSplit] = React.useState(50)
-  const containerRef = React.useRef()
+  const [split, setSplit] = useState(50)
+  const containerRef = useRef()
 
-  const move = React.useCallback((clientX) => {
+  const move = useCallback((clientX) => {
     const rect = containerRef.current?.getBoundingClientRect()
     if (!rect) return
     const pct = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100))
@@ -702,8 +702,8 @@ export function BeforeAfterCompare({ beforeUrl, afterUrl, label }) {
 
 // ─── Count-up number animation ───────────────────────────────────────────────
 export function useCountUp(target, duration = 1200, enabled = true) {
-  const [val, setVal] = React.useState(0)
-  React.useEffect(() => {
+  const [val, setVal] = useState(0)
+  useEffect(() => {
     if (!enabled || !target) { setVal(target); return }
     let start = null
     const step = ts => {

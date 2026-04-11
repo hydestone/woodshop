@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
@@ -49,23 +49,30 @@ export default function AllPhotos() {
     toast('Saved', 'success')
   }
 
+  // O(1) project lookup — avoids repeated .find() in filters and sort
+  const projMap = useMemo(() => {
+    const m = {}
+    data.projects.forEach(p => { m[p.id] = p })
+    return m
+  }, [data.projects])
+
   // Build category list from projects that have photos
   const projectCategories = [...new Set(
     data.photos
-      .map(p => data.projects.find(proj => proj.id === p.project_id)?.category)
+      .map(p => projMap[p.project_id]?.category)
       .filter(Boolean)
   )].sort()
 
   const getFiltered = () => {
     let photos = filter === 'all' ? data.photos
       : filter.startsWith('cat:')
-        ? data.photos.filter(p => data.projects.find(proj => proj.id === p.project_id)?.category === filter.slice(4))
+        ? data.photos.filter(p => projMap[p.project_id]?.category === filter.slice(4))
         : data.photos.filter(p => p.tags?.split(',').map(t => t.trim()).includes(filter))
 
     // Always sort by project category, then by project name within category
     photos = photos.slice().sort((a, b) => {
-      const projA = data.projects.find(p => p.id === a.project_id)
-      const projB = data.projects.find(p => p.id === b.project_id)
+      const projA = projMap[a.project_id]
+      const projB = projMap[b.project_id]
       const catA = projA?.category || 'zzz'  // uncategorised sorts last
       const catB = projB?.category || 'zzz'
       if (catA !== catB) return catA.localeCompare(catB)
