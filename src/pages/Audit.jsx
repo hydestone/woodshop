@@ -6,7 +6,7 @@ import * as db from '../db.js'
 const TAGS = ['finished', 'portfolio', 'progress', 'inspiration', 'before', 'after']
 
 // ── Inline editable cell ───────────────────────────────────────────────────────
-function Cell({ value, onSave, type = 'text', options, missing }) {
+function Cell({ value, onSave, type = 'text', options, missing, placeholder }) {
   const [editing, setEditing] = useState(false)
   const [val, setVal] = useState(value || '')
 
@@ -34,7 +34,7 @@ function Cell({ value, onSave, type = 'text', options, missing }) {
     <select autoFocus className="form-select" style={{ fontSize: 13, padding: '3px 6px', minWidth: 100 }}
       value={val} onChange={e => { setVal(e.target.value); setEditing(false); if (e.target.value !== (value || '')) onSave(e.target.value) }}
       onBlur={() => setEditing(false)}>
-      <option value="">—</option>
+      <option value="">{placeholder || '—'}</option>
       {options.map(o => <option key={o} value={o}>{o}</option>)}
     </select>
   )
@@ -179,8 +179,22 @@ function PhotosAudit() {
                   </td>
                   <td style={{ padding: '6px 12px' }}>
                     <Cell value={proj?.name} missing={!photo.project_id}
-                      type="select" options={projects.map(p => p.name)}
-                      onSave={v => {
+                      type="select"
+                      placeholder="Select project…"
+                      options={[...projects.map(p => p.name).sort((a, b) => a.localeCompare(b)), '＋ New Project']}
+                      onSave={async v => {
+                        if (v === '＋ New Project') {
+                          const name = prompt('New project name:')
+                          if (!name?.trim()) return
+                          try {
+                            const proj = await db.addProject({ name: name.trim(), status: 'planning' })
+                            mutate(d => ({ ...d, projects: [...d.projects, proj] }))
+                            await db.updatePhoto(photo.id, { project_id: proj.id })
+                            mutate(d => ({ ...d, photos: d.photos.map(p => p.id === photo.id ? { ...p, project_id: proj.id } : p) }))
+                            toast(`Created "${name.trim()}" and linked photo`, 'success')
+                          } catch (e) { toast(e.message, 'error') }
+                          return
+                        }
                         const p = projects.find(x => x.name === v)
                         if (p) save(photo.id, { project_id: p.id })
                       }} />
