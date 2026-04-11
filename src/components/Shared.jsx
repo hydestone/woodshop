@@ -1,5 +1,6 @@
 import React from 'react'
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 // Lightweight SVG icon factory — no external dependency
@@ -380,7 +381,7 @@ export function Lightbox({ photos, index, onClose }) {
   // Keep pan refs in sync
   useEffect(() => { panStart.current = { ...pan } }, [pan])
 
-  return (
+  return createPortal(
     <div
       ref={containerRef}
       role="dialog"
@@ -465,7 +466,8 @@ export function Lightbox({ photos, index, onClose }) {
           <IClose size={18} color="#fff" sw={2.5} />
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 
