@@ -371,7 +371,7 @@
   background: rgba(0,0,0,.55);
   z-index: 500;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
 }
 
@@ -658,7 +658,7 @@ body {
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: calc(var(--tabbar-h, 49px) + env(safe-area-inset-bottom, 0px) + 24px);
+  padding-bottom: 20px;
 }
 /* Override for pages that set their own padding */
 .scroll-page[style*="paddingBottom"] { padding-bottom: unset; }
@@ -900,22 +900,21 @@ body {
   position: fixed;
   inset: 0;
   background: rgba(26,18,8,.45);
-  z-index: 100;
+  z-index: 500;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
   animation: fadeIn 180ms ease;
 }
 .sheet {
   width: 100%;
-  max-width: 520px;
   max-height: 92dvh;
   background: var(--bg);
-  border-radius: var(--r-lg);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: sheetIn 240ms cubic-bezier(.32,.72,0,1);
+  animation: sheetUp 240ms cubic-bezier(.32,.72,0,1);
   padding-bottom: var(--safe-b);
 }
 .sheet-handle {
@@ -2225,6 +2224,10 @@ body {
   .proj-detail-grid {
     grid-template-columns: 1fr;
   }
+
+  .page-header-row .page-title {
+    flex: 0 0 100%;
+  }
 }
 
 /* ─── tablet-max (@media (max-width: 900px)) ───────────────────── */
@@ -2242,13 +2245,14 @@ body {
     max-width: 520px;
     border-radius: var(--r-lg);
     max-height: 88vh;
+    animation: sheetIn 240ms cubic-bezier(.32,.72,0,1);
   }
 
   .tabbar { display: none; }
 
   .sidebar { display: flex; }
 
-  .scroll-page { padding-bottom: 20px !important; }
+  .scroll-page { padding-bottom: 20px; }
 
   .fab { bottom: 24px; }
 

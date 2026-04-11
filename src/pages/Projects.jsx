@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo, memo, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
@@ -1452,7 +1453,7 @@ function CoatSheet({ nextNum, defaultCoat, isEdit, onSave, onClose }) {
 
 // ─── Ron Swanson modal ────────────────────────────────────────────────────────
 function RonSwansonModal({ onClose }) {
-  return (
+  return createPortal(
     <div className="overlay" onClick={onClose} style={{ alignItems: 'center', justifyContent: 'center' }}>
       <div onClick={e => e.stopPropagation()} style={{ background: 'var(--navy)', borderRadius: 16, overflow: 'hidden', maxWidth: 380, width: '90%', boxShadow: '0 24px 60px rgba(0,0,0,.5)', animation: 'slideUp .3s cubic-bezier(.32,.72,0,1)' }}>
         <img src="/ronswanson.webp" alt="Ron Swanson" style={{ width: '100%', display: 'block', maxHeight: 280, objectFit: 'cover', objectPosition: 'top' }} />
@@ -1465,7 +1466,8 @@ function RonSwansonModal({ onClose }) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 
@@ -1484,7 +1486,7 @@ function QRLabelSheet({ project, onClose }) {
       '<script>new QRCode(document.getElementById("qr"),{text:"' + url + '",width:160,height:160,colorDark:"#0F1E38",colorLight:"#ffffff"});setTimeout(function(){window.print()},800)<' + '/script></body></html>')
     win.document.close()
   }
-  return (
+  return createPortal(
     <div className="overlay" onClick={onClose} style={{ alignItems:'center', justifyContent:'center' }}>
       <div style={{ background:'var(--surface)', borderRadius:16, padding:'28px 24px', maxWidth:320, width:'90%', textAlign:'center' }}
         onClick={e => e.stopPropagation()}>
@@ -1501,7 +1503,8 @@ function QRLabelSheet({ project, onClose }) {
           <button className="btn-primary" style={{ flex:1 }} onClick={handlePrint}>Print Label</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 
@@ -1633,7 +1636,7 @@ function ReminderSheet({ project, onClose }) {
     addToGoogleCalendar({ title: note, start, end, description: `Project: ${project.name}` })
     onClose()
   }
-  return (
+  return createPortal(
     <div className="overlay" onClick={onClose} style={{ alignItems:'center', justifyContent:'center' }}>
       <div style={{ background:'var(--surface)', borderRadius:16, padding:'28px 24px', maxWidth:340, width:'90%' }}
         onClick={e => e.stopPropagation()}>
@@ -1653,6 +1656,7 @@ function ReminderSheet({ project, onClose }) {
           <button className="btn-secondary" style={{ width:'100%', justifyContent:'center' }} onClick={onClose}>Cancel</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

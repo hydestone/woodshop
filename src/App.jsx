@@ -1,5 +1,6 @@
 import React from 'react'
 import { useState, useEffect, useCallback, createContext, useContext, lazy, Suspense } from 'react'
+import { createPortal } from 'react-dom'
 import * as db from './db.js'
 import { supabase, getSession, signOut, onAuthStateChange } from './supabase.js'
 import Auth from './pages/Auth.jsx'
@@ -798,7 +799,7 @@ export default function App() {
       )}
 
         {/* More sheet (mobile) */}
-        {showMore && (
+        {showMore && createPortal(
           <div
             className="overlay"
             onClick={() => setShowMore(false)}
@@ -875,7 +876,8 @@ export default function App() {
                 })}
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </ToastProvider>
     </AppCtx.Provider>

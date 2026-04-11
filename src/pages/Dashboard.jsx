@@ -1,5 +1,6 @@
 import * as echarts from 'echarts'
 import { useMemo, useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useCtx } from '../App.jsx'
 import { coatStatus, maintStatus, fmtShort, fmt, IChevR, IChevL, PhotoGrid, KineticTitle } from '../components/Shared.jsx'
 import { useToast } from '../components/Toast.jsx'
@@ -75,7 +76,7 @@ function YearCarousel({ year, projects, photos, onClose }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [cur, carouselPhotos.length, onClose])
 
-  if (!carouselPhotos.length) return (
+  if (!carouselPhotos.length) return createPortal(
     <div className="overlay" onClick={onClose} style={{ alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ background: 'var(--surface)', borderRadius: 16, padding: '32px 24px', maxWidth: 360, width: '90%', textAlign: 'center' }}>
         <div style={{ fontSize: 40, marginBottom: 12 }}>📷</div>
@@ -83,7 +84,8 @@ function YearCarousel({ year, projects, photos, onClose }) {
         <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 16 }}>{yearProjects.length} project{yearProjects.length !== 1 ? 's' : ''} but no finished photos uploaded.</p>
         <button className="btn-primary" style={{ width: '100%', justifyContent: 'center' }} onClick={onClose}>Close</button>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 
   return (
