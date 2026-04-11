@@ -77,7 +77,7 @@ export default function Trash() {
     try {
       await db.emptyTrash()
       mutate(d => ({ ...d, trash: [] }))
-      toast('Trash emptied', 'success')
+      toast('Recycling bin emptied', 'success')
       setConfirmEmpty(false)
     } catch (e) { toast(e.message, 'error') }
   }
@@ -86,15 +86,15 @@ export default function Trash() {
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div className="page-header">
         <div className="page-header-row">
-          <h1 className="page-title">Trash</h1>
+          <h1 className="page-title">Recycling Bin</h1>
           {trash.length > 0 && (
             <button className="btn-text" style={{ color: 'var(--red)' }} onClick={() => setConfirmEmpty(true)}>
-              Empty Trash
+              Empty Recycling Bin
             </button>
           )}
         </div>
         <p className="page-subtitle">
-          {trash.length} item{trash.length !== 1 ? 's' : ''} · auto-deleted after 30 days
+          {trash.length} item{trash.length !== 1 ? 's' : ''} · items auto-delete after 30 days
         </p>
       </div>
 
@@ -127,8 +127,8 @@ export default function Trash() {
         {filtered.length === 0 ? (
           <div className="empty" style={{ paddingTop: 60 }}>
             <div className="empty-icon">🗑️</div>
-            <div className="empty-title">{trash.length === 0 ? 'Trash is empty' : 'No items in this filter'}</div>
-            <p className="empty-sub">{trash.length === 0 ? 'Deleted items will appear here for 30 days' : 'Try a different filter'}</p>
+            <div className="empty-title">{trash.length === 0 ? 'Recycling bin is empty' : 'No items in this filter'}</div>
+            <p className="empty-sub">{trash.length === 0 ? 'Deleted items appear here for 30 days before being permanently removed' : 'Try a different filter'}</p>
           </div>
         ) : (
           <div className="group">
@@ -170,8 +170,8 @@ export default function Trash() {
 
       {confirmEmpty && (
         <ConfirmSheet
-          message={`Permanently delete all ${trash.length} item${trash.length !== 1 ? 's' : ''} in trash? This cannot be undone.`}
-          confirmLabel="Empty Trash"
+          message={`Permanently delete all ${trash.length} item${trash.length !== 1 ? 's' : ''} in the recycling bin? This cannot be undone.`}
+          confirmLabel="Empty Recycling Bin"
           onConfirm={emptyAll}
           onClose={() => setConfirmEmpty(false)}
         />

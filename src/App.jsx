@@ -86,7 +86,7 @@ const NAV_SECTIONS = [
       { id: 'settings',    label: 'Categories',         Icon: IWrench },
       { id: 'import',      label: 'Bulk Import',       Icon: ICamera },
       { id: 'costs',       label: 'Costs',             Icon: IDollar },
-      { id: 'trash',       label: 'Trash',             Icon: ITrash  },
+      { id: 'trash',       label: 'Recycling Bin',     Icon: ITrash  },
     ],
   },
 ]
@@ -462,11 +462,13 @@ export default function App() {
   const urgentCoats = data.coats.filter(c => coatStatus(c).urgent).length
   const urgentMaint = data.maintenance.filter(m => maintStatus(m).urgent).length
   const shopCount   = data.shopping.filter(s => !s.completed).length
+  const trashCount  = (data.trash || []).length
 
   const badgeFor = id => {
     if (id === 'projects')    return urgentCoats
     if (id === 'maintenance') return urgentMaint
     if (id === 'shopping')    return shopCount
+    if (id === 'trash')       return trashCount
     return 0
   }
 

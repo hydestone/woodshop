@@ -42,11 +42,14 @@ async function q(promise) {
 // ── Trash helper — saves item to trash before deleting ───────────────────────
 async function trashAndDelete(table, id, itemType) {
   const { data: item } = await supabase.from(table).select('*').eq('id', id).single()
+  let trashRecord = null
   if (item) {
     const user_id = await getCurrentUserId()
-    await supabase.from('trash').insert({ id: uid(), item_type: itemType, item_data: item, deleted_at: isoNow(), user_id })
+    trashRecord = { id: uid(), item_type: itemType, item_data: item, deleted_at: isoNow(), user_id }
+    await supabase.from('trash').insert(trashRecord)
   }
-  return q(supabase.from(table).delete().eq('id', id))
+  await q(supabase.from(table).delete().eq('id', id))
+  return trashRecord
 }
 
 // ── Load all ──────────────────────────────────────────────────────────────────
@@ -121,14 +124,17 @@ export async function deleteProject(id) {
   const { data: coats } = await supabase.from('coats').select('*').eq('project_id', id)
   const { data: photos } = await supabase.from('photos').select('*').eq('project_id', id)
   const { data: pws } = await supabase.from('project_wood_sources').select('*').eq('project_id', id)
+  let trashRecord = null
   if (project) {
-    await supabase.from('trash').insert({
+    trashRecord = {
       id: uid(), item_type: 'project',
       item_data: { ...project, _steps: steps || [], _coats: coats || [], _photos: photos || [], _woodSources: pws || [] },
       deleted_at: isoNow(), user_id
-    })
+    }
+    await supabase.from('trash').insert(trashRecord)
   }
-  return q(supabase.from('projects').delete().eq('id', id))
+  await q(supabase.from('projects').delete().eq('id', id))
+  return trashRecord
 }
 
 // ── Steps ─────────────────────────────────────────────────────────────────────
@@ -234,8 +240,10 @@ export async function updatePhoto(id, fields) {
 }
 export async function deletePhoto(photo) {
   const user_id = await getCurrentUserId()
-  await supabase.from('trash').insert({ id: uid(), item_type: 'photo', item_data: photo, deleted_at: isoNow(), user_id })
-  return q(supabase.from('photos').delete().eq('id', photo.id))
+  const trashRecord = { id: uid(), item_type: 'photo', item_data: photo, deleted_at: isoNow(), user_id }
+  await supabase.from('trash').insert(trashRecord)
+  await q(supabase.from('photos').delete().eq('id', photo.id))
+  return trashRecord
 }
 
 // ── Wood stock ────────────────────────────────────────────────────────────────

@@ -42,7 +42,12 @@ export default function AllPhotos() {
       const photo = data.photos.find(p => p.id === id)
       const prev = data.photos
       mutate(d => ({ ...d, photos: d.photos.filter(p => p.id !== id) }))
-      if (photo) await db.deletePhoto(photo).catch(e => { mutate(d => ({ ...d, photos: prev })); toast(e.message, 'error') })
+      if (photo) {
+        try {
+          const trashed = await db.deletePhoto(photo)
+          if (trashed) mutate(d => ({ ...d, trash: [trashed, ...(d.trash || [])] }))
+        } catch(e) { mutate(d => ({ ...d, photos: prev })); toast(e.message, 'error') }
+      }
       return
     }
     mutate(d => ({ ...d, photos: d.photos.map(p => p.id === id ? { ...p, ...fields } : p) }))

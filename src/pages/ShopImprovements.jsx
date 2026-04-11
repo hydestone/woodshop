@@ -24,7 +24,10 @@ export default function ShopImprovements() {
   const del = async id => {
     const prev = data.shopImprovements
     mutate(d => ({ ...d, shopImprovements: d.shopImprovements.filter(s => s.id !== id) }))
-    await db.deleteShopImprovement(id).catch(e => { mutate(d => ({ ...d, shopImprovements: prev })); toast(e.message, 'error') })
+    try {
+      const trashed = await db.deleteShopImprovement(id)
+      if (trashed) mutate(d => ({ ...d, trash: [trashed, ...(d.trash || [])] }))
+    } catch(e) { mutate(d => ({ ...d, shopImprovements: prev })); toast(e.message, 'error') }
     setDeleteItem(null)
   }
 

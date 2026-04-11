@@ -35,7 +35,10 @@ export default function Brainstorm() {
   const del = async id => {
     const prev = data.brainstorming
     mutate(d => ({ ...d, brainstorming: d.brainstorming.filter(n => n.id !== id) }))
-    await db.deleteBrainstorm(id).catch(e => { mutate(d => ({ ...d, brainstorming: prev })); toast(e.message, 'error') })
+    try {
+      const trashed = await db.deleteBrainstorm(id)
+      if (trashed) mutate(d => ({ ...d, trash: [trashed, ...(d.trash || [])] }))
+    } catch(e) { mutate(d => ({ ...d, brainstorming: prev })); toast(e.message, 'error') }
     setDeleteNote(null)
   }
 
