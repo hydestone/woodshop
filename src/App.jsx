@@ -88,6 +88,7 @@ const NAV_SECTIONS = [
       { id: 'import',      label: 'Bulk Import',       Icon: ICamera },
       { id: 'costs',       label: 'Costs',             Icon: IDollar },
       { id: 'trash',       label: 'Recycling Bin',     Icon: ITrash  },
+      { id: 'help',        label: 'Help',              Icon: IBook   },
     ],
   },
 ]
