@@ -94,11 +94,21 @@ export default function Maintenance() {
   const [expanded, setExpanded]     = useState({})
 
   const del = async id => {
+    const item = data.maintenance.find(m => m.id === id)
     const prev = data.maintenance
     mutate(d => ({ ...d, maintenance: d.maintenance.filter(m => m.id !== id) }))
     try {
       const trashed = await db.deleteMaint(id)
-      if (trashed) mutate(d => ({ ...d, trash: [trashed, ...(d.trash || [])] }))
+      if (trashed) {
+        mutate(d => ({ ...d, trash: [trashed, ...(d.trash || [])] }))
+        toast(`"${item?.name}" deleted`, 'success', 5000, {
+          label: 'Undo',
+          onClick: async () => {
+            await db.restoreFromTrash(trashed.id, trashed)
+            mutate(d => ({ ...d, maintenance: [...d.maintenance, item], trash: d.trash.filter(t => t.id !== trashed.id) }))
+          }
+        })
+      }
     } catch(e) { mutate(d => ({ ...d, maintenance: prev })); toast(e.message, 'error') }
     setDeleteItem(null)
   }

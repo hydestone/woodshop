@@ -1491,11 +1491,18 @@ body {
 .search-empty { padding: 24px 16px; text-align: center; color: var(--text-3); font-size: 14px; }
 
 /* ─── Toast ──────────────────────────────────────────────────────────────── */
-.toast {
+.toast-container {
   position: fixed;
   bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 12px);
   left: 50%;
   transform: translateX(-50%);
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 8px;
+  z-index: 9999;
+  pointer-events: none;
+}
+.toast {
   background: #1A1208;
   color: #fff;
   border-radius: var(--r-md);
@@ -1503,13 +1510,26 @@ body {
   font-size: 14px;
   font-weight: 500;
   box-shadow: var(--shadow-xl);
-  z-index: 400;
   display: flex;
   align-items: center;
   gap: 10px;
   white-space: nowrap;
   animation: toastIn 220ms cubic-bezier(.32,.72,0,1);
+  pointer-events: auto;
 }
+.toast-message { flex: 1; }
+.toast-action {
+  background: none;
+  border: none;
+  color: #60A5FA;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 2px;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.toast-action:active { opacity: 0.7; }
 .toast.success::before { content: '✓'; font-weight: 700; color: #4ADE80; }
 .toast.error::before   { content: '!'; font-weight: 700; color: #F87171; }
 
@@ -2178,7 +2198,7 @@ body {
 
   .scroll-page { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 8px); }
 
-  .toast { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 10px); }
+  .toast-container { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 10px); }
 
   /* Mobile top bar: single row, explicit flex values */
 

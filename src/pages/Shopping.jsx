@@ -20,11 +20,21 @@ export default function Shopping() {
   }
 
   const del = async id => {
+    const item = data.shopping.find(s => s.id === id)
     const prev = data.shopping
     mutate(d => ({ ...d, shopping: d.shopping.filter(s => s.id !== id) }))
     try {
       const trashed = await db.deleteShopItem(id)
-      if (trashed) mutate(d => ({ ...d, trash: [trashed, ...(d.trash || [])] }))
+      if (trashed) {
+        mutate(d => ({ ...d, trash: [trashed, ...(d.trash || [])] }))
+        toast(`"${item?.name}" deleted`, 'success', 5000, {
+          label: 'Undo',
+          onClick: async () => {
+            await db.restoreFromTrash(trashed.id, trashed)
+            mutate(d => ({ ...d, shopping: [...d.shopping, item], trash: d.trash.filter(t => t.id !== trashed.id) }))
+          }
+        })
+      }
     } catch(e) { mutate(d => ({ ...d, shopping: prev })); toast(e.message, 'error') }
     setDeleteItem(null)
   }

@@ -16,11 +16,21 @@ export default function Finishes() {
   const [search, setSearch]         = useState('')
 
   const del = async id => {
+    const item = data.finishProducts.find(p => p.id === id)
     const prev = data.finishProducts
     mutate(d => ({ ...d, finishProducts: d.finishProducts.filter(p => p.id !== id) }))
     try {
       const trashed = await db.deleteFinishProduct(id)
-      if (trashed) mutate(d => ({ ...d, trash: [trashed, ...(d.trash || [])] }))
+      if (trashed) {
+        mutate(d => ({ ...d, trash: [trashed, ...(d.trash || [])] }))
+        toast(`"${item?.name}" deleted`, 'success', 5000, {
+          label: 'Undo',
+          onClick: async () => {
+            await db.restoreFromTrash(trashed.id, trashed)
+            mutate(d => ({ ...d, finishProducts: [...d.finishProducts, item], trash: d.trash.filter(t => t.id !== trashed.id) }))
+          }
+        })
+      }
     } catch(e) { mutate(d => ({ ...d, finishProducts: prev })); toast(e.message, 'error') }
     setDeleteItem(null)
   }

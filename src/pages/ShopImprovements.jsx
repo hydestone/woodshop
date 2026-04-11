@@ -22,11 +22,21 @@ export default function ShopImprovements() {
   }
 
   const del = async id => {
+    const item = data.shopImprovements.find(s => s.id === id)
     const prev = data.shopImprovements
     mutate(d => ({ ...d, shopImprovements: d.shopImprovements.filter(s => s.id !== id) }))
     try {
       const trashed = await db.deleteShopImprovement(id)
-      if (trashed) mutate(d => ({ ...d, trash: [trashed, ...(d.trash || [])] }))
+      if (trashed) {
+        mutate(d => ({ ...d, trash: [trashed, ...(d.trash || [])] }))
+        toast(`"${item?.title}" deleted`, 'success', 5000, {
+          label: 'Undo',
+          onClick: async () => {
+            await db.restoreFromTrash(trashed.id, trashed)
+            mutate(d => ({ ...d, shopImprovements: [...d.shopImprovements, item], trash: d.trash.filter(t => t.id !== trashed.id) }))
+          }
+        })
+      }
     } catch(e) { mutate(d => ({ ...d, shopImprovements: prev })); toast(e.message, 'error') }
     setDeleteItem(null)
   }

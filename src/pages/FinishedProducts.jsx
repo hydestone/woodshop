@@ -34,7 +34,16 @@ export default function FinishedWork() {
       if (photo) {
         try {
           const trashed = await db.deletePhoto(photo)
-          if (trashed) mutate(d => ({ ...d, trash: [trashed, ...(d.trash || [])] }))
+          if (trashed) {
+            mutate(d => ({ ...d, trash: [trashed, ...(d.trash || [])] }))
+            toast('Photo deleted', 'success', 5000, {
+              label: 'Undo',
+              onClick: async () => {
+                await db.restoreFromTrash(trashed.id, trashed)
+                mutate(d => ({ ...d, photos: [{ ...photo, url: photo.url }, ...d.photos], trash: d.trash.filter(t => t.id !== trashed.id) }))
+              }
+            })
+          }
         } catch(e) { mutate(d => ({ ...d, photos: prev })); toast(e.message, 'error') }
       }
       return

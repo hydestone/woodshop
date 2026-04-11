@@ -39,11 +39,21 @@ export default function Resources() {
   }, [])
 
   const del = async id => {
+    const item = data.resources.find(r => r.id === id)
     const prev = data.resources
     mutate(d => ({ ...d, resources: d.resources.filter(r => r.id !== id) }))
     try {
       const trashed = await db.deleteResource(id)
-      if (trashed) mutate(d => ({ ...d, trash: [trashed, ...(d.trash || [])] }))
+      if (trashed) {
+        mutate(d => ({ ...d, trash: [trashed, ...(d.trash || [])] }))
+        toast(`"${item?.title}" deleted`, 'success', 5000, {
+          label: 'Undo',
+          onClick: async () => {
+            await db.restoreFromTrash(trashed.id, trashed)
+            mutate(d => ({ ...d, resources: [...d.resources, item], trash: d.trash.filter(t => t.id !== trashed.id) }))
+          }
+        })
+      }
     } catch(e) { mutate(d => ({ ...d, resources: prev })); toast(e.message, 'error') }
     setDeleteItem(null)
   }
