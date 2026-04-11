@@ -717,7 +717,7 @@ export default function Dashboard() {
             <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.6px' }}>Recent Photos</span>
             <button className="btn-text" onClick={() => setTab('photos')}>See all</button>
           </div>
-          <PhotoGrid photos={data.photos.slice(0, 8)} showProject projects={data.projects} />
+          <PhotoGrid photos={data.photos.slice(0, 20)} showProject projects={data.projects} />
         </>}
 
         {upCoats.length > 0 && <>

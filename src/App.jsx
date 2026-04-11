@@ -295,13 +295,13 @@ function ParticleNebula({ isDark }) {
       ? ['rgba(139,168,208,', 'rgba(74,222,128,', 'rgba(167,139,250,', 'rgba(255,255,255,']
       : ['rgba(29,78,216,',   'rgba(22,101,52,',  'rgba(124,58,237,',  'rgba(180,83,9,']
 
-    const particles = Array.from({ length: 38 }, (_, i) => ({
+    const particles = Array.from({ length: 110 }, (_, i) => ({
       x: Math.random() * 100,  // percent
       y: Math.random() * 100,
-      vx: (Math.random() - 0.5) * 0.012,
-      vy: (Math.random() - 0.5) * 0.008,
-      r: 0.6 + Math.random() * 1.4,
-      a: 0.08 + Math.random() * 0.18,
+      vx: (Math.random() - 0.5) * 0.015,
+      vy: (Math.random() - 0.5) * 0.01,
+      r: 0.4 + Math.random() * 1.8,
+      a: 0.12 + Math.random() * 0.28,
       col: colours[i % colours.length],
       phase: Math.random() * Math.PI * 2,
     }))
@@ -318,7 +318,7 @@ function ParticleNebula({ isDark }) {
         if (p.y < -5) p.y = 105
         if (p.y > 105) p.y = -5
         // gentle breathing opacity
-        const opacity = p.a * (0.6 + 0.4 * Math.sin(t * 0.7 + p.phase))
+        const opacity = p.a * (0.15 + 0.85 * Math.sin(t * 1.2 + p.phase))
         ctx.beginPath()
         ctx.arc(p.x / 100 * W(), p.y / 100 * H(), p.r, 0, Math.PI * 2)
         ctx.fillStyle = p.col + opacity + ')'

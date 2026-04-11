@@ -677,8 +677,8 @@ body {
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   border-top: 1px solid var(--border);
   display: flex;
-  align-items: flex-end;
-  padding-top: 6px;
+  align-items: center;
+  padding-top: 4px;
   padding-bottom: env(safe-area-inset-bottom, 0px);
   z-index: 50;
 }

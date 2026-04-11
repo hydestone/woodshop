@@ -99,37 +99,34 @@ export default function AllPhotos() {
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
       <div className="scroll-page" style={{ paddingBottom: 80 }}>
         <div className="page-header">
-          <div className="page-header-row">
-            <h1 className="page-title">All Photos</h1>
-            <span style={{ fontSize: 13, color: 'var(--text-3)' }}>{data.photos.length} photo{data.photos.length !== 1 ? 's' : ''}</span>
-          </div>
-        </div>
-        {/* Filters & Sort */}
-        <div className="filter-bar" style={{ paddingBottom: 8 }}>
-          <FilterSelect
-            value={filter.startsWith('cat:') ? 'all' : filter}
-            onChange={v => setFilter(v)}
-            options={['finished','portfolio','progress','inspiration','before','after'].map(t => ({ value: t, label: t.charAt(0).toUpperCase()+t.slice(1) }))}
-            allLabel="All Types"
-            label="Filter by type"
-          />
-          {projectCategories.length > 0 && (
+          <div className="page-header-row" style={{ flexWrap: 'wrap', gap: 8 }}>
+            <h1 className="page-title" style={{ marginRight: 'auto' }}>All Photos</h1>
+            <span style={{ fontSize: 13, color: 'var(--text-3)', marginRight: 4 }}>{data.photos.length}</span>
             <FilterSelect
-              value={filter.startsWith('cat:') ? filter.slice(4) : 'all'}
-              onChange={v => setFilter(v === 'all' ? 'all' : 'cat:' + v)}
-              options={projectCategories.map(c => ({ value: c, label: c }))}
-              allLabel="All Categories"
-              label="Filter by category"
+              value={filter.startsWith('cat:') ? 'all' : filter}
+              onChange={v => setFilter(v)}
+              options={['finished','portfolio','progress','inspiration','before','after'].map(t => ({ value: t, label: t.charAt(0).toUpperCase()+t.slice(1) }))}
+              allLabel="All Types"
+              label="Filter by type"
             />
-          )}
-          <div className="filter-select-wrap">
-            <select className={`filter-select${sortBy !== 'date' ? ' active' : ''}`}
-              value={sortBy} onChange={e => setSortBy(e.target.value)}>
-              <option value="date">Date Added</option>
-              <option value="project">By Project</option>
-              <option value="tag">By Tag</option>
-            </select>
-            <span className="filter-select-chevron" aria-hidden="true">▾</span>
+            {projectCategories.length > 0 && (
+              <FilterSelect
+                value={filter.startsWith('cat:') ? filter.slice(4) : 'all'}
+                onChange={v => setFilter(v === 'all' ? 'all' : 'cat:' + v)}
+                options={projectCategories.map(c => ({ value: c, label: c }))}
+                allLabel="All Categories"
+                label="Filter by category"
+              />
+            )}
+            <div className="filter-select-wrap">
+              <select className={`filter-select${sortBy !== 'date' ? ' active' : ''}`}
+                value={sortBy} onChange={e => setSortBy(e.target.value)}>
+                <option value="date">Date Added</option>
+                <option value="project">By Project</option>
+                <option value="tag">By Tag</option>
+              </select>
+              <span className="filter-select-chevron" aria-hidden="true">▾</span>
+            </div>
           </div>
         </div>
         <DropZone onFiles={handleFiles} uploading={uploading} />
