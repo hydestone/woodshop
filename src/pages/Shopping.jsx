@@ -20,8 +20,9 @@ export default function Shopping() {
   }
 
   const del = async id => {
+    const prev = data.shopping
     mutate(d => ({ ...d, shopping: d.shopping.filter(s => s.id !== id) }))
-    await db.deleteShopItem(id).catch(e => toast(e.message, 'error'))
+    await db.deleteShopItem(id).catch(e => { mutate(d => ({ ...d, shopping: prev })); toast(e.message, 'error') })
     setDeleteItem(null)
   }
 

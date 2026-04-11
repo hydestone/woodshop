@@ -101,12 +101,21 @@ export function maintStatus(m) {
 
 // ─── Sheet ────────────────────────────────────────────────────────────────────
 export function Sheet({ title, onClose, onSave, saveLabel = 'Save', children }) {
+  const [saving, setSaving] = useState(false)
+
   // Close on Escape
   useEffect(() => {
-    const handler = e => { if (e.key === 'Escape') onClose() }
+    const handler = e => { if (e.key === 'Escape' && !saving) onClose() }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [onClose])
+  }, [onClose, saving])
+
+  const handleSave = useCallback(async () => {
+    if (saving || !onSave) return
+    setSaving(true)
+    try { await onSave() }
+    finally { setSaving(false) }
+  }, [onSave, saving])
 
   return (
     <div
@@ -115,16 +124,16 @@ export function Sheet({ title, onClose, onSave, saveLabel = 'Save', children }) 
       aria-modal="true"
       aria-label={title}
       onMouseDown={e => { if (e.target === e.currentTarget) e.currentTarget._shouldClose = true }}
-      onMouseUp={e => { if (e.currentTarget._shouldClose && e.target === e.currentTarget) { onClose(); } e.currentTarget._shouldClose = false }}
+      onMouseUp={e => { if (e.currentTarget._shouldClose && e.target === e.currentTarget && !saving) { onClose(); } e.currentTarget._shouldClose = false }}
       onClick={e => e.stopPropagation()}
     >
       <div className="sheet">
         <div className="sheet-handle" />
         <div className="sheet-header">
-          <button className="sheet-cancel" onClick={onClose}>Cancel</button>
+          <button className="sheet-cancel" onClick={onClose} disabled={saving}>Cancel</button>
           <span className="sheet-title">{title}</span>
           {onSave
-            ? <button className="sheet-save" onClick={onSave}>{saveLabel}</button>
+            ? <button className="sheet-save" onClick={handleSave} disabled={saving}>{saving ? 'Saving…' : saveLabel}</button>
             : <span style={{ width: 40 }} />
           }
         </div>

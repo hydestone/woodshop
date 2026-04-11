@@ -462,8 +462,11 @@ export function ProjectDetail() {
       await db.updateProject(projId, fields)
       // Persist wood source junction — only if caller passed woodStockId
       if (woodStockId !== undefined) {
-        await db.removeProjectWoodSources(projId)
+        // Get existing junction IDs before adding new — so we only delete the old ones
+        const oldIds = data.projectWoodSources.filter(pws => pws.project_id === projId).map(pws => pws.id)
         const newPws = woodStockId ? await db.addProjectWoodSource(projId, woodStockId) : null
+        // Remove old junction rows by ID (not project_id) so the new row survives
+        for (const oldId of oldIds) await db.removeProjectWoodSource(oldId)
         mutate(d => ({
           ...d,
           projectWoodSources: [

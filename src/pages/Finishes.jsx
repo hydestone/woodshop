@@ -16,8 +16,9 @@ export default function Finishes() {
   const [search, setSearch]         = useState('')
 
   const del = async id => {
+    const prev = data.finishProducts
     mutate(d => ({ ...d, finishProducts: d.finishProducts.filter(p => p.id !== id) }))
-    await db.deleteFinishProduct(id).catch(e => toast(e.message, 'error'))
+    await db.deleteFinishProduct(id).catch(e => { mutate(d => ({ ...d, finishProducts: prev })); toast(e.message, 'error') })
     setDeleteItem(null)
   }
 

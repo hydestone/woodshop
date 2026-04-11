@@ -39,8 +39,9 @@ export default function Resources() {
   }, [])
 
   const del = async id => {
+    const prev = data.resources
     mutate(d => ({ ...d, resources: d.resources.filter(r => r.id !== id) }))
-    await db.deleteResource(id).catch(e => toast(e.message, 'error'))
+    await db.deleteResource(id).catch(e => { mutate(d => ({ ...d, resources: prev })); toast(e.message, 'error') })
     setDeleteItem(null)
   }
 

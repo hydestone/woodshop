@@ -22,23 +22,26 @@ export default function AllPhotos() {
 
   const doUpload = async (caption, tags) => {
     setShowTag(false)
+    let uploaded = 0
     for (const file of pendingFiles) {
       setUploading(true)
       try {
         const photo = await db.uploadPhoto(null, file, caption, 'progress', tags)
         mutate(d => ({ ...d, photos: [photo, ...d.photos] }))
+        uploaded++
       } catch (e) { toast('Upload failed: ' + e.message, 'error') }
       setUploading(false)
     }
     setPendingFiles([])
-    toast('Photo uploaded', 'success')
+    if (uploaded > 0) toast(`${uploaded} photo${uploaded !== 1 ? 's' : ''} uploaded`, 'success')
   }
 
   const edit = async (id, fields) => {
     if (fields._delete) {
       const photo = data.photos.find(p => p.id === id)
+      const prev = data.photos
       mutate(d => ({ ...d, photos: d.photos.filter(p => p.id !== id) }))
-      if (photo) await db.deletePhoto(photo).catch(e => toast(e.message, 'error'))
+      if (photo) await db.deletePhoto(photo).catch(e => { mutate(d => ({ ...d, photos: prev })); toast(e.message, 'error') })
       return
     }
     mutate(d => ({ ...d, photos: d.photos.map(p => p.id === id ? { ...p, ...fields } : p) }))

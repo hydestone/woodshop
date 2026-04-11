@@ -94,8 +94,9 @@ export default function Maintenance() {
   const [expanded, setExpanded]     = useState({})
 
   const del = async id => {
+    const prev = data.maintenance
     mutate(d => ({ ...d, maintenance: d.maintenance.filter(m => m.id !== id) }))
-    await db.deleteMaint(id).catch(e => toast(e.message, 'error'))
+    await db.deleteMaint(id).catch(e => { mutate(d => ({ ...d, maintenance: prev })); toast(e.message, 'error') })
     setDeleteItem(null)
   }
 
