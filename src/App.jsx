@@ -35,6 +35,7 @@ import Help           from './pages/Help.jsx'
 import SmokeTest      from './pages/SmokeTest.jsx'
 import Calculators    from './pages/Calculators.jsx'
 import Trash          from './pages/Trash.jsx'
+import Tutorial, { useTutorialCheck } from './components/Tutorial.jsx'
 import ErrorBoundary  from './components/ErrorBoundary.jsx'
 
 // ─── Context ──────────────────────────────────────────────────────────────────
@@ -364,6 +365,7 @@ export default function App() {
   const [showQR, setShowQR] = useState(false)
   const [showFeedback, setShowFeedback] = useState(false)
   const [isOffline, setIsOffline] = useState(!navigator.onLine)
+  const { showTutorial, dismissTutorial, launchTutorial } = useTutorialCheck()
 
   useEffect(() => {
     const goOffline = () => setIsOffline(true)
@@ -472,7 +474,7 @@ export default function App() {
     return 0
   }
 
-  const ctx = { data, mutate, reload, tab, setTab, navigate, projId, setProjId, theme }
+  const ctx = { data, mutate, reload, tab, setTab, navigate, projId, setProjId, theme, launchTutorial }
 
   return (
     <AppCtx.Provider value={ctx}>
@@ -631,6 +633,7 @@ export default function App() {
         {/* QR Code modal */}
         {showQR && <QRModal onClose={() => setShowQR(false)} />}
         {showFeedback && <FeedbackModal session={session} onClose={() => setShowFeedback(false)} />}
+        {showTutorial && <Tutorial onClose={dismissTutorial} setTab={setTab} />}
       {isOffline && (
         <div className="offline-banner">
           ⚡ Offline — showing cached data

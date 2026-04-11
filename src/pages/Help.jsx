@@ -135,6 +135,7 @@ const SECTIONS = [
 ]
 
 export default function Help() {
+  const { launchTutorial } = useCtx()
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div className="scroll-page">
@@ -143,6 +144,13 @@ export default function Help() {
             <h1 className="page-title">Help</h1>
           </div>
           <p className="page-subtitle">Everything you can do in JDH Woodworks</p>
+        </div>
+
+        <div style={{ padding: '0 16px 20px' }}>
+          <button className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 20px', fontSize: 15 }}
+            onClick={launchTutorial}>
+            <span style={{ fontSize: 20 }}>🎓</span> Take a Tour
+          </button>
         </div>
 
         {SECTIONS.map(section => (
