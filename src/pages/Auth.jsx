@@ -27,12 +27,14 @@ export default function Auth({ onLogin }) {
   return (
     <div style={{
       height: '100vh', display: 'flex', alignItems: 'center',
-      justifyContent: 'center', background: '#F0F4F8',
+      justifyContent: 'center',
+      background: 'linear-gradient(rgba(15,30,56,.82), rgba(15,30,56,.88)), url(/shavings.jpg) center/cover no-repeat',
     }}>
       <div style={{
-        background: '#fff', borderRadius: 16, padding: '40px 36px',
+        background: 'rgba(255,255,255,.97)', borderRadius: 16, padding: '40px 36px',
         width: '100%', maxWidth: 400,
-        boxShadow: '0 4px 24px rgba(15,23,42,.08)',
+        boxShadow: '0 8px 40px rgba(0,0,0,.25)',
+        backdropFilter: 'blur(8px)',
       }}>
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 32 }}>
