@@ -102,20 +102,22 @@ export function maintStatus(m) {
 // ─── Sheet ────────────────────────────────────────────────────────────────────
 export function Sheet({ title, onClose, onSave, saveLabel = 'Save', children }) {
   const [saving, setSaving] = useState(false)
+  const savingRef = useRef(false)
 
   // Close on Escape
   useEffect(() => {
-    const handler = e => { if (e.key === 'Escape' && !saving) onClose() }
+    const handler = e => { if (e.key === 'Escape' && !savingRef.current) onClose() }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [onClose, saving])
+  }, [onClose])
 
   const handleSave = useCallback(async () => {
-    if (saving || !onSave) return
+    if (savingRef.current || !onSave) return
+    savingRef.current = true
     setSaving(true)
     try { await onSave() }
-    finally { setSaving(false) }
-  }, [onSave, saving])
+    finally { savingRef.current = false; setSaving(false) }
+  }, [onSave])
 
   return (
     <div
@@ -158,7 +160,7 @@ export function BulkAddSheet({ title, hint, onSave, onClose }) {
   const ref = useRef()
   const handleSave = () => {
     const lines = (ref.current?.value || '').split('\n').map(l => l.trim()).filter(Boolean)
-    if (lines.length) onSave(lines)
+    if (lines.length) return onSave(lines)
   }
   return (
     <Sheet title={title} onClose={onClose} onSave={handleSave} saveLabel="Add">
