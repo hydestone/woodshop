@@ -7,7 +7,7 @@ import { ToastProvider } from './components/Toast.jsx'
 import GlobalSearch from './components/Search.jsx'
 import {
   IFolder, ICart, IWrench, ICamera, ITree, IBulb, ISaw,
-  IStar, ICheck, IGrid, IIdea, IBrain, IDollar,
+  IStar, ICheck, IGrid, IIdea, IBrain, IDollar, ITrash,
   IBook, IHouse, IImage, ILayers, IMore, IClose,
   coatStatus, maintStatus,
 } from './components/Shared.jsx'
@@ -34,6 +34,7 @@ import Audit          from './pages/Audit.jsx'
 import Help           from './pages/Help.jsx'
 import SmokeTest      from './pages/SmokeTest.jsx'
 import Calculators    from './pages/Calculators.jsx'
+import Trash          from './pages/Trash.jsx'
 import ErrorBoundary  from './components/ErrorBoundary.jsx'
 
 // ─── Context ──────────────────────────────────────────────────────────────────
@@ -85,6 +86,7 @@ const NAV_SECTIONS = [
       { id: 'settings',    label: 'Categories',         Icon: IWrench },
       { id: 'import',      label: 'Bulk Import',       Icon: ICamera },
       { id: 'costs',       label: 'Costs',             Icon: IDollar },
+      { id: 'trash',       label: 'Trash',             Icon: ITrash  },
     ],
   },
 ]
@@ -594,6 +596,7 @@ export default function App() {
                   {tab === 'help'        && <Help />}
                   {tab === 'smoketest'   && <SmokeTest />}
                   {tab === 'calculators' && <Calculators />}
+                  {tab === 'trash'       && <Trash />}
                 </>
               )}
               </ErrorBoundary>
