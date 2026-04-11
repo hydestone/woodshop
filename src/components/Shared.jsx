@@ -534,6 +534,7 @@ export function PhotoCard({ photo, onEdit, onOpen, showProject, projects, tileIn
         <img
           src={photo.url}
           alt={photo.caption || 'Workshop photo'}
+          loading="lazy"
           onError={() => setErr(true)}
           onClick={onOpen}
         />

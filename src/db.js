@@ -194,7 +194,7 @@ export async function clearDoneItems() {
 }
 
 // ── Photos ────────────────────────────────────────────────────────────────────
-async function compressImage(file, maxPx = 2400, quality = 0.92) {
+async function compressImage(file, maxPx = 1600, quality = 0.85) {
   // HEIC and non-image types fall through uncompressed
   if (!file.type.startsWith('image/') || file.type === 'image/gif') return file
   return new Promise((resolve) => {
