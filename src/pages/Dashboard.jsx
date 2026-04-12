@@ -643,6 +643,7 @@ export default function Dashboard() {
       </div>
       <div style={{ paddingBottom: 32 }}>
 
+        {/* ── Action Zone ─────────────────────────────────────────────── */}
         {urgCoats.length > 0 && <>
           <span className="section-label">Ready to Apply</span>
           <div className="group">
@@ -653,6 +654,18 @@ export default function Dashboard() {
                 <IChevR size={14} color="var(--text-4)" />
               </div>
             ))}
+          </div>
+        </>}
+
+        {upCoats.length > 0 && <>
+          <span className="section-label">Upcoming Coats</span>
+          <div className="group">
+            {upCoats.map(c => { const st = coatStatus(c); return (
+              <div key={c.id} className="cell" style={{ cursor: 'pointer' }} onClick={() => setProjId(c.project_id)}>
+                <div style={{ flex: 1 }}><div style={{ fontWeight: 500 }}>{c.product}</div><div style={{ fontSize: 13, color: 'var(--text-3)' }}>Coat {c.coat_number} · {c.proj?.name} · {fmtShort(c.applied_at)}</div></div>
+                <span style={{ fontSize: 14, color: st.color, fontWeight: 500 }}>{st.label}</span>
+              </div>
+            )})}
           </div>
         </>}
 
@@ -669,7 +682,7 @@ export default function Dashboard() {
         </>}
 
         {nextSteps.length > 0 && <>
-          <span className="section-label">Active Projects</span>
+          <span className="section-label">Next Steps</span>
           <div className="group">
             {nextSteps.map(({ p, step }) => (
               <div key={p.id} className="cell" style={{ cursor: 'pointer' }} onClick={() => setProjId(p.id)}>
@@ -680,8 +693,15 @@ export default function Dashboard() {
           </div>
         </>}
 
-        {!hasUrgent && <div className="empty" style={{ paddingTop: 32, paddingBottom: 0 }}><div className="empty-icon">🪵</div><div className="empty-title">All clear</div><p className="empty-sub">Nothing urgent today.</p></div>}
+        {!hasUrgent && (
+          <div className="empty" style={{ paddingTop: 32, paddingBottom: 0 }}>
+            <div className="empty-icon">✅</div>
+            <div className="empty-title">All clear</div>
+            <p className="empty-sub">No coats ready, no overdue maintenance, no pending steps.</p>
+          </div>
+        )}
 
+        {/* ── Continue Working ────────────────────────────────────────── */}
         {(() => {
           const recent = [...data.projects]
             .filter(p => p.status !== 'complete')
@@ -704,6 +724,8 @@ export default function Dashboard() {
             </div>
           </>)
         })()}
+
+        {/* ── Analytics ───────────────────────────────────────────────── */}
         <span className="section-label" style={{ marginTop: 28 }}>Analytics</span>
         <div className="dash-grid">
           <div className="card"><div className="label-caps-sm">Projects by Year</div><ProjectsByYear projects={data.projects} photos={data.photos} onDrill={handleDrill} isDark={theme === 'dark'} /></div>
@@ -713,26 +735,6 @@ export default function Dashboard() {
           <div className="card"><div className="label-caps-sm">Wood Source Map</div><WoodSourceMap locations={locations} woodStock={data.woodStock} projectWoodSources={data.projectWoodSources} onLocationClick={(locName) => { setTab('projects'); window.__woodLocationFilter = locName; }} /></div>
           <div className="card" style={{gridColumn:'1/-1'}}><div className="label-caps-sm">Material Flow — Species → Category → Finish</div><MaterialFlow projects={data.projects} isDark={theme === 'dark'} /></div>
         </div>
-
-        {data.photos.length > 0 && <>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '24px 20px 6px' }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.6px' }}>Recent Photos</span>
-            <button className="btn-text" onClick={() => setTab('photos')}>See all</button>
-          </div>
-          <PhotoGrid photos={data.photos.slice(0, 12)} showProject projects={data.projects} />
-        </>}
-
-        {upCoats.length > 0 && <>
-          <span className="section-label" style={{ marginTop: 8 }}>Upcoming Coats</span>
-          <div className="group">
-            {upCoats.map(c => { const st = coatStatus(c); return (
-              <div key={c.id} className="cell" style={{ cursor: 'pointer' }} onClick={() => setProjId(c.project_id)}>
-                <div style={{ flex: 1 }}><div style={{ fontWeight: 500 }}>{c.product}</div><div style={{ fontSize: 13, color: 'var(--text-3)' }}>Coat {c.coat_number} · {c.proj?.name} · {fmtShort(c.applied_at)}</div></div>
-                <span style={{ fontSize: 14, color: st.color, fontWeight: 500 }}>{st.label}</span>
-              </div>
-            )})}
-          </div>
-        </>}
       </div>
       <AddPhotoFAB />
     </div>
