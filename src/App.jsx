@@ -1,6 +1,5 @@
 import React from 'react'
 import { useState, useEffect, useCallback, createContext, useContext, lazy, Suspense } from 'react'
-import { createPortal } from 'react-dom'
 import * as db from './db.js'
 import { supabase, getSession, signOut, onAuthStateChange } from './supabase.js'
 import Auth from './pages/Auth.jsx'
@@ -10,7 +9,7 @@ import {
   IFolder, ICart, IWrench, ICamera, ITree, IBulb, ISaw,
   IStar, ICheck, IGrid, IIdea, IBrain, IDollar, ITrash,
   IBook, IHouse, IImage, ILayers, IMore, IClose,
-  coatStatus, maintStatus,
+  coatStatus, maintStatus, Sheet,
 } from './components/Shared.jsx'
 
 // Pages
@@ -793,92 +792,66 @@ export default function App() {
         </div>
       )}
 
-        {/* More sheet (mobile) */}
-        {showMore && createPortal(
-          <div
-            className="overlay"
-            onClick={() => setShowMore(false)}
-            role="dialog"
-            aria-modal="true"
-            aria-label="More navigation"
-          >
-            <div className="sheet" onClick={e => e.stopPropagation()}>
-              <div className="sheet-handle" />
-              <div className="sheet-header">
-                <span />
-                <span className="sheet-title">More</span>
-                <button className="sheet-cancel" onClick={() => setShowMore(false)} aria-label="Close">
-                  <IClose size={18} color="var(--text-3)" sw={2} />
-                </button>
+        {/* More sheet (mobile) — uses Sheet component for scroll lock + portal */}
+        {showMore && (
+          <Sheet title="More" onClose={() => setShowMore(false)}>
+            {/* Portfolio links */}
+            <div className="form-group" style={{ marginBottom: 8 }}>
+              <div className="more-item" style={{ borderBottom: '1px solid var(--border-2)', padding: '13px 16px' }}
+                onClick={() => { setShowMore(false); setShowFeedback(true) }} role="button" tabIndex={0}>
+                <IBrain size={20} color="var(--accent)" sw={1.8} />
+                <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>Send Feedback</span>
               </div>
-              <div className="sheet-body">
-                {/* Portfolio links */}
-                <div className="form-group" style={{ marginBottom: 8 }}>
-                  <div className="more-item" style={{ borderBottom: '1px solid var(--border-2)', padding: '13px 16px' }}
-                    onClick={() => { setShowMore(false); setShowFeedback(true) }} role="button" tabIndex={0}>
-                    <IBrain size={20} color="var(--accent)" sw={1.8} />
-                    <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>Send Feedback</span>
-                  </div>
-                  <div className="more-item" style={{ borderBottom: '1px solid var(--border-2)', padding: '13px 16px' }}
-                    onClick={() => { setShowMore(false); setShowQR(true) }} role="button" tabIndex={0}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
-                      <rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/>
-                    </svg>
-                    <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>Share Portfolio</span>
-                  </div>
-                  <a href="/portfolio" target="_blank" rel="noopener noreferrer"
-                    className="more-item"
-                    style={{ borderBottom: 'none', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 14, padding: '13px 16px' }}
-                    onClick={() => setShowMore(false)}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                      <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
-                    </svg>
-                    <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>View Portfolio</span>
-                  </a>
-                </div>
-
-                {/* Grouped nav sections — skip items already in tab bar */}
-                {NAV_SECTIONS.map(section => {
-                  const items = section.items.filter(t => !['home','projects','shopping','photos'].includes(t.id))
-                  if (!items.length) return null
-                  // Give the first (null-label) section a "Workshop" heading in mobile more menu
-                  const label = section.label || 'Workshop'
-                  return (
-                    <div key={label} style={{ marginBottom: 8 }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-4)', textTransform: 'uppercase', letterSpacing: '.8px', padding: '4px 16px 6px' }}>
-                        {label}
-                      </div>
-                      <div className="form-group">
-                        {items.map((t, i) => {
-                          const badge = badgeFor(t.id)
-                          return (
-                            <div key={t.id} className="more-item"
-                              style={{ borderBottom: i < items.length - 1 ? '1px solid var(--border-2)' : 'none', padding: '13px 16px' }}
-                              onClick={() => { setTab(t.id); setShowMore(false) }}
-                              role="button" tabIndex={0}
-                              onKeyDown={e => e.key === 'Enter' && (setTab(t.id), setShowMore(false))}>
-                              <t.Icon size={20} color="var(--accent)" sw={1.8} />
-                              <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>{t.label}</span>
-                              {badge > 0 && <span className="sidebar-badge">{badge}</span>}
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )
-                })}
+              <div className="more-item" style={{ borderBottom: '1px solid var(--border-2)', padding: '13px 16px' }}
+                onClick={() => { setShowMore(false); setShowQR(true) }} role="button" tabIndex={0}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                  <rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/>
+                </svg>
+                <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>Share Portfolio</span>
               </div>
-              {/* Bottom close — always reachable on iPhone */}
-              <div style={{ padding: '8px 20px 16px', flexShrink: 0, borderTop: '1px solid var(--border-2)' }}>
-                <button className="btn-secondary" style={{ width: '100%', justifyContent: 'center', padding: '12px' }} onClick={() => setShowMore(false)}>
-                  Close
-                </button>
-              </div>
+              <a href="/portfolio" target="_blank" rel="noopener noreferrer"
+                className="more-item"
+                style={{ borderBottom: 'none', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 14, padding: '13px 16px' }}
+                onClick={() => setShowMore(false)}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                  <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+                </svg>
+                <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>View Portfolio</span>
+              </a>
             </div>
-          </div>,
-          document.body
+
+            {/* Grouped nav sections */}
+            {NAV_SECTIONS.map(section => {
+              const items = section.items.filter(t => !['home','projects','shopping','photos'].includes(t.id))
+              if (!items.length) return null
+              const label = section.label || 'Workshop'
+              return (
+                <div key={label} style={{ marginBottom: 8 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-4)', textTransform: 'uppercase', letterSpacing: '.8px', padding: '4px 16px 6px' }}>
+                    {label}
+                  </div>
+                  <div className="form-group">
+                    {items.map((t, i) => {
+                      const badge = badgeFor(t.id)
+                      return (
+                        <div key={t.id} className="more-item"
+                          style={{ borderBottom: i < items.length - 1 ? '1px solid var(--border-2)' : 'none', padding: '13px 16px' }}
+                          onClick={() => { setTab(t.id); setShowMore(false) }}
+                          role="button" tabIndex={0}
+                          onKeyDown={e => e.key === 'Enter' && (setTab(t.id), setShowMore(false))}>
+                          <t.Icon size={20} color="var(--accent)" sw={1.8} />
+                          <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>{t.label}</span>
+                          {badge > 0 && <span className="sidebar-badge">{badge}</span>}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })}
+          </Sheet>
         )}
       </ToastProvider>
     </AppCtx.Provider>

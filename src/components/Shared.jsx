@@ -126,11 +126,9 @@ export function Sheet({ title, onClose, onSave, saveLabel = 'Save', children }) 
 
   // Lock background scroll when sheet is open
   useEffect(() => {
-    // Prevent touchmove on overlay background from scrolling page behind
     const el = overlayRef.current
     if (!el) return
     const prevent = e => {
-      // Allow scrolling inside .sheet-body, block everything else
       let target = e.target
       while (target && target !== el) {
         if (target.classList?.contains('sheet-body')) return
@@ -140,24 +138,6 @@ export function Sheet({ title, onClose, onSave, saveLabel = 'Save', children }) 
     }
     el.addEventListener('touchmove', prevent, { passive: false })
     return () => el.removeEventListener('touchmove', prevent)
-  }, [])
-
-  // iOS keyboard: resize overlay to visual viewport
-  useEffect(() => {
-    const vv = window.visualViewport
-    if (!vv) return
-    const update = () => {
-      const el = overlayRef.current
-      if (!el) return
-      el.style.height = vv.height + 'px'
-      el.style.top = vv.offsetTop + 'px'
-    }
-    vv.addEventListener('resize', update)
-    vv.addEventListener('scroll', update)
-    return () => {
-      vv.removeEventListener('resize', update)
-      vv.removeEventListener('scroll', update)
-    }
   }, [])
 
   return createPortal(
