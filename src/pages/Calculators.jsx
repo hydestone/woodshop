@@ -471,57 +471,67 @@ function ConverterColumn({ title, cfg, catKey }) {
 
   const result = val !== '' ? convertVal(parseFloat(val), from, to, cfg) : ''
 
+  const selectStyle = {
+    background: 'transparent', border: '1px solid var(--border-2)', borderRadius: 8,
+    fontFamily: 'inherit', fontSize: 14, fontWeight: 600, outline: 'none',
+    width: '100%', padding: '8px 10px', color: 'var(--text)',
+    appearance: 'none', WebkitAppearance: 'none',
+  }
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <div className="label-caps">{title}</div>
-
-      {/* Input */}
-      <div style={{ background: 'var(--navy)', borderRadius: 8, padding: '10px 12px' }}>
-        <div style={{ fontSize: 10, color: 'var(--sb-text)', marginBottom: 4 }}>From</div>
-        <select
-          value={from}
-          onChange={e => setFrom(e.target.value)}
-          style={{ background: 'transparent', color: 'var(--white)', border: 'none', fontFamily: 'inherit', fontSize: 13, fontWeight: 700, outline: 'none', marginBottom: 6, width: '100%' }}
-        >
-          {cfg.units.map(u => <option key={u} value={u} style={{ background: 'var(--navy)' }}>{u}</option>)}
+    <ProSection title={title}>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10 }}>
+        <select value={from} onChange={e => setFrom(e.target.value)} style={selectStyle}>
+          {cfg.units.map(u => <option key={u} value={u}>{u}</option>)}
         </select>
-        <input
-          className="calc-input"
-          value={val}
-          onChange={e => setVal(e.target.value)}
-          placeholder="0"
-          inputMode="decimal"
-          style={{ background: 'rgba(255,255,255,.1)', color: 'var(--white)', border: '1px solid rgba(255,255,255,.2)', textAlign: 'right', fontSize: 18, fontWeight: 700, width: '100%' }}
-        />
-      </div>
-
-      {/* Swap */}
-      <button
-        onClick={() => { setFrom(to); setTo(from) }}
-        style={{ background: 'var(--fill)', border: 'none', borderRadius: 99, padding: '4px', cursor: 'pointer', alignSelf: 'center', fontSize: 16, lineHeight: 1, color: 'var(--text-3)' }}
-        aria-label="Swap units"
-      >⇅</button>
-
-      {/* Result */}
-      <div style={{ background: 'var(--surface)', border: '1px solid var(--border-2)', borderRadius: 8, padding: '10px 12px' }}>
-        <div style={{ fontSize: 10, color: 'var(--text-4)', marginBottom: 4 }}>Result</div>
-        <select
-          value={to}
-          onChange={e => setTo(e.target.value)}
-          style={{ background: 'transparent', border: 'none', fontFamily: 'inherit', fontSize: 13, fontWeight: 700, outline: 'none', marginBottom: 6, width: '100%', color: 'var(--text)' }}
-        >
-          {cfg.units.map(u => <option key={u}>{u}</option>)}
+        <button
+          onClick={() => { setFrom(to); setTo(from) }}
+          style={{ background: 'var(--fill)', border: 'none', borderRadius: 99, width: 32, height: 32, cursor: 'pointer', fontSize: 16, color: 'var(--text-3)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          aria-label="Swap units"
+        >⇄</button>
+        <select value={to} onChange={e => setTo(e.target.value)} style={selectStyle}>
+          {cfg.units.map(u => <option key={u} value={u}>{u}</option>)}
         </select>
-        <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--forest)', textAlign: 'right' }}>{result || '—'}</div>
       </div>
-    </div>
+      <input
+        className="calc-input"
+        value={val}
+        onChange={e => setVal(e.target.value)}
+        placeholder="Enter value"
+        inputMode="decimal"
+        style={{ width: '100%', marginBottom: 10 }}
+      />
+      {result && (
+        <div className="calc-display" style={{ marginBottom: 0 }}>
+          <div className="calc-display-row">
+            <div>
+              <div key={result} className="calc-display-value result-pop" style={{ fontSize: 28 }}>{result}</div>
+              <div className="calc-display-sub">{to}</div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: 14, color: 'rgba(240,244,248,.4)' }}>{val} {from}</div>
+            </div>
+          </div>
+        </div>
+      )}
+    </ProSection>
   )
 }
 
 function UnitConverter() {
+  const [showHelp, setShowHelp] = useState(false)
   return (
-    <div style={{ padding: '12px 20px 40px', maxWidth: 640, margin: '0 auto' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
+    <div style={{ padding: '0 20px 40px', maxWidth: 640, margin: '0 auto' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '8px 0 12px' }}>
+        <span style={{ fontSize: 12, color: 'var(--text-4)' }}>Convert between imperial and metric units</span>
+        <button className="calc-help-btn" onClick={() => setShowHelp(!showHelp)} title="Help">?</button>
+      </div>
+      {showHelp && (
+        <div className="calc-help-tip">
+          <strong>Unit Converter</strong> handles length, temperature, weight, and area conversions. Select your units, enter a value, and the result appears instantly. Tap the ⇄ button to swap from/to units.
+        </div>
+      )}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
         {Object.entries(CONV).map(([title, cfg]) => (
           <ConverterColumn key={title} title={title} cfg={cfg} catKey={title} />
         ))}
@@ -675,7 +685,6 @@ function TrimCuts() {
                 ))}
                 {b.sl-b.used>0.05&&(
                   <div style={{ flex:1, background:'repeating-linear-gradient(45deg,rgba(239,68,68,.15),rgba(239,68,68,.15) 4px,rgba(239,68,68,.08) 4px,rgba(239,68,68,.08) 8px)', border:'none' }} title={`Waste: ${inToFtInStr(Math.max(0,b.sl-b.used))}`} />
-                )}
                 )}
               </div>
               <div style={{ display:'flex', flexWrap:'wrap', gap:5, marginTop:8 }}>

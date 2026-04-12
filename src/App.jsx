@@ -866,6 +866,12 @@ export default function App() {
                   )
                 })}
               </div>
+              {/* Bottom close — always reachable on iPhone */}
+              <div style={{ padding: '8px 20px 16px', flexShrink: 0, borderTop: '1px solid var(--border-2)' }}>
+                <button className="btn-secondary" style={{ width: '100%', justifyContent: 'center', padding: '12px' }} onClick={() => setShowMore(false)}>
+                  Close
+                </button>
+              </div>
             </div>
           </div>,
           document.body

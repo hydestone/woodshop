@@ -1784,6 +1784,15 @@ body {
   box-shadow: 0 0 0 2px rgba(239,68,68,.2);
 }
 
+@keyframes searchHighlight {
+  0% { background: rgba(37,99,235,.25); }
+  100% { background: transparent; }
+}
+.search-highlight {
+  animation: searchHighlight 2s ease forwards;
+  border-radius: 8px;
+}
+
 .result-box {
   background: var(--navy);
   border-radius: var(--r-md);
