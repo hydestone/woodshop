@@ -830,11 +830,11 @@ body {
 .btn-text:active,
 .fab:active,
 .tab-btn:active {
-  transform: scale(0.97);
-  opacity: 0.8;
+  transform: scale(0.94) !important;
+  opacity: 0.65 !important;
 }
 .photo-card:active {
-  transform: scale(0.98);
+  transform: scale(0.96) !important;
 }
 
 .section-label {
@@ -875,7 +875,7 @@ body {
   transform: translateY(-1px);
 }
 .proj-card:active {
-  transform: scale(0.98);
+  transform: scale(0.95) !important;
   box-shadow: var(--shadow-sm);
 }
 
@@ -944,6 +944,7 @@ body {
   flex-direction: column;
   overflow: hidden;
   animation: sheetUp 240ms cubic-bezier(.32,.72,0,1);
+  padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: var(--safe-b);
 }
 .sheet-handle {
