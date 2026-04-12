@@ -153,7 +153,7 @@ function ProjectsByYear({ projects, photos, onDrill , isDark = false }) {
       icon: 'roundRect',
       itemWidth: 10, itemHeight: 10,
     },
-    grid: { top: 8, left: 32, right: 8, bottom: 40, containLabel: false },
+    grid: { top: 8, left: 32, right: 8, bottom: 56, containLabel: false },
     xAxis: {
       type: 'category',
       data: grouped.map(([y]) => y),
@@ -195,7 +195,7 @@ function ProjectsByYear({ projects, photos, onDrill , isDark = false }) {
 
   return (
     <div>
-      <div ref={chartRef} style={{ width:'100%', height: 180 }} />
+      <div ref={chartRef} style={{ width:'100%', height: 220 }} />
       <div style={{ fontSize:11, color:'var(--text-4)', marginTop:4 }}>Click a bar to browse that year</div>
       {carouselYear && <YearCarousel year={carouselYear} projects={projects} photos={photos} onClose={()=>setCarouselYear(null)}/>}
     </div>

@@ -2250,8 +2250,8 @@ body {
   }
 }
 
-/* ─── tablet-max (@media (max-width: 900px)) ───────────────────── */
-@media (max-width: 900px) {
+/* ─── tablet-max (@media (min-width: 768px) and (max-width: 900px)) ─ */
+@media (min-width: 768px) and (max-width: 900px) {
   .dash-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
