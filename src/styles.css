@@ -2560,6 +2560,10 @@ body {
 
 /* ─── pwa-standalone (@media (display-mode: standalone)) ───────── */
 @media (display-mode: standalone) {
+  .sheet {
+    max-height: calc(80dvh - env(safe-area-inset-top, 0px));
+  }
+
   .portfolio-back-btn {
     display: flex;
     align-items: center;
