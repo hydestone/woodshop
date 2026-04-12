@@ -241,7 +241,7 @@
 
   /* Layout */
   --topbar-h:    84px;
-  --tabbar-h:    49px;
+  --tabbar-h:    44px;
   --safe-b:      env(safe-area-inset-bottom, 0px);
 
   /* Extended palette */
@@ -677,8 +677,8 @@ body {
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   border-top: 1px solid var(--border);
   display: flex;
-  align-items: center;
-  padding-top: 4px;
+  align-items: flex-end;
+  padding: 0;
   padding-bottom: env(safe-area-inset-bottom, 0px);
   z-index: 50;
 }
@@ -691,7 +691,7 @@ body {
   gap: 2px;
   background: none;
   border: none;
-  padding: 2px 0;
+  padding: 6px 0 4px;
   cursor: pointer;
   position: relative;
   color: var(--text-3);
