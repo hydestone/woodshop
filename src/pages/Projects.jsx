@@ -437,6 +437,7 @@ export function ProjectDetail() {
   const [showRon, setShowRon]   = useState(false)
   const [showQRLabel, setShowQRLabel] = useState(false)
   const [showReminder, setShowReminder] = useState(false)
+  const [detailTab, setDetailTab] = useState('overview')
 
   const project = data.projects.find(p => p.id === projId)
   if (!project) return null
@@ -652,11 +653,66 @@ export function ProjectDetail() {
         </div>
       </div>
 
-      {/* ── Two-column body ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'var(--border-2)' }} className="proj-detail-grid">
+      {/* ── Sub-tab bar ── */}
+      <div style={{
+        display: 'flex', gap: 0, background: 'var(--surface)',
+        borderBottom: '1px solid var(--border)',
+        position: 'sticky', top: 0, zIndex: 10,
+      }}>
+        {['overview', 'steps', 'finishing', 'photos'].map(t => (
+          <button key={t} onClick={() => setDetailTab(t)} style={{
+            flex: 1, padding: '10px 0', fontSize: 13, fontWeight: 600,
+            fontFamily: 'inherit', border: 'none', cursor: 'pointer',
+            background: 'transparent',
+            color: detailTab === t ? 'var(--accent)' : 'var(--text-3)',
+            borderBottom: detailTab === t ? '2px solid var(--accent)' : '2px solid transparent',
+            transition: 'color 150ms, border-color 150ms',
+          }}>
+            {t.charAt(0).toUpperCase() + t.slice(1)}
+          </button>
+        ))}
+      </div>
 
-        {/* Left — Build Steps */}
-        <div style={{ background: 'var(--surface)', padding: '20px' }}>
+      {/* ── Overview tab ── */}
+      {detailTab === 'overview' && (
+        <div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'var(--border-2)', marginTop: 1 }} className="proj-detail-grid">
+            <TimeTracker project={project} onSave={handleUpdate} />
+            <CostTracker project={project} onSave={handleUpdate} projId={projId} shopping={data.shopping} />
+          </div>
+
+          {/* Wood source */}
+          {(() => {
+            const pws = data.projectWoodSources?.find(w => w.project_id === projId)
+            const ws = pws ? data.woodStock?.find(w => w.id === pws.wood_stock_id) : null
+            if (!ws) return null
+            return (
+              <div style={{ background: 'var(--surface)', marginTop: 1, padding: '16px 20px' }}>
+                <div className="label-caps" style={{ marginBottom: 8 }}>Wood Source</div>
+                <div style={{ fontSize: 14 }}>
+                  <span style={{ fontWeight: 600 }}>{ws.species}</span>
+                  {ws.dimensions && <span style={{ color: 'var(--text-3)', marginLeft: 8 }}>{ws.dimensions}</span>}
+                  {ws.source && <span style={{ color: 'var(--text-3)', marginLeft: 8 }}>from {ws.source}</span>}
+                </div>
+              </div>
+            )
+          })()}
+
+          {/* Description */}
+          {project.description && (
+            <div style={{ background: 'var(--surface)', marginTop: 1, padding: '16px 20px' }}>
+              <div className="label-caps" style={{ marginBottom: 8 }}>Description</div>
+              <p style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.6, margin: 0 }}>{project.description}</p>
+            </div>
+          )}
+
+          <div style={{ height: 20 }} />
+        </div>
+      )}
+
+      {/* ── Steps tab ── */}
+      {detailTab === 'steps' && (
+        <div style={{ background: 'var(--surface)', marginTop: 1, padding: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <div>
               <div className="label-caps">Build Steps</div>
@@ -665,38 +721,38 @@ export function ProjectDetail() {
             <button className="icon-btn" onClick={() => setSub('steps-add')} aria-label="Add step"><IPlus size={18} color="var(--accent)" /></button>
           </div>
           <StepsList projId={projId} />
+          <div style={{ height: 20 }} />
         </div>
+      )}
 
-        {/* Right — Finishing */}
-        <div style={{ background: 'var(--surface)', padding: '20px' }}>
+      {/* ── Finishing tab ── */}
+      {detailTab === 'finishing' && (
+        <div style={{ background: 'var(--surface)', marginTop: 1, padding: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <div className="label-caps">Finishing</div>
             <button className="icon-btn" onClick={() => setSub('finish-add')} aria-label="Add coat"><IPlus size={18} color="var(--accent)" /></button>
           </div>
           <FinishingList projId={projId} sub={sub} setSub={setSub} />
-        </div>
-      </div>
-
-      {/* ── Time & Cost ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'var(--border-2)', marginTop: 1 }}>
-        <TimeTracker project={project} onSave={handleUpdate} />
-        <CostTracker project={project} onSave={handleUpdate} projId={projId} shopping={data.shopping} />
-      </div>
-
-      {/* ── Photos full-width ── */}
-      <div style={{ background: 'var(--surface)', marginTop: 1, padding: '20px' }}>
-        <PhotoTimeline projId={projId} />
-      </div>
-
-      {/* ── Inspiration ── */}
-      {data.photos.filter(p => p.project_id === projId && p.photo_type === 'inspiration').length > 0 && (
-        <div style={{ background: 'var(--surface)', marginTop: 1, padding: '20px' }}>
-          <div className="label-caps" style={{ marginBottom: 12 }}>Inspiration</div>
-          <PhotoPane projId={projId} type="inspiration" inline />
+          <div style={{ height: 20 }} />
         </div>
       )}
 
-      <div style={{ height: 20 }} />
+      {/* ── Photos tab ── */}
+      {detailTab === 'photos' && (
+        <div>
+          <div style={{ background: 'var(--surface)', marginTop: 1, padding: '20px' }}>
+            <PhotoTimeline projId={projId} />
+          </div>
+
+          {data.photos.filter(p => p.project_id === projId && p.photo_type === 'inspiration').length > 0 && (
+            <div style={{ background: 'var(--surface)', marginTop: 1, padding: '20px' }}>
+              <div className="label-caps" style={{ marginBottom: 12 }}>Inspiration</div>
+              <PhotoPane projId={projId} type="inspiration" inline />
+            </div>
+          )}
+          <div style={{ height: 20 }} />
+        </div>
+      )}
 
       {editing    && <ProjectSheet project={project} categories={categories} onSave={handleUpdate} onClose={() => setEditing(false)} mutate={mutate} />}
       {confirming && <ConfirmSheet message={`Delete "${project.name}"? All steps, coats, and photos will be removed. This cannot be undone.`} onConfirm={handleDelete} onClose={() => setConfirming(false)} />}
