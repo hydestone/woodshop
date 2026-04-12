@@ -104,6 +104,7 @@ export function maintStatus(m) {
 export function Sheet({ title, onClose, onSave, saveLabel = 'Save', children }) {
   const [saving, setSaving] = useState(false)
   const savingRef = useRef(false)
+  const overlayRef = useRef(null)
 
   const handleSave = useCallback(async () => {
     if (savingRef.current || !onSave) return
@@ -123,8 +124,27 @@ export function Sheet({ title, onClose, onSave, saveLabel = 'Save', children }) 
     return () => window.removeEventListener('keydown', handler)
   }, [onClose, handleSave])
 
+  // iOS keyboard: resize overlay to visual viewport
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv) return
+    const update = () => {
+      const el = overlayRef.current
+      if (!el) return
+      el.style.height = vv.height + 'px'
+      el.style.top = vv.offsetTop + 'px'
+    }
+    vv.addEventListener('resize', update)
+    vv.addEventListener('scroll', update)
+    return () => {
+      vv.removeEventListener('resize', update)
+      vv.removeEventListener('scroll', update)
+    }
+  }, [])
+
   return createPortal(
     <div
+      ref={overlayRef}
       className="overlay"
       role="dialog"
       aria-modal="true"

@@ -500,6 +500,8 @@ export default function App() {
     const goOnline  = () => setIsOffline(false)
     window.addEventListener('offline', goOffline)
     window.addEventListener('online',  goOnline)
+    // Enable :active CSS states on iOS Safari
+    document.addEventListener('touchstart', () => {}, { passive: true })
     return () => {
       window.removeEventListener('offline', goOffline)
       window.removeEventListener('online',  goOnline)
