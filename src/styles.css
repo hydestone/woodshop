@@ -937,14 +937,13 @@ body {
 }
 .sheet {
   width: 100%;
-  max-height: calc(92dvh - env(safe-area-inset-top, 0px));
+  max-height: 80dvh;
   background: var(--bg);
   border-radius: var(--r-lg) var(--r-lg) 0 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   animation: sheetUp 240ms cubic-bezier(.32,.72,0,1);
-  padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: var(--safe-b);
 }
 .sheet-handle {
