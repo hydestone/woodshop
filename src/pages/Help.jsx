@@ -146,12 +146,14 @@ export default function Help() {
           <p className="page-subtitle">Everything you can do in JDH Woodworks</p>
         </div>
 
-        <div style={{ padding: '0 16px 20px' }}>
-          <button className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 20px', fontSize: 15 }}
-            onClick={launchTutorial}>
-            <span style={{ fontSize: 20 }}>🎓</span> Take a Tour
-          </button>
-        </div>
+        {window.innerWidth >= 768 && (
+          <div style={{ padding: '0 16px 20px' }}>
+            <button className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 20px', fontSize: 15 }}
+              onClick={launchTutorial}>
+              <span style={{ fontSize: 20 }}>🎓</span> Take a Tour
+            </button>
+          </div>
+        )}
 
         {SECTIONS.map(section => (
           <div key={section.title} style={{ marginBottom: 24 }}>

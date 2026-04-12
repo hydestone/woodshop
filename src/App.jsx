@@ -781,7 +781,7 @@ export default function App() {
         {/* QR Code modal */}
         {showQR && <QRModal onClose={() => setShowQR(false)} />}
         {showFeedback && <FeedbackModal session={session} onClose={() => setShowFeedback(false)} />}
-        {showTutorial && <Tutorial onClose={dismissTutorial} setTab={setTab} />}
+        {showTutorial && window.innerWidth >= 768 && <Tutorial onClose={dismissTutorial} setTab={setTab} />}
       {isOffline && (
         <div className="offline-banner">
           ⚡ Offline — showing cached data
