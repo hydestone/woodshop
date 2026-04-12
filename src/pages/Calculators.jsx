@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 
 // ─── Math utilities ────────────────────────────────────────────────────────────
 function gcd(a, b) { return b ? gcd(b, a % b) : Math.abs(a) }
@@ -114,11 +114,19 @@ function LenInput({ label, value, onChange, placeholder }) {
 
 // ─── Tab: Board Foot ───────────────────────────────────────────────────────────
 function BoardFoot() {
-  const [t, setT] = useState(''), [w, setW] = useState(''), [l, setL] = useState('')
-  const [qty, setQty] = useState('1'), [cost, setCost] = useState('')
+  const [t, setT] = useState(() => { try { return localStorage.getItem('bf-t') || '' } catch { return '' } })
+  const [w, setW] = useState(() => { try { return localStorage.getItem('bf-w') || '' } catch { return '' } })
+  const [l, setL] = useState('')
+  const [qty, setQty] = useState('1')
+  const [cost, setCost] = useState(() => { try { return localStorage.getItem('bf-cost') || '' } catch { return '' } })
   const [tally, setTally] = useState([])
   const [memory, setMemory] = useState(null)
   const [showHelp, setShowHelp] = useState(false)
+
+  // Persist commonly reused values
+  useEffect(() => { try { localStorage.setItem('bf-t', t) } catch {} }, [t])
+  useEffect(() => { try { localStorage.setItem('bf-w', w) } catch {} }, [w])
+  useEffect(() => { try { localStorage.setItem('bf-cost', cost) } catch {} }, [cost])
 
   const pf = v => { const o = parseFracObj(v); return o ? fracToDecimal(o) : null }
   const tv = pf(t), wv = pf(w), lv = parseFloat(l) || 0
@@ -208,7 +216,18 @@ function BoardFoot() {
               <span>{Math.round(tally.reduce((s,r) => s+r.bf, 0)*1000)/1000} BF{tally.some(r=>r.cost>0) ? ` · $${tally.reduce((s,r)=>s+r.cost,0).toFixed(2)}` : ''}</span>
             </div>
           </div>
-          <button className="btn-text" style={{ marginTop: 8, color: 'var(--red)' }} onClick={() => setTally([])}>Clear tally</button>
+          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+            <button className="btn-text" style={{ color: 'var(--red)' }} onClick={() => setTally([])}>Clear tally</button>
+            <button className="btn-text" style={{ color: 'var(--accent)' }} onClick={() => {
+              const lines = tally.map(r => `${r.desc} → ${r.bf} BF${r.cost > 0 ? ` ($${r.cost.toFixed(2)})` : ''}`)
+              const total = Math.round(tally.reduce((s,r) => s+r.bf, 0)*1000)/1000
+              const totalCost = tally.reduce((s,r) => s+r.cost, 0)
+              lines.push(`\nTotal: ${total} BF${totalCost > 0 ? ` · $${totalCost.toFixed(2)}` : ''}`)
+              const text = `Board Feet Tally\n${'─'.repeat(24)}\n${lines.join('\n')}\n\n— JDH Woodworks`
+              if (navigator.share) navigator.share({ text }).catch(() => {})
+              else { navigator.clipboard?.writeText(text); }
+            }}>Share tally</button>
+          </div>
         </SectionCard>
       )}
     </div>
@@ -533,11 +552,14 @@ function TrimCuts() {
     { id:1, len:'', qty:1, label:'' },
     { id:2, len:'', qty:1, label:'' },
   ])
-  const [stock, setStock] = useState("8', 10', 12'")
-  const [kerf, setKerf]   = useState('0.125')
+  const [stock, setStock] = useState(() => { try { return localStorage.getItem('tc-stock') || "8', 10', 12'" } catch { return "8', 10', 12'" } })
+  const [kerf, setKerf]   = useState(() => { try { return localStorage.getItem('tc-kerf') || '0.125' } catch { return '0.125' } })
   const [result, setResult] = useState(null)
   const [error, setError]   = useState(null)
   const [showHelp, setShowHelp] = useState(false)
+
+  useEffect(() => { try { localStorage.setItem('tc-stock', stock) } catch {} }, [stock])
+  useEffect(() => { try { localStorage.setItem('tc-kerf', kerf) } catch {} }, [kerf])
 
   const upd = (id, f, v) => setCuts(c => c.map(x => x.id===id ? {...x,[f]:v} : x))
   const addRow = () => setCuts(c => [...c, { id:Date.now(), len:'', qty:1, label:'' }])
@@ -622,6 +644,16 @@ function TrimCuts() {
             </div>
           </div>
 
+          {/* Share */}
+          <button className="btn-text" style={{ color: 'var(--accent)', marginBottom: 12, fontSize: 13 }} onClick={() => {
+            const summary = Object.entries(result.summary).sort(([a],[b])=>+a-+b).map(([len,cnt]) => `${cnt}× ${inToFtInStr(+len)}`).join(', ')
+            const waste = Math.round((1-result.boards.reduce((s,b)=>s+b.used,0)/result.boards.reduce((s,b)=>s+b.sl,0))*100)
+            const cutList = result.boards.map((b,i) => `Board ${i+1} (${inToFtInStr(b.sl)}): ${b.cuts.map(c => inToFtInStr(c)).join(' + ')}`).join('\n')
+            const text = `Cut List Optimization\n${'─'.repeat(24)}\nStock needed: ${summary}\nWaste: ${waste}%\n\n${cutList}\n\n— JDH Woodworks`
+            if (navigator.share) navigator.share({ text }).catch(() => {})
+            else navigator.clipboard?.writeText(text)
+          }}>Share cut list</button>
+
           {/* Board diagrams */}
           {result.boards.map((b, bi) => (
             <div key={bi} style={{ background: 'var(--surface)', border: '1px solid var(--border-2)', borderRadius: 12, padding: '14px 16px', marginBottom: 8 }}>
@@ -699,9 +731,13 @@ function packSheets(pieces, sw, sh, kerf) {
 }
 
 function SheetGoods() {
-  const [sheetW, setSheetW] = useState('48')
-  const [sheetH, setSheetH] = useState('96')
-  const [kerf, setKerf]     = useState('0.125')
+  const [sheetW, setSheetW] = useState(() => { try { return localStorage.getItem('sg-w') || '48' } catch { return '48' } })
+  const [sheetH, setSheetH] = useState(() => { try { return localStorage.getItem('sg-h') || '96' } catch { return '96' } })
+  const [kerf, setKerf]     = useState(() => { try { return localStorage.getItem('sg-kerf') || '0.125' } catch { return '0.125' } })
+
+  useEffect(() => { try { localStorage.setItem('sg-w', sheetW) } catch {} }, [sheetW])
+  useEffect(() => { try { localStorage.setItem('sg-h', sheetH) } catch {} }, [sheetH])
+  useEffect(() => { try { localStorage.setItem('sg-kerf', kerf) } catch {} }, [kerf])
   const [cuts, setCuts]     = useState([
     { id:1, w:'', h:'', qty:1, label:'' },
     { id:2, w:'', h:'', qty:1, label:'' },
@@ -826,6 +862,12 @@ function SheetGoods() {
               </div>
             </div>
           </div>
+          <button className="btn-text" style={{ color: 'var(--accent)', marginBottom: 12, fontSize: 13 }} onClick={() => {
+            const pieces = cuts.filter(c => parseFloat(c.w) && parseFloat(c.h)).map(c => `${c.qty}× ${c.w}"×${c.h}"${c.label ? ` (${c.label})` : ''}`).join(', ')
+            const text = `Sheet Goods Layout\n${'─'.repeat(24)}\nSheet: ${sheetW}"×${sheetH}"\nPieces: ${pieces}\nSheets needed: ${result.sheets.length}\nWaste: ${result.wastePct}%\nUsed: ${result.usedSqFt} sq ft\n\n— JDH Woodworks`
+            if (navigator.share) navigator.share({ text }).catch(() => {})
+            else navigator.clipboard?.writeText(text)
+          }}>Share layout</button>
           {result.sheets.map((sheet,i) => <SheetDiagram key={i} sheet={sheet} sw={result.sw} sh={result.sh} idx={i}/>)}
         </>
       )}

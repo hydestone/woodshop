@@ -2385,6 +2385,11 @@ body {
   .page-header-row .page-title {
     flex: 0 0 100%;
   }
+
+  /* Prevent iOS auto-zoom on input focus */
+  input, select, textarea, .calc-input, .calc-input-sm, .form-input, .search-input {
+    font-size: 16px !important;
+  }
 }
 
 /* ─── tablet-max (@media (min-width: 768px) and (max-width: 900px)) ─ */
