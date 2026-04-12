@@ -124,6 +124,13 @@ export function Sheet({ title, onClose, onSave, saveLabel = 'Save', children }) 
     return () => window.removeEventListener('keydown', handler)
   }, [onClose, handleSave])
 
+  // Lock background scroll when sheet is open
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [])
+
   // iOS keyboard: resize overlay to visual viewport
   useEffect(() => {
     const vv = window.visualViewport

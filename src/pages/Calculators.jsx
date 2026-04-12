@@ -1081,12 +1081,10 @@ function CalcNotes() {
 }
 
 // ─── Main Calculators page ────────────────────────────────────────────────────
-const BASIC_TABS = [
+const ALL_TABS = [
   { id:'boardfoot', label:'Board Foot', icon: '📐' },
   { id:'fractions', label:'Fractions',  icon: '⅝' },
   { id:'converter', label:'Converter',  icon: '🔄' },
-]
-const ENHANCED_TABS = [
   { id:'trim',      label:'Trim Cuts',  icon: '✂️' },
   { id:'sheet',     label:'Sheet Goods', icon: '📦' },
   { id:'advanced',  label:'Advanced',   icon: '📊' },
@@ -1097,44 +1095,16 @@ export default function Calculators() {
   const [tab, setTab] = useState(() => {
     try { return localStorage.getItem('calc-tab') || 'boardfoot' } catch { return 'boardfoot' }
   })
-  const [mode, setMode] = useState(() => {
-    try { return localStorage.getItem('calc-mode') || 'basic' } catch { return 'basic' }
-  })
 
   const switchTab = t => {
     setTab(t)
     try { localStorage.setItem('calc-tab', t) } catch {}
   }
 
-  const switchMode = m => {
-    setMode(m)
-    try { localStorage.setItem('calc-mode', m) } catch {}
-    // If switching to basic and current tab is enhanced-only, reset to boardfoot
-    if (m === 'basic' && ENHANCED_TABS.some(t => t.id === tab)) switchTab('boardfoot')
-  }
-
-  const tabs = mode === 'enhanced' ? [...BASIC_TABS, ...ENHANCED_TABS] : BASIC_TABS
-
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div className="page-header" style={{ paddingBottom: 0 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h1 className="page-title">Calculators</h1>
-          <div style={{ display: 'flex', borderRadius: 8, overflow: 'hidden', border: '1px solid var(--border)' }}>
-            <button onClick={() => switchMode('basic')} style={{
-              padding: '5px 14px', fontSize: 12, fontWeight: 600, fontFamily: 'inherit',
-              border: 'none', cursor: 'pointer',
-              background: mode === 'basic' ? 'var(--accent)' : 'var(--fill)',
-              color: mode === 'basic' ? '#fff' : 'var(--text-3)',
-            }}>Basic</button>
-            <button onClick={() => switchMode('enhanced')} style={{
-              padding: '5px 14px', fontSize: 12, fontWeight: 600, fontFamily: 'inherit',
-              border: 'none', cursor: 'pointer',
-              background: mode === 'enhanced' ? 'var(--accent)' : 'var(--fill)',
-              color: mode === 'enhanced' ? '#fff' : 'var(--text-3)',
-            }}>Enhanced</button>
-          </div>
-        </div>
+        <h1 className="page-title">Calculators</h1>
         {/* Mobile: dropdown */}
         <div className="calc-tab-select-wrap">
           <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', width: '100%' }}>
@@ -1144,14 +1114,14 @@ export default function Calculators() {
               onChange={e => switchTab(e.target.value)}
               style={{ width: '100%' }}
             >
-              {tabs.map(t => <option key={t.id} value={t.id}>{t.icon} {t.label}</option>)}
+              {ALL_TABS.map(t => <option key={t.id} value={t.id}>{t.icon} {t.label}</option>)}
             </select>
             <span className="filter-select-chevron" aria-hidden="true">▾</span>
           </div>
         </div>
         {/* Desktop: tabs */}
         <div className="page-tabs" style={{ marginTop: 12 }}>
-          {tabs.map(t => (
+          {ALL_TABS.map(t => (
             <button key={t.id} onClick={() => switchTab(t.id)} className={`page-tab${tab === t.id ? ' active' : ''}`}>
               {t.label}
             </button>

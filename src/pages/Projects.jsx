@@ -1424,8 +1424,8 @@ function ProjectSheet({ project, categories, onSave, onClose, mutate }) {
     const name = refs.name.current?.value.trim()
     if (!name) {
       setNameError(true)
-      refs.name.current?.focus()
-      setTimeout(() => setNameError(false), 1500)
+      toast('Project name is required', 'error')
+      setTimeout(() => setNameError(false), 2000)
       return
     }
     const yearVal = refs.year.current?.value.trim()
