@@ -480,7 +480,11 @@ export default function App() {
   const [projId, setProjId]     = useState(null)
   const [showMore, setShowMore] = useState(false)
   const [theme, setTheme] = useState(() => {
-    try { return localStorage.getItem('jdh-theme') || 'dark' } catch { return 'dark' }
+    try {
+      const saved = localStorage.getItem('jdh-theme')
+      if (saved) return saved
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    } catch { return 'dark' }
   })
 
   // Apply theme to <html> element
@@ -495,6 +499,9 @@ export default function App() {
   const [isOffline, setIsOffline] = useState(!navigator.onLine)
   const { showTutorial, dismissTutorial, launchTutorial } = useTutorialCheck()
   const [needsPassword, setNeedsPassword] = useState(false)
+  const [pullY, setPullY] = useState(0)
+  const [refreshing, setRefreshing] = useState(false)
+  const pullRef = useRef({ startY: 0, pulling: false, dy: 0, busy: false })
 
   useEffect(() => {
     const goOffline = () => setIsOffline(true)
@@ -503,9 +510,45 @@ export default function App() {
     window.addEventListener('online',  goOnline)
     // Enable :active CSS states on iOS Safari
     document.addEventListener('touchstart', () => {}, { passive: true })
+
+    // Pull-to-refresh
+    const onTouchStart = e => {
+      if (pullRef.current.busy) return
+      const scrollEl = document.querySelector('.scroll-page')
+      if (scrollEl && scrollEl.scrollTop <= 0) {
+        pullRef.current.startY = e.touches[0].clientY
+        pullRef.current.pulling = true
+        pullRef.current.dy = 0
+      }
+    }
+    const onTouchMove = e => {
+      if (!pullRef.current.pulling) return
+      const dy = e.touches[0].clientY - pullRef.current.startY
+      if (dy > 0 && dy < 120) { pullRef.current.dy = dy; setPullY(dy) }
+      else if (dy <= 0) { pullRef.current.pulling = false; pullRef.current.dy = 0; setPullY(0) }
+    }
+    const onTouchEnd = () => {
+      if (pullRef.current.pulling && pullRef.current.dy > 60 && !pullRef.current.busy) {
+        pullRef.current.busy = true
+        setRefreshing(true)
+        setPullY(0)
+        reload().finally(() => { setRefreshing(false); pullRef.current.busy = false })
+      } else {
+        setPullY(0)
+      }
+      pullRef.current.pulling = false
+      pullRef.current.dy = 0
+    }
+    document.addEventListener('touchstart', onTouchStart, { passive: true })
+    document.addEventListener('touchmove', onTouchMove, { passive: true })
+    document.addEventListener('touchend', onTouchEnd)
+
     return () => {
       window.removeEventListener('offline', goOffline)
       window.removeEventListener('online',  goOnline)
+      document.removeEventListener('touchstart', onTouchStart)
+      document.removeEventListener('touchmove', onTouchMove)
+      document.removeEventListener('touchend', onTouchEnd)
     }
   }, [])
 
@@ -722,6 +765,21 @@ export default function App() {
 
             {/* ── Content ── */}
             <main className="main-area" id="main-content">
+              {/* Pull-to-refresh indicator */}
+              {(pullY > 10 || refreshing) && (
+                <div style={{
+                  display: 'flex', justifyContent: 'center', alignItems: 'center',
+                  height: refreshing ? 40 : Math.min(pullY * 0.5, 40),
+                  overflow: 'hidden', transition: refreshing ? 'height 200ms' : 'none',
+                }}>
+                  {refreshing
+                    ? <div className="spinner" style={{ width: 18, height: 18, borderWidth: 2 }} />
+                    : <span style={{ fontSize: 12, color: 'var(--text-3)', opacity: pullY > 60 ? 1 : 0.4 }}>
+                        {pullY > 60 ? '↓ Release to refresh' : '↓ Pull to refresh'}
+                      </span>
+                  }
+                </div>
+              )}
               <ErrorBoundary>
               {projId ? (
                 <ProjectDetail />
