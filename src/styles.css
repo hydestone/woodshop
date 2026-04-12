@@ -808,6 +808,35 @@ body {
 }
 .cell:last-child { border-bottom: none; }
 
+/* ─── Tap feedback (iOS active state) ──────────────────────────────────────── */
+.cell[style*="cursor"],
+.more-item,
+.photo-card,
+.back-btn,
+.icon-btn,
+.btn-primary,
+.btn-secondary,
+.btn-text,
+.fab,
+.tab-btn { 
+  transition: transform 60ms ease, opacity 60ms ease;
+}
+.cell[style*="cursor"]:active,
+.more-item:active,
+.back-btn:active,
+.icon-btn:active,
+.btn-primary:active,
+.btn-secondary:active,
+.btn-text:active,
+.fab:active,
+.tab-btn:active {
+  transform: scale(0.97);
+  opacity: 0.8;
+}
+.photo-card:active {
+  transform: scale(0.98);
+}
+
 .section-label {
   display: block;
   font-size: 11px;
@@ -846,7 +875,7 @@ body {
   transform: translateY(-1px);
 }
 .proj-card:active {
-  transform: translateY(0);
+  transform: scale(0.98);
   box-shadow: var(--shadow-sm);
 }
 
