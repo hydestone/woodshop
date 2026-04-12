@@ -842,11 +842,36 @@ function CalcInput({ label, value, onChange, placeholder }) {
   )
 }
 
-function ResultBox({ label, value }) {
+function ProDisplay({ items }) {
+  const active = items.filter(i => i.v)
+  if (!active.length) return null
   return (
-    <div className="result-box-light" style={{ flex: 1 }}>
-      <div className="result-box-label">{label}</div>
-      <div className="result-box-value">{value}</div>
+    <div className="calc-display" style={{ marginTop: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: active.length <= 2 ? '1fr '.repeat(active.length) : 'repeat(auto-fill, minmax(120px, 1fr))', gap: '12px 16px' }}>
+        {active.map(i => (
+          <div key={i.label}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.6px', textTransform: 'uppercase', color: 'rgba(240,244,248,.4)', marginBottom: 4 }}>{i.label}</div>
+            <div key={i.v} className="calc-display-value result-pop" style={{ fontSize: active.length > 3 ? 20 : 28 }}>{i.v}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function ProSection({ title, help, children, badge }) {
+  const [showHelp, setShowHelp] = useState(false)
+  return (
+    <div style={{ background: 'var(--surface)', borderRadius: 12, padding: '16px 20px', marginBottom: 12, border: '1px solid var(--border-2)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>{title}</span>
+          {badge && <span style={{ fontSize: 11, background: 'var(--accent)', color: '#fff', borderRadius: 6, padding: '1px 8px', fontWeight: 600 }}>{badge}</span>}
+        </div>
+        {help && <button className="calc-help-btn" onClick={() => setShowHelp(!showHelp)} title="Help">?</button>}
+      </div>
+      {showHelp && <div className="calc-help-tip">{help}</div>}
+      {children}
     </div>
   )
 }
@@ -893,94 +918,87 @@ function AdvancedCalc() {
   const compMiter  = halfCorner && btv ? (Math.atan(Math.cos(btv*Math.PI/180)*Math.tan(halfCorner*Math.PI/180))*180/Math.PI).toFixed(2)+'°' : null
   const compBevel  = halfCorner && btv ? (Math.atan(Math.sin(halfCorner*Math.PI/180)*Math.sin(btv*Math.PI/180))*180/Math.PI).toFixed(2)+'°' : null
 
-  const Section = ({ title, hint, children }) => (
-    <SectionCard title={title}>
-      {hint && <p style={{ fontSize: 12, color: 'var(--text-4)', marginBottom: 12, lineHeight: 1.5 }}>{hint}</p>}
-      {children}
-    </SectionCard>
-  )
-
-  const ResultRow2 = ({ items }) => (
-    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
-      {items.filter(i=>i.v).map(i => <ResultBox key={i.label} label={i.label} value={i.v} />)}
-    </div>
-  )
-
   return (
     <div style={{ padding: '0 20px 40px', maxWidth: 640, margin: '0 auto' }}>
 
-      <Section title="Pitch · Rise · Run" hint="Enter any two values. Lengths: 48, 4', 3'6&quot;">
+      <ProSection title="Pitch · Rise · Run" badge="ROOF" help="Enter any two values to calculate the rest. Lengths accept feet-inches: 48, 4', 3'6&quot;. Pitch is rise per 12&quot; of run. Rafter length is the hypotenuse (actual lumber length needed).">
         <div style={{ display:'flex', gap:8 }}>
           <CalcInput label="Pitch (in 12)" value={pitch} onChange={setPitch} placeholder="6" />
           <CalcInput label="Rise" value={rise} onChange={setRise} placeholder={`4'6"`}  />
           <CalcInput label="Run" value={run} onChange={setRun} placeholder="9'" />
         </div>
-        <ResultRow2 items={[
-          { label:'Pitch (in 12)', v: calcPitch && !pitch ? String(calcPitch) : null },
-          { label:'Rise',          v: calcRise  && !rise  ? calcRise  : null },
-          { label:'Run',           v: calcRun   && !run   ? calcRun   : null },
-          { label:'Rafter',        v: calcHyp },
-          { label:'Angle',         v: calcAngle },
+        <ProDisplay items={[
+          { label:'Pitch', v: calcPitch && !pitch ? String(calcPitch) : null },
+          { label:'Rise',  v: calcRise  && !rise  ? calcRise  : null },
+          { label:'Run',   v: calcRun   && !run   ? calcRun   : null },
+          { label:'Rafter Length', v: calcHyp },
+          { label:'Angle', v: calcAngle },
         ]}/>
-      </Section>
+      </ProSection>
 
-      <Section title="Diagonal · Squaring" hint="Measure both diagonals — if equal, it's square.">
+      <ProSection title="Diagonal · Squaring" badge="LAYOUT" help="Enter width and height to find the diagonal. If both diagonals of a rectangle are equal, the corners are square. Essential for framing, cabinet carcasses, and drawer squaring.">
         <div style={{ display:'flex', gap:8 }}>
           <CalcInput label="Width" value={dw} onChange={setDw} placeholder="8'" />
           <CalcInput label="Height" value={dh} onChange={setDh} placeholder="10'" />
         </div>
-        <ResultRow2 items={[
+        <ProDisplay items={[
           { label:'Diagonal', v: diagVal },
           { label:'Angle',    v: diagAngle },
         ]}/>
-      </Section>
+      </ProSection>
 
-      <Section title="Stairs" hint="Code: 4&quot;–7¾&quot; riser, 10–11&quot; tread. Rise + tread ≈ 17–18&quot;.">
+      <ProSection title="Stair Layout" badge="STAIRS" help="Enter total rise (floor-to-floor height) and number of risers. Code requires 4&quot;–7¾&quot; riser height and 10–11&quot; tread depth. The rule of thumb: riser + tread ≈ 17–18&quot;.">
         <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
           <CalcInput label="Total rise" value={totalRise} onChange={setTotalRise} placeholder={`8'4"`} />
           <CalcInput label="# risers" value={numRisers} onChange={setNumRisers} placeholder="14" />
           <CalcInput label="Tread (in)" value={treadW} onChange={setTreadW} placeholder="10" />
         </div>
-        <ResultRow2 items={[
-          { label:'Riser height', v: riserH },
-          { label:'Total run',   v: stairRun },
-          { label:'Stair angle', v: stairAng },
+        <ProDisplay items={[
+          { label:'Riser Height', v: riserH },
+          { label:'Total Run',   v: stairRun },
+          { label:'Stair Angle', v: stairAng },
         ]}/>
         {riserOk !== null && (
-          <div style={{ marginTop:10, background:riserOk?'var(--green-dim)':'var(--orange-dim)', borderRadius:8, padding:'8px 12px', fontSize:13, color:riserOk?'var(--green)':'var(--orange)' }}>
+          <div style={{ marginTop:10, background:riserOk?'var(--green-dim)':'var(--orange-dim)', borderRadius:8, padding:'8px 12px', fontSize:13, fontWeight:600, color:riserOk?'var(--green)':'var(--orange)' }}>
             {riserOk ? '✓ Riser within code (4"–7¾")' : `⚠ Riser ${riserH} is outside typical code range`}
           </div>
         )}
-      </Section>
+      </ProSection>
 
-      <Section title="Circle · Arc">
+      <ProSection title="Circle · Arc" help="Enter any one measurement to calculate the rest. Works for turning bowls, roundovers, arc calculations, and circular saw jigs.">
         <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:10 }}>
           {['diameter','radius','circumference','area'].map(t => (
-            <button key={t} onClick={() => setCircType(t)} className={`pill-tab-sm${circType===t?' active':''}`}>
+            <button key={t} onClick={() => setCircType(t)} style={{
+              padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600,
+              fontFamily: 'inherit', border: 'none', cursor: 'pointer',
+              background: circType===t ? 'var(--accent)' : 'var(--fill)',
+              color: circType===t ? '#fff' : 'var(--text-3)',
+              transition: 'all 120ms',
+            }}>
               {t.charAt(0).toUpperCase()+t.slice(1)}
             </button>
           ))}
         </div>
         <CalcInput label={`Enter ${circType}`} value={circInput} onChange={setCircInput} placeholder={circType==='area'?'100 in²':'12"'} />
-        <ResultRow2 items={[
+        <ProDisplay items={[
           { label:'Diameter',      v: circType!=='diameter'      ? circDiam  : null },
           { label:'Radius',        v: circType!=='radius'        ? circRad   : null },
           { label:'Circumference', v: circType!=='circumference' ? circPerim : null },
           { label:'Area',          v: circType!=='area'          ? circArea  : null },
         ]}/>
-      </Section>
+      </ProSection>
 
-      <Section title="Compound Miter" hint="Corner angle: total joint angle (90° for a box). Blade tilt: degrees from vertical.">
+      <ProSection title="Compound Miter" badge="SAW" help="Corner angle: total joint angle (90° for a standard box, 72° for a pentagon). Blade tilt: degrees from vertical. Calculates the miter angle and bevel angle for your saw settings.">
         <div style={{ display:'flex', gap:8 }}>
           <CalcInput label="Corner angle (°)" value={corner} onChange={setCorner} placeholder="90" />
           <CalcInput label="Blade tilt (°)" value={bladeTilt} onChange={setBladeTilt} placeholder="0 for flat" />
         </div>
-        <ResultRow2 items={[
-          { label:'Flat miter',    v: flatMiter },
-          { label:'Comp. miter',  v: compMiter },
-          { label:'Blade bevel',  v: compBevel },
+        <ProDisplay items={[
+          { label:'Flat Miter',   v: flatMiter },
+          { label:'Comp. Miter', v: compMiter },
+          { label:'Blade Bevel', v: compBevel },
         ]}/>
-      </Section>
+      </ProSection>
 
     </div>
   )
