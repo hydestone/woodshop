@@ -502,15 +502,13 @@ function ConverterColumn({ title, cfg, catKey }) {
         style={{ width: '100%', marginBottom: 10 }}
       />
       {result && (
-        <div className="calc-display" style={{ marginBottom: 0 }}>
-          <div className="calc-display-row">
-            <div>
-              <div key={result} className="calc-display-value result-pop" style={{ fontSize: 28 }}>{result}</div>
-              <div className="calc-display-sub">{to}</div>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 14, color: 'rgba(240,244,248,.4)' }}>{val} {from}</div>
-            </div>
+        <div className="calc-display" style={{ marginBottom: 0, padding: '16px 20px' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+            <span key={result} className="calc-display-value result-pop" style={{ fontSize: 28 }}>{result}</span>
+            <span style={{ fontSize: 16, color: 'rgba(240,244,248,.5)', fontWeight: 600 }}>{to}</span>
+          </div>
+          <div style={{ fontSize: 13, color: 'rgba(240,244,248,.35)', marginTop: 6 }}>
+            {val} {from}
           </div>
         </div>
       )}
@@ -531,7 +529,7 @@ function UnitConverter() {
           <strong>Unit Converter</strong> handles length, temperature, weight, and area conversions. Select your units, enter a value, and the result appears instantly. Tap the ⇄ button to swap from/to units.
         </div>
       )}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+      <div className="converter-grid">
         {Object.entries(CONV).map(([title, cfg]) => (
           <ConverterColumn key={title} title={title} cfg={cfg} catKey={title} />
         ))}

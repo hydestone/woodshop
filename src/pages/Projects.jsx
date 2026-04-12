@@ -1451,7 +1451,7 @@ function ProjectSheet({ project, categories, onSave, onClose, mutate }) {
   return (
     <Sheet title={project ? 'Edit Project' : 'New Project'} onClose={onClose} onSave={handleSave}>
       <div className="form-group">
-        <FormCell label="Name"><input ref={refs.name} className={`form-input${nameError ? ' form-input-error form-shake' : ''}`} placeholder="Cherry Bowl" defaultValue={project?.name || ''} autoFocus onChange={() => nameError && setNameError(false)} /></FormCell>
+        <FormCell label="Name"><input ref={refs.name} className={`form-input${nameError ? ' form-input-error form-shake' : ''}`} placeholder="Cherry Bowl" defaultValue={project?.name || ''} onChange={() => nameError && setNameError(false)} /></FormCell>
         <ManagedSelect label="Category" value={category} onChange={setCategory}
           items={categories} addLabel="category"
           onAddNew={async name => {

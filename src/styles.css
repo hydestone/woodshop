@@ -1793,6 +1793,15 @@ body {
   border-radius: 8px;
 }
 
+.converter-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+@media (max-width: 767px) {
+  .converter-grid { grid-template-columns: 1fr; }
+}
+
 .result-box {
   background: var(--navy);
   border-radius: var(--r-md);
@@ -2410,6 +2419,11 @@ body {
   input, select, textarea, .calc-input, .calc-input-sm, .form-input, .search-input {
     font-size: 16px !important;
   }
+
+  /* Tighter form on mobile */
+  .form-group { margin-bottom: 10px; }
+  .form-cell { padding: 10px 14px; min-height: 44px; }
+  .form-label { min-width: 110px; font-size: 14px; }
 }
 
 /* ─── tablet-max (@media (min-width: 768px) and (max-width: 900px)) ─ */
