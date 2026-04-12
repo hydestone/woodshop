@@ -117,6 +117,8 @@ function BoardFoot() {
   const [t, setT] = useState(''), [w, setW] = useState(''), [l, setL] = useState('')
   const [qty, setQty] = useState('1'), [cost, setCost] = useState('')
   const [tally, setTally] = useState([])
+  const [memory, setMemory] = useState(null)
+  const [showHelp, setShowHelp] = useState(false)
 
   const pf = v => { const o = parseFracObj(v); return o ? fracToDecimal(o) : null }
   const tv = pf(t), wv = pf(w), lv = parseFloat(l) || 0
@@ -132,7 +134,52 @@ function BoardFoot() {
 
   return (
     <div style={{ padding: '0 20px 40px', maxWidth: 640, margin: '0 auto' }}>
-      <p style={{ fontSize: 12, color: 'var(--text-4)', margin: '12px 0' }}>BF = T × W × L ÷ 144 · Accepts fractions: 3/4, 1 3/8</p>
+      {/* Help toggle */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '8px 0 12px' }}>
+        <span style={{ fontSize: 12, color: 'var(--text-4)' }}>BF = T × W × L ÷ 144</span>
+        <button className="calc-help-btn" onClick={() => setShowHelp(!showHelp)} title="Help">?</button>
+      </div>
+      {showHelp && (
+        <div className="calc-help-tip">
+          <strong>Board Feet</strong> measures lumber volume. Enter thickness and width in inches (fractions OK: 3/4, 1 3/8). Length in inches. Qty multiplies the result. $/BF estimates cost per board foot.
+        </div>
+      )}
+
+      {/* Premium display */}
+      <div className="calc-display">
+        {memory !== null && <div className="calc-memory-badge">M = {memory}</div>}
+        <div className="calc-display-row">
+          <div>
+            <div key={bfQty} className={`calc-display-value${bfQty ? ' result-pop' : ''}`}>
+              {bfQty ?? '—'}
+            </div>
+            <div className="calc-display-sub">
+              board feet{bf && bfQty !== bf ? ` (${q}× ${bf} BF)` : ''}
+            </div>
+          </div>
+          {estCost && (
+            <div>
+              <div className="calc-display-cost">${estCost}</div>
+              <div className="calc-display-cost-sub">est. cost</div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Memory bar */}
+      <div className="calc-memory-bar">
+        <button className="calc-mem-btn" onClick={() => bfQty && setMemory(m => m !== null ? Math.round((m + bfQty)*1000)/1000 : bfQty)} disabled={!bfQty}>M+</button>
+        <button className="calc-mem-btn" onClick={() => bfQty && setMemory(m => m !== null ? Math.round((m - bfQty)*1000)/1000 : -bfQty)} disabled={!bfQty}>M−</button>
+        <button className="calc-mem-btn" onClick={() => { if (memory !== null) { setT(''); setW(''); setL(''); setQty('1') } }} disabled={memory === null}>MR</button>
+        <button className="calc-mem-btn" onClick={() => setMemory(null)} disabled={memory === null}>MC</button>
+      </div>
+      {memory !== null && (
+        <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--accent)', fontWeight: 600, marginBottom: 12 }}>
+          Memory: {memory} BF
+        </div>
+      )}
+
+      {/* Inputs */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
         <LenInput label="Thickness (in)" value={t} onChange={setT} placeholder="3/4" />
         <LenInput label="Width (in)" value={w} onChange={setW} placeholder="6" />
@@ -141,19 +188,6 @@ function BoardFoot() {
       <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
         <LenInput label="Qty" value={qty} onChange={setQty} placeholder="1" />
         <LenInput label="$/BF (optional)" value={cost} onChange={setCost} placeholder="5.00" />
-      </div>
-
-      <div className="result-box" style={{ marginBottom: 12 }}>
-        <div>
-          <div key={bfQty} className={`metric-num${bfQty ? ' result-appear' : ''}`}>{bfQty ?? '—'}</div>
-          <div className="metric-sub">board feet{bf && bfQty !== bf ? ` (${q}× ${bf} BF)` : ''}</div>
-        </div>
-        {estCost && (
-          <div style={{ textAlign: 'right' }}>
-            <div className="metric-green">${estCost}</div>
-            <div className="metric-sub">est. cost</div>
-          </div>
-        )}
       </div>
 
       <button className="btn-secondary" style={{ width: '100%', justifyContent: 'center', marginBottom: 20 }} onClick={addTally} disabled={!bfQty}>
@@ -978,19 +1012,24 @@ function CalcNotes() {
 }
 
 // ─── Main Calculators page ────────────────────────────────────────────────────
-const TABS = [
-  { id:'boardfoot', label:'Board Foot' },
-  { id:'fractions', label:'Fractions'  },
-  { id:'converter', label:'Converter'  },
-  { id:'trim',      label:'Trim Cuts'  },
-  { id:'sheet',     label:'Sheet Goods'},
-  { id:'advanced',  label:'Advanced'   },
-  { id:'notes',     label:'Notes'      },
+const BASIC_TABS = [
+  { id:'boardfoot', label:'Board Foot', icon: '📐' },
+  { id:'fractions', label:'Fractions',  icon: '⅝' },
+  { id:'converter', label:'Converter',  icon: '🔄' },
+]
+const ENHANCED_TABS = [
+  { id:'trim',      label:'Trim Cuts',  icon: '✂️' },
+  { id:'sheet',     label:'Sheet Goods', icon: '📦' },
+  { id:'advanced',  label:'Advanced',   icon: '📊' },
+  { id:'notes',     label:'Notes',      icon: '📝' },
 ]
 
 export default function Calculators() {
   const [tab, setTab] = useState(() => {
     try { return localStorage.getItem('calc-tab') || 'boardfoot' } catch { return 'boardfoot' }
+  })
+  const [mode, setMode] = useState(() => {
+    try { return localStorage.getItem('calc-mode') || 'basic' } catch { return 'basic' }
   })
 
   const switchTab = t => {
@@ -998,10 +1037,35 @@ export default function Calculators() {
     try { localStorage.setItem('calc-tab', t) } catch {}
   }
 
+  const switchMode = m => {
+    setMode(m)
+    try { localStorage.setItem('calc-mode', m) } catch {}
+    // If switching to basic and current tab is enhanced-only, reset to boardfoot
+    if (m === 'basic' && ENHANCED_TABS.some(t => t.id === tab)) switchTab('boardfoot')
+  }
+
+  const tabs = mode === 'enhanced' ? [...BASIC_TABS, ...ENHANCED_TABS] : BASIC_TABS
+
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div className="page-header" style={{ paddingBottom: 0 }}>
-        <h1 className="page-title">Calculators</h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h1 className="page-title">Calculators</h1>
+          <div style={{ display: 'flex', borderRadius: 8, overflow: 'hidden', border: '1px solid var(--border)' }}>
+            <button onClick={() => switchMode('basic')} style={{
+              padding: '5px 14px', fontSize: 12, fontWeight: 600, fontFamily: 'inherit',
+              border: 'none', cursor: 'pointer',
+              background: mode === 'basic' ? 'var(--accent)' : 'var(--fill)',
+              color: mode === 'basic' ? '#fff' : 'var(--text-3)',
+            }}>Basic</button>
+            <button onClick={() => switchMode('enhanced')} style={{
+              padding: '5px 14px', fontSize: 12, fontWeight: 600, fontFamily: 'inherit',
+              border: 'none', cursor: 'pointer',
+              background: mode === 'enhanced' ? 'var(--accent)' : 'var(--fill)',
+              color: mode === 'enhanced' ? '#fff' : 'var(--text-3)',
+            }}>Enhanced</button>
+          </div>
+        </div>
         {/* Mobile: dropdown */}
         <div className="calc-tab-select-wrap">
           <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', width: '100%' }}>
@@ -1011,14 +1075,14 @@ export default function Calculators() {
               onChange={e => switchTab(e.target.value)}
               style={{ width: '100%' }}
             >
-              {TABS.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
+              {tabs.map(t => <option key={t.id} value={t.id}>{t.icon} {t.label}</option>)}
             </select>
             <span className="filter-select-chevron" aria-hidden="true">▾</span>
           </div>
         </div>
         {/* Desktop: tabs */}
         <div className="page-tabs" style={{ marginTop: 12 }}>
-          {TABS.map(t => (
+          {tabs.map(t => (
             <button key={t.id} onClick={() => switchTab(t.id)} className={`page-tab${tab === t.id ? ' active' : ''}`}>
               {t.label}
             </button>
