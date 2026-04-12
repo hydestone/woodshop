@@ -954,7 +954,6 @@ body {
   justify-content: center;
   animation: fadeIn 180ms ease;
   overscroll-behavior: none;
-  touch-action: none;
 }
 .sheet {
   width: 100%;
@@ -966,7 +965,6 @@ body {
   overflow: hidden;
   animation: sheetUp 240ms cubic-bezier(.32,.72,0,1);
   padding-bottom: var(--safe-b);
-  touch-action: auto;
   box-shadow: var(--shadow-sheet);
 }
 .sheet-handle {
@@ -2447,9 +2445,9 @@ body {
 
   .top-bar-search-right .search-input-wrap.focused { width: 100% !important; }
 
-  /* Toggle: natural size, no grow */
+  /* Toggle: natural size, no grow, always on top */
 
-  .theme-toggle { flex: 0 0 auto; }
+  .theme-toggle { flex: 0 0 auto; z-index: 5; position: relative; }
 
   .proj-detail-grid {
     grid-template-columns: 1fr;

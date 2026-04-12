@@ -124,37 +124,22 @@ export function Sheet({ title, onClose, onSave, saveLabel = 'Save', children }) 
     return () => window.removeEventListener('keydown', handler)
   }, [onClose, handleSave])
 
-  // Lock background scroll when sheet is open (iOS-safe)
+  // Lock background scroll when sheet is open
   useEffect(() => {
-    const scrollY = window.scrollY
-    const main = document.querySelector('.scroll-page')
-    const mainScroll = main ? main.scrollTop : 0
-    
-    document.body.style.position = 'fixed'
-    document.body.style.top = `-${scrollY}px`
-    document.body.style.left = '0'
-    document.body.style.right = '0'
-    document.body.style.overflow = 'hidden'
-    
-    // Also lock the main scroll container
-    if (main) {
-      main.style.overflow = 'hidden'
-      main.style.touchAction = 'none'
-    }
-
-    return () => {
-      document.body.style.position = ''
-      document.body.style.top = ''
-      document.body.style.left = ''
-      document.body.style.right = ''
-      document.body.style.overflow = ''
-      window.scrollTo(0, scrollY)
-      if (main) {
-        main.style.overflow = ''
-        main.style.touchAction = ''
-        main.scrollTop = mainScroll
+    // Prevent touchmove on overlay background from scrolling page behind
+    const el = overlayRef.current
+    if (!el) return
+    const prevent = e => {
+      // Allow scrolling inside .sheet-body, block everything else
+      let target = e.target
+      while (target && target !== el) {
+        if (target.classList?.contains('sheet-body')) return
+        target = target.parentElement
       }
+      e.preventDefault()
     }
+    el.addEventListener('touchmove', prevent, { passive: false })
+    return () => el.removeEventListener('touchmove', prevent)
   }, [])
 
   // iOS keyboard: resize overlay to visual viewport
