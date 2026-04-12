@@ -643,6 +643,40 @@ export default function Dashboard() {
       </div>
       <div style={{ paddingBottom: 32 }}>
 
+        {/* ── Onboarding for new users ────────────────────────────────── */}
+        {data.projects.length === 0 && (
+          <div style={{ padding: '0 20px', marginBottom: 24 }}>
+            <div style={{ background: 'var(--surface)', borderRadius: 16, padding: '28px 24px', border: '1px solid var(--border)' }}>
+              <div style={{ fontSize: 28, marginBottom: 8 }}>👋</div>
+              <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>Welcome to your workshop</div>
+              <p style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.6, marginBottom: 20 }}>
+                Get started by completing these steps. Each one takes about a minute.
+              </p>
+              {[
+                { done: false, label: 'Create your first project', action: () => setTab('projects'), icon: '📁' },
+                { done: data.photos.length > 0, label: 'Upload a photo', action: () => setTab('photos'), icon: '📷' },
+                { done: data.maintenance.length > 0, label: 'Add a maintenance item', action: () => setTab('maintenance'), icon: '🔧' },
+                { done: data.woodStock?.length > 0, label: 'Log your wood stock', action: () => setTab('stock'), icon: '🪵' },
+              ].map((step, i) => (
+                <div key={i} onClick={step.done ? undefined : step.action}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0',
+                    borderTop: i > 0 ? '1px solid var(--border-2)' : 'none',
+                    cursor: step.done ? 'default' : 'pointer', opacity: step.done ? 0.5 : 1,
+                  }}>
+                  <span style={{ fontSize: 20, width: 32, textAlign: 'center' }}>
+                    {step.done ? '✅' : step.icon}
+                  </span>
+                  <span style={{ flex: 1, fontSize: 15, fontWeight: 500, textDecoration: step.done ? 'line-through' : 'none' }}>
+                    {step.label}
+                  </span>
+                  {!step.done && <span style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 600 }}>Go →</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* ── Action Zone ─────────────────────────────────────────────── */}
         {urgCoats.length > 0 && <>
           <span className="section-label">Ready to Apply</span>

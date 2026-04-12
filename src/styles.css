@@ -1773,6 +1773,17 @@ body {
 }
 .result-pop { animation: resultPop 300ms cubic-bezier(.34,1.4,.64,1); }
 
+@keyframes formShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+.form-shake { animation: formShake 400ms ease; }
+.form-input-error {
+  border-color: var(--red) !important;
+  box-shadow: 0 0 0 2px rgba(239,68,68,.2);
+}
+
 .result-box {
   background: var(--navy);
   border-radius: var(--r-md);

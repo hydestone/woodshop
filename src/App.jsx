@@ -74,7 +74,7 @@ const NAV_SECTIONS = [
   {
     label: 'Settings',
     items: [
-      { id: 'settings',    label: 'Categories',         Icon: IWrench },
+      { id: 'settings',    label: 'Settings',           Icon: IWrench },
       { id: 'costs',       label: 'Costs',              Icon: IDollar },
       { id: 'import',      label: 'Bulk Import',        Icon: ICamera },
       { id: 'trash',       label: 'Recycling Bin',      Icon: ITrash  },

@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react'
+import { useState, useRef, useMemo, useEffect } from 'react'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
@@ -8,11 +8,14 @@ export default function AllPhotos() {
   const { navigate, data, mutate } = useCtx()
   const toast = useToast()
   const [uploading, setUploading]       = useState(false)
-  const [filter, setFilter]             = useState('all')
-  const [sortBy, setSortBy]             = useState('date')
+  const [filter, setFilter]             = useState(() => { try { return sessionStorage.getItem('photo-filter') || 'all' } catch { return 'all' } })
+  const [sortBy, setSortBy]             = useState(() => { try { return sessionStorage.getItem('photo-sort') || 'date' } catch { return 'date' } })
   const [pendingFiles, setPendingFiles] = useState([])
   const [showTag, setShowTag]           = useState(false)
   const fileRef = useRef()
+
+  useEffect(() => { try { sessionStorage.setItem('photo-filter', filter) } catch {} }, [filter])
+  useEffect(() => { try { sessionStorage.setItem('photo-sort', sortBy) } catch {} }, [sortBy])
 
   const handleFiles = files => {
     const arr = Array.from(files)

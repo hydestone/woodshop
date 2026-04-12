@@ -531,7 +531,7 @@ function UnitConverter() {
 }
 
 // ─── Tab: Trim / Linear cuts (FFD) ────────────────────────────────────────────
-const CUT_COLS = ['var(--navy)','var(--forest)','#1D4ED8','#92400E','#6B21A8','#065F46','#7C2D12','#BE185D']
+const CUT_COLS = ['#2563EB','#16A34A','#D97706','#DC2626','#7C3AED','#0891B2','#C026D3','#EA580C']
 
 function ffd(cuts, stockLengths, kerf) {
   const pieces = []; cuts.forEach(c => { for (let i=0;i<c.qty;i++) pieces.push(c.length) })
@@ -594,13 +594,13 @@ function TrimCuts() {
 
       {/* Cut list */}
       <ProSection title="Cut List">
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) 44px minmax(0,2fr) 28px', gap: 5, marginBottom: 6 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) 56px minmax(0,2fr) 28px', gap: 5, marginBottom: 6 }}>
           {['Length', 'Qty', 'Label', ''].map(h => (
             <div key={h} className="calc-label" style={{ marginBottom: 0, textAlign: 'center' }}>{h}</div>
           ))}
         </div>
         {cuts.map((c, i) => (
-          <div key={c.id} style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) 44px minmax(0,2fr) 28px', gap: 5, marginBottom: 6, alignItems: 'center' }}>
+          <div key={c.id} style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) 56px minmax(0,2fr) 28px', gap: 5, marginBottom: 6, alignItems: 'center' }}>
             <input className="calc-input" value={c.len} onChange={e => upd(c.id,'len',e.target.value)} placeholder="48 or 4'6&quot;" onKeyDown={e => e.key==='Enter' && addRow()} />
             <input className="calc-input" type="number" min="1" value={c.qty} onChange={e => upd(c.id,'qty',e.target.value)} style={{ textAlign: 'center' }} />
             <input className="calc-input" value={c.label} onChange={e => upd(c.id,'label',e.target.value)} placeholder="optional" />
@@ -656,25 +656,26 @@ function TrimCuts() {
 
           {/* Board diagrams */}
           {result.boards.map((b, bi) => (
-            <div key={bi} style={{ background: 'var(--surface)', border: '1px solid var(--border-2)', borderRadius: 12, padding: '14px 16px', marginBottom: 8 }}>
+            <div key={bi} style={{ background: 'var(--surface)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 12, padding: '14px 16px', marginBottom: 8 }}>
               <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8, fontSize:13 }}>
                 <span style={{ fontWeight:700 }}>Board {bi+1} · <span style={{ color:'var(--accent)' }}>{inToFtInStr(b.sl)}</span></span>
-                <span style={{ color:'var(--text-4)' }}>waste {inToFtInStr(Math.max(0,b.sl-b.used))}</span>
+                <span style={{ color:'var(--orange)', fontWeight: 600 }}>waste {inToFtInStr(Math.max(0,b.sl-b.used))}</span>
               </div>
-              <div style={{ display:'flex', height:28, borderRadius:8, overflow:'hidden', border:'1px solid var(--border-2)' }}>
+              <div style={{ display:'flex', height:32, borderRadius:8, overflow:'hidden', border:'2px solid rgba(255,255,255,.25)' }}>
                 {b.cuts.map((cut,ci) => (
                   <div key={ci} title={inToFtInStr(cut)} style={{
                     width:`${(cut/b.sl)*100}%`,
                     background:CUT_COLS[ci%CUT_COLS.length],
                     display:'flex', alignItems:'center', justifyContent:'center',
                     fontSize:10, fontWeight:700, color:'#fff', overflow:'hidden',
-                    borderRight:ci<b.cuts.length-1?'1px solid rgba(255,255,255,.3)':'none',
+                    borderRight:ci<b.cuts.length-1?'1px solid rgba(255,255,255,.4)':'none',
                   }}>
                     {(cut/b.sl)>0.12?inToFtInStr(cut):''}
                   </div>
                 ))}
                 {b.sl-b.used>0.05&&(
-                  <div style={{ flex:1, background:'repeating-linear-gradient(45deg,var(--fill),var(--fill) 4px,var(--border-2) 4px,var(--border-2) 8px)' }} />
+                  <div style={{ flex:1, background:'repeating-linear-gradient(45deg,rgba(239,68,68,.15),rgba(239,68,68,.15) 4px,rgba(239,68,68,.08) 4px,rgba(239,68,68,.08) 8px)', border:'none' }} title={`Waste: ${inToFtInStr(Math.max(0,b.sl-b.used))}`} />
+                )}
                 )}
               </div>
               <div style={{ display:'flex', flexWrap:'wrap', gap:5, marginTop:8 }}>
@@ -696,7 +697,7 @@ function TrimCuts() {
 }
 
 // ─── Tab: Sheet Goods ──────────────────────────────────────────────────────────
-const SHEET_COLS = ['var(--navy)','var(--forest)','#1D4ED8','#92400E','#6B21A8','#065F46','#7C2D12','#BE185D','#0E7490','#7C3AED']
+const SHEET_COLS = ['#2563EB','#16A34A','#D97706','#DC2626','#7C3AED','#0891B2','#C026D3','#EA580C','#0D9488','#4F46E5']
 
 function packSheets(pieces, sw, sh, kerf) {
   const sheets = []
@@ -824,11 +825,11 @@ function SheetGoods() {
       </ProSection>
 
       <ProSection title="Pieces to Cut">
-        <div style={{ display:'grid', gridTemplateColumns:'minmax(0,1fr) minmax(0,1fr) 44px minmax(0,1fr) 28px', gap:5, marginBottom:6 }}>
+        <div style={{ display:'grid', gridTemplateColumns:'minmax(0,1fr) minmax(0,1fr) 56px minmax(0,1fr) 28px', gap:5, marginBottom:6 }}>
           {['Width','Height','Qty','Label',''].map(h => <div key={h} className="calc-label" style={{ marginBottom:0, textAlign:'center' }}>{h}</div>)}
         </div>
         {cuts.map((c,i) => (
-          <div key={c.id} style={{ display:'grid', gridTemplateColumns:'minmax(0,1fr) minmax(0,1fr) 44px minmax(0,1fr) 28px', gap:5, marginBottom:6, alignItems:'center' }}>
+          <div key={c.id} style={{ display:'grid', gridTemplateColumns:'minmax(0,1fr) minmax(0,1fr) 56px minmax(0,1fr) 28px', gap:5, marginBottom:6, alignItems:'center' }}>
             <input className="calc-input" value={c.w} onChange={e=>upd(c.id,'w',e.target.value)} placeholder='12"' />
             <input className="calc-input" value={c.h} onChange={e=>upd(c.id,'h',e.target.value)} placeholder='24"' />
             <input className="calc-input" type="number" min="1" value={c.qty} onChange={e=>upd(c.id,'qty',e.target.value)} style={{ textAlign:'center' }} />
