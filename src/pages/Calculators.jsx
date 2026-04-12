@@ -537,6 +537,7 @@ function TrimCuts() {
   const [kerf, setKerf]   = useState('0.125')
   const [result, setResult] = useState(null)
   const [error, setError]   = useState(null)
+  const [showHelp, setShowHelp] = useState(false)
 
   const upd = (id, f, v) => setCuts(c => c.map(x => x.id===id ? {...x,[f]:v} : x))
   const addRow = () => setCuts(c => [...c, { id:Date.now(), len:'', qty:1, label:'' }])
@@ -559,12 +560,18 @@ function TrimCuts() {
 
   return (
     <div style={{ padding: '0 20px 40px', maxWidth: 640, margin: '0 auto' }}>
-      <p style={{ fontSize: 12, color: 'var(--text-4)', margin: '12px 0' }}>
-        Enter lengths in inches (48), feet (4'), or ft/in (4'6"). Fractions OK: 3 7/8
-      </p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '8px 0 12px' }}>
+        <span style={{ fontSize: 12, color: 'var(--text-4)' }}>Optimize linear cuts from standard lumber</span>
+        <button className="calc-help-btn" onClick={() => setShowHelp(!showHelp)} title="Help">?</button>
+      </div>
+      {showHelp && (
+        <div className="calc-help-tip">
+          <strong>Trim Cut Optimizer</strong> finds the most efficient way to cut pieces from standard lumber lengths. Enter each piece you need (length, quantity, optional label), your available stock lengths, and blade kerf. The optimizer minimizes waste by fitting pieces onto the fewest boards possible. Lengths accept inches (48), feet (4'), or feet-inches (4'6"). Fractions work too: 3 7/8.
+        </div>
+      )}
 
       {/* Cut list */}
-      <SectionCard>
+      <ProSection title="Cut List">
         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) 44px minmax(0,2fr) 28px', gap: 5, marginBottom: 6 }}>
           {['Length', 'Qty', 'Label', ''].map(h => (
             <div key={h} className="calc-label" style={{ marginBottom: 0, textAlign: 'center' }}>{h}</div>
@@ -572,39 +579,18 @@ function TrimCuts() {
         </div>
         {cuts.map((c, i) => (
           <div key={c.id} style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) 44px minmax(0,2fr) 28px', gap: 5, marginBottom: 6, alignItems: 'center' }}>
-            <input
-              className="calc-input"
-              value={c.len}
-              onChange={e => upd(c.id,'len',e.target.value)}
-              placeholder="48 or 4'6&quot;"
-              onKeyDown={e => e.key==='Enter' && addRow()}
-            />
-            <input
-              className="calc-input"
-              type="number" min="1" value={c.qty}
-              onChange={e => upd(c.id,'qty',e.target.value)}
-              style={{ textAlign: 'center' }}
-            />
-            <input
-              className="calc-input"
-              value={c.label}
-              onChange={e => upd(c.id,'label',e.target.value)}
-              placeholder="optional"
-            />
-            <button
-              onClick={() => setCuts(cc => cc.filter(x => x.id!==c.id))}
-              disabled={cuts.length===1}
-              className="icon-btn"
-              style={{ color: 'var(--red)', opacity: cuts.length===1 ? .3 : 1, justifySelf: 'center' }}
-            >×</button>
+            <input className="calc-input" value={c.len} onChange={e => upd(c.id,'len',e.target.value)} placeholder="48 or 4'6&quot;" onKeyDown={e => e.key==='Enter' && addRow()} />
+            <input className="calc-input" type="number" min="1" value={c.qty} onChange={e => upd(c.id,'qty',e.target.value)} style={{ textAlign: 'center' }} />
+            <input className="calc-input" value={c.label} onChange={e => upd(c.id,'label',e.target.value)} placeholder="optional" />
+            <button onClick={() => setCuts(cc => cc.filter(x => x.id!==c.id))} disabled={cuts.length===1} className="icon-btn" style={{ color: 'var(--red)', opacity: cuts.length===1 ? .3 : 1, justifySelf: 'center' }}>×</button>
           </div>
         ))}
         <button className="btn-text" onClick={addRow} style={{ fontSize: 13 }}>+ Add cut</button>
-      </SectionCard>
+      </ProSection>
 
       {/* Stock + kerf */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
-        <LenInput label="Stock lengths (comma-separated)" value={stock} onChange={setStock} placeholder="8', 10', 12'" />
+      <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+        <LenInput label="Available stock lengths" value={stock} onChange={setStock} placeholder="8', 10', 12'" />
         <div style={{ width: 88 }}>
           <div className="calc-label">Kerf (in)</div>
           <input className="calc-input" type="number" step="0.0625" value={kerf} onChange={e => setKerf(e.target.value)} style={{ width: '100%' }} />
@@ -613,39 +599,43 @@ function TrimCuts() {
 
       {error && <div className="warn-box">{error}</div>}
       <button className="btn-primary" style={{ width: '100%', justifyContent: 'center', marginBottom: 20 }} onClick={calc}>
-        Calculate
+        Calculate Cuts
       </button>
 
       {result && (
         <>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
-            {Object.entries(result.summary).sort(([a],[b])=>+a-+b).map(([len,cnt]) => (
-              <div key={len} className="card-navy" style={{ padding: '10px 16px', textAlign: 'center', borderRadius: 10 }}>
-                <div style={{ fontSize: 26, fontWeight: 900, color: 'var(--white)' }}>{cnt}</div>
-                <div style={{ fontSize: 12, color: 'var(--sb-text)' }}>× {inToFtInStr(+len)}</div>
+          {/* Premium summary display */}
+          <div className="calc-display">
+            <div style={{ display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
+              {Object.entries(result.summary).sort(([a],[b])=>+a-+b).map(([len,cnt]) => (
+                <div key={len}>
+                  <div className="calc-display-value result-pop" style={{ fontSize: 32 }}>{cnt}</div>
+                  <div className="calc-display-sub">× {inToFtInStr(+len)}</div>
+                </div>
+              ))}
+              <div>
+                <div className="calc-display-value result-pop" style={{ fontSize: 32, color: result.boards.reduce((s,b)=>s+b.used,0)/result.boards.reduce((s,b)=>s+b.sl,0) > 0.85 ? '#4ADE80' : '#F59E0B' }}>
+                  {Math.round((1-result.boards.reduce((s,b)=>s+b.used,0)/result.boards.reduce((s,b)=>s+b.sl,0))*100)}%
+                </div>
+                <div className="calc-display-sub">waste</div>
               </div>
-            ))}
-            <div style={{ flex:1, minWidth:70, background:'var(--surface)', borderRadius:10, padding:'10px 16px', border:'1px solid var(--border-2)', textAlign:'center' }}>
-              <div style={{ fontSize:22, fontWeight:700, color:'var(--orange)' }}>
-                {Math.round((1-result.boards.reduce((s,b)=>s+b.used,0)/result.boards.reduce((s,b)=>s+b.sl,0))*100)}%
-              </div>
-              <div style={{ fontSize:11, color:'var(--text-3)' }}>waste</div>
             </div>
           </div>
 
+          {/* Board diagrams */}
           {result.boards.map((b, bi) => (
-            <div key={bi} className="card" style={{ marginBottom: 8 }}>
-              <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6, fontSize:13 }}>
+            <div key={bi} style={{ background: 'var(--surface)', border: '1px solid var(--border-2)', borderRadius: 12, padding: '14px 16px', marginBottom: 8 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8, fontSize:13 }}>
                 <span style={{ fontWeight:700 }}>Board {bi+1} · <span style={{ color:'var(--accent)' }}>{inToFtInStr(b.sl)}</span></span>
                 <span style={{ color:'var(--text-4)' }}>waste {inToFtInStr(Math.max(0,b.sl-b.used))}</span>
               </div>
-              <div style={{ display:'flex', height:24, borderRadius:6, overflow:'hidden', border:'1px solid var(--border-2)' }}>
+              <div style={{ display:'flex', height:28, borderRadius:8, overflow:'hidden', border:'1px solid var(--border-2)' }}>
                 {b.cuts.map((cut,ci) => (
                   <div key={ci} title={inToFtInStr(cut)} style={{
                     width:`${(cut/b.sl)*100}%`,
                     background:CUT_COLS[ci%CUT_COLS.length],
                     display:'flex', alignItems:'center', justifyContent:'center',
-                    fontSize:9, fontWeight:700, color:'#fff', overflow:'hidden',
+                    fontSize:10, fontWeight:700, color:'#fff', overflow:'hidden',
                     borderRight:ci<b.cuts.length-1?'1px solid rgba(255,255,255,.3)':'none',
                   }}>
                     {(cut/b.sl)>0.12?inToFtInStr(cut):''}
@@ -718,6 +708,7 @@ function SheetGoods() {
   ])
   const [result, setResult] = useState(null)
   const [error, setError]   = useState(null)
+  const [showHelp, setShowHelp] = useState(false)
 
   const upd = (id, f, v) => setCuts(c => c.map(x => x.id===id?{...x,[f]:v}:x))
   const addRow = () => setCuts(c => [...c, { id:Date.now(),w:'',h:'',qty:1,label:'' }])
@@ -743,20 +734,20 @@ function SheetGoods() {
   }
 
   const SheetDiagram = ({ sheet, sw, sh, idx }) => {
-    const SCALE = 180/Math.max(sw,sh)
+    const SCALE = 200/Math.max(sw,sh)
     const vw=sw*SCALE, vh=sh*SCALE
     const labelColors={}; let ci=0
     return (
-      <div className="card" style={{ marginBottom:8 }}>
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border-2)', borderRadius: 12, padding: '14px 16px', marginBottom: 8 }}>
         <div style={{ fontSize:13,fontWeight:700,marginBottom:8 }}>Sheet {idx+1}</div>
-        <svg width={vw} height={vh} style={{ border:'1px solid var(--border-2)',borderRadius:6,background:'var(--fill-2)',display:'block' }}>
+        <svg width={vw} height={vh} style={{ border:'1px solid var(--border-2)',borderRadius:8,background:'var(--fill-2)',display:'block' }}>
           {sheet.pieces.map((p,i) => {
             if (!labelColors[p.label]) { labelColors[p.label]=SHEET_COLS[ci++%SHEET_COLS.length] }
             const color=labelColors[p.label]
             const x=p.x*SCALE,y=p.y*SCALE,w=p.origW*SCALE,h=p.origH*SCALE
             return (
               <g key={i}>
-                <rect x={x} y={y} width={w} height={h} fill={color} fillOpacity={0.75} stroke={color} strokeWidth={1}/>
+                <rect x={x} y={y} width={w} height={h} fill={color} fillOpacity={0.75} stroke={color} strokeWidth={1} rx={3}/>
                 {w>18&&h>12&&<text x={x+w/2} y={y+h/2} textAnchor="middle" dominantBaseline="middle" fill="#fff" fontSize={Math.min(10,w/5)} fontWeight="700" fontFamily="system-ui">{p.label.length>7?p.label.slice(0,6)+'…':p.label}</text>}
               </g>
             )
@@ -775,20 +766,28 @@ function SheetGoods() {
 
   return (
     <div style={{ padding: '0 20px 40px', maxWidth: 640, margin: '0 auto' }}>
-      <p style={{ fontSize: 12, color: 'var(--text-4)', margin: '12px 0' }}>
-        Optimize cuts from full sheets. Default: 4×8 plywood (48"×96").
-      </p>
-
-      <div style={{ display:'flex', gap:10, marginBottom:12 }}>
-        <LenInput label='Sheet width (in)' value={sheetW} onChange={setSheetW} placeholder="48" />
-        <LenInput label='Sheet height (in)' value={sheetH} onChange={setSheetH} placeholder="96" />
-        <div style={{ width:80 }}>
-          <div className="calc-label">Kerf</div>
-          <input className="calc-input" type="number" step="0.0625" value={kerf} onChange={e=>setKerf(e.target.value)} style={{ width:'100%' }} />
-        </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '8px 0 12px' }}>
+        <span style={{ fontSize: 12, color: 'var(--text-4)' }}>Optimize rectangular cuts from sheet stock</span>
+        <button className="calc-help-btn" onClick={() => setShowHelp(!showHelp)} title="Help">?</button>
       </div>
+      {showHelp && (
+        <div className="calc-help-tip">
+          <strong>Sheet Goods Optimizer</strong> fits rectangular pieces onto full sheets (plywood, MDF, etc.) with minimal waste. Default is a standard 4×8 sheet (48"×96"). Enter each piece width, height, quantity, and optional label. The optimizer packs pieces efficiently and shows a visual diagram of each sheet with color-coded pieces.
+        </div>
+      )}
 
-      <SectionCard>
+      <ProSection title="Sheet Size">
+        <div style={{ display:'flex', gap:10 }}>
+          <LenInput label='Width (in)' value={sheetW} onChange={setSheetW} placeholder="48" />
+          <LenInput label='Height (in)' value={sheetH} onChange={setSheetH} placeholder="96" />
+          <div style={{ width:80 }}>
+            <div className="calc-label">Kerf</div>
+            <input className="calc-input" type="number" step="0.0625" value={kerf} onChange={e=>setKerf(e.target.value)} style={{ width:'100%' }} />
+          </div>
+        </div>
+      </ProSection>
+
+      <ProSection title="Pieces to Cut">
         <div style={{ display:'grid', gridTemplateColumns:'minmax(0,1fr) minmax(0,1fr) 44px minmax(0,1fr) 28px', gap:5, marginBottom:6 }}>
           {['Width','Height','Qty','Label',''].map(h => <div key={h} className="calc-label" style={{ marginBottom:0, textAlign:'center' }}>{h}</div>)}
         </div>
@@ -802,27 +801,29 @@ function SheetGoods() {
           </div>
         ))}
         <button className="btn-text" onClick={addRow} style={{ fontSize:13 }}>+ Add piece</button>
-      </SectionCard>
+      </ProSection>
 
       {error && <div className="warn-box">{error}</div>}
       <button className="btn-primary" style={{ width:'100%',justifyContent:'center',marginBottom:20 }} onClick={calc}>
-        Optimize sheets
+        Optimize Sheets
       </button>
 
       {result && (
         <>
-          <div style={{ display:'flex',gap:8,flexWrap:'wrap',marginBottom:12 }}>
-            <div className="card-navy" style={{ padding:'10px 16px',textAlign:'center',borderRadius:10 }}>
-              <div style={{ fontSize:28,fontWeight:900,color:'var(--white)' }}>{result.sheets.length}</div>
-              <div style={{ fontSize:12,color:'var(--sb-text)' }}>sheet{result.sheets.length!==1?'s':''}</div>
-            </div>
-            <div style={{ flex:1,background:'var(--surface)',borderRadius:10,padding:'10px 16px',border:'1px solid var(--border-2)',textAlign:'center' }}>
-              <div style={{ fontSize:22,fontWeight:700,color:'var(--orange)' }}>{result.wastePct}%</div>
-              <div style={{ fontSize:11,color:'var(--text-3)' }}>waste</div>
-            </div>
-            <div style={{ flex:1,background:'var(--surface)',borderRadius:10,padding:'10px 16px',border:'1px solid var(--border-2)',textAlign:'center' }}>
-              <div style={{ fontSize:18,fontWeight:700 }}>{result.usedSqFt} ft²</div>
-              <div style={{ fontSize:11,color:'var(--text-3)' }}>used</div>
+          <div className="calc-display">
+            <div style={{ display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
+              <div>
+                <div className="calc-display-value result-pop" style={{ fontSize: 36 }}>{result.sheets.length}</div>
+                <div className="calc-display-sub">sheet{result.sheets.length!==1?'s':''} needed</div>
+              </div>
+              <div>
+                <div className="calc-display-value result-pop" style={{ fontSize: 36, color: result.wastePct < 20 ? '#4ADE80' : '#F59E0B' }}>{result.wastePct}%</div>
+                <div className="calc-display-sub">waste</div>
+              </div>
+              <div>
+                <div className="calc-display-value result-pop" style={{ fontSize: 28 }}>{result.usedSqFt}</div>
+                <div className="calc-display-sub">sq ft used</div>
+              </div>
             </div>
           </div>
           {result.sheets.map((sheet,i) => <SheetDiagram key={i} sheet={sheet} sw={result.sw} sh={result.sh} idx={i}/>)}
