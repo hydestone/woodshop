@@ -24,20 +24,18 @@ import Finishes         from './pages/Finishes.jsx'
 import Resources        from './pages/Resources.jsx'
 import ShopImprovements from './pages/ShopImprovements.jsx'
 import AllPhotos        from './pages/Photos.jsx'
+import FinishedProducts from './pages/FinishedProducts.jsx'
+import Inspiration      from './pages/Inspiration.jsx'
+import YearReview      from './pages/YearReview.jsx'
 import Settings       from './pages/Settings.jsx'
 import ProjectIdeas   from './pages/ProjectIdeas.jsx'
+import BulkImport     from './pages/BulkImport.jsx'
+import Costs         from './pages/Costs.jsx'
+import Audit          from './pages/Audit.jsx'
 import Help           from './pages/Help.jsx'
+import SmokeTest      from './pages/SmokeTest.jsx'
+import Calculators    from './pages/Calculators.jsx'
 import Trash          from './pages/Trash.jsx'
-
-// Lazy-loaded (heavy or infrequently used)
-const FinishedProducts = lazy(() => import('./pages/FinishedProducts.jsx'))
-const Inspiration      = lazy(() => import('./pages/Inspiration.jsx'))
-const YearReview       = lazy(() => import('./pages/YearReview.jsx'))
-const BulkImport       = lazy(() => import('./pages/BulkImport.jsx'))
-const Costs            = lazy(() => import('./pages/Costs.jsx'))
-const Audit            = lazy(() => import('./pages/Audit.jsx'))
-const Calculators      = lazy(() => import('./pages/Calculators.jsx'))
-const SmokeTest        = lazy(() => import('./pages/SmokeTest.jsx'))
 
 import Tutorial, { useTutorialCheck } from './components/Tutorial.jsx'
 import ErrorBoundary  from './components/ErrorBoundary.jsx'
