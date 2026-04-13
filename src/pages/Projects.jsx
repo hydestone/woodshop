@@ -153,14 +153,14 @@ export default function Projects() {
             </div>
           </div>
           {/* Filter + sort + favorites + table — single row */}
-          <div style={{ display:'flex', gap:6, alignItems:'center', marginTop:10, flexWrap:'wrap' }}>
+          <div style={{ display:'flex', gap:6, alignItems:'center', marginTop:10, flexWrap:'nowrap', overflowX:'auto', WebkitOverflowScrolling:'touch' }}>
             {/* Category */}
             {categories.length > 0 && (
               <FilterSelect
                 value={filter}
                 onChange={setFilter}
                 options={categories.map(c => ({ value: c.name, label: c.name }))}
-                allLabel="All Categories"
+                allLabel="All"
                 label="Filter by category"
               />
             )}
@@ -169,32 +169,31 @@ export default function Projects() {
               <select className={`filter-select${sortBy !== 'status' ? ' active' : ''}`}
                 value={sortBy} onChange={e => setSortBy(e.target.value)}
               >
-                <option value="status">By Status</option>
-                <option value="name">By Name</option>
-                <option value="category">By Category</option>
-                <option value="year">By Year</option>
-                <option value="recent">Recently Added</option>
+                <option value="status">Status</option>
+                <option value="name">Name</option>
+                <option value="category">Category</option>
+                <option value="year">Year</option>
+                <option value="recent">Recent</option>
               </select>
               <span className="filter-select-chevron" aria-hidden="true">▾</span>
             </div>
-            {/* Favorites toggle */}
+            {/* Favorites toggle — star only */}
             <button
               onClick={() => setShowFavOnly(f => !f)}
-              className={showFavOnly ? 'btn-primary' : 'btn-secondary'}
-              style={{ padding:'5px 10px', fontSize:13, display:'flex', alignItems:'center', gap:5 }}
+              style={{ padding:'6px 8px', background: showFavOnly ? 'var(--accent)' : 'var(--fill)', border:'none', borderRadius:8, cursor:'pointer', display:'flex', alignItems:'center', flexShrink:0 }}
               title={showFavOnly ? 'Show all' : 'Favorites only'}
+              aria-label={showFavOnly ? 'Show all projects' : 'Show favorites only'}
             >
-              <IStar size={14} fill={showFavOnly ? '#fff' : 'none'} color={showFavOnly ? '#fff' : '#F59E0B'} />
-              {showFavOnly ? 'Favorites' : 'Favorites'}
+              <IStar size={16} fill={showFavOnly ? '#fff' : 'none'} color={showFavOnly ? '#fff' : '#F59E0B'} />
             </button>
             {/* Table view — desktop only */}
             <button
               className={viewMode === 'table' ? 'btn-primary' : 'btn-secondary'}
-              style={{ padding:'5px 12px', fontSize:13, marginLeft:'auto' }}
+              style={{ padding:'5px 12px', fontSize:13, marginLeft:'auto', flexShrink:0 }}
               id="table-toggle-btn"
               onClick={() => setViewMode(v => v === 'cards' ? 'table' : 'cards')}
             >
-              {viewMode === 'table' ? 'Card view' : 'Table view'}
+              {viewMode === 'table' ? 'Cards' : 'Table'}
             </button>
           </div>
         </div>

@@ -50,7 +50,7 @@ export default function AllPhotos() {
           const trashed = await db.deletePhoto(photo)
           if (trashed) {
             mutate(d => ({ ...d, trash: [trashed, ...(d.trash || [])] }))
-            toast('Photo deleted', 'success', 5000, {
+            toast('Photo deleted', 'success', 2000, {
               label: 'Undo',
               onClick: async () => {
                 await db.restoreFromTrash(trashed.id, trashed)
@@ -133,9 +133,9 @@ export default function AllPhotos() {
             <div className="filter-select-wrap">
               <select className={`filter-select${sortBy !== 'date' ? ' active' : ''}`}
                 value={sortBy} onChange={e => setSortBy(e.target.value)}>
-                <option value="date">Date Added</option>
-                <option value="project">By Project</option>
-                <option value="tag">By Tag</option>
+                <option value="date">Date</option>
+                <option value="project">Project</option>
+                <option value="tag">Tag</option>
               </select>
               <span className="filter-select-chevron" aria-hidden="true">▾</span>
             </div>

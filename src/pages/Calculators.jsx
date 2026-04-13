@@ -12,6 +12,14 @@ function fracSub(a, b) { return fracReduce(a.n * b.d - b.n * a.d, a.d * b.d) }
 function fracMul(a, b) { return fracReduce(a.n * b.n, a.d * b.d) }
 function fracDiv(a, b) { return fracReduce(a.n * b.d, a.d * b.n) }
 function fracToDecimal({ n, d }) { return d === 0 ? 0 : n / d }
+function fracToStr({ n, d }) {
+  if (d === 1) return `${n}`
+  const w = Math.floor(Math.abs(n) / d) * Math.sign(n)
+  const rem = Math.abs(n) % d
+  if (w && rem) return `${w} ${rem}/${d}`
+  if (w) return `${w}`
+  return `${n}/${d}`
+}
 
 function parseFracObj(s) {
   s = (s || '').trim()
@@ -106,6 +114,7 @@ function LenInput({ label, value, onChange, placeholder }) {
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder || '0'}
         inputMode="decimal"
+        autoComplete="off"
         style={{ width: '100%', textAlign: 'center' }}
       />
     </div>
@@ -135,9 +144,15 @@ function BoardFoot() {
   const bfQty = bf ? Math.round(bf * q * 1000) / 1000 : null
   const estCost = bfQty && cost ? (bfQty * (parseFloat(cost) || 0)).toFixed(2) : null
 
+  // History
+  const [history, setHistory] = useState(() => { try { return JSON.parse(localStorage.getItem('bf-history')) || [] } catch { return [] } })
+  const saveHistory = h => { setHistory(h); try { localStorage.setItem('bf-history', JSON.stringify(h)) } catch {} }
+
   const addTally = () => {
     if (!bfQty) return
-    setTally(p => [...p, { desc: `${t||'?'}" × ${w||'?'}" × ${l||'?'}" ×${q}`, bf: bfQty, cost: estCost ? parseFloat(estCost) : 0 }])
+    const entry = { desc: `${t||'?'}" × ${w||'?'}" × ${l||'?'}" ×${q}`, bf: bfQty, cost: estCost ? parseFloat(estCost) : 0 }
+    setTally(p => [...p, entry])
+    saveHistory([{ ...entry, ts: Date.now() }, ...history].slice(0, 10))
   }
 
   return (
@@ -230,6 +245,24 @@ function BoardFoot() {
           </div>
         </SectionCard>
       )}
+
+      {/* History */}
+      {history.length > 0 && (
+        <SectionCard title="Recent Calculations">
+          <div className="tally-table">
+            {history.map((h, i) => (
+              <div key={i} className="tally-row" style={{ cursor: 'pointer' }} onClick={() => {
+                const m = h.desc.match(/^(.+)" × (.+)" × (.+)" ×(\d+)$/)
+                if (m) { setT(m[1]); setW(m[2]); setL(m[3]); setQty(m[4]) }
+              }}>
+                <span style={{ color: 'var(--text-3)', fontSize: 13 }}>{h.desc}</span>
+                <span style={{ fontWeight: 700, fontSize: 13 }}>{h.bf} BF</span>
+              </div>
+            ))}
+          </div>
+          <button className="btn-text" style={{ marginTop: 6, fontSize: 12, color: 'var(--text-4)' }} onClick={() => saveHistory([])}>Clear history</button>
+        </SectionCard>
+      )}
     </div>
   )
 }
@@ -244,6 +277,10 @@ function FractionCalc() {
   const [op, setOp]           = useState(null) // '+' '-' '×' '÷'
   const [result, setResult]   = useState(null) // computed result (fracObj)
   const [justEvaled, setJustEvaled] = useState(false) // after = was pressed
+
+  // History
+  const [fracHistory, setFracHistory] = useState(() => { try { return JSON.parse(localStorage.getItem('frac-history')) || [] } catch { return [] } })
+  const saveFracHistory = h => { setFracHistory(h); try { localStorage.setItem('frac-history', JSON.stringify(h)) } catch {} }
 
   // Parse current display string to fracObj
   const parsedDisplay = useMemo(() => {
@@ -319,6 +356,7 @@ function FractionCalc() {
       setOp(null)
       setDisplay('')
       setJustEvaled(true)
+      saveFracHistory([{ expr: `${fracToStr(lhs)} ${op} ${fracToStr(rhs)}`, result: fracToStr(res), decimal: fracToDecimal(res).toFixed(4), ts: Date.now() }, ...fracHistory].slice(0, 10))
     }
   }
 
@@ -429,6 +467,20 @@ function FractionCalc() {
               <strong>{(fracToDecimal(activeVal) * 25.4).toFixed(3)} mm</strong>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* History */}
+      {fracHistory.length > 0 && (
+        <div style={{ marginTop: 14, background: 'var(--fill)', borderRadius: 'var(--r-sm)', padding: '12px 14px' }}>
+          <div className="label-caps" style={{ marginBottom: 8 }}>Recent</div>
+          {fracHistory.map((h, i) => (
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0', borderBottom: i < fracHistory.length - 1 ? '1px solid var(--border-2)' : 'none', fontSize: 13 }}>
+              <span style={{ color: 'var(--text-3)' }}>{h.expr}</span>
+              <span style={{ fontWeight: 700 }}>= {h.result}</span>
+            </div>
+          ))}
+          <button className="btn-text" style={{ marginTop: 6, fontSize: 12, color: 'var(--text-4)' }} onClick={() => saveFracHistory([])}>Clear</button>
         </div>
       )}
     </div>
@@ -570,7 +622,15 @@ function TrimCuts() {
   useEffect(() => { try { localStorage.setItem('tc-kerf', kerf) } catch {} }, [kerf])
 
   const upd = (id, f, v) => setCuts(c => c.map(x => x.id===id ? {...x,[f]:v} : x))
+  const cutListRef = useRef(null)
   const addRow = () => setCuts(c => [...c, { id:Date.now(), len:'', qty:1, label:'' }])
+
+  // Focus the last length input after adding a row
+  useEffect(() => {
+    if (cuts.length < 2) return
+    const inputs = cutListRef.current?.querySelectorAll('input[placeholder*="48"]')
+    if (inputs?.length) inputs[inputs.length - 1].focus()
+  }, [cuts.length])
 
   const calc = () => {
     setError(null); setResult(null)
@@ -602,19 +662,21 @@ function TrimCuts() {
 
       {/* Cut list */}
       <ProSection title="Cut List">
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) 56px minmax(0,2fr) 28px', gap: 5, marginBottom: 6 }}>
-          {['Length', 'Qty', 'Label', ''].map(h => (
-            <div key={h} className="calc-label" style={{ marginBottom: 0, textAlign: 'center' }}>{h}</div>
+        <div ref={cutListRef}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) 56px minmax(0,2fr) 28px', gap: 5, marginBottom: 6 }}>
+            {['Length', 'Qty', 'Label', ''].map(h => (
+              <div key={h} className="calc-label" style={{ marginBottom: 0, textAlign: 'center' }}>{h}</div>
+            ))}
+          </div>
+          {cuts.map((c, i) => (
+            <div key={c.id} style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) 56px minmax(0,2fr) 28px', gap: 5, marginBottom: 6, alignItems: 'center' }}>
+              <input className="calc-input" value={c.len} onChange={e => upd(c.id,'len',e.target.value)} placeholder="48 or 4'6&quot;" onKeyDown={e => e.key==='Enter' && addRow()} />
+              <input className="calc-input" type="number" min="1" value={c.qty} onChange={e => upd(c.id,'qty',e.target.value)} style={{ textAlign: 'center' }} />
+              <input className="calc-input" value={c.label} onChange={e => upd(c.id,'label',e.target.value)} placeholder="optional" />
+              <button onClick={() => setCuts(cc => cc.filter(x => x.id!==c.id))} disabled={cuts.length===1} className="icon-btn" style={{ color: 'var(--red)', opacity: cuts.length===1 ? .3 : 1, justifySelf: 'center' }}>×</button>
+            </div>
           ))}
         </div>
-        {cuts.map((c, i) => (
-          <div key={c.id} style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) 56px minmax(0,2fr) 28px', gap: 5, marginBottom: 6, alignItems: 'center' }}>
-            <input className="calc-input" value={c.len} onChange={e => upd(c.id,'len',e.target.value)} placeholder="48 or 4'6&quot;" onKeyDown={e => e.key==='Enter' && addRow()} />
-            <input className="calc-input" type="number" min="1" value={c.qty} onChange={e => upd(c.id,'qty',e.target.value)} style={{ textAlign: 'center' }} />
-            <input className="calc-input" value={c.label} onChange={e => upd(c.id,'label',e.target.value)} placeholder="optional" />
-            <button onClick={() => setCuts(cc => cc.filter(x => x.id!==c.id))} disabled={cuts.length===1} className="icon-btn" style={{ color: 'var(--red)', opacity: cuts.length===1 ? .3 : 1, justifySelf: 'center' }}>×</button>
-          </div>
-        ))}
         <button className="btn-text" onClick={addRow} style={{ fontSize: 13 }}>+ Add cut</button>
       </ProSection>
 
@@ -888,7 +950,7 @@ function CalcInput({ label, value, onChange, placeholder }) {
   return (
     <div style={{ flex: 1 }}>
       <div className="calc-label">{label}</div>
-      <input className="calc-input" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder || '—'} style={{ width: '100%' }} />
+      <input className="calc-input" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder || '—'} autoComplete="off" inputMode="decimal" style={{ width: '100%' }} />
     </div>
   )
 }
