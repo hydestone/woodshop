@@ -16,22 +16,8 @@ export default function Finishes() {
   const [search, setSearch]         = useState('')
 
   const del = async id => {
-    const item = data.finishProducts.find(p => p.id === id)
-    const prev = data.finishProducts
     mutate(d => ({ ...d, finishProducts: d.finishProducts.filter(p => p.id !== id) }))
-    try {
-      const trashed = await db.deleteFinishProduct(id)
-      if (trashed) {
-        mutate(d => ({ ...d, trash: [trashed, ...(d.trash || [])] }))
-        toast(`"${item?.name}" deleted`, 'success', 5000, {
-          label: 'Undo',
-          onClick: async () => {
-            await db.restoreFromTrash(trashed.id, trashed)
-            mutate(d => ({ ...d, finishProducts: [...d.finishProducts, item], trash: d.trash.filter(t => t.id !== trashed.id) }))
-          }
-        })
-      }
-    } catch(e) { mutate(d => ({ ...d, finishProducts: prev })); toast(e.message, 'error') }
+    await db.deleteFinishProduct(id).catch(e => toast(e.message, 'error'))
     setDeleteItem(null)
   }
 
@@ -82,7 +68,7 @@ export default function Finishes() {
           {sorted.length > 0 ? (
             <div className="group">
               {sorted.map((p, i) => (
-                <div key={p.id} style={{ borderBottom: i < sorted.length - 1 ? '1px solid var(--border-2)' : 'none' }}>
+                <div key={p.id} data-id={p.id} style={{ borderBottom: i < sorted.length - 1 ? '1px solid var(--border-2)' : 'none' }}>
                   {/* Row */}
                   <div
                     style={{ padding: '13px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}

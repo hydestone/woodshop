@@ -493,6 +493,21 @@ export default function App() {
   }, [theme])
 
   const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark')
+
+  // Scroll to search result after tab navigation
+  useEffect(() => {
+    const id = window.__highlightId
+    if (!id) return
+    window.__highlightId = null
+    const timer = setTimeout(() => {
+      const el = document.querySelector(`[data-id="${id}"]`)
+      if (!el) return
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      el.classList.add('search-highlight')
+      setTimeout(() => el.classList.remove('search-highlight'), 2500)
+    }, 150)
+    return () => clearTimeout(timer)
+  }, [tab])
   const [showQR, setShowQR] = useState(false)
   const [showFeedback, setShowFeedback] = useState(false)
   const [isOffline, setIsOffline] = useState(!navigator.onLine)

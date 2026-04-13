@@ -20,22 +20,8 @@ export default function Shopping() {
   }
 
   const del = async id => {
-    const item = data.shopping.find(s => s.id === id)
-    const prev = data.shopping
     mutate(d => ({ ...d, shopping: d.shopping.filter(s => s.id !== id) }))
-    try {
-      const trashed = await db.deleteShopItem(id)
-      if (trashed) {
-        mutate(d => ({ ...d, trash: [trashed, ...(d.trash || [])] }))
-        toast(`"${item?.name}" deleted`, 'success', 5000, {
-          label: 'Undo',
-          onClick: async () => {
-            await db.restoreFromTrash(trashed.id, trashed)
-            mutate(d => ({ ...d, shopping: [...d.shopping, item], trash: d.trash.filter(t => t.id !== trashed.id) }))
-          }
-        })
-      }
-    } catch(e) { mutate(d => ({ ...d, shopping: prev })); toast(e.message, 'error') }
+    await db.deleteShopItem(id).catch(e => toast(e.message, 'error'))
     setDeleteItem(null)
   }
 
@@ -131,7 +117,7 @@ export default function Shopping() {
 
 function ShopRow({ item, onToggle, onEdit, onDelete, last }) {
   return (
-    <div className="cell" style={{ borderBottom: last ? 'none' : '1px solid var(--border-2)' }}>
+    <div className="cell" data-id={item.id} style={{ borderBottom: last ? 'none' : '1px solid var(--border-2)' }}>
       <button className="check-btn" onClick={onToggle} aria-label={item.completed ? 'Mark not purchased' : 'Mark purchased'}>
         {item.completed
           ? <ICheck size={22} color="var(--green)" sw={2} />
