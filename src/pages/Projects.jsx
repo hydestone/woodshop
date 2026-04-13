@@ -142,7 +142,7 @@ export default function Projects() {
       <div ref={scrollRef} className="scroll-page" style={{ paddingBottom: 100 }}>
         <div className="page-header">
           <div className="page-header-row">
-            <div style={{ display:'flex', alignItems:'center', gap:8, minWidth:0 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:8, minWidth:0, flex:1 }}>
               <h1 className="page-title">Projects</h1>
               {locationFilter && (
                 <span style={{ fontSize:11, background:'var(--green-dim,rgba(22,101,52,.12))', color:'var(--green)', borderRadius:99, padding:'2px 8px', fontWeight:600, whiteSpace:'nowrap', display:'flex', alignItems:'center', gap:4 }}>
@@ -151,10 +151,28 @@ export default function Projects() {
                 </span>
               )}
             </div>
+            {/* Star + Table toggle on title row */}
+            <div style={{ display:'flex', gap:6, alignItems:'center' }}>
+              <button
+                onClick={() => setShowFavOnly(f => !f)}
+                style={{ padding:'6px 8px', background: showFavOnly ? 'var(--accent)' : 'var(--fill)', border:'none', borderRadius:8, cursor:'pointer', display:'flex', alignItems:'center' }}
+                title={showFavOnly ? 'Show all' : 'Favorites only'}
+                aria-label={showFavOnly ? 'Show all projects' : 'Show favorites only'}
+              >
+                <IStar size={16} fill={showFavOnly ? '#fff' : 'none'} color={showFavOnly ? '#fff' : '#F59E0B'} />
+              </button>
+              <button
+                className={viewMode === 'table' ? 'btn-primary' : 'btn-secondary'}
+                style={{ padding:'5px 12px', fontSize:13 }}
+                id="table-toggle-btn"
+                onClick={() => setViewMode(v => v === 'cards' ? 'table' : 'cards')}
+              >
+                {viewMode === 'table' ? 'Cards' : 'Table'}
+              </button>
+            </div>
           </div>
-          {/* Filter + sort + favorites + table — single row */}
-          <div style={{ display:'flex', gap:6, alignItems:'center', marginTop:10, flexWrap:'nowrap', overflowX:'auto', WebkitOverflowScrolling:'touch' }}>
-            {/* Category */}
+          {/* Filters row */}
+          <div style={{ display:'flex', gap:6, alignItems:'center', marginTop:8 }}>
             {categories.length > 0 && (
               <FilterSelect
                 value={filter}
@@ -164,7 +182,6 @@ export default function Projects() {
                 label="Filter by category"
               />
             )}
-            {/* Sort */}
             <div className="filter-select-wrap">
               <select className={`filter-select${sortBy !== 'status' ? ' active' : ''}`}
                 value={sortBy} onChange={e => setSortBy(e.target.value)}
@@ -177,24 +194,6 @@ export default function Projects() {
               </select>
               <span className="filter-select-chevron" aria-hidden="true">▾</span>
             </div>
-            {/* Favorites toggle — star only */}
-            <button
-              onClick={() => setShowFavOnly(f => !f)}
-              style={{ padding:'6px 8px', background: showFavOnly ? 'var(--accent)' : 'var(--fill)', border:'none', borderRadius:8, cursor:'pointer', display:'flex', alignItems:'center', flexShrink:0 }}
-              title={showFavOnly ? 'Show all' : 'Favorites only'}
-              aria-label={showFavOnly ? 'Show all projects' : 'Show favorites only'}
-            >
-              <IStar size={16} fill={showFavOnly ? '#fff' : 'none'} color={showFavOnly ? '#fff' : '#F59E0B'} />
-            </button>
-            {/* Table view — desktop only */}
-            <button
-              className={viewMode === 'table' ? 'btn-primary' : 'btn-secondary'}
-              style={{ padding:'5px 12px', fontSize:13, marginLeft:'auto', flexShrink:0 }}
-              id="table-toggle-btn"
-              onClick={() => setViewMode(v => v === 'cards' ? 'table' : 'cards')}
-            >
-              {viewMode === 'table' ? 'Cards' : 'Table'}
-            </button>
           </div>
         </div>
 

@@ -372,6 +372,27 @@ function FractionCalc() {
 
   const activeVal = result || parsedDisplay
 
+  // Desktop keyboard input — ref avoids stale closures
+  const kbRef = useRef({})
+  kbRef.current = { appendDigit, pressOp, pressEquals, pressBackspace, pressAC }
+  useEffect(() => {
+    const handler = e => {
+      if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') return
+      const k = kbRef.current
+      if (e.key >= '0' && e.key <= '9') { k.appendDigit(e.key); e.preventDefault() }
+      else if (e.key === '/') { k.appendDigit('/'); e.preventDefault() }
+      else if (e.key === '.') { k.appendDigit('.'); e.preventDefault() }
+      else if (e.key === '+') { k.pressOp('+'); e.preventDefault() }
+      else if (e.key === '-') { k.pressOp('-'); e.preventDefault() }
+      else if (e.key === '*') { k.pressOp('×'); e.preventDefault() }
+      else if (e.key === 'Enter' || e.key === '=') { k.pressEquals(); e.preventDefault() }
+      else if (e.key === 'Backspace') { k.pressBackspace(); e.preventDefault() }
+      else if (e.key === 'Escape') { k.pressAC(); e.preventDefault() }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
+
   // Display string
   const eqLine = [
     left ? fracToHTML(left, { fontSize: 18, color: 'rgba(255,255,255,.6)' }) : null,

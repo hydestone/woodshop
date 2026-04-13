@@ -38,6 +38,7 @@ import Trash          from './pages/Trash.jsx'
 
 import Tutorial, { useTutorialCheck } from './components/Tutorial.jsx'
 import ErrorBoundary  from './components/ErrorBoundary.jsx'
+import PullToRefresh  from './components/PullToRefresh.jsx'
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 const AppCtx = createContext(null)
@@ -740,6 +741,7 @@ export default function App() {
 
             {/* ── Content ── */}
             <main className="main-area" id="main-content">
+              <PullToRefresh onRefresh={reload}>
               <ErrorBoundary>
               {projId ? (
                 <ProjectDetail />
@@ -771,6 +773,7 @@ export default function App() {
                 </>
               )}
               </ErrorBoundary>
+              </PullToRefresh>
 
               {/* Mobile tab bar */}
               <nav className="tabbar" aria-label="Mobile navigation">

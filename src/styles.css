@@ -672,6 +672,7 @@ body {
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   padding-bottom: 20px;
+  overscroll-behavior-y: contain;
 }
 /* Override for pages that set their own padding */
 .scroll-page[style*="paddingBottom"] { padding-bottom: unset; }
