@@ -140,6 +140,17 @@ export function Sheet({ title, onClose, onSave, saveLabel = 'Save', children }) 
     return () => el.removeEventListener('touchmove', prevent)
   }, [])
 
+  // iOS keyboard: shrink overlay to visual viewport height
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv) return
+    const el = overlayRef.current
+    if (!el) return
+    const update = () => { el.style.height = vv.height + 'px' }
+    vv.addEventListener('resize', update)
+    return () => { vv.removeEventListener('resize', update); el.style.height = '' }
+  }, [])
+
   return createPortal(
     <div
       ref={overlayRef}
