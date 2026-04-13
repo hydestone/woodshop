@@ -279,6 +279,20 @@ function SetPasswordScreen({ session, onComplete }) {
     if (err) {
       setError(err.message)
     } else {
+      // Notify owner of new signup
+      try {
+        fetch(FEEDBACK_WEBHOOK, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: session?.user?.email || 'unknown',
+            message: `New signup: ${displayName.trim()}`,
+            rating: 0,
+            timestamp: new Date().toISOString(),
+          })
+        })
+      } catch {}
       onComplete()
     }
   }
