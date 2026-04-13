@@ -111,9 +111,11 @@ export default function AllPhotos() {
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
       <div className="scroll-page" style={{ paddingBottom: 80 }}>
         <div className="page-header">
-          <div className="page-header-row" style={{ flexWrap: 'wrap', gap: 8 }}>
-            <h1 className="page-title" style={{ marginRight: 'auto' }}>All Photos</h1>
-            <span style={{ fontSize: 13, color: 'var(--text-3)', marginRight: 4 }}>{data.photos.length}</span>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 8 }}>
+            <h1 className="page-title">All Photos</h1>
+            <span style={{ fontSize: 26, fontWeight: 700, color: 'var(--text-3)' }}>{data.photos.length}</span>
+          </div>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
             <FilterSelect
               value={filter.startsWith('cat:') ? 'all' : filter}
               onChange={v => setFilter(v)}

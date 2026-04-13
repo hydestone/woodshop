@@ -73,7 +73,7 @@ export default function PullToRefresh({ onRefresh, children }) {
   }, [])
 
   return (
-    <div ref={containerRef} style={{ height: '100%', position: 'relative' }}>
+    <div ref={containerRef} style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, position: 'relative' }}>
       {(pullDistance > 5 || refreshing) && (
         <div style={{
           height: refreshing ? 36 : pullDistance,

@@ -596,7 +596,9 @@ export function ProjectDetail() {
               )
             })()}
           </div>
-          <div style={{ display: 'flex', gap: 4 }}>
+        </div>
+        {/* Action buttons — own row */}
+        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 8 }}>
             <button
               className="icon-btn"
               onClick={() => {
@@ -628,7 +630,6 @@ export function ProjectDetail() {
             <button className="icon-btn" onClick={() => setEditing(true)} aria-label="Edit project"><IEdit size={17} /></button>
             <button className="icon-btn" onClick={() => setConfirming(true)} aria-label="Delete project" style={{ color: 'var(--red)' }}><ITrash size={17} /></button>
           </div>
-        </div>
 
         <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 6 }}>{project.name}</h2>
 
