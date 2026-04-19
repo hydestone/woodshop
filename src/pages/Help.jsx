@@ -13,7 +13,8 @@ const SECTIONS = [
       'Convert a Project Idea to a project with one tap.',
       'Use the ← → arrows in the project header to step through projects.',
       'Filter by status (Active, Planning, etc.) and sort by name, category, or year.',
-      'Favorites star in the project header bookmarks it for quick access.',
+      'Favorites star in the project header bookmarks it for quick access. You can also tap the ⭐ on any project card.',
+      'Use the Favorites toggle button in the Projects filter bar to show only starred projects.',
       'Calendar button adds a reminder to Google Calendar or Apple Reminders.',
     ],
   },
@@ -24,6 +25,7 @@ const SECTIONS = [
       'Capture things you want to build someday — no commitment required.',
       'Add a title, notes, and tags.',
       'Tap "→ Project" to instantly convert an idea into a real project in Planning status.',
+      'From the Inspiration page, tap the 💡 button on any photo to create an idea directly from it.',
     ],
   },
   {
@@ -53,6 +55,7 @@ const SECTIONS = [
       'All Photos shows every photo across all projects.',
       'Finished Work shows photos tagged as "finished".',
       'Inspiration: drag-drop or tap + to add mood board photos. Tag any photo as "inspiration" and it appears here.',
+      'Tap the 💡 button on any inspiration photo to turn it into a Project Idea.',
       "Click a photo's project name to jump directly to that project.",
       'Wood Stock Gallery shows photos of raw lumber.',
     ],
@@ -135,7 +138,6 @@ const SECTIONS = [
 ]
 
 export default function Help() {
-  const { launchTutorial } = useCtx()
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div className="scroll-page">
@@ -145,15 +147,6 @@ export default function Help() {
           </div>
           <p className="page-subtitle">Everything you can do in JDH Woodworks</p>
         </div>
-
-        {window.innerWidth >= 768 && (
-          <div style={{ padding: '0 16px 20px' }}>
-            <button className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 20px', fontSize: 15 }}
-              onClick={launchTutorial}>
-              <span style={{ fontSize: 20 }}>🎓</span> Take a Tour
-            </button>
-          </div>
-        )}
 
         {SECTIONS.map(section => (
           <div key={section.title} style={{ marginBottom: 24 }}>

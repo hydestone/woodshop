@@ -81,7 +81,7 @@ const NAV_SECTIONS = [
   {
     label: 'Settings',
     items: [
-      { id: 'settings',    label: 'Categories',         Icon: IWrench },
+      { id: 'settings',    label: 'Settings',           Icon: IWrench },
       { id: 'costs',       label: 'Costs',             Icon: IDollar },
       { id: 'import',      label: 'Bulk Import',       Icon: ICamera },
       { id: 'trash',       label: 'Recycling Bin',     Icon: ITrash  },
@@ -95,11 +95,11 @@ const ALL_NAV = NAV_SECTIONS.flatMap(s => s.items)
 
 
 const MOBILE_TABS = [
-  { id: 'home',     label: 'Home',     Icon: IHouse  },
-  { id: 'projects', label: 'Projects', Icon: IFolder },
-  { id: 'shopping', label: 'Shop',     Icon: ICart   },
-  { id: 'photos',   label: 'Photos',   Icon: ICamera },
-  { id: 'more',     label: 'More',     Icon: IMore   },
+  { id: 'home',        label: 'Home',     Icon: IHouse  },
+  { id: 'projects',    label: 'Projects', Icon: IFolder },
+  { id: 'calculators', label: 'Calc',     Icon: ISaw    },
+  { id: 'photos',      label: 'Photos',   Icon: ICamera },
+  { id: 'more',        label: 'More',     Icon: IMore   },
 ]
 
 
@@ -817,7 +817,7 @@ export default function App() {
 
                 {/* Grouped nav sections — skip items already in tab bar */}
                 {NAV_SECTIONS.map(section => {
-                  const items = section.items.filter(t => !['home','projects','shopping','photos'].includes(t.id))
+                  const items = section.items.filter(t => !['home','projects','calculators','photos'].includes(t.id))
                   if (!items.length) return null
                   // Give the first (null-label) section a "Workshop" heading in mobile more menu
                   const label = section.label || 'Build'
