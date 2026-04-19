@@ -451,14 +451,11 @@ export default function App() {
 
   // ── Auth state ────────────────────────────────────────────────────────────
   useEffect(() => {
-    // Check for existing session on mount
-    getSession().then(s => {
-      setSession(s)
-      setAuthChecked(true)
-    })
-    // Listen for auth changes (login / logout / invite)
+    // onAuthStateChange fires INITIAL_SESSION immediately on subscribe
+    // — no need for a separate getSession() call (which caused duplicate loads)
     const { data: { subscription } } = onAuthStateChange((s, event) => {
       setSession(s)
+      setAuthChecked(true)
       // Detect invite or recovery — user needs to set password
       if (s && (event === 'PASSWORD_RECOVERY' || window.location.hash.includes('type=invite') || window.location.hash.includes('type=recovery'))) {
         setNeedsPassword(true)
