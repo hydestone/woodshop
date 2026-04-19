@@ -2,7 +2,7 @@ import * as echarts from 'echarts'
 import { useMemo, useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useCtx } from '../App.jsx'
-import { coatStatus, maintStatus, fmtShort, fmt, IChevR, IChevL, PhotoGrid, KineticTitle } from '../components/Shared.jsx'
+import { coatStatus, maintStatus, fmtShort, fmt, IChevR, IChevL, IFolder, ICamera, ICart, ISaw, PhotoGrid, KineticTitle } from '../components/Shared.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
 
@@ -684,6 +684,22 @@ export default function Dashboard() {
         </>}
 
         {!hasUrgent && <div className="empty" style={{ paddingTop: 32, paddingBottom: 0 }}><div className="empty-icon">🪵</div><div className="empty-title">All clear</div><p className="empty-sub">Nothing urgent today.</p></div>}
+
+        {/* Quick actions */}
+        <div style={{ display: 'flex', gap: 8, padding: '16px 20px 8px', overflowX: 'auto', scrollbarWidth: 'none' }}>
+          <button className="dash-action-btn" onClick={() => setTab('projects')}>
+            <IFolder size={16} color="var(--accent)" sw={1.8} /> New Project
+          </button>
+          <button className="dash-action-btn" onClick={() => setTab('photos')}>
+            <ICamera size={16} color="var(--accent)" sw={1.8} /> Add Photo
+          </button>
+          <button className="dash-action-btn" onClick={() => setTab('shopping')}>
+            <ICart size={16} color="var(--accent)" sw={1.8} /> Shopping
+          </button>
+          <button className="dash-action-btn" onClick={() => setTab('calculators')}>
+            <ISaw size={16} color="var(--accent)" sw={1.8} /> Calculator
+          </button>
+        </div>
 
         {(() => {
           const recent = [...data.projects]

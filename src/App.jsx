@@ -49,47 +49,41 @@ export const useCtx = () => useContext(AppCtx)
 // ── Sectioned navigation ────────────────────────────────────────────────────
 const NAV_SECTIONS = [
   {
-    label: null,
+    label: null, // "Build" in more menu
     items: [
       { id: 'home',        label: 'Home',             Icon: IHouse  },
       { id: 'projects',    label: 'Projects',          Icon: IFolder },
       { id: 'ideas',       label: 'Project Ideas',     Icon: IIdea   },
-      { id: 'stock',       label: 'Wood Stock',        Icon: ITree   },
-      { id: 'maintenance', label: 'Shop Maintenance',  Icon: IWrench },
-      { id: 'shop',        label: 'Shop Improvements', Icon: IHouse  },
       { id: 'shopping',    label: 'Shopping List',     Icon: ICart   },
+      { id: 'stock',       label: 'Wood Stock',        Icon: ITree   },
     ],
   },
   {
-    label: 'Creative',
-    items: [
-      { id: 'brainstorm',  label: 'Brainstorm',        Icon: IBulb   },
-      { id: 'calculators', label: 'Calculators',        Icon: ISaw    },
-      { id: 'yearreview',  label: 'Year in Review',    Icon: IStar   },
-    ],
-  },
-  {
-    label: 'Gallery',
+    label: 'Explore',
     items: [
       { id: 'photos',      label: 'All Photos',        Icon: ICamera },
       { id: 'finished',    label: 'Finished Work',     Icon: IImage  },
       { id: 'inspiration', label: 'Inspiration',       Icon: IBulb   },
-      { id: 'stockgallery', label: 'Wood Stock Gallery', Icon: ITree   },
+      { id: 'brainstorm',  label: 'Brainstorm',        Icon: IBrain  },
+      { id: 'yearreview',  label: 'Year in Review',    Icon: IStar   },
     ],
   },
   {
-    label: 'Library',
+    label: 'Workshop',
     items: [
+      { id: 'maintenance', label: 'Shop Maintenance',  Icon: IWrench },
+      { id: 'shop',        label: 'Shop Improvements', Icon: IHouse  },
+      { id: 'calculators', label: 'Calculators',        Icon: ISaw    },
       { id: 'finishes',    label: 'Finishes',          Icon: ILayers },
       { id: 'resources',   label: 'Resources',         Icon: IBook   },
     ],
   },
   {
-    label: 'Admin',
+    label: 'Settings',
     items: [
       { id: 'settings',    label: 'Categories',         Icon: IWrench },
-      { id: 'import',      label: 'Bulk Import',       Icon: ICamera },
       { id: 'costs',       label: 'Costs',             Icon: IDollar },
+      { id: 'import',      label: 'Bulk Import',       Icon: ICamera },
       { id: 'trash',       label: 'Recycling Bin',     Icon: ITrash  },
       { id: 'help',        label: 'Help',              Icon: IBook   },
     ],
@@ -826,7 +820,7 @@ export default function App() {
                   const items = section.items.filter(t => !['home','projects','shopping','photos'].includes(t.id))
                   if (!items.length) return null
                   // Give the first (null-label) section a "Workshop" heading in mobile more menu
-                  const label = section.label || 'Workshop'
+                  const label = section.label || 'Build'
                   return (
                     <div key={label} style={{ marginBottom: 8 }}>
                       <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-4)', textTransform: 'uppercase', letterSpacing: '.8px', padding: '4px 16px 6px' }}>

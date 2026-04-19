@@ -1908,6 +1908,27 @@ body {
   gap: 12px;
   padding: 0 20px;
 }
+.dash-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--fill);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font);
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 120ms, border-color 120ms;
+}
+.dash-action-btn:active { transform: scale(0.97); }
+@media (hover: hover) {
+  .dash-action-btn:hover { background: var(--surface); border-color: var(--accent); }
+}
 
 
 /* ─── Overlay fullscreen (lightbox / year carousel) ─────────────────────── */
