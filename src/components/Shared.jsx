@@ -123,6 +123,22 @@ export function Sheet({ title, onClose, onSave, saveLabel = 'Save', children }) 
     return () => window.removeEventListener('keydown', handler)
   }, [onClose, handleSave])
 
+  // iOS keyboard: scroll focused input into view inside sheet-body
+  useEffect(() => {
+    const handleFocus = (e) => {
+      const tag = e.target?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+        setTimeout(() => {
+          if (document.activeElement === e.target) {
+            e.target.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
+          }
+        }, 350)
+      }
+    }
+    document.addEventListener('focusin', handleFocus)
+    return () => document.removeEventListener('focusin', handleFocus)
+  }, [])
+
   return createPortal(
     <div
       className="overlay"
