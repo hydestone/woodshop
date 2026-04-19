@@ -1,6 +1,5 @@
 import * as echarts from 'echarts'
 import { useMemo, useState, useEffect, useRef } from 'react'
-import { createPortal } from 'react-dom'
 import { useCtx } from '../App.jsx'
 import { coatStatus, maintStatus, fmtShort, fmt, IChevR, IChevL, PhotoGrid, KineticTitle } from '../components/Shared.jsx'
 import { useToast } from '../components/Toast.jsx'
@@ -429,9 +428,9 @@ function WoodSourceMap({ locations, woodStock, projectWoodSources, onLocationCli
       }
     })
     return () => { if (mapInstance.current) { mapInstance.current.remove(); mapInstance.current = null } }
-  }, [mappable, sourceCounts, expanded])
+  }, [mappable, sourceCounts])
 
-  // B6: Force Leaflet to recalculate size after layout settles
+  // B6: Force Leaflet to recalculate size after layout settles (fixes iPhone blank map)
   useEffect(() => {
     if (mapInstance.current) {
       setTimeout(() => mapInstance.current?.invalidateSize(), 300)
@@ -460,7 +459,7 @@ function WoodSourceMap({ locations, woodStock, projectWoodSources, onLocationCli
           </div>
         ))}
       </div>
-      {expanded && createPortal(
+      {expanded && (
         <div onClick={e => { if (e.target === e.currentTarget) setExpanded(false) }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.7)', zIndex: 2000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
           <div className="map-modal-card">
             <div className="map-modal-header">
@@ -469,8 +468,7 @@ function WoodSourceMap({ locations, woodStock, projectWoodSources, onLocationCli
             </div>
             <div ref={mapRef} style={{ flex: 1 }} />
           </div>
-        </div>,
-        document.body
+        </div>
       )}
     </div>
   )
@@ -726,7 +724,7 @@ export default function Dashboard() {
             <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.6px' }}>Recent Photos</span>
             <button className="btn-text" onClick={() => setTab('photos')}>See all</button>
           </div>
-          <PhotoGrid photos={data.photos.slice(0, 12)} showProject projects={data.projects} />
+          <PhotoGrid photos={data.photos.slice(0, 8)} showProject projects={data.projects} />
         </>}
 
         {upCoats.length > 0 && <>
@@ -741,7 +739,40 @@ export default function Dashboard() {
           </div>
         </>}
       </div>
+      <AddPhotoFAB />
     </div>
   )
+}
+
+function AddPhotoFAB() {
+  const { mutate } = useCtx()
+  const toast = useToast()
+  const [uploading, setUploading] = useState(false)
+  const inputRef = useRef()
+  const handleFile = async (e) => {
+    const file = e.target.files?.[0]; if (!file) return
+    setUploading(true)
+    try {
+      const photo = await db.uploadPhoto(null, file, '', 'progress', '')
+      mutate(d => ({ ...d, photos: [photo, ...d.photos] }))
+      toast('Photo added', 'success')
+    } catch(err) { toast(err.message, 'error') }
+    finally { setUploading(false); e.target.value = '' }
+  }
+  return (<>
+    <input ref={inputRef} type="file" accept="image/*" capture="environment"
+      style={{ display:'none' }} onChange={handleFile} />
+    <button className="fab" onClick={() => inputRef.current?.click()}
+      aria-label="Add photo"
+      style={{ bottom: 'calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 16px)' }}>
+      {uploading
+        ? <div className="spinner" style={{ width:22, height:22, borderWidth:2 }}/>
+        : <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+      }
+    </button>
+  </>)
 }
 
