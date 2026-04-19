@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo } from 'react'
+import ConstructionCalc from './ConstructionCalc.jsx'
 
 // ─── Math utilities ────────────────────────────────────────────────────────────
 function gcd(a, b) { return b ? gcd(b, a % b) : Math.abs(a) }
@@ -181,206 +182,7 @@ function BoardFoot() {
   )
 }
 
-// ─── Tab: Fraction Calculator ─────────────────────────────────────────────────
-// Single unified keypad. Model: left op right = result.
-// Entry flows naturally: type a number (whole or fractional), hit operator, type second number, hit =.
-function FractionCalc() {
-  // Calculator state machine
-  const [display, setDisplay] = useState('')   // what the user is currently typing
-  const [left, setLeft]       = useState(null) // stored left operand (fracObj)
-  const [op, setOp]           = useState(null) // '+' '-' '×' '÷'
-  const [result, setResult]   = useState(null) // computed result (fracObj)
-  const [justEvaled, setJustEvaled] = useState(false) // after = was pressed
-
-  // Parse current display string to fracObj
-  const parsedDisplay = useMemo(() => {
-    if (!display) return null
-    return parseFracObj(display)
-  }, [display])
-
-  const appendDigit = d => {
-    setResult(null)
-    if (justEvaled) { setDisplay(d); setJustEvaled(false); return }
-    setDisplay(prev => {
-      if (d === '.' && prev.includes('.')) return prev
-      return prev + d
-    })
-  }
-
-  const appendFrac = (num, den) => {
-    // Insert "num/den" — if display is non-empty add as fractional part
-    setResult(null)
-    setJustEvaled(false)
-    setDisplay(prev => {
-      if (!prev || prev === '0') return `${num}/${den}`
-      if (prev.includes('/')) return prev // already has fraction
-      return `${prev} ${num}/${den}`
-    })
-  }
-
-  const setDenominator = den => {
-    // Quick denominator: sets denominator for current numerator in display
-    setResult(null)
-    setJustEvaled(false)
-    setDisplay(prev => {
-      if (!prev) return `1/${den}`
-      // If display is "X Y/Z", replace denominator
-      const mixedMatch = prev.match(/^(-?\d+)\s+(\d+)\/(\d+)$/)
-      if (mixedMatch) return `${mixedMatch[1]} ${mixedMatch[2]}/${den}`
-      // If display is "X/Y", replace denominator
-      const fracMatch = prev.match(/^(\d+)\/(\d+)$/)
-      if (fracMatch) return `${fracMatch[1]}/${den}`
-      // If display is a whole number, make it "X/den"... wait that's ambiguous.
-      // Better: treat as numerator
-      const wholeMatch = prev.match(/^(-?\d+)$/)
-      if (wholeMatch) return `${prev}/${den}`
-      return prev
-    })
-  }
-
-  const pressOp = newOp => {
-    setResult(null)
-    setJustEvaled(false)
-    const val = result || parsedDisplay
-    if (val) {
-      setLeft(val)
-      setOp(newOp)
-      setDisplay('')
-    } else if (left) {
-      setOp(newOp) // change operator without clearing
-    }
-  }
-
-  const pressEquals = () => {
-    const rhs = parsedDisplay
-    const lhs = left
-    if (!rhs || !lhs || !op) return
-    let res
-    if (op === '+') res = fracAdd(lhs, rhs)
-    else if (op === '-') res = fracSub(lhs, rhs)
-    else if (op === '×') res = fracMul(lhs, rhs)
-    else if (op === '÷') res = fracDiv(lhs, rhs)
-    if (res) {
-      setResult(res)
-      setLeft(res)
-      setOp(null)
-      setDisplay('')
-      setJustEvaled(true)
-    }
-  }
-
-  const pressAC = () => {
-    setDisplay(''); setLeft(null); setOp(null); setResult(null); setJustEvaled(false)
-  }
-
-  const pressBackspace = () => {
-    setResult(null)
-    setJustEvaled(false)
-    setDisplay(prev => prev.slice(0, -1))
-  }
-
-  const activeVal = result || parsedDisplay
-
-  // Display string
-  const eqLine = [
-    left ? fracToHTML(left, { fontSize: 18, color: 'rgba(255,255,255,.6)' }) : null,
-    op   ? <span key="op" style={{ fontSize: 20, color: '#F59E0B', fontWeight: 700, margin: '0 4px' }}>{op}</span> : null,
-    !result && parsedDisplay && op
-      ? fracToHTML(parsedDisplay, { fontSize: 18, color: 'rgba(255,255,255,.6)' })
-      : null,
-  ].filter(Boolean)
-
-  const DENS = [2, 4, 8, 16, 32, 64]
-
-  return (
-    <div style={{ padding: '0 16px 40px', maxWidth: 480, margin: '0 auto' }}>
-      {/* Display */}
-      <div style={{ background: 'var(--navy)', borderRadius: 'var(--r-md)', padding: '14px 18px', marginBottom: 12, minHeight: 96 }}>
-        {/* Equation line */}
-        {eqLine.length > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', marginBottom: 6, minHeight: 28 }}>
-            {eqLine}
-          </div>
-        )}
-        {/* Main value */}
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, flexWrap: 'wrap' }}>
-          {result
-            ? <span key={`${result.n}/${result.d}`} className="result-pop">
-                {fracToHTML(result, { fontSize: 36, color: '#4ADE80', fontWeight: 800 })}
-              </span>
-            : display
-              ? <span style={{ fontSize: 28, color: '#fff', fontWeight: 700 }}>{display}</span>
-              : <span style={{ fontSize: 28, color: 'rgba(255,255,255,.25)' }}>0</span>
-          }
-          {result && (
-            <span className="result-appear" style={{ fontSize: 13, color: '#8BA8D0' }}>
-              {fracToDecimal(result).toFixed(4)}" · {(fracToDecimal(result) * 25.4).toFixed(2)} mm
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Keypad — single unified grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6 }}>
-        {/* Row 1: 7 8 9 ÷ AC */}
-        {[7,8,9].map(n => <button key={n} className="key-btn" onClick={() => appendDigit(String(n))}>{n}</button>)}
-        <button className="key-btn amber" onClick={() => pressOp('÷')}>÷</button>
-        <button className="key-btn red" style={{ fontSize: 13 }} onClick={pressAC}>AC</button>
-
-        {/* Row 2: 4 5 6 × ⌫ */}
-        {[4,5,6].map(n => <button key={n} className="key-btn" onClick={() => appendDigit(String(n))}>{n}</button>)}
-        <button className="key-btn amber" onClick={() => pressOp('×')}>×</button>
-        <button className="key-btn gray" style={{ fontSize: 18 }} onClick={pressBackspace}>⌫</button>
-
-        {/* Row 3: 1 2 3 - /2 */}
-        {[1,2,3].map(n => <button key={n} className="key-btn" onClick={() => appendDigit(String(n))}>{n}</button>)}
-        <button className="key-btn amber" onClick={() => pressOp('-')}>−</button>
-        <button className={`key-btn den`} onClick={() => setDenominator(2)}>/2</button>
-
-        {/* Row 4: 0 / + /4 /8 */}
-        <button className="key-btn" onClick={() => appendDigit('0')}>0</button>
-        <button className="key-btn gray" onClick={() => appendDigit('/')} style={{ fontSize: 20 }}>/</button>
-        <button className="key-btn amber" onClick={() => pressOp('+')}>+</button>
-        <button className={`key-btn den`} onClick={() => setDenominator(4)}>/4</button>
-        <button className={`key-btn den`} onClick={() => setDenominator(8)}>/8</button>
-
-        {/* Row 5: /16 /32 /64 . = */}
-        <button className={`key-btn den`} onClick={() => setDenominator(16)}>/16</button>
-        <button className={`key-btn den`} onClick={() => setDenominator(32)}>/32</button>
-        <button className={`key-btn den`} onClick={() => setDenominator(64)}>/64</button>
-        <button className="key-btn" onClick={() => appendDigit('.')} style={{ fontSize: 20 }}>.</button>
-        <button className="key-btn forest" style={{ gridColumn: 'span 1', fontSize: 20 }} onClick={pressEquals}>=</button>
-      </div>
-
-      {/* Conversions */}
-      {activeVal && (
-        <div style={{ marginTop: 14, background: 'var(--fill)', borderRadius: 'var(--r-sm)', padding: '12px 14px' }}>
-          <div className="label-caps" style={{ marginBottom: 8 }}>Conversions</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, fontSize: 13 }}>
-            {[16, 32, 64].map(den => {
-              const dec = fracToDecimal(activeVal)
-              const { w, n, d } = inchToFrac(dec, den)
-              return (
-                <div key={den} style={{ background: 'var(--surface)', borderRadius: 6, padding: '6px 10px' }}>
-                  <div style={{ fontSize: 10, color: 'var(--text-4)', marginBottom: 2 }}>nearest 1/{den}"</div>
-                  <strong>{n === 0 ? `${w}"` : `${w > 0 ? w + ' ' : ''}${n}/${d}"`}</strong>
-                </div>
-              )
-            })}
-            <div style={{ background: 'var(--surface)', borderRadius: 6, padding: '6px 10px' }}>
-              <div style={{ fontSize: 10, color: 'var(--text-4)', marginBottom: 2 }}>decimal</div>
-              <strong>{fracToDecimal(activeVal).toFixed(5)}"</strong>
-            </div>
-            <div style={{ background: 'var(--surface)', borderRadius: 6, padding: '6px 10px' }}>
-              <div style={{ fontSize: 10, color: 'var(--text-4)', marginBottom: 2 }}>millimeters</div>
-              <strong>{(fracToDecimal(activeVal) * 25.4).toFixed(3)} mm</strong>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
+// FractionCalc removed — merged into ConstructionCalc
 
 // ─── Tab: Converter (4 columns, all on one tab) ────────────────────────────────
 const CONV = {
@@ -807,159 +609,9 @@ function SheetGoods() {
   )
 }
 
-// ─── Tab: Advanced (all 5 modes on one scrollable tab) ────────────────────────
-function CalcInput({ label, value, onChange, placeholder }) {
-  return (
-    <div style={{ flex: 1 }}>
-      <div className="calc-label">{label}</div>
-      <input className="calc-input" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder || '—'} style={{ width: '100%' }} />
-    </div>
-  )
-}
+// AdvancedCalc removed — merged into ConstructionCalc
 
-function ResultBox({ label, value }) {
-  return (
-    <div className="result-box-light" style={{ flex: 1 }}>
-      <div className="result-box-label">{label}</div>
-      <div className="result-box-value">{value}</div>
-    </div>
-  )
-}
-
-function AdvancedCalc() {
-  // Pitch/Rise/Run
-  const [pitch, setPitch] = useState(''), [rise, setRise] = useState(''), [run, setRun] = useState('')
-  const pv = parseFloat(pitch), riv = parseLenIn(rise), ruv = parseLenIn(run)
-  const calcPitch = riv && ruv ? +(riv/ruv*12).toFixed(3) : null
-  const calcRise  = pv && ruv  ? inToFtInStr(pv*ruv/12) : null
-  const calcRun   = pv && riv  ? inToFtInStr(riv*12/pv) : null
-  const calcHyp   = riv && ruv ? inToFtInStr(Math.sqrt(riv*riv+ruv*ruv)) : null
-  const calcAngle = riv && ruv ? (Math.atan(riv/ruv)*180/Math.PI).toFixed(2)+'°' : null
-
-  // Diagonal
-  const [dw, setDw] = useState(''), [dh, setDh] = useState('')
-  const dwv = parseLenIn(dw), dhv = parseLenIn(dh)
-  const diagVal  = dwv && dhv ? inToFtInStr(Math.sqrt(dwv*dwv+dhv*dhv)) : null
-  const diagAngle= dwv && dhv ? (Math.atan(dhv/dwv)*180/Math.PI).toFixed(2)+'°' : null
-
-  // Stairs
-  const [totalRise, setTotalRise] = useState(''), [numRisers, setNumRisers] = useState(''), [treadW, setTreadW] = useState('10')
-  const trv = parseLenIn(totalRise), nrv = parseInt(numRisers)||0, twv = parseFloat(treadW)||10
-  const riserH   = trv && nrv ? inToFtInStr(trv/nrv) : null
-  const riserDec = trv && nrv ? trv/nrv : null
-  const stairRun = nrv && twv  ? inToFtInStr((nrv-1)*twv) : null
-  const stairAng = riserDec && twv ? (Math.atan(riserDec/twv)*180/Math.PI).toFixed(1)+'°' : null
-  const riserOk  = riserDec ? riserDec>=4&&riserDec<=7.75 : null
-
-  // Circle
-  const [circInput, setCircInput] = useState(''), [circType, setCircType] = useState('diameter')
-  const cv = parseLenIn(circInput)
-  const cr = cv ? (circType==='radius'?cv:circType==='diameter'?cv/2:circType==='circumference'?cv/(2*Math.PI):Math.sqrt(cv/Math.PI)) : null
-  const circDiam = cr ? inToFtInStr(cr*2) : null
-  const circRad  = cr ? inToFtInStr(cr) : null
-  const circPerim= cr ? inToFtInStr(cr*2*Math.PI) : null
-  const circArea = cr ? (cr*cr*Math.PI).toFixed(3)+' in²' : null
-
-  // Compound miter
-  const [corner, setCorner] = useState(''), [bladeTilt, setBladeTilt] = useState('')
-  const cv2 = parseFloat(corner), btv = parseFloat(bladeTilt)
-  const halfCorner = cv2 ? cv2/2 : null
-  const flatMiter  = halfCorner ? (90-halfCorner).toFixed(2)+'°' : null
-  const compMiter  = halfCorner && btv ? (Math.atan(Math.cos(btv*Math.PI/180)*Math.tan(halfCorner*Math.PI/180))*180/Math.PI).toFixed(2)+'°' : null
-  const compBevel  = halfCorner && btv ? (Math.atan(Math.sin(halfCorner*Math.PI/180)*Math.sin(btv*Math.PI/180))*180/Math.PI).toFixed(2)+'°' : null
-
-  const Section = ({ title, hint, children }) => (
-    <SectionCard title={title}>
-      {hint && <p style={{ fontSize: 12, color: 'var(--text-4)', marginBottom: 12, lineHeight: 1.5 }}>{hint}</p>}
-      {children}
-    </SectionCard>
-  )
-
-  const ResultRow2 = ({ items }) => (
-    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
-      {items.filter(i=>i.v).map(i => <ResultBox key={i.label} label={i.label} value={i.v} />)}
-    </div>
-  )
-
-  return (
-    <div style={{ padding: '0 20px 40px', maxWidth: 640, margin: '0 auto' }}>
-
-      <Section title="Pitch · Rise · Run" hint="Enter any two values. Lengths: 48, 4', 3'6&quot;">
-        <div style={{ display:'flex', gap:8 }}>
-          <CalcInput label="Pitch (in 12)" value={pitch} onChange={setPitch} placeholder="6" />
-          <CalcInput label="Rise" value={rise} onChange={setRise} placeholder={`4'6"`}  />
-          <CalcInput label="Run" value={run} onChange={setRun} placeholder="9'" />
-        </div>
-        <ResultRow2 items={[
-          { label:'Pitch (in 12)', v: calcPitch && !pitch ? String(calcPitch) : null },
-          { label:'Rise',          v: calcRise  && !rise  ? calcRise  : null },
-          { label:'Run',           v: calcRun   && !run   ? calcRun   : null },
-          { label:'Rafter',        v: calcHyp },
-          { label:'Angle',         v: calcAngle },
-        ]}/>
-      </Section>
-
-      <Section title="Diagonal · Squaring" hint="Measure both diagonals — if equal, it's square.">
-        <div style={{ display:'flex', gap:8 }}>
-          <CalcInput label="Width" value={dw} onChange={setDw} placeholder="8'" />
-          <CalcInput label="Height" value={dh} onChange={setDh} placeholder="10'" />
-        </div>
-        <ResultRow2 items={[
-          { label:'Diagonal', v: diagVal },
-          { label:'Angle',    v: diagAngle },
-        ]}/>
-      </Section>
-
-      <Section title="Stairs" hint="Code: 4&quot;–7¾&quot; riser, 10–11&quot; tread. Rise + tread ≈ 17–18&quot;.">
-        <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-          <CalcInput label="Total rise" value={totalRise} onChange={setTotalRise} placeholder={`8'4"`} />
-          <CalcInput label="# risers" value={numRisers} onChange={setNumRisers} placeholder="14" />
-          <CalcInput label="Tread (in)" value={treadW} onChange={setTreadW} placeholder="10" />
-        </div>
-        <ResultRow2 items={[
-          { label:'Riser height', v: riserH },
-          { label:'Total run',   v: stairRun },
-          { label:'Stair angle', v: stairAng },
-        ]}/>
-        {riserOk !== null && (
-          <div style={{ marginTop:10, background:riserOk?'var(--green-dim)':'var(--orange-dim)', borderRadius:8, padding:'8px 12px', fontSize:13, color:riserOk?'var(--green)':'var(--orange)' }}>
-            {riserOk ? '✓ Riser within code (4"–7¾")' : `⚠ Riser ${riserH} is outside typical code range`}
-          </div>
-        )}
-      </Section>
-
-      <Section title="Circle · Arc">
-        <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:10 }}>
-          {['diameter','radius','circumference','area'].map(t => (
-            <button key={t} onClick={() => setCircType(t)} className={`pill-tab-sm${circType===t?' active':''}`}>
-              {t.charAt(0).toUpperCase()+t.slice(1)}
-            </button>
-          ))}
-        </div>
-        <CalcInput label={`Enter ${circType}`} value={circInput} onChange={setCircInput} placeholder={circType==='area'?'100 in²':'12"'} />
-        <ResultRow2 items={[
-          { label:'Diameter',      v: circType!=='diameter'      ? circDiam  : null },
-          { label:'Radius',        v: circType!=='radius'        ? circRad   : null },
-          { label:'Circumference', v: circType!=='circumference' ? circPerim : null },
-          { label:'Area',          v: circType!=='area'          ? circArea  : null },
-        ]}/>
-      </Section>
-
-      <Section title="Compound Miter" hint="Corner angle: total joint angle (90° for a box). Blade tilt: degrees from vertical.">
-        <div style={{ display:'flex', gap:8 }}>
-          <CalcInput label="Corner angle (°)" value={corner} onChange={setCorner} placeholder="90" />
-          <CalcInput label="Blade tilt (°)" value={bladeTilt} onChange={setBladeTilt} placeholder="0 for flat" />
-        </div>
-        <ResultRow2 items={[
-          { label:'Flat miter',    v: flatMiter },
-          { label:'Comp. miter',  v: compMiter },
-          { label:'Blade bevel',  v: compBevel },
-        ]}/>
-      </Section>
-
-    </div>
-  )
-}
+// AdvancedCalc removed — merged into ConstructionCalc
 
 // ─── Tab: Notes ───────────────────────────────────────────────────────────────
 function CalcNotes() {
@@ -988,18 +640,17 @@ function CalcNotes() {
 
 // ─── Main Calculators page ────────────────────────────────────────────────────
 const TABS = [
+  { id:'construction', label:'Construction Calc' },
   { id:'boardfoot', label:'Board Foot' },
-  { id:'fractions', label:'Fractions'  },
   { id:'converter', label:'Converter'  },
   { id:'trim',      label:'Trim Cuts'  },
   { id:'sheet',     label:'Sheet Goods'},
-  { id:'advanced',  label:'Advanced'   },
   { id:'notes',     label:'Notes'      },
 ]
 
 export default function Calculators() {
   const [tab, setTab] = useState(() => {
-    try { return localStorage.getItem('calc-tab') || 'boardfoot' } catch { return 'boardfoot' }
+    try { return localStorage.getItem('calc-tab') || 'construction' } catch { return 'construction' }
   })
 
   const switchTab = t => {
@@ -1035,12 +686,11 @@ export default function Calculators() {
         </div>
       </div>
       <div className="scroll-page" style={{ paddingTop: 16 }}>
+        {tab === 'construction' && <ConstructionCalc />}
         {tab === 'boardfoot' && <BoardFoot />}
-        {tab === 'fractions' && <FractionCalc />}
         {tab === 'converter' && <UnitConverter />}
         {tab === 'trim'      && <TrimCuts />}
         {tab === 'sheet'     && <SheetGoods />}
-        {tab === 'advanced'  && <AdvancedCalc />}
         {tab === 'notes'     && <CalcNotes />}
       </div>
     </div>

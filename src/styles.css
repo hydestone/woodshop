@@ -1991,6 +1991,240 @@ body {
 .key-btn.den   { background: var(--forest); color: var(--white); font-size: 14px; }
 .key-btn.den:not(.active) { background: var(--fill); color: var(--text-3); }
 
+/* ─── Construction Calculator (CM Pro) ──────────────────────────────────────── */
+.cm-display {
+  background: var(--navy, #0F1E38);
+  border-radius: var(--r-md);
+  padding: 14px 16px 12px;
+  margin-bottom: 8px;
+  min-height: 100px;
+}
+.cm-indicator {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  background: rgba(255,255,255,.1);
+  color: #8BA8D0;
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+.cm-mode-toggle {
+  display: inline-flex;
+  background: var(--fill);
+  border-radius: 8px;
+  padding: 2px;
+  gap: 2px;
+}
+.cm-mode-toggle button {
+  background: none;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font);
+  color: var(--text-3);
+  cursor: pointer;
+  transition: all 150ms;
+}
+.cm-mode-toggle button.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0,0,0,.12);
+}
+.cm-memory-bar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.cm-mem-btn {
+  flex: 1;
+  background: var(--fill);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 0;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font);
+  color: var(--text-3);
+  cursor: pointer;
+  transition: background 120ms;
+}
+.cm-mem-btn:active { background: var(--border); }
+.cm-mem-btn:disabled { opacity: .35; cursor: default; }
+.cm-mem-btn.active { background: var(--accent); color: #fff; }
+.cm-keypad {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 5px;
+}
+.cm-key {
+  background: var(--fill);
+  border: none;
+  border-radius: 8px;
+  padding: 14px 0;
+  font-size: 18px;
+  font-weight: 600;
+  font-family: var(--font);
+  color: var(--text);
+  cursor: pointer;
+  transition: transform 80ms, background 120ms;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cm-key:active { transform: scale(0.93); }
+.cm-key.amber { background: #92400E; color: #FDE68A; }
+.cm-key.red { background: var(--red); color: #fff; font-size: 13px; font-weight: 700; }
+.cm-key.forest { background: var(--forest); color: #fff; font-size: 22px; }
+.cm-key.gray { background: var(--text-4); color: #fff; }
+.cm-key.den { background: var(--forest); color: #fff; font-size: 14px; font-weight: 700; opacity: .8; }
+.cm-key.unit { background: rgba(37,99,235,.15); color: var(--accent); font-size: 13px; font-weight: 700; }
+.cm-history {
+  background: var(--fill);
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.cm-history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  width: 100%;
+  font-family: var(--font);
+  text-align: left;
+  transition: background 120ms;
+}
+.cm-history-item:hover { background: var(--surface); }
+.cm-con-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+  margin-bottom: 8px;
+}
+.cm-con-btn {
+  background: var(--fill);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font);
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all 150ms;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.cm-con-btn:active { transform: scale(0.96); }
+.cm-con-btn.active {
+  background: rgba(45,90,61,.15);
+  border-color: var(--forest);
+  color: var(--forest);
+}
+.cm-con-btn.help {
+  background: rgba(37,99,235,.08);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.cm-con-icon { font-size: 16px; line-height: 1; }
+.cm-con-panel {
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-md);
+  padding: 14px;
+  margin-bottom: 10px;
+}
+.cm-con-inputs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.cm-con-input-wrap { flex: 1; min-width: 80px; }
+.cm-con-value {
+  flex: 1;
+  background: var(--fill);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-3);
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+}
+.cm-con-value.has-value { color: var(--text); }
+.cm-con-value.computed { color: var(--forest); font-style: italic; }
+.cm-con-set-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.cm-con-set-btn:active { opacity: .8; }
+.cm-con-results {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.cm-con-result-item {
+  flex: 1;
+  min-width: 80px;
+  background: rgba(45,90,61,.08);
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.cm-con-clear {
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--text-4);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 8px 0 0;
+  font-family: var(--font);
+  text-align: center;
+}
+.cm-con-clear:hover { color: var(--red); }
+.cm-conversions {
+  margin-top: 10px;
+  background: var(--fill);
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+}
+.cm-conv-cell {
+  background: var(--surface);
+  border-radius: 4px;
+  padding: 4px 8px;
+  text-align: center;
+}
+.cm-help-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 /* ─── Error / warning banner ─────────────────────────────────────────────── */
 .warn-box {
   background: var(--red-dim);
