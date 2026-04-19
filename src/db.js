@@ -39,24 +39,11 @@ async function q(promise) {
   return data
 }
 
-// ── Trash helper — saves item to trash before deleting ───────────────────────
-async function trashAndDelete(table, id, itemType) {
-  const { data: item } = await supabase.from(table).select('*').eq('id', id).single()
-  let trashRecord = null
-  if (item) {
-    const user_id = await getCurrentUserId()
-    trashRecord = { id: uid(), item_type: itemType, item_data: item, deleted_at: isoNow(), user_id }
-    await supabase.from('trash').insert(trashRecord)
-  }
-  await q(supabase.from(table).delete().eq('id', id))
-  return trashRecord
-}
-
 // ── Load all ──────────────────────────────────────────────────────────────────
 export async function loadAll() {
-  const safe = (promise, fallback = []) => promise.then(r => r.data ?? fallback).catch(e => { console.warn('[loadAll] query failed:', e.message); return fallback })
+  const safe = (promise, fallback = []) => promise.then(r => r.data ?? fallback).catch(() => fallback)
   const [projects, steps, coats, maintenance, shopping, photos,
-         woodStock, brainstorming, finishProducts, resources, shopImprovements, categories, woodLocations, projectWoodSources, species, finishes, trash] = await Promise.all([
+         woodStock, brainstorming, finishProducts, resources, shopImprovements, categories, woodLocations, projectWoodSources, species, finishes] = await Promise.all([
     safe(supabase.from('projects').select('*').order('created_at')),
     safe(supabase.from('steps').select('*').limit(1000).order('sort_order')),
     safe(supabase.from('coats').select('*').limit(500).order('coat_number')),
@@ -73,21 +60,7 @@ export async function loadAll() {
     safe(supabase.from('project_wood_sources').select('*')),
     safeWithCache('species', supabase.from('species').select('*').order('name')),
     safeWithCache('finishes', supabase.from('finishes').select('*').order('name')),
-    safe(supabase.from('trash').select('*').order('deleted_at', { ascending: false })),
   ])
-
-  // Auto-purge trash older than 30 days
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 86_400_000).toISOString()
-  const expired = trash.filter(t => t.deleted_at < thirtyDaysAgo)
-  if (expired.length) {
-    for (const t of expired) {
-      if (t.item_type === 'photo' && t.item_data?.storage_path) {
-        await supabase.storage.from(BUCKET).remove([t.item_data.storage_path]).catch(() => {})
-      }
-      await supabase.from('trash').delete().eq('id', t.id).catch(() => {})
-    }
-  }
-
   return {
     projects,
     steps,
@@ -105,7 +78,6 @@ export async function loadAll() {
     projectWoodSources,
     species,
     finishes,
-    trash: trash.filter(t => t.deleted_at >= thirtyDaysAgo),
   }
 }
 
@@ -118,23 +90,7 @@ export async function updateProject(id, fields) {
   return q(supabase.from('projects').update(fields).eq('id', id))
 }
 export async function deleteProject(id) {
-  const user_id = await getCurrentUserId()
-  const { data: project } = await supabase.from('projects').select('*').eq('id', id).single()
-  const { data: steps } = await supabase.from('steps').select('*').eq('project_id', id)
-  const { data: coats } = await supabase.from('coats').select('*').eq('project_id', id)
-  const { data: photos } = await supabase.from('photos').select('*').eq('project_id', id)
-  const { data: pws } = await supabase.from('project_wood_sources').select('*').eq('project_id', id)
-  let trashRecord = null
-  if (project) {
-    trashRecord = {
-      id: uid(), item_type: 'project',
-      item_data: { ...project, _steps: steps || [], _coats: coats || [], _photos: photos || [], _woodSources: pws || [] },
-      deleted_at: isoNow(), user_id
-    }
-    await supabase.from('trash').insert(trashRecord)
-  }
-  await q(supabase.from('projects').delete().eq('id', id))
-  return trashRecord
+  return q(supabase.from('projects').delete().eq('id', id))
 }
 
 // ── Steps ─────────────────────────────────────────────────────────────────────
@@ -170,7 +126,7 @@ export async function updateMaint(id, fields) {
   return q(supabase.from('maintenance').update(fields).eq('id', id))
 }
 export async function deleteMaint(id) {
-  return trashAndDelete('maintenance', id, 'maintenance')
+  return q(supabase.from('maintenance').delete().eq('id', id))
 }
 
 // ── Shopping ──────────────────────────────────────────────────────────────────
@@ -182,19 +138,14 @@ export async function updateShopItem(id, fields) {
   return q(supabase.from('shopping').update(fields).eq('id', id))
 }
 export async function deleteShopItem(id) {
-  return trashAndDelete('shopping', id, 'shopping')
+  return q(supabase.from('shopping').delete().eq('id', id))
 }
 export async function clearDoneItems() {
-  const user_id = await getCurrentUserId()
-  const { data: items } = await supabase.from('shopping').select('*').eq('completed', true)
-  if (items?.length) {
-    await supabase.from('trash').insert(items.map(item => ({ id: uid(), item_type: 'shopping', item_data: item, deleted_at: isoNow(), user_id })))
-  }
   return q(supabase.from('shopping').delete().eq('completed', true))
 }
 
 // ── Photos ────────────────────────────────────────────────────────────────────
-async function compressImage(file, maxPx = 1600, quality = 0.85) {
+async function compressImage(file, maxPx = 2400, quality = 0.92) {
   // HEIC and non-image types fall through uncompressed
   if (!file.type.startsWith('image/') || file.type === 'image/gif') return file
   return new Promise((resolve) => {
@@ -239,11 +190,8 @@ export async function updatePhoto(id, fields) {
   return q(supabase.from('photos').update(fields).eq('id', id))
 }
 export async function deletePhoto(photo) {
-  const user_id = await getCurrentUserId()
-  const trashRecord = { id: uid(), item_type: 'photo', item_data: photo, deleted_at: isoNow(), user_id }
-  await supabase.from('trash').insert(trashRecord)
-  await q(supabase.from('photos').delete().eq('id', photo.id))
-  return trashRecord
+  await supabase.storage.from(BUCKET).remove([photo.storage_path])
+  return q(supabase.from('photos').delete().eq('id', photo.id))
 }
 
 // ── Wood stock ────────────────────────────────────────────────────────────────
@@ -256,7 +204,7 @@ export async function updateWoodStock(id, fields) {
   return q(supabase.from('wood_stock').update(fields).eq('id', id))
 }
 export async function deleteWoodStock(id) {
-  return trashAndDelete('wood_stock', id, 'wood_stock')
+  return q(supabase.from('wood_stock').delete().eq('id', id))
 }
 export async function addMoistureReading(stockId, reading, notes) {
   const user_id = await getCurrentUserId()
@@ -264,6 +212,16 @@ export async function addMoistureReading(stockId, reading, notes) {
 }
 export async function loadMoistureLog(stockId) {
   return q(supabase.from('moisture_log').select('*').eq('stock_id', stockId).order('logged_at'))
+}
+export async function loadAllMoistureLogs(stockIds) {
+  if (!stockIds.length) return {}
+  const rows = await q(supabase.from('moisture_log').select('*').in('stock_id', stockIds).order('logged_at'))
+  const grouped = {}
+  for (const row of rows) {
+    if (!grouped[row.stock_id]) grouped[row.stock_id] = []
+    grouped[row.stock_id].push(row)
+  }
+  return grouped
 }
 
 // ── Brainstorming ─────────────────────────────────────────────────────────────
@@ -275,7 +233,7 @@ export async function updateBrainstorm(id, content) {
   return q(supabase.from('brainstorming').update({ content }).eq('id', id))
 }
 export async function deleteBrainstorm(id) {
-  return trashAndDelete('brainstorming', id, 'brainstorm')
+  return q(supabase.from('brainstorming').delete().eq('id', id))
 }
 
 // ── Finish products ───────────────────────────────────────────────────────────
@@ -287,7 +245,7 @@ export async function updateFinishProduct(id, fields) {
   return q(supabase.from('finish_products').update(fields).eq('id', id))
 }
 export async function deleteFinishProduct(id) {
-  return trashAndDelete('finish_products', id, 'finish')
+  return q(supabase.from('finish_products').delete().eq('id', id))
 }
 
 // ── Resources ─────────────────────────────────────────────────────────────────
@@ -299,7 +257,7 @@ export async function updateResource(id, fields) {
   return q(supabase.from('resources').update(fields).eq('id', id))
 }
 export async function deleteResource(id) {
-  return trashAndDelete('resources', id, 'resource')
+  return q(supabase.from('resources').delete().eq('id', id))
 }
 
 // ── Shop improvements ─────────────────────────────────────────────────────────
@@ -311,7 +269,7 @@ export async function updateShopImprovement(id, fields) {
   return q(supabase.from('shop_improvements').update(fields).eq('id', id))
 }
 export async function deleteShopImprovement(id) {
-  return trashAndDelete('shop_improvements', id, 'shop_improvement')
+  return q(supabase.from('shop_improvements').delete().eq('id', id))
 }
 
 // ── Categories ────────────────────────────────────────────────────────────────
@@ -392,50 +350,4 @@ export async function deleteFinish(id) {
 export async function toggleFavorite(id, value) {
   const { error } = await supabase.from('projects').update({ is_favorite: value }).eq('id', id)
   if (error) throw error
-}
-
-// ── Trash management ─────────────────────────────────────────────────────────
-const TRASH_TABLES = {
-  project: 'projects', photo: 'photos', shopping: 'shopping', brainstorm: 'brainstorming',
-  maintenance: 'maintenance', finish: 'finish_products', resource: 'resources',
-  shop_improvement: 'shop_improvements', wood_stock: 'wood_stock',
-}
-
-export async function restoreFromTrash(trashId, trashItem) {
-  const { item_type: type, item_data: item } = trashItem
-
-  if (type === 'project') {
-    const { _steps, _coats, _photos, _woodSources, ...project } = item
-    await q(supabase.from('projects').upsert(project))
-    if (_steps?.length) await supabase.from('steps').upsert(_steps).catch(() => {})
-    if (_coats?.length) await supabase.from('coats').upsert(_coats).catch(() => {})
-    if (_photos?.length) await supabase.from('photos').upsert(_photos).catch(() => {})
-    if (_woodSources?.length) await supabase.from('project_wood_sources').upsert(_woodSources).catch(() => {})
-  } else if (type === 'photo') {
-    const { url, ...photo } = item
-    await q(supabase.from('photos').upsert(photo))
-  } else {
-    const table = TRASH_TABLES[type]
-    if (table) await q(supabase.from(table).upsert(item))
-  }
-
-  return q(supabase.from('trash').delete().eq('id', trashId))
-}
-
-export async function permanentDeleteTrash(trashId, trashItem) {
-  if (trashItem.item_type === 'photo' && trashItem.item_data?.storage_path) {
-    await supabase.storage.from(BUCKET).remove([trashItem.item_data.storage_path]).catch(() => {})
-  }
-  if (trashItem.item_type === 'project' && trashItem.item_data?._photos?.length) {
-    const paths = trashItem.item_data._photos.map(p => p.storage_path).filter(Boolean)
-    if (paths.length) await supabase.storage.from(BUCKET).remove(paths).catch(() => {})
-  }
-  return q(supabase.from('trash').delete().eq('id', trashId))
-}
-
-export async function emptyTrash() {
-  const { data: items } = await supabase.from('trash').select('*')
-  for (const t of (items || [])) {
-    await permanentDeleteTrash(t.id, t).catch(() => {})
-  }
 }

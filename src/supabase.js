@@ -34,8 +34,8 @@ export async function signOut() {
 }
 
 export function onAuthStateChange(callback) {
-  return supabase.auth.onAuthStateChange((event, session) => {
-    callback(session, event)
+  return supabase.auth.onAuthStateChange((_event, session) => {
+    callback(session)
   })
 }
 
@@ -47,6 +47,11 @@ export function photoUrl(storagePath, opts = {}) {
       : undefined
   })
   return data.publicUrl
+}
+
+// Thumbnail URL — used in grids (smaller, faster)
+export function photoThumb(storagePath, width = 400) {
+  return photoUrl(storagePath, { thumb: true, width })
 }
 
 export function addToGoogleCalendar({ title, start, end, description }) {
@@ -61,3 +66,14 @@ export function addToGoogleCalendar({ title, start, end, description }) {
   window.open(`https://calendar.google.com/calendar/render?${params}`, '_blank')
 }
 
+export function addToAppleReminders({ title, notes, dueDate }) {
+  // Format date for reminders URL scheme: YYYY-MM-DDTHH:MM:SS
+  const dt = dueDate ? dueDate.toISOString().slice(0, 19) : null
+  const params = new URLSearchParams()
+  params.set('title', title)
+  if (notes) params.set('notes', notes)
+  if (dt) params.set('due', dt)
+  // Try x-apple-reminder scheme first (works on iOS)
+  const url = `x-apple-reminderkit://REMCDReminder/?${params.toString()}`
+  window.location.href = url
+}

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
-import { addToGoogleCalendar } from '../supabase.js'
+import { addToGoogleCalendar, addToAppleReminders } from '../supabase.js'
 import { Sheet, FormCell, ConfirmSheet, DropZone, STOCK_STATUS, fmt, IPlus, ITrash, IEdit, ICal, IBell, ICamera } from '../components/Shared.jsx'
 
 const STATUS_ORDER = ['Freshly cut','Drying','Ready to use','Used up']
@@ -387,11 +387,10 @@ export default function Stock() {
   const locations = data.woodLocations || []
 
   useEffect(() => {
-    data.woodStock.forEach(item => {
-      if (logCache[item.id] === undefined) {
-        db.loadMoistureLog(item.id).then(rows => setLogCache(prev=>({...prev,[item.id]:rows}))).catch(()=>{})
-      }
-    })
+    const ids = data.woodStock.map(s => s.id)
+    if (ids.length && Object.keys(logCache).length === 0) {
+      db.loadAllMoistureLogs(ids).then(grouped => setLogCache(grouped)).catch(() => {})
+    }
   }, [data.woodStock])
 
   const del = async id => {
@@ -418,6 +417,11 @@ export default function Stock() {
     if (!item.harvested_at) { toast('Set a harvest date first','error'); return }
     const d = new Date(new Date(item.harvested_at).getTime()+180*86_400_000)
     addToGoogleCalendar({ title:`Check ${item.species} — ready?`, start:d, end:new Date(d.getTime()+3_600_000), description:`${item.species} harvested ${fmt(item.harvested_at)}.` })
+  }
+  const appleReminder = item => {
+    if (!item.harvested_at) { toast('Set a harvest date first','error'); return }
+    const d = new Date(new Date(item.harvested_at).getTime()+180*86_400_000)
+    addToAppleReminders({ title:`Check ${item.species} — ready?`, notes:`Harvested ${fmt(item.harvested_at)}.`, dueDate:d })
   }
 
   const byStatus = STATUS_ORDER.reduce((acc,s)=>{
@@ -464,7 +468,7 @@ export default function Stock() {
                     const isReady=readyDate&&new Date()>=readyDate
                     const loc=locations.find(l=>l.id===item.location_id)
                     return (
-                      <div key={item.id} data-id={item.id} style={{borderBottom:i<arr.length-1?'1px solid var(--border-2)':'none',padding:'12px 16px',background:'var(--surface)'}}>
+                      <div key={item.id} style={{borderBottom:i<arr.length-1?'1px solid var(--border-2)':'none',padding:'12px 16px',background:'var(--surface)'}}>
                         <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
                           <div style={{flex:1,paddingRight:12}}>
                             <div style={{fontWeight:600}}>{item.species}</div>
@@ -487,6 +491,7 @@ export default function Stock() {
                               </button>
                               {(status==='Freshly cut'||status==='Drying')&&<>
                                 <button className="btn-cal" onClick={()=>calReminder(item)}><ICal size={13} color="currentColor"/> Google Cal</button>
+                                <button className="btn-reminder" onClick={()=>appleReminder(item)}><IBell size={13} color="currentColor"/> Reminders</button>
                               </>}
                             </div>
                           </div>
