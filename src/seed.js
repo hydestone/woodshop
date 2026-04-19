@@ -29,9 +29,15 @@ async function safe(promise) {
   try { return await promise } catch { return null }
 }
 
+// Concurrency guard — prevents multiple reload calls from seeding simultaneously
+let _seeding = false
+
 // ── Seed ─────────────────────────────────────────────────────────────────────
 
 export async function seedSampleData() {
+  if (_seeding) return null
+  _seeding = true
+  try {
   const user_id = await getCurrentUserId()
   if (!user_id) return null
   const now = isoNow()
@@ -137,6 +143,9 @@ export async function seedSampleData() {
   })
 
   return ids
+  } finally {
+    _seeding = false
+  }
 }
 
 // ── Clear sample data ────────────────────────────────────────────────────────
