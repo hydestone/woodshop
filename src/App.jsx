@@ -483,20 +483,24 @@ export default function App() {
       setError(null)
       const [d] = await Promise.all([db.loadAll(), minTime])
 
-      // Seed sample data for new users
-      const { data: { session: s } } = await supabase.auth.getSession()
-      if (s?.user && !s.user.user_metadata?.seeded_at && d.projects.length === 0) {
-        const ids = await seedSampleData()
-        if (ids) {
-          setSampleIds(ids)
-          const d2 = await db.loadAll()
-          setData(d2)
+      // Always set data first — app loads regardless of seed outcome
+      setData(d)
+
+      // Seed check for new users (non-blocking — failures don't prevent app load)
+      try {
+        const s = await getSession()
+        if (s?.user && !s.user.user_metadata?.seeded_at && d.projects.length === 0) {
+          const ids = await seedSampleData()
+          if (ids) {
+            setSampleIds(ids)
+            const d2 = await db.loadAll()
+            setData(d2)
+          }
         } else {
-          setData(d)
+          setSampleIds(s?.user?.user_metadata?.sample_ids || null)
         }
-      } else {
-        setData(d)
-        setSampleIds(getSampleIds(s))
+      } catch (seedErr) {
+        console.error('Seed check:', seedErr)
       }
 
       setLoadPhase('exit')
