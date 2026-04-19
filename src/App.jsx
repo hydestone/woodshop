@@ -9,7 +9,7 @@ import {
   IFolder, ICart, IWrench, ICamera, ITree, IBulb, ISaw,
   IStar, ICheck, IGrid, IIdea, IBrain, IDollar, ITrash,
   IBook, IHouse, IImage, ILayers, IMore, IClose,
-  coatStatus, maintStatus, Sheet,
+  coatStatus, maintStatus,
 } from './components/Shared.jsx'
 
 // Pages
@@ -35,10 +35,8 @@ import Help           from './pages/Help.jsx'
 import SmokeTest      from './pages/SmokeTest.jsx'
 import Calculators    from './pages/Calculators.jsx'
 import Trash          from './pages/Trash.jsx'
-
 import Tutorial, { useTutorialCheck } from './components/Tutorial.jsx'
 import ErrorBoundary  from './components/ErrorBoundary.jsx'
-import PullToRefresh  from './components/PullToRefresh.jsx'
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 const AppCtx = createContext(null)
@@ -50,35 +48,47 @@ const NAV_SECTIONS = [
   {
     label: null,
     items: [
-      { id: 'home',        label: 'Home',              Icon: IHouse  },
-      { id: 'projects',    label: 'Projects',           Icon: IFolder },
-      { id: 'ideas',       label: 'Project Ideas',      Icon: IIdea   },
-      { id: 'stock',       label: 'Wood Stock',         Icon: ITree   },
-      { id: 'maintenance', label: 'Shop Maintenance',   Icon: IWrench },
-      { id: 'shop',        label: 'Shop Improvements',  Icon: IHouse  },
-      { id: 'shopping',    label: 'Shopping List',       Icon: ICart   },
+      { id: 'home',        label: 'Home',             Icon: IHouse  },
+      { id: 'projects',    label: 'Projects',          Icon: IFolder },
+      { id: 'ideas',       label: 'Project Ideas',     Icon: IIdea   },
+      { id: 'stock',       label: 'Wood Stock',        Icon: ITree   },
+      { id: 'maintenance', label: 'Shop Maintenance',  Icon: IWrench },
+      { id: 'shop',        label: 'Shop Improvements', Icon: IHouse  },
+      { id: 'shopping',    label: 'Shopping List',     Icon: ICart   },
     ],
   },
   {
-    label: 'Explore',
+    label: 'Creative',
     items: [
-      { id: 'photos',      label: 'All Photos',         Icon: ICamera },
-      { id: 'finished',    label: 'Finished Work',      Icon: IImage  },
-      { id: 'brainstorm',  label: 'Brainstorm',         Icon: IBulb   },
-      { id: 'calculators', label: 'Calculators',         Icon: ISaw    },
-      { id: 'yearreview',  label: 'Year in Review',     Icon: IStar   },
-      { id: 'finishes',    label: 'Finishes',           Icon: ILayers },
-      { id: 'resources',   label: 'Resources',          Icon: IBook   },
+      { id: 'brainstorm',  label: 'Brainstorm',        Icon: IBulb   },
+      { id: 'calculators', label: 'Calculators',        Icon: ISaw    },
+      { id: 'yearreview',  label: 'Year in Review',    Icon: IStar   },
     ],
   },
   {
-    label: 'Settings',
+    label: 'Gallery',
     items: [
-      { id: 'settings',    label: 'Settings',           Icon: IWrench },
-      { id: 'costs',       label: 'Costs',              Icon: IDollar },
-      { id: 'import',      label: 'Bulk Import',        Icon: ICamera },
-      { id: 'trash',       label: 'Recycling Bin',      Icon: ITrash  },
-      { id: 'help',        label: 'Help',               Icon: IBook   },
+      { id: 'photos',      label: 'All Photos',        Icon: ICamera },
+      { id: 'finished',    label: 'Finished Work',     Icon: IImage  },
+      { id: 'inspiration', label: 'Inspiration',       Icon: IBulb   },
+      { id: 'stockgallery', label: 'Wood Stock Gallery', Icon: ITree   },
+    ],
+  },
+  {
+    label: 'Library',
+    items: [
+      { id: 'finishes',    label: 'Finishes',          Icon: ILayers },
+      { id: 'resources',   label: 'Resources',         Icon: IBook   },
+    ],
+  },
+  {
+    label: 'Admin',
+    items: [
+      { id: 'settings',    label: 'Categories',         Icon: IWrench },
+      { id: 'import',      label: 'Bulk Import',       Icon: ICamera },
+      { id: 'costs',       label: 'Costs',             Icon: IDollar },
+      { id: 'trash',       label: 'Recycling Bin',     Icon: ITrash  },
+      { id: 'help',        label: 'Help',              Icon: IBook   },
     ],
   },
 ]
@@ -279,20 +289,6 @@ function SetPasswordScreen({ session, onComplete }) {
     if (err) {
       setError(err.message)
     } else {
-      // Notify owner of new signup
-      try {
-        fetch(FEEDBACK_WEBHOOK, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: session?.user?.email || 'unknown',
-            message: `New signup: ${displayName.trim()}`,
-            rating: 0,
-            timestamp: new Date().toISOString(),
-          })
-        })
-      } catch {}
       onComplete()
     }
   }
@@ -409,96 +405,20 @@ function SetPasswordScreen({ session, onComplete }) {
 
 // ─── Root ─────────────────────────────────────────────────────────────────────
 
-// ── Particle nebula — desktop only ────────────────────────────────────────────
-function ParticleNebula({ isDark }) {
-  const canvasRef = React.useRef()
-
-  React.useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    let raf
-
-    const resize = () => {
-      canvas.width  = canvas.offsetWidth  * window.devicePixelRatio
-      canvas.height = canvas.offsetHeight * window.devicePixelRatio
-      ctx.setTransform(1, 0, 0, 1, 0, 0)   // reset before scale to prevent accumulation
-      ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
-    }
-    resize()
-    window.addEventListener('resize', resize)
-
-    const W = () => canvas.offsetWidth
-    const H = () => canvas.offsetHeight
-
-    // Particle colours adapt to theme
-    const colours = isDark
-      ? ['rgba(139,168,208,', 'rgba(74,222,128,', 'rgba(167,139,250,', 'rgba(255,255,255,']
-      : ['rgba(29,78,216,',   'rgba(22,101,52,',  'rgba(124,58,237,',  'rgba(180,83,9,']
-
-    const particles = Array.from({ length: 38 }, (_, i) => ({
-      x: Math.random() * 100,  // percent
-      y: Math.random() * 100,
-      vx: (Math.random() - 0.5) * 0.012,
-      vy: (Math.random() - 0.5) * 0.008,
-      r: 0.6 + Math.random() * 1.4,
-      a: 0.08 + Math.random() * 0.18,
-      col: colours[i % colours.length],
-      phase: Math.random() * Math.PI * 2,
-    }))
-
-    const draw = (ts) => {
-      if (document.hidden) { raf = requestAnimationFrame(draw); return }
-      ctx.clearRect(0, 0, W(), H())
-      const t = ts / 1000
-      particles.forEach(p => {
-        p.x += p.vx
-        p.y += p.vy
-        if (p.x < -2) p.x = 102
-        if (p.x > 102) p.x = -2
-        if (p.y < -5) p.y = 105
-        if (p.y > 105) p.y = -5
-        // gentle breathing opacity
-        const opacity = p.a * (0.6 + 0.4 * Math.sin(t * 0.7 + p.phase))
-        ctx.beginPath()
-        ctx.arc(p.x / 100 * W(), p.y / 100 * H(), p.r, 0, Math.PI * 2)
-        ctx.fillStyle = p.col + opacity + ')'
-        ctx.fill()
-      })
-      raf = requestAnimationFrame(draw)
-    }
-
-    raf = requestAnimationFrame(draw)
-    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize) }
-  }, [isDark])
-
-  return (
-    <canvas
-      ref={canvasRef}
-      style={{
-        position: 'absolute', inset: 0, width: '100%', height: '100%',
-        pointerEvents: 'none', opacity: 0.9,
-      }}
-      aria-hidden="true"
-    />
-  )
-}
+// ── ParticleNebula removed — replaced by shavings.jpg nav bar texture ────────
 
 export default function App() {
   const [session, setSession]   = useState(null)
   const [authChecked, setAuthChecked] = useState(false)
   const [data, setData]         = useState(null)
   const [loading, setLoading]   = useState(true)
+  const [loadPhase, setLoadPhase] = useState('show') // 'show' | 'exit' | null
   const [error, setError]       = useState(null)
   const [tab, setTabRaw]        = useState('home')
   const [projId, setProjId]     = useState(null)
   const [showMore, setShowMore] = useState(false)
   const [theme, setTheme] = useState(() => {
-    try {
-      const saved = localStorage.getItem('jdh-theme')
-      if (saved) return saved
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-    } catch { return 'dark' }
+    try { return localStorage.getItem('jdh-theme') || 'dark' } catch { return 'dark' }
   })
 
   // Apply theme to <html> element
@@ -508,21 +428,6 @@ export default function App() {
   }, [theme])
 
   const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark')
-
-  // Scroll to search result after tab navigation
-  useEffect(() => {
-    const id = window.__highlightId
-    if (!id) return
-    window.__highlightId = null
-    const timer = setTimeout(() => {
-      const el = document.querySelector(`[data-id="${id}"]`)
-      if (!el) return
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      el.classList.add('search-highlight')
-      setTimeout(() => el.classList.remove('search-highlight'), 2500)
-    }, 150)
-    return () => clearTimeout(timer)
-  }, [tab])
   const [showQR, setShowQR] = useState(false)
   const [showFeedback, setShowFeedback] = useState(false)
   const [isOffline, setIsOffline] = useState(!navigator.onLine)
@@ -534,8 +439,6 @@ export default function App() {
     const goOnline  = () => setIsOffline(false)
     window.addEventListener('offline', goOffline)
     window.addEventListener('online',  goOnline)
-    // Enable :active CSS states on iOS Safari
-    document.addEventListener('touchstart', () => {}, { passive: true })
     return () => {
       window.removeEventListener('offline', goOffline)
       window.removeEventListener('online',  goOnline)
@@ -562,6 +465,7 @@ export default function App() {
         // Logged out — clear data
         setData(null)
         setLoading(true)
+        setLoadPhase('show')
       }
     })
     // Also check hash on initial load
@@ -572,12 +476,16 @@ export default function App() {
   }, [])
 
   const reload = useCallback(async () => {
+    const minTime = new Promise(r => setTimeout(r, 1500))
     try {
       setError(null)
-      const d = await db.loadAll()
+      const [d] = await Promise.all([db.loadAll(), minTime])
       setData(d)
+      setLoadPhase('exit')
+      setTimeout(() => setLoadPhase(null), 400)
     } catch (e) {
       setError(e.message)
+      setLoadPhase(null)
     } finally {
       setLoading(false)
     }
@@ -621,10 +529,10 @@ export default function App() {
   )
 
   // ── Loading ────────────────────────────────────────────────────────────────
-  if (loading) return (
-    <div className="loading-screen">
-      <img src="/New_Logo.png" alt="" className="loading-logo-img loading-logo-anim" style={{ filter: 'brightness(1.4) saturate(2)' }} />
-      <div className="loading-wordmark loading-text-anim">JDH <span>WOODWORKS</span></div>
+  if (loadPhase) return (
+    <div className={`loading-screen ${loadPhase === 'exit' ? 'loading-exit' : ''}`}>
+      <img src="/New_Logo.png" alt="" className="loading-logo-img" />
+      <div className="loading-wordmark">JDH <span>WOODWORKS</span></div>
     </div>
   )
 
@@ -664,8 +572,7 @@ export default function App() {
         <div className="app-wrapper">
 
           {/* ── Top bar ── */}
-          <header className="top-bar" role="banner" style={{ position: 'relative' }}>
-            {window.matchMedia && window.matchMedia('(pointer: fine)').matches && <ParticleNebula isDark={theme === 'dark'} />}
+          <header className="top-bar" role="banner">
             <div className="top-bar-brand">
               <img src="/New_Logo.png" alt="" aria-hidden="true" className="top-bar-logo" />
               <div className="top-bar-title">JDH <span className="top-bar-accent">WOODWORKS</span></div>
@@ -755,7 +662,6 @@ export default function App() {
 
             {/* ── Content ── */}
             <main className="main-area" id="main-content">
-              <PullToRefresh onRefresh={reload}>
               <ErrorBoundary>
               {projId ? (
                 <ProjectDetail />
@@ -787,7 +693,6 @@ export default function App() {
                 </>
               )}
               </ErrorBoundary>
-              </PullToRefresh>
 
               {/* Mobile tab bar */}
               <nav className="tabbar" aria-label="Mobile navigation">
@@ -817,73 +722,92 @@ export default function App() {
         {/* QR Code modal */}
         {showQR && <QRModal onClose={() => setShowQR(false)} />}
         {showFeedback && <FeedbackModal session={session} onClose={() => setShowFeedback(false)} />}
-        {showTutorial && window.innerWidth >= 768 && <Tutorial onClose={dismissTutorial} setTab={setTab} />}
+        {showTutorial && <Tutorial onClose={dismissTutorial} setTab={setTab} />}
       {isOffline && (
         <div className="offline-banner">
           ⚡ Offline — showing cached data
         </div>
       )}
 
-        {/* More sheet (mobile) — uses Sheet component for scroll lock + portal */}
+        {/* More sheet (mobile) */}
         {showMore && (
-          <Sheet title="More" onClose={() => setShowMore(false)}>
-            {/* Portfolio links */}
-            <div className="form-group" style={{ marginBottom: 8 }}>
-              <div className="more-item" style={{ borderBottom: '1px solid var(--border-2)', padding: '13px 16px' }}
-                onClick={() => { setShowMore(false); setShowFeedback(true) }} role="button" tabIndex={0}>
-                <IBrain size={20} color="var(--accent)" sw={1.8} />
-                <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>Send Feedback</span>
+          <div
+            className="overlay"
+            onClick={() => setShowMore(false)}
+            role="dialog"
+            aria-modal="true"
+            aria-label="More navigation"
+          >
+            <div className="sheet" onClick={e => e.stopPropagation()}>
+              <div className="sheet-handle" />
+              <div className="sheet-header">
+                <span />
+                <span className="sheet-title">More</span>
+                <button className="sheet-cancel" onClick={() => setShowMore(false)} aria-label="Close">
+                  <IClose size={18} color="var(--text-3)" sw={2} />
+                </button>
               </div>
-              <div className="more-item" style={{ borderBottom: '1px solid var(--border-2)', padding: '13px 16px' }}
-                onClick={() => { setShowMore(false); setShowQR(true) }} role="button" tabIndex={0}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
-                  <rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/>
-                </svg>
-                <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>Share Portfolio</span>
-              </div>
-              <a href="/portfolio" target="_blank" rel="noopener noreferrer"
-                className="more-item"
-                style={{ borderBottom: 'none', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 14, padding: '13px 16px' }}
-                onClick={() => setShowMore(false)}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                  <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
-                </svg>
-                <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>View Portfolio</span>
-              </a>
-            </div>
-
-            {/* Grouped nav sections */}
-            {NAV_SECTIONS.map(section => {
-              const items = section.items.filter(t => !['home','projects','shopping','photos'].includes(t.id))
-              if (!items.length) return null
-              const label = section.label || 'Workshop'
-              return (
-                <div key={label} style={{ marginBottom: 8 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-4)', textTransform: 'uppercase', letterSpacing: '.8px', padding: '4px 16px 6px' }}>
-                    {label}
+              <div className="sheet-body">
+                {/* Portfolio links */}
+                <div className="form-group" style={{ marginBottom: 8 }}>
+                  <div className="more-item" style={{ borderBottom: '1px solid var(--border-2)', padding: '13px 16px' }}
+                    onClick={() => { setShowMore(false); setShowFeedback(true) }} role="button" tabIndex={0}>
+                    <IBrain size={20} color="var(--accent)" sw={1.8} />
+                    <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>Send Feedback</span>
                   </div>
-                  <div className="form-group">
-                    {items.map((t, i) => {
-                      const badge = badgeFor(t.id)
-                      return (
-                        <div key={t.id} className="more-item"
-                          style={{ borderBottom: i < items.length - 1 ? '1px solid var(--border-2)' : 'none', padding: '13px 16px' }}
-                          onClick={() => { setTab(t.id); setShowMore(false) }}
-                          role="button" tabIndex={0}
-                          onKeyDown={e => e.key === 'Enter' && (setTab(t.id), setShowMore(false))}>
-                          <t.Icon size={20} color="var(--accent)" sw={1.8} />
-                          <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>{t.label}</span>
-                          {badge > 0 && <span className="sidebar-badge">{badge}</span>}
-                        </div>
-                      )
-                    })}
+                  <div className="more-item" style={{ borderBottom: '1px solid var(--border-2)', padding: '13px 16px' }}
+                    onClick={() => { setShowMore(false); setShowQR(true) }} role="button" tabIndex={0}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                      <rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/>
+                    </svg>
+                    <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>Share Portfolio</span>
                   </div>
+                  <a href="/portfolio" target="_blank" rel="noopener noreferrer"
+                    className="more-item"
+                    style={{ borderBottom: 'none', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 14, padding: '13px 16px' }}
+                    onClick={() => setShowMore(false)}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                      <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+                    </svg>
+                    <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>View Portfolio</span>
+                  </a>
                 </div>
-              )
-            })}
-          </Sheet>
+
+                {/* Grouped nav sections — skip items already in tab bar */}
+                {NAV_SECTIONS.map(section => {
+                  const items = section.items.filter(t => !['home','projects','shopping','photos'].includes(t.id))
+                  if (!items.length) return null
+                  // Give the first (null-label) section a "Workshop" heading in mobile more menu
+                  const label = section.label || 'Workshop'
+                  return (
+                    <div key={label} style={{ marginBottom: 8 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-4)', textTransform: 'uppercase', letterSpacing: '.8px', padding: '4px 16px 6px' }}>
+                        {label}
+                      </div>
+                      <div className="form-group">
+                        {items.map((t, i) => {
+                          const badge = badgeFor(t.id)
+                          return (
+                            <div key={t.id} className="more-item"
+                              style={{ borderBottom: i < items.length - 1 ? '1px solid var(--border-2)' : 'none', padding: '13px 16px' }}
+                              onClick={() => { setTab(t.id); setShowMore(false) }}
+                              role="button" tabIndex={0}
+                              onKeyDown={e => e.key === 'Enter' && (setTab(t.id), setShowMore(false))}>
+                              <t.Icon size={20} color="var(--accent)" sw={1.8} />
+                              <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>{t.label}</span>
+                              {badge > 0 && <span className="sidebar-badge">{badge}</span>}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
         )}
       </ToastProvider>
     </AppCtx.Provider>
