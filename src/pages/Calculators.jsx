@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 
 // ─── Math utilities ────────────────────────────────────────────────────────────
 function gcd(a, b) { return b ? gcd(b, a % b) : Math.abs(a) }
@@ -12,14 +12,6 @@ function fracSub(a, b) { return fracReduce(a.n * b.d - b.n * a.d, a.d * b.d) }
 function fracMul(a, b) { return fracReduce(a.n * b.n, a.d * b.d) }
 function fracDiv(a, b) { return fracReduce(a.n * b.d, a.d * b.n) }
 function fracToDecimal({ n, d }) { return d === 0 ? 0 : n / d }
-function fracToStr({ n, d }) {
-  if (d === 1) return `${n}`
-  const w = Math.floor(Math.abs(n) / d) * Math.sign(n)
-  const rem = Math.abs(n) % d
-  if (w && rem) return `${w} ${rem}/${d}`
-  if (w) return `${w}`
-  return `${n}/${d}`
-}
 
 function parseFracObj(s) {
   s = (s || '').trim()
@@ -114,7 +106,6 @@ function LenInput({ label, value, onChange, placeholder }) {
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder || '0'}
         inputMode="decimal"
-        autoComplete="off"
         style={{ width: '100%', textAlign: 'center' }}
       />
     </div>
@@ -123,19 +114,9 @@ function LenInput({ label, value, onChange, placeholder }) {
 
 // ─── Tab: Board Foot ───────────────────────────────────────────────────────────
 function BoardFoot() {
-  const [t, setT] = useState(() => { try { return localStorage.getItem('bf-t') || '' } catch { return '' } })
-  const [w, setW] = useState(() => { try { return localStorage.getItem('bf-w') || '' } catch { return '' } })
-  const [l, setL] = useState('')
-  const [qty, setQty] = useState('1')
-  const [cost, setCost] = useState(() => { try { return localStorage.getItem('bf-cost') || '' } catch { return '' } })
+  const [t, setT] = useState(''), [w, setW] = useState(''), [l, setL] = useState('')
+  const [qty, setQty] = useState('1'), [cost, setCost] = useState('')
   const [tally, setTally] = useState([])
-  const [memory, setMemory] = useState(null)
-  const [showHelp, setShowHelp] = useState(false)
-
-  // Persist commonly reused values
-  useEffect(() => { try { localStorage.setItem('bf-t', t) } catch {} }, [t])
-  useEffect(() => { try { localStorage.setItem('bf-w', w) } catch {} }, [w])
-  useEffect(() => { try { localStorage.setItem('bf-cost', cost) } catch {} }, [cost])
 
   const pf = v => { const o = parseFracObj(v); return o ? fracToDecimal(o) : null }
   const tv = pf(t), wv = pf(w), lv = parseFloat(l) || 0
@@ -144,65 +125,14 @@ function BoardFoot() {
   const bfQty = bf ? Math.round(bf * q * 1000) / 1000 : null
   const estCost = bfQty && cost ? (bfQty * (parseFloat(cost) || 0)).toFixed(2) : null
 
-  // History
-  const [history, setHistory] = useState(() => { try { return JSON.parse(localStorage.getItem('bf-history')) || [] } catch { return [] } })
-  const saveHistory = h => { setHistory(h); try { localStorage.setItem('bf-history', JSON.stringify(h)) } catch {} }
-
   const addTally = () => {
     if (!bfQty) return
-    const entry = { desc: `${t||'?'}" × ${w||'?'}" × ${l||'?'}" ×${q}`, bf: bfQty, cost: estCost ? parseFloat(estCost) : 0 }
-    setTally(p => [...p, entry])
-    saveHistory([{ ...entry, ts: Date.now() }, ...history].slice(0, 10))
+    setTally(p => [...p, { desc: `${t||'?'}" × ${w||'?'}" × ${l||'?'}" ×${q}`, bf: bfQty, cost: estCost ? parseFloat(estCost) : 0 }])
   }
 
   return (
     <div style={{ padding: '0 20px 40px', maxWidth: 640, margin: '0 auto' }}>
-      {/* Help toggle */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '8px 0 12px' }}>
-        <span style={{ fontSize: 12, color: 'var(--text-4)' }}>BF = T × W × L ÷ 144</span>
-        <button className="calc-help-btn" onClick={() => setShowHelp(!showHelp)} title="Help">?</button>
-      </div>
-      {showHelp && (
-        <div className="calc-help-tip">
-          <strong>Board Feet</strong> measures lumber volume. Enter thickness and width in inches (fractions OK: 3/4, 1 3/8). Length in inches. Qty multiplies the result. $/BF estimates cost per board foot.
-        </div>
-      )}
-
-      {/* Premium display */}
-      <div className="calc-display">
-        {memory !== null && <div className="calc-memory-badge">M = {memory}</div>}
-        <div className="calc-display-row">
-          <div>
-            <div key={bfQty} className={`calc-display-value${bfQty ? ' result-pop' : ''}`}>
-              {bfQty ?? '—'}
-            </div>
-            <div className="calc-display-sub">
-              board feet{bf && bfQty !== bf ? ` (${q}× ${bf} BF)` : ''}
-            </div>
-          </div>
-          {estCost && (
-            <div>
-              <div className="calc-display-cost">${estCost}</div>
-              <div className="calc-display-cost-sub">est. cost</div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Memory bar */}
-      <div className="calc-memory-bar">
-        <button className="calc-mem-btn" onClick={() => bfQty && setMemory(m => m !== null ? Math.round((m + bfQty)*1000)/1000 : bfQty)} disabled={!bfQty}>M+</button>
-        <button className="calc-mem-btn" onClick={() => bfQty && setMemory(m => m !== null ? Math.round((m - bfQty)*1000)/1000 : -bfQty)} disabled={!bfQty}>M−</button>
-        <button className="calc-mem-btn" onClick={() => { if (memory !== null) { setT(''); setW(''); setL(''); setQty('1') } }} disabled={memory === null}>MR</button>
-        <button className="calc-mem-btn" onClick={() => setMemory(null)} disabled={memory === null}>MC</button>
-      </div>
-      {memory !== null && (
-        <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--accent)', fontWeight: 600, marginBottom: 12 }}>
-          Memory: {memory} BF
-        </div>
-      )}
-
-      {/* Inputs */}
+      <p style={{ fontSize: 12, color: 'var(--text-4)', margin: '12px 0' }}>BF = T × W × L ÷ 144 · Accepts fractions: 3/4, 1 3/8</p>
       <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
         <LenInput label="Thickness (in)" value={t} onChange={setT} placeholder="3/4" />
         <LenInput label="Width (in)" value={w} onChange={setW} placeholder="6" />
@@ -211,6 +141,19 @@ function BoardFoot() {
       <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
         <LenInput label="Qty" value={qty} onChange={setQty} placeholder="1" />
         <LenInput label="$/BF (optional)" value={cost} onChange={setCost} placeholder="5.00" />
+      </div>
+
+      <div className="result-box" style={{ marginBottom: 12 }}>
+        <div>
+          <div key={bfQty} className={`metric-num${bfQty ? ' result-appear' : ''}`}>{bfQty ?? '—'}</div>
+          <div className="metric-sub">board feet{bf && bfQty !== bf ? ` (${q}× ${bf} BF)` : ''}</div>
+        </div>
+        {estCost && (
+          <div style={{ textAlign: 'right' }}>
+            <div className="metric-green">${estCost}</div>
+            <div className="metric-sub">est. cost</div>
+          </div>
+        )}
       </div>
 
       <button className="btn-secondary" style={{ width: '100%', justifyContent: 'center', marginBottom: 20 }} onClick={addTally} disabled={!bfQty}>
@@ -231,36 +174,7 @@ function BoardFoot() {
               <span>{Math.round(tally.reduce((s,r) => s+r.bf, 0)*1000)/1000} BF{tally.some(r=>r.cost>0) ? ` · $${tally.reduce((s,r)=>s+r.cost,0).toFixed(2)}` : ''}</span>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-            <button className="btn-text" style={{ color: 'var(--red)' }} onClick={() => setTally([])}>Clear tally</button>
-            <button className="btn-text" style={{ color: 'var(--accent)' }} onClick={() => {
-              const lines = tally.map(r => `${r.desc} → ${r.bf} BF${r.cost > 0 ? ` ($${r.cost.toFixed(2)})` : ''}`)
-              const total = Math.round(tally.reduce((s,r) => s+r.bf, 0)*1000)/1000
-              const totalCost = tally.reduce((s,r) => s+r.cost, 0)
-              lines.push(`\nTotal: ${total} BF${totalCost > 0 ? ` · $${totalCost.toFixed(2)}` : ''}`)
-              const text = `Board Feet Tally\n${'─'.repeat(24)}\n${lines.join('\n')}\n\n— JDH Woodworks`
-              if (navigator.share) navigator.share({ text }).catch(() => {})
-              else { navigator.clipboard?.writeText(text); }
-            }}>Share tally</button>
-          </div>
-        </SectionCard>
-      )}
-
-      {/* History */}
-      {history.length > 0 && (
-        <SectionCard title="Recent Calculations">
-          <div className="tally-table">
-            {history.map((h, i) => (
-              <div key={i} className="tally-row" style={{ cursor: 'pointer' }} onClick={() => {
-                const m = h.desc.match(/^(.+)" × (.+)" × (.+)" ×(\d+)$/)
-                if (m) { setT(m[1]); setW(m[2]); setL(m[3]); setQty(m[4]) }
-              }}>
-                <span style={{ color: 'var(--text-3)', fontSize: 13 }}>{h.desc}</span>
-                <span style={{ fontWeight: 700, fontSize: 13 }}>{h.bf} BF</span>
-              </div>
-            ))}
-          </div>
-          <button className="btn-text" style={{ marginTop: 6, fontSize: 12, color: 'var(--text-4)' }} onClick={() => saveHistory([])}>Clear history</button>
+          <button className="btn-text" style={{ marginTop: 8, color: 'var(--red)' }} onClick={() => setTally([])}>Clear tally</button>
         </SectionCard>
       )}
     </div>
@@ -277,10 +191,6 @@ function FractionCalc() {
   const [op, setOp]           = useState(null) // '+' '-' '×' '÷'
   const [result, setResult]   = useState(null) // computed result (fracObj)
   const [justEvaled, setJustEvaled] = useState(false) // after = was pressed
-
-  // History
-  const [fracHistory, setFracHistory] = useState(() => { try { return JSON.parse(localStorage.getItem('frac-history')) || [] } catch { return [] } })
-  const saveFracHistory = h => { setFracHistory(h); try { localStorage.setItem('frac-history', JSON.stringify(h)) } catch {} }
 
   // Parse current display string to fracObj
   const parsedDisplay = useMemo(() => {
@@ -356,7 +266,6 @@ function FractionCalc() {
       setOp(null)
       setDisplay('')
       setJustEvaled(true)
-      saveFracHistory([{ expr: `${fracToStr(lhs)} ${op} ${fracToStr(rhs)}`, result: fracToStr(res), decimal: fracToDecimal(res).toFixed(4), ts: Date.now() }, ...fracHistory].slice(0, 10))
     }
   }
 
@@ -371,27 +280,6 @@ function FractionCalc() {
   }
 
   const activeVal = result || parsedDisplay
-
-  // Desktop keyboard input — ref avoids stale closures
-  const kbRef = useRef({})
-  kbRef.current = { appendDigit, pressOp, pressEquals, pressBackspace, pressAC }
-  useEffect(() => {
-    const handler = e => {
-      if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') return
-      const k = kbRef.current
-      if (e.key >= '0' && e.key <= '9') { k.appendDigit(e.key); e.preventDefault() }
-      else if (e.key === '/') { k.appendDigit('/'); e.preventDefault() }
-      else if (e.key === '.') { k.appendDigit('.'); e.preventDefault() }
-      else if (e.key === '+') { k.pressOp('+'); e.preventDefault() }
-      else if (e.key === '-') { k.pressOp('-'); e.preventDefault() }
-      else if (e.key === '*') { k.pressOp('×'); e.preventDefault() }
-      else if (e.key === 'Enter' || e.key === '=') { k.pressEquals(); e.preventDefault() }
-      else if (e.key === 'Backspace') { k.pressBackspace(); e.preventDefault() }
-      else if (e.key === 'Escape') { k.pressAC(); e.preventDefault() }
-    }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [])
 
   // Display string
   const eqLine = [
@@ -490,20 +378,6 @@ function FractionCalc() {
           </div>
         </div>
       )}
-
-      {/* History */}
-      {fracHistory.length > 0 && (
-        <div style={{ marginTop: 14, background: 'var(--fill)', borderRadius: 'var(--r-sm)', padding: '12px 14px' }}>
-          <div className="label-caps" style={{ marginBottom: 8 }}>Recent</div>
-          {fracHistory.map((h, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0', borderBottom: i < fracHistory.length - 1 ? '1px solid var(--border-2)' : 'none', fontSize: 13 }}>
-              <span style={{ color: 'var(--text-3)' }}>{h.expr}</span>
-              <span style={{ fontWeight: 700 }}>= {h.result}</span>
-            </div>
-          ))}
-          <button className="btn-text" style={{ marginTop: 6, fontSize: 12, color: 'var(--text-4)' }} onClick={() => saveFracHistory([])}>Clear</button>
-        </div>
-      )}
     </div>
   )
 }
@@ -544,65 +418,57 @@ function ConverterColumn({ title, cfg, catKey }) {
 
   const result = val !== '' ? convertVal(parseFloat(val), from, to, cfg) : ''
 
-  const selectStyle = {
-    background: 'transparent', border: '1px solid var(--border-2)', borderRadius: 8,
-    fontFamily: 'inherit', fontSize: 14, fontWeight: 600, outline: 'none',
-    width: '100%', padding: '8px 10px', color: 'var(--text)',
-    appearance: 'none', WebkitAppearance: 'none',
-  }
-
   return (
-    <ProSection title={title}>
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10 }}>
-        <select value={from} onChange={e => setFrom(e.target.value)} style={selectStyle}>
-          {cfg.units.map(u => <option key={u} value={u}>{u}</option>)}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className="label-caps">{title}</div>
+
+      {/* Input */}
+      <div style={{ background: 'var(--navy)', borderRadius: 8, padding: '10px 12px' }}>
+        <div style={{ fontSize: 10, color: 'var(--sb-text)', marginBottom: 4 }}>From</div>
+        <select
+          value={from}
+          onChange={e => setFrom(e.target.value)}
+          style={{ background: 'transparent', color: 'var(--white)', border: 'none', fontFamily: 'inherit', fontSize: 13, fontWeight: 700, outline: 'none', marginBottom: 6, width: '100%' }}
+        >
+          {cfg.units.map(u => <option key={u} value={u} style={{ background: 'var(--navy)' }}>{u}</option>)}
         </select>
-        <button
-          onClick={() => { setFrom(to); setTo(from) }}
-          style={{ background: 'var(--fill)', border: 'none', borderRadius: 99, width: 32, height: 32, cursor: 'pointer', fontSize: 16, color: 'var(--text-3)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          aria-label="Swap units"
-        >⇄</button>
-        <select value={to} onChange={e => setTo(e.target.value)} style={selectStyle}>
-          {cfg.units.map(u => <option key={u} value={u}>{u}</option>)}
-        </select>
+        <input
+          className="calc-input"
+          value={val}
+          onChange={e => setVal(e.target.value)}
+          placeholder="0"
+          inputMode="decimal"
+          style={{ background: 'rgba(255,255,255,.1)', color: 'var(--white)', border: '1px solid rgba(255,255,255,.2)', textAlign: 'right', fontSize: 18, fontWeight: 700, width: '100%' }}
+        />
       </div>
-      <input
-        className="calc-input"
-        value={val}
-        onChange={e => setVal(e.target.value)}
-        placeholder="Enter value"
-        inputMode="decimal"
-        style={{ width: '100%', marginBottom: 10 }}
-      />
-      {result && (
-        <div className="calc-display" style={{ marginBottom: 0, padding: '16px 20px' }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-            <span key={result} className="calc-display-value result-pop" style={{ fontSize: 28 }}>{result}</span>
-            <span style={{ fontSize: 16, color: 'rgba(240,244,248,.5)', fontWeight: 600 }}>{to}</span>
-          </div>
-          <div style={{ fontSize: 13, color: 'rgba(240,244,248,.35)', marginTop: 6 }}>
-            {val} {from}
-          </div>
-        </div>
-      )}
-    </ProSection>
+
+      {/* Swap */}
+      <button
+        onClick={() => { setFrom(to); setTo(from) }}
+        style={{ background: 'var(--fill)', border: 'none', borderRadius: 99, padding: '4px', cursor: 'pointer', alignSelf: 'center', fontSize: 16, lineHeight: 1, color: 'var(--text-3)' }}
+        aria-label="Swap units"
+      >⇅</button>
+
+      {/* Result */}
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border-2)', borderRadius: 8, padding: '10px 12px' }}>
+        <div style={{ fontSize: 10, color: 'var(--text-4)', marginBottom: 4 }}>Result</div>
+        <select
+          value={to}
+          onChange={e => setTo(e.target.value)}
+          style={{ background: 'transparent', border: 'none', fontFamily: 'inherit', fontSize: 13, fontWeight: 700, outline: 'none', marginBottom: 6, width: '100%', color: 'var(--text)' }}
+        >
+          {cfg.units.map(u => <option key={u}>{u}</option>)}
+        </select>
+        <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--forest)', textAlign: 'right' }}>{result || '—'}</div>
+      </div>
+    </div>
   )
 }
 
 function UnitConverter() {
-  const [showHelp, setShowHelp] = useState(false)
   return (
-    <div style={{ padding: '0 20px 40px', maxWidth: 640, margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '8px 0 12px' }}>
-        <span style={{ fontSize: 12, color: 'var(--text-4)' }}>Convert between imperial and metric units</span>
-        <button className="calc-help-btn" onClick={() => setShowHelp(!showHelp)} title="Help">?</button>
-      </div>
-      {showHelp && (
-        <div className="calc-help-tip">
-          <strong>Unit Converter</strong> handles length, temperature, weight, and area conversions. Select your units, enter a value, and the result appears instantly. Tap the ⇄ button to swap from/to units.
-        </div>
-      )}
-      <div className="converter-grid">
+    <div style={{ padding: '12px 20px 40px', maxWidth: 640, margin: '0 auto' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
         {Object.entries(CONV).map(([title, cfg]) => (
           <ConverterColumn key={title} title={title} cfg={cfg} catKey={title} />
         ))}
@@ -612,7 +478,7 @@ function UnitConverter() {
 }
 
 // ─── Tab: Trim / Linear cuts (FFD) ────────────────────────────────────────────
-const CUT_COLS = ['#2563EB','#16A34A','#D97706','#DC2626','#7C3AED','#0891B2','#C026D3','#EA580C']
+const CUT_COLS = ['var(--navy)','var(--forest)','#1D4ED8','#92400E','#6B21A8','#065F46','#7C2D12','#BE185D']
 
 function ffd(cuts, stockLengths, kerf) {
   const pieces = []; cuts.forEach(c => { for (let i=0;i<c.qty;i++) pieces.push(c.length) })
@@ -633,25 +499,17 @@ function TrimCuts() {
     { id:1, len:'', qty:1, label:'' },
     { id:2, len:'', qty:1, label:'' },
   ])
-  const [stock, setStock] = useState(() => { try { return localStorage.getItem('tc-stock') || "8', 10', 12'" } catch { return "8', 10', 12'" } })
-  const [kerf, setKerf]   = useState(() => { try { return localStorage.getItem('tc-kerf') || '0.125' } catch { return '0.125' } })
+  const [stock, setStock] = useState("8', 10', 12'")
+  const [kerf, setKerf]   = useState('0.125')
   const [result, setResult] = useState(null)
   const [error, setError]   = useState(null)
-  const [showHelp, setShowHelp] = useState(false)
-
-  useEffect(() => { try { localStorage.setItem('tc-stock', stock) } catch {} }, [stock])
-  useEffect(() => { try { localStorage.setItem('tc-kerf', kerf) } catch {} }, [kerf])
 
   const upd = (id, f, v) => setCuts(c => c.map(x => x.id===id ? {...x,[f]:v} : x))
-  const cutListRef = useRef(null)
-  const addRow = () => setCuts(c => [...c, { id:Date.now(), len:'', qty:1, label:'' }])
-
-  // Focus the last length input after adding a row
-  useEffect(() => {
-    if (cuts.length < 2) return
-    const inputs = cutListRef.current?.querySelectorAll('input[placeholder*="48"]')
-    if (inputs?.length) inputs[inputs.length - 1].focus()
-  }, [cuts.length])
+  const addRow = () => {
+    const newId = Date.now()
+    setCuts(c => [...c, { id: newId, len: '', qty: 1, label: '' }])
+    setTimeout(() => document.getElementById('len-' + newId)?.focus(), 50)
+  }
 
   const calc = () => {
     setError(null); setResult(null)
@@ -671,39 +529,53 @@ function TrimCuts() {
 
   return (
     <div style={{ padding: '0 20px 40px', maxWidth: 640, margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '8px 0 12px' }}>
-        <span style={{ fontSize: 12, color: 'var(--text-4)' }}>Optimize linear cuts from standard lumber</span>
-        <button className="calc-help-btn" onClick={() => setShowHelp(!showHelp)} title="Help">?</button>
-      </div>
-      {showHelp && (
-        <div className="calc-help-tip">
-          <strong>Trim Cut Optimizer</strong> finds the most efficient way to cut pieces from standard lumber lengths. Enter each piece you need (length, quantity, optional label), your available stock lengths, and blade kerf. The optimizer minimizes waste by fitting pieces onto the fewest boards possible. Lengths accept inches (48), feet (4'), or feet-inches (4'6"). Fractions work too: 3 7/8.
-        </div>
-      )}
+      <p style={{ fontSize: 12, color: 'var(--text-4)', margin: '12px 0' }}>
+        Enter lengths in inches (48), feet (4'), or ft/in (4'6"). Fractions OK: 3 7/8
+      </p>
 
       {/* Cut list */}
-      <ProSection title="Cut List">
-        <div ref={cutListRef}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) 56px minmax(0,2fr) 28px', gap: 5, marginBottom: 6 }}>
-            {['Length', 'Qty', 'Label', ''].map(h => (
-              <div key={h} className="calc-label" style={{ marginBottom: 0, textAlign: 'center' }}>{h}</div>
-            ))}
-          </div>
-          {cuts.map((c, i) => (
-            <div key={c.id} style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) 56px minmax(0,2fr) 28px', gap: 5, marginBottom: 6, alignItems: 'center' }}>
-              <input className="calc-input" value={c.len} onChange={e => upd(c.id,'len',e.target.value)} placeholder="48 or 4'6&quot;" onKeyDown={e => e.key==='Enter' && addRow()} />
-              <input className="calc-input" type="number" min="1" value={c.qty} onChange={e => upd(c.id,'qty',e.target.value)} style={{ textAlign: 'center' }} />
-              <input className="calc-input" value={c.label} onChange={e => upd(c.id,'label',e.target.value)} placeholder="optional" />
-              <button onClick={() => setCuts(cc => cc.filter(x => x.id!==c.id))} disabled={cuts.length===1} className="icon-btn" style={{ color: 'var(--red)', opacity: cuts.length===1 ? .3 : 1, justifySelf: 'center' }}>×</button>
-            </div>
+      <SectionCard>
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) 44px minmax(0,2fr) 28px', gap: 5, marginBottom: 6 }}>
+          {['Length', 'Qty', 'Label', ''].map(h => (
+            <div key={h} className="calc-label" style={{ marginBottom: 0, textAlign: 'center' }}>{h}</div>
           ))}
         </div>
+        {cuts.map((c, i) => (
+          <div key={c.id} style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) 44px minmax(0,2fr) 28px', gap: 5, marginBottom: 6, alignItems: 'center' }}>
+            <input
+              id={'len-' + c.id}
+              className="calc-input"
+              value={c.len}
+              onChange={e => upd(c.id,'len',e.target.value)}
+              placeholder="48 or 4'6&quot;"
+              onKeyDown={e => e.key==='Enter' && addRow()}
+            />
+            <input
+              className="calc-input"
+              type="number" min="1" value={c.qty}
+              onChange={e => upd(c.id,'qty',e.target.value)}
+              style={{ textAlign: 'center' }}
+            />
+            <input
+              className="calc-input"
+              value={c.label}
+              onChange={e => upd(c.id,'label',e.target.value)}
+              placeholder="optional"
+            />
+            <button
+              onClick={() => setCuts(cc => cc.filter(x => x.id!==c.id))}
+              disabled={cuts.length===1}
+              className="icon-btn"
+              style={{ color: 'var(--red)', opacity: cuts.length===1 ? .3 : 1, justifySelf: 'center' }}
+            >×</button>
+          </div>
+        ))}
         <button className="btn-text" onClick={addRow} style={{ fontSize: 13 }}>+ Add cut</button>
-      </ProSection>
+      </SectionCard>
 
       {/* Stock + kerf */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
-        <LenInput label="Available stock lengths" value={stock} onChange={setStock} placeholder="8', 10', 12'" />
+      <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
+        <LenInput label="Stock lengths (comma-separated)" value={stock} onChange={setStock} placeholder="8', 10', 12'" />
         <div style={{ width: 88 }}>
           <div className="calc-label">Kerf (in)</div>
           <input className="calc-input" type="number" step="0.0625" value={kerf} onChange={e => setKerf(e.target.value)} style={{ width: '100%' }} />
@@ -712,60 +584,46 @@ function TrimCuts() {
 
       {error && <div className="warn-box">{error}</div>}
       <button className="btn-primary" style={{ width: '100%', justifyContent: 'center', marginBottom: 20 }} onClick={calc}>
-        Calculate Cuts
+        Calculate
       </button>
 
       {result && (
         <>
-          {/* Premium summary display */}
-          <div className="calc-display">
-            <div style={{ display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
-              {Object.entries(result.summary).sort(([a],[b])=>+a-+b).map(([len,cnt]) => (
-                <div key={len}>
-                  <div className="calc-display-value result-pop" style={{ fontSize: 32 }}>{cnt}</div>
-                  <div className="calc-display-sub">× {inToFtInStr(+len)}</div>
-                </div>
-              ))}
-              <div>
-                <div className="calc-display-value result-pop" style={{ fontSize: 32, color: result.boards.reduce((s,b)=>s+b.used,0)/result.boards.reduce((s,b)=>s+b.sl,0) > 0.85 ? '#4ADE80' : '#F59E0B' }}>
-                  {Math.round((1-result.boards.reduce((s,b)=>s+b.used,0)/result.boards.reduce((s,b)=>s+b.sl,0))*100)}%
-                </div>
-                <div className="calc-display-sub">waste</div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+            {Object.entries(result.summary).sort(([a],[b])=>+a-+b).map(([len,cnt]) => (
+              <div key={len} className="card-navy" style={{ padding: '10px 16px', textAlign: 'center', borderRadius: 10 }}>
+                <div style={{ fontSize: 26, fontWeight: 900, color: 'var(--white)' }}>{cnt}</div>
+                <div style={{ fontSize: 12, color: 'var(--sb-text)' }}>× {inToFtInStr(+len)}</div>
               </div>
+            ))}
+            <div style={{ flex:1, minWidth:70, background:'var(--surface)', borderRadius:10, padding:'10px 16px', border:'1px solid var(--border-2)', textAlign:'center' }}>
+              <div style={{ fontSize:22, fontWeight:700, color:'var(--orange)' }}>
+                {Math.round((1-result.boards.reduce((s,b)=>s+b.used,0)/result.boards.reduce((s,b)=>s+b.sl,0))*100)}%
+              </div>
+              <div style={{ fontSize:11, color:'var(--text-3)' }}>waste</div>
             </div>
           </div>
 
-          {/* Share */}
-          <button className="btn-text" style={{ color: 'var(--accent)', marginBottom: 12, fontSize: 13 }} onClick={() => {
-            const summary = Object.entries(result.summary).sort(([a],[b])=>+a-+b).map(([len,cnt]) => `${cnt}× ${inToFtInStr(+len)}`).join(', ')
-            const waste = Math.round((1-result.boards.reduce((s,b)=>s+b.used,0)/result.boards.reduce((s,b)=>s+b.sl,0))*100)
-            const cutList = result.boards.map((b,i) => `Board ${i+1} (${inToFtInStr(b.sl)}): ${b.cuts.map(c => inToFtInStr(c)).join(' + ')}`).join('\n')
-            const text = `Cut List Optimization\n${'─'.repeat(24)}\nStock needed: ${summary}\nWaste: ${waste}%\n\n${cutList}\n\n— JDH Woodworks`
-            if (navigator.share) navigator.share({ text }).catch(() => {})
-            else navigator.clipboard?.writeText(text)
-          }}>Share cut list</button>
-
-          {/* Board diagrams */}
           {result.boards.map((b, bi) => (
-            <div key={bi} style={{ background: 'var(--surface)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 12, padding: '14px 16px', marginBottom: 8 }}>
-              <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8, fontSize:13 }}>
+            <div key={bi} className="card" style={{ marginBottom: 8 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6, fontSize:13 }}>
                 <span style={{ fontWeight:700 }}>Board {bi+1} · <span style={{ color:'var(--accent)' }}>{inToFtInStr(b.sl)}</span></span>
-                <span style={{ color:'var(--orange)', fontWeight: 600 }}>waste {inToFtInStr(Math.max(0,b.sl-b.used))}</span>
+                <span style={{ color:'var(--text-4)' }}>waste {inToFtInStr(Math.max(0,b.sl-b.used))}</span>
               </div>
-              <div style={{ display:'flex', height:32, borderRadius:8, overflow:'hidden', border:'2px solid rgba(255,255,255,.25)' }}>
+              <div style={{ display:'flex', height:24, borderRadius:6, overflow:'hidden', border:'1px solid var(--border-2)' }}>
                 {b.cuts.map((cut,ci) => (
                   <div key={ci} title={inToFtInStr(cut)} style={{
                     width:`${(cut/b.sl)*100}%`,
                     background:CUT_COLS[ci%CUT_COLS.length],
                     display:'flex', alignItems:'center', justifyContent:'center',
-                    fontSize:10, fontWeight:700, color:'#fff', overflow:'hidden',
-                    borderRight:ci<b.cuts.length-1?'1px solid rgba(255,255,255,.4)':'none',
+                    fontSize:9, fontWeight:700, color:'#fff', overflow:'hidden',
+                    borderRight:ci<b.cuts.length-1?'1px solid rgba(255,255,255,.3)':'none',
                   }}>
                     {(cut/b.sl)>0.12?inToFtInStr(cut):''}
                   </div>
                 ))}
                 {b.sl-b.used>0.05&&(
-                  <div style={{ flex:1, background:'repeating-linear-gradient(45deg,rgba(239,68,68,.15),rgba(239,68,68,.15) 4px,rgba(239,68,68,.08) 4px,rgba(239,68,68,.08) 8px)', border:'none' }} title={`Waste: ${inToFtInStr(Math.max(0,b.sl-b.used))}`} />
+                  <div style={{ flex:1, background:'repeating-linear-gradient(45deg,var(--fill),var(--fill) 4px,var(--border-2) 4px,var(--border-2) 8px)' }} />
                 )}
               </div>
               <div style={{ display:'flex', flexWrap:'wrap', gap:5, marginTop:8 }}>
@@ -787,7 +645,7 @@ function TrimCuts() {
 }
 
 // ─── Tab: Sheet Goods ──────────────────────────────────────────────────────────
-const SHEET_COLS = ['#2563EB','#16A34A','#D97706','#DC2626','#7C3AED','#0891B2','#C026D3','#EA580C','#0D9488','#4F46E5']
+const SHEET_COLS = ['var(--navy)','var(--forest)','#1D4ED8','#92400E','#6B21A8','#065F46','#7C2D12','#BE185D','#0E7490','#7C3AED']
 
 function packSheets(pieces, sw, sh, kerf) {
   const sheets = []
@@ -822,23 +680,22 @@ function packSheets(pieces, sw, sh, kerf) {
 }
 
 function SheetGoods() {
-  const [sheetW, setSheetW] = useState(() => { try { return localStorage.getItem('sg-w') || '48' } catch { return '48' } })
-  const [sheetH, setSheetH] = useState(() => { try { return localStorage.getItem('sg-h') || '96' } catch { return '96' } })
-  const [kerf, setKerf]     = useState(() => { try { return localStorage.getItem('sg-kerf') || '0.125' } catch { return '0.125' } })
-
-  useEffect(() => { try { localStorage.setItem('sg-w', sheetW) } catch {} }, [sheetW])
-  useEffect(() => { try { localStorage.setItem('sg-h', sheetH) } catch {} }, [sheetH])
-  useEffect(() => { try { localStorage.setItem('sg-kerf', kerf) } catch {} }, [kerf])
+  const [sheetW, setSheetW] = useState('48')
+  const [sheetH, setSheetH] = useState('96')
+  const [kerf, setKerf]     = useState('0.125')
   const [cuts, setCuts]     = useState([
     { id:1, w:'', h:'', qty:1, label:'' },
     { id:2, w:'', h:'', qty:1, label:'' },
   ])
   const [result, setResult] = useState(null)
   const [error, setError]   = useState(null)
-  const [showHelp, setShowHelp] = useState(false)
 
   const upd = (id, f, v) => setCuts(c => c.map(x => x.id===id?{...x,[f]:v}:x))
-  const addRow = () => setCuts(c => [...c, { id:Date.now(),w:'',h:'',qty:1,label:'' }])
+  const addRow = () => {
+    const newId = Date.now()
+    setCuts(c => [...c, { id: newId, w: '', h: '', qty: 1, label: '' }])
+    setTimeout(() => document.getElementById('sw-' + newId)?.focus(), 50)
+  }
 
   const calc = () => {
     setError(null); setResult(null)
@@ -861,20 +718,20 @@ function SheetGoods() {
   }
 
   const SheetDiagram = ({ sheet, sw, sh, idx }) => {
-    const SCALE = 200/Math.max(sw,sh)
+    const SCALE = 180/Math.max(sw,sh)
     const vw=sw*SCALE, vh=sh*SCALE
     const labelColors={}; let ci=0
     return (
-      <div style={{ background: 'var(--surface)', border: '1px solid var(--border-2)', borderRadius: 12, padding: '14px 16px', marginBottom: 8 }}>
+      <div className="card" style={{ marginBottom:8 }}>
         <div style={{ fontSize:13,fontWeight:700,marginBottom:8 }}>Sheet {idx+1}</div>
-        <svg width={vw} height={vh} style={{ border:'1px solid var(--border-2)',borderRadius:8,background:'var(--fill-2)',display:'block' }}>
+        <svg width={vw} height={vh} style={{ border:'1px solid var(--border-2)',borderRadius:6,background:'var(--fill-2)',display:'block' }}>
           {sheet.pieces.map((p,i) => {
             if (!labelColors[p.label]) { labelColors[p.label]=SHEET_COLS[ci++%SHEET_COLS.length] }
             const color=labelColors[p.label]
             const x=p.x*SCALE,y=p.y*SCALE,w=p.origW*SCALE,h=p.origH*SCALE
             return (
               <g key={i}>
-                <rect x={x} y={y} width={w} height={h} fill={color} fillOpacity={0.75} stroke={color} strokeWidth={1} rx={3}/>
+                <rect x={x} y={y} width={w} height={h} fill={color} fillOpacity={0.75} stroke={color} strokeWidth={1}/>
                 {w>18&&h>12&&<text x={x+w/2} y={y+h/2} textAnchor="middle" dominantBaseline="middle" fill="#fff" fontSize={Math.min(10,w/5)} fontWeight="700" fontFamily="system-ui">{p.label.length>7?p.label.slice(0,6)+'…':p.label}</text>}
               </g>
             )
@@ -893,34 +750,26 @@ function SheetGoods() {
 
   return (
     <div style={{ padding: '0 20px 40px', maxWidth: 640, margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '8px 0 12px' }}>
-        <span style={{ fontSize: 12, color: 'var(--text-4)' }}>Optimize rectangular cuts from sheet stock</span>
-        <button className="calc-help-btn" onClick={() => setShowHelp(!showHelp)} title="Help">?</button>
+      <p style={{ fontSize: 12, color: 'var(--text-4)', margin: '12px 0' }}>
+        Optimize cuts from full sheets. Default: 4×8 plywood (48"×96").
+      </p>
+
+      <div style={{ display:'flex', gap:10, marginBottom:12 }}>
+        <LenInput label='Sheet width (in)' value={sheetW} onChange={setSheetW} placeholder="48" />
+        <LenInput label='Sheet height (in)' value={sheetH} onChange={setSheetH} placeholder="96" />
+        <div style={{ width:80 }}>
+          <div className="calc-label">Kerf</div>
+          <input className="calc-input" type="number" step="0.0625" value={kerf} onChange={e=>setKerf(e.target.value)} style={{ width:'100%' }} />
+        </div>
       </div>
-      {showHelp && (
-        <div className="calc-help-tip">
-          <strong>Sheet Goods Optimizer</strong> fits rectangular pieces onto full sheets (plywood, MDF, etc.) with minimal waste. Default is a standard 4×8 sheet (48"×96"). Enter each piece width, height, quantity, and optional label. The optimizer packs pieces efficiently and shows a visual diagram of each sheet with color-coded pieces.
-        </div>
-      )}
 
-      <ProSection title="Sheet Size">
-        <div style={{ display:'flex', gap:10 }}>
-          <LenInput label='Width (in)' value={sheetW} onChange={setSheetW} placeholder="48" />
-          <LenInput label='Height (in)' value={sheetH} onChange={setSheetH} placeholder="96" />
-          <div style={{ width:80 }}>
-            <div className="calc-label">Kerf</div>
-            <input className="calc-input" type="number" step="0.0625" value={kerf} onChange={e=>setKerf(e.target.value)} style={{ width:'100%' }} />
-          </div>
-        </div>
-      </ProSection>
-
-      <ProSection title="Pieces to Cut">
-        <div style={{ display:'grid', gridTemplateColumns:'minmax(0,1fr) minmax(0,1fr) 56px minmax(0,1fr) 28px', gap:5, marginBottom:6 }}>
+      <SectionCard>
+        <div style={{ display:'grid', gridTemplateColumns:'minmax(0,1fr) minmax(0,1fr) 44px minmax(0,1fr) 28px', gap:5, marginBottom:6 }}>
           {['Width','Height','Qty','Label',''].map(h => <div key={h} className="calc-label" style={{ marginBottom:0, textAlign:'center' }}>{h}</div>)}
         </div>
         {cuts.map((c,i) => (
-          <div key={c.id} style={{ display:'grid', gridTemplateColumns:'minmax(0,1fr) minmax(0,1fr) 56px minmax(0,1fr) 28px', gap:5, marginBottom:6, alignItems:'center' }}>
-            <input className="calc-input" value={c.w} onChange={e=>upd(c.id,'w',e.target.value)} placeholder='12"' />
+          <div key={c.id} style={{ display:'grid', gridTemplateColumns:'minmax(0,1fr) minmax(0,1fr) 44px minmax(0,1fr) 28px', gap:5, marginBottom:6, alignItems:'center' }}>
+            <input id={'sw-' + c.id} className="calc-input" value={c.w} onChange={e=>upd(c.id,'w',e.target.value)} placeholder='12"' />
             <input className="calc-input" value={c.h} onChange={e=>upd(c.id,'h',e.target.value)} placeholder='24"' />
             <input className="calc-input" type="number" min="1" value={c.qty} onChange={e=>upd(c.id,'qty',e.target.value)} style={{ textAlign:'center' }} />
             <input className="calc-input" value={c.label} onChange={e=>upd(c.id,'label',e.target.value)} placeholder="optional" />
@@ -928,37 +777,29 @@ function SheetGoods() {
           </div>
         ))}
         <button className="btn-text" onClick={addRow} style={{ fontSize:13 }}>+ Add piece</button>
-      </ProSection>
+      </SectionCard>
 
       {error && <div className="warn-box">{error}</div>}
       <button className="btn-primary" style={{ width:'100%',justifyContent:'center',marginBottom:20 }} onClick={calc}>
-        Optimize Sheets
+        Optimize sheets
       </button>
 
       {result && (
         <>
-          <div className="calc-display">
-            <div style={{ display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
-              <div>
-                <div className="calc-display-value result-pop" style={{ fontSize: 36 }}>{result.sheets.length}</div>
-                <div className="calc-display-sub">sheet{result.sheets.length!==1?'s':''} needed</div>
-              </div>
-              <div>
-                <div className="calc-display-value result-pop" style={{ fontSize: 36, color: result.wastePct < 20 ? '#4ADE80' : '#F59E0B' }}>{result.wastePct}%</div>
-                <div className="calc-display-sub">waste</div>
-              </div>
-              <div>
-                <div className="calc-display-value result-pop" style={{ fontSize: 28 }}>{result.usedSqFt}</div>
-                <div className="calc-display-sub">sq ft used</div>
-              </div>
+          <div style={{ display:'flex',gap:8,flexWrap:'wrap',marginBottom:12 }}>
+            <div className="card-navy" style={{ padding:'10px 16px',textAlign:'center',borderRadius:10 }}>
+              <div style={{ fontSize:28,fontWeight:900,color:'var(--white)' }}>{result.sheets.length}</div>
+              <div style={{ fontSize:12,color:'var(--sb-text)' }}>sheet{result.sheets.length!==1?'s':''}</div>
+            </div>
+            <div style={{ flex:1,background:'var(--surface)',borderRadius:10,padding:'10px 16px',border:'1px solid var(--border-2)',textAlign:'center' }}>
+              <div style={{ fontSize:22,fontWeight:700,color:'var(--orange)' }}>{result.wastePct}%</div>
+              <div style={{ fontSize:11,color:'var(--text-3)' }}>waste</div>
+            </div>
+            <div style={{ flex:1,background:'var(--surface)',borderRadius:10,padding:'10px 16px',border:'1px solid var(--border-2)',textAlign:'center' }}>
+              <div style={{ fontSize:18,fontWeight:700 }}>{result.usedSqFt} ft²</div>
+              <div style={{ fontSize:11,color:'var(--text-3)' }}>used</div>
             </div>
           </div>
-          <button className="btn-text" style={{ color: 'var(--accent)', marginBottom: 12, fontSize: 13 }} onClick={() => {
-            const pieces = cuts.filter(c => parseFloat(c.w) && parseFloat(c.h)).map(c => `${c.qty}× ${c.w}"×${c.h}"${c.label ? ` (${c.label})` : ''}`).join(', ')
-            const text = `Sheet Goods Layout\n${'─'.repeat(24)}\nSheet: ${sheetW}"×${sheetH}"\nPieces: ${pieces}\nSheets needed: ${result.sheets.length}\nWaste: ${result.wastePct}%\nUsed: ${result.usedSqFt} sq ft\n\n— JDH Woodworks`
-            if (navigator.share) navigator.share({ text }).catch(() => {})
-            else navigator.clipboard?.writeText(text)
-          }}>Share layout</button>
           {result.sheets.map((sheet,i) => <SheetDiagram key={i} sheet={sheet} sw={result.sw} sh={result.sh} idx={i}/>)}
         </>
       )}
@@ -971,41 +812,16 @@ function CalcInput({ label, value, onChange, placeholder }) {
   return (
     <div style={{ flex: 1 }}>
       <div className="calc-label">{label}</div>
-      <input className="calc-input" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder || '—'} autoComplete="off" inputMode="decimal" style={{ width: '100%' }} />
+      <input className="calc-input" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder || '—'} style={{ width: '100%' }} />
     </div>
   )
 }
 
-function ProDisplay({ items }) {
-  const active = items.filter(i => i.v)
-  if (!active.length) return null
+function ResultBox({ label, value }) {
   return (
-    <div className="calc-display" style={{ marginTop: 12 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: active.length <= 2 ? '1fr '.repeat(active.length) : 'repeat(auto-fill, minmax(120px, 1fr))', gap: '12px 16px' }}>
-        {active.map(i => (
-          <div key={i.label}>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.6px', textTransform: 'uppercase', color: 'rgba(240,244,248,.4)', marginBottom: 4 }}>{i.label}</div>
-            <div key={i.v} className="calc-display-value result-pop" style={{ fontSize: active.length > 3 ? 20 : 28 }}>{i.v}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function ProSection({ title, help, children, badge }) {
-  const [showHelp, setShowHelp] = useState(false)
-  return (
-    <div style={{ background: 'var(--surface)', borderRadius: 12, padding: '16px 20px', marginBottom: 12, border: '1px solid var(--border-2)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>{title}</span>
-          {badge && <span style={{ fontSize: 11, background: 'var(--accent)', color: '#fff', borderRadius: 6, padding: '1px 8px', fontWeight: 600 }}>{badge}</span>}
-        </div>
-        {help && <button className="calc-help-btn" onClick={() => setShowHelp(!showHelp)} title="Help">?</button>}
-      </div>
-      {showHelp && <div className="calc-help-tip">{help}</div>}
-      {children}
+    <div className="result-box-light" style={{ flex: 1 }}>
+      <div className="result-box-label">{label}</div>
+      <div className="result-box-value">{value}</div>
     </div>
   )
 }
@@ -1052,87 +868,94 @@ function AdvancedCalc() {
   const compMiter  = halfCorner && btv ? (Math.atan(Math.cos(btv*Math.PI/180)*Math.tan(halfCorner*Math.PI/180))*180/Math.PI).toFixed(2)+'°' : null
   const compBevel  = halfCorner && btv ? (Math.atan(Math.sin(halfCorner*Math.PI/180)*Math.sin(btv*Math.PI/180))*180/Math.PI).toFixed(2)+'°' : null
 
+  const Section = ({ title, hint, children }) => (
+    <SectionCard title={title}>
+      {hint && <p style={{ fontSize: 12, color: 'var(--text-4)', marginBottom: 12, lineHeight: 1.5 }}>{hint}</p>}
+      {children}
+    </SectionCard>
+  )
+
+  const ResultRow2 = ({ items }) => (
+    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
+      {items.filter(i=>i.v).map(i => <ResultBox key={i.label} label={i.label} value={i.v} />)}
+    </div>
+  )
+
   return (
     <div style={{ padding: '0 20px 40px', maxWidth: 640, margin: '0 auto' }}>
 
-      <ProSection title="Pitch · Rise · Run" badge="ROOF" help="Enter any two values to calculate the rest. Lengths accept feet-inches: 48, 4', 3'6&quot;. Pitch is rise per 12&quot; of run. Rafter length is the hypotenuse (actual lumber length needed).">
+      <Section title="Pitch · Rise · Run" hint="Enter any two values. Lengths: 48, 4', 3'6&quot;">
         <div style={{ display:'flex', gap:8 }}>
           <CalcInput label="Pitch (in 12)" value={pitch} onChange={setPitch} placeholder="6" />
           <CalcInput label="Rise" value={rise} onChange={setRise} placeholder={`4'6"`}  />
           <CalcInput label="Run" value={run} onChange={setRun} placeholder="9'" />
         </div>
-        <ProDisplay items={[
-          { label:'Pitch', v: calcPitch && !pitch ? String(calcPitch) : null },
-          { label:'Rise',  v: calcRise  && !rise  ? calcRise  : null },
-          { label:'Run',   v: calcRun   && !run   ? calcRun   : null },
-          { label:'Rafter Length', v: calcHyp },
-          { label:'Angle', v: calcAngle },
+        <ResultRow2 items={[
+          { label:'Pitch (in 12)', v: calcPitch && !pitch ? String(calcPitch) : null },
+          { label:'Rise',          v: calcRise  && !rise  ? calcRise  : null },
+          { label:'Run',           v: calcRun   && !run   ? calcRun   : null },
+          { label:'Rafter',        v: calcHyp },
+          { label:'Angle',         v: calcAngle },
         ]}/>
-      </ProSection>
+      </Section>
 
-      <ProSection title="Diagonal · Squaring" badge="LAYOUT" help="Enter width and height to find the diagonal. If both diagonals of a rectangle are equal, the corners are square. Essential for framing, cabinet carcasses, and drawer squaring.">
+      <Section title="Diagonal · Squaring" hint="Measure both diagonals — if equal, it's square.">
         <div style={{ display:'flex', gap:8 }}>
           <CalcInput label="Width" value={dw} onChange={setDw} placeholder="8'" />
           <CalcInput label="Height" value={dh} onChange={setDh} placeholder="10'" />
         </div>
-        <ProDisplay items={[
+        <ResultRow2 items={[
           { label:'Diagonal', v: diagVal },
           { label:'Angle',    v: diagAngle },
         ]}/>
-      </ProSection>
+      </Section>
 
-      <ProSection title="Stair Layout" badge="STAIRS" help="Enter total rise (floor-to-floor height) and number of risers. Code requires 4&quot;–7¾&quot; riser height and 10–11&quot; tread depth. The rule of thumb: riser + tread ≈ 17–18&quot;.">
+      <Section title="Stairs" hint="Code: 4&quot;–7¾&quot; riser, 10–11&quot; tread. Rise + tread ≈ 17–18&quot;.">
         <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
           <CalcInput label="Total rise" value={totalRise} onChange={setTotalRise} placeholder={`8'4"`} />
           <CalcInput label="# risers" value={numRisers} onChange={setNumRisers} placeholder="14" />
           <CalcInput label="Tread (in)" value={treadW} onChange={setTreadW} placeholder="10" />
         </div>
-        <ProDisplay items={[
-          { label:'Riser Height', v: riserH },
-          { label:'Total Run',   v: stairRun },
-          { label:'Stair Angle', v: stairAng },
+        <ResultRow2 items={[
+          { label:'Riser height', v: riserH },
+          { label:'Total run',   v: stairRun },
+          { label:'Stair angle', v: stairAng },
         ]}/>
         {riserOk !== null && (
-          <div style={{ marginTop:10, background:riserOk?'var(--green-dim)':'var(--orange-dim)', borderRadius:8, padding:'8px 12px', fontSize:13, fontWeight:600, color:riserOk?'var(--green)':'var(--orange)' }}>
+          <div style={{ marginTop:10, background:riserOk?'var(--green-dim)':'var(--orange-dim)', borderRadius:8, padding:'8px 12px', fontSize:13, color:riserOk?'var(--green)':'var(--orange)' }}>
             {riserOk ? '✓ Riser within code (4"–7¾")' : `⚠ Riser ${riserH} is outside typical code range`}
           </div>
         )}
-      </ProSection>
+      </Section>
 
-      <ProSection title="Circle · Arc" help="Enter any one measurement to calculate the rest. Works for turning bowls, roundovers, arc calculations, and circular saw jigs.">
+      <Section title="Circle · Arc">
         <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:10 }}>
           {['diameter','radius','circumference','area'].map(t => (
-            <button key={t} onClick={() => setCircType(t)} style={{
-              padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600,
-              fontFamily: 'inherit', border: 'none', cursor: 'pointer',
-              background: circType===t ? 'var(--accent)' : 'var(--fill)',
-              color: circType===t ? '#fff' : 'var(--text-3)',
-              transition: 'all 120ms',
-            }}>
+            <button key={t} onClick={() => setCircType(t)} className={`pill-tab-sm${circType===t?' active':''}`}>
               {t.charAt(0).toUpperCase()+t.slice(1)}
             </button>
           ))}
         </div>
         <CalcInput label={`Enter ${circType}`} value={circInput} onChange={setCircInput} placeholder={circType==='area'?'100 in²':'12"'} />
-        <ProDisplay items={[
+        <ResultRow2 items={[
           { label:'Diameter',      v: circType!=='diameter'      ? circDiam  : null },
           { label:'Radius',        v: circType!=='radius'        ? circRad   : null },
           { label:'Circumference', v: circType!=='circumference' ? circPerim : null },
           { label:'Area',          v: circType!=='area'          ? circArea  : null },
         ]}/>
-      </ProSection>
+      </Section>
 
-      <ProSection title="Compound Miter" badge="SAW" help="Corner angle: total joint angle (90° for a standard box, 72° for a pentagon). Blade tilt: degrees from vertical. Calculates the miter angle and bevel angle for your saw settings.">
+      <Section title="Compound Miter" hint="Corner angle: total joint angle (90° for a box). Blade tilt: degrees from vertical.">
         <div style={{ display:'flex', gap:8 }}>
           <CalcInput label="Corner angle (°)" value={corner} onChange={setCorner} placeholder="90" />
           <CalcInput label="Blade tilt (°)" value={bladeTilt} onChange={setBladeTilt} placeholder="0 for flat" />
         </div>
-        <ProDisplay items={[
-          { label:'Flat Miter',   v: flatMiter },
-          { label:'Comp. Miter', v: compMiter },
-          { label:'Blade Bevel', v: compBevel },
+        <ResultRow2 items={[
+          { label:'Flat miter',    v: flatMiter },
+          { label:'Comp. miter',  v: compMiter },
+          { label:'Blade bevel',  v: compBevel },
         ]}/>
-      </ProSection>
+      </Section>
 
     </div>
   )
@@ -1164,14 +987,14 @@ function CalcNotes() {
 }
 
 // ─── Main Calculators page ────────────────────────────────────────────────────
-const ALL_TABS = [
-  { id:'boardfoot', label:'Board Foot', icon: '📐' },
-  { id:'fractions', label:'Fractions',  icon: '⅝' },
-  { id:'converter', label:'Converter',  icon: '🔄' },
-  { id:'trim',      label:'Trim Cuts',  icon: '✂️' },
-  { id:'sheet',     label:'Sheet Goods', icon: '📦' },
-  { id:'advanced',  label:'Advanced',   icon: '📊' },
-  { id:'notes',     label:'Notes',      icon: '📝' },
+const TABS = [
+  { id:'boardfoot', label:'Board Foot' },
+  { id:'fractions', label:'Fractions'  },
+  { id:'converter', label:'Converter'  },
+  { id:'trim',      label:'Trim Cuts'  },
+  { id:'sheet',     label:'Sheet Goods'},
+  { id:'advanced',  label:'Advanced'   },
+  { id:'notes',     label:'Notes'      },
 ]
 
 export default function Calculators() {
@@ -1197,14 +1020,14 @@ export default function Calculators() {
               onChange={e => switchTab(e.target.value)}
               style={{ width: '100%' }}
             >
-              {ALL_TABS.map(t => <option key={t.id} value={t.id}>{t.icon} {t.label}</option>)}
+              {TABS.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
             </select>
             <span className="filter-select-chevron" aria-hidden="true">▾</span>
           </div>
         </div>
         {/* Desktop: tabs */}
         <div className="page-tabs" style={{ marginTop: 12 }}>
-          {ALL_TABS.map(t => (
+          {TABS.map(t => (
             <button key={t.id} onClick={() => switchTab(t.id)} className={`page-tab${tab === t.id ? ' active' : ''}`}>
               {t.label}
             </button>

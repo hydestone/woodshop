@@ -20,12 +20,12 @@ const I = ({ d, size = 22, color = 'currentColor', sw = 1.8, fill = 'none' }) =>
 )
 
 export const IPlus     = p => <I {...p} d="M12 5v14M5 12h14" />
-export const ITrash    = p => <I {...p} d={['M3 6h18','M19 6l-1 14H6L5 6','M8 6V4h8v2']} />
+export const ITrash    = p => <I color="var(--red)" {...p} d={['M3 6h18','M19 6l-1 14H6L5 6','M8 6V4h8v2']} />
 export const ICircle   = p => <I {...p} d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20" />
 export const ICheck    = p => <I {...p} d={['M22 11.08V12a10 10 0 1 1-5.93-9.14','M22 4 12 14.01l-3-3']} />
 export const IChevR    = p => <I {...p} d="M9 18l6-6-6-6" />
 export const IChevL    = p => <I {...p} d="M15 18l-6-6 6-6" />
-export const IEdit     = p => <I {...p} d={['M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7','M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z']} />
+export const IEdit     = p => <I color="var(--accent)" {...p} d={['M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7','M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z']} />
 export const ICal      = p => <I {...p} d={['M8 2v4','M16 2v4','M3 10h18','M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z']} />
 export const ICamera   = p => <I {...p} d={['M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z','M12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z']} />
 export const IUpload   = p => <I {...p} d={['M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4','M17 8l-5-5-5 5','M12 3v12']} />
