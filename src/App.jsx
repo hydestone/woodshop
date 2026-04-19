@@ -1,5 +1,5 @@
 import React from 'react'
-import { useState, useEffect, useCallback, createContext, useContext, lazy, Suspense } from 'react'
+import { useState, useEffect, useCallback, useRef, createContext, useContext, lazy, Suspense } from 'react'
 import { seedSampleData, clearSampleData, getSampleIds } from './seed.js'
 import * as db from './db.js'
 import { supabase, getSession, signOut, onAuthStateChange } from './supabase.js'
@@ -13,7 +13,7 @@ import {
   coatStatus, maintStatus,
 } from './components/Shared.jsx'
 
-// Pages
+// Pages — eager (core tabs)
 const Dashboard = lazy(() => import('./pages/Dashboard.jsx'))
 import Projects, { ProjectDetail } from './pages/Projects.jsx'
 import Shopping         from './pages/Shopping.jsx'
@@ -26,16 +26,18 @@ import ShopImprovements from './pages/ShopImprovements.jsx'
 import AllPhotos        from './pages/Photos.jsx'
 import FinishedProducts from './pages/FinishedProducts.jsx'
 import Inspiration      from './pages/Inspiration.jsx'
-import YearReview      from './pages/YearReview.jsx'
-import Settings       from './pages/Settings.jsx'
-import ProjectIdeas   from './pages/ProjectIdeas.jsx'
-import BulkImport     from './pages/BulkImport.jsx'
-import Costs         from './pages/Costs.jsx'
-import Audit          from './pages/Audit.jsx'
-import Help           from './pages/Help.jsx'
-import SmokeTest      from './pages/SmokeTest.jsx'
-import Calculators    from './pages/Calculators.jsx'
-import Trash          from './pages/Trash.jsx'
+import ProjectIdeas     from './pages/ProjectIdeas.jsx'
+
+// Pages — lazy (less frequent)
+const YearReview  = lazy(() => import('./pages/YearReview.jsx'))
+const Settings    = lazy(() => import('./pages/Settings.jsx'))
+const BulkImport  = lazy(() => import('./pages/BulkImport.jsx'))
+const Costs       = lazy(() => import('./pages/Costs.jsx'))
+const Audit       = lazy(() => import('./pages/Audit.jsx'))
+const Help        = lazy(() => import('./pages/Help.jsx'))
+const SmokeTest   = lazy(() => import('./pages/SmokeTest.jsx'))
+const Calculators = lazy(() => import('./pages/Calculators.jsx'))
+const Trash       = lazy(() => import('./pages/Trash.jsx'))
 import Tutorial, { useTutorialCheck } from './components/Tutorial.jsx'
 import ErrorBoundary  from './components/ErrorBoundary.jsx'
 
@@ -513,9 +515,16 @@ export default function App() {
     }
   }, [])
 
-  // Load data once authenticated
+  // Load data once authenticated (loadedRef prevents duplicate loads from auth listener firing multiple times)
+  const loadedRef = useRef(false)
   useEffect(() => {
-    if (session) reload()
+    if (session && !loadedRef.current) {
+      loadedRef.current = true
+      reload()
+    }
+    if (!session) {
+      loadedRef.current = false
+    }
   }, [session, reload])
 
   const mutate = useCallback(fn => setData(prev => fn({ ...prev })), [])
@@ -689,7 +698,7 @@ export default function App() {
 
             {/* ── Content ── */}
             <main className="main-area" id="main-content">
-              <ErrorBoundary>
+              <ErrorBoundary key={projId || tab}>
               {projId ? (
                 <ProjectDetail />
               ) : (
@@ -718,16 +727,18 @@ export default function App() {
                   {tab === 'finished'    && <FinishedProducts />}
                   {tab === 'inspiration' && <Inspiration />}
                   {tab === 'stockgallery' && <div className="scroll-page" style={{paddingBottom:40}}><div className="page-header"><h1 className="page-title">Wood Stock Gallery</h1><p className="page-subtitle">Photos of raw lumber, blanks, and prep work</p></div><WoodStockGallery /></div>}
-                  {tab === 'yearreview'  && <YearReview />}
-                  {tab === 'settings'    && <Settings />}
                   {tab === 'ideas'       && <ProjectIdeas />}
-                  {tab === 'import'      && <BulkImport />}
-                  {tab === 'costs'       && <Costs />}
-                  {tab === 'audit'       && <Audit />}
-                  {tab === 'help'        && <Help />}
-                  {tab === 'smoketest'   && <SmokeTest />}
-                  {tab === 'calculators' && <Calculators />}
-                  {tab === 'trash'       && <Trash />}
+                  <Suspense fallback={<div style={{ padding: 40, textAlign: 'center', color: 'var(--text-3)' }}>Loading...</div>}>
+                    {tab === 'yearreview'  && <YearReview />}
+                    {tab === 'settings'    && <Settings />}
+                    {tab === 'import'      && <BulkImport />}
+                    {tab === 'costs'       && <Costs />}
+                    {tab === 'audit'       && <Audit />}
+                    {tab === 'help'        && <Help />}
+                    {tab === 'smoketest'   && <SmokeTest />}
+                    {tab === 'calculators' && <Calculators />}
+                    {tab === 'trash'       && <Trash />}
+                  </Suspense>
                 </>
               )}
               </ErrorBoundary>

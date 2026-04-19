@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { memo } from 'react'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 
@@ -545,7 +545,7 @@ export function PhotoGrid({ photos, onEdit, showProject, projects, onNavigatePro
 }
 
 // ─── PhotoCard ────────────────────────────────────────────────────────────────
-export function PhotoCard({ photo, onEdit, onOpen, showProject, projects, tileIndex = 0, onNavigateProject }) {
+export const PhotoCard = memo(function PhotoCard({ photo, onEdit, onOpen, showProject, projects, tileIndex = 0, onNavigateProject }) {
   const cardRef = useRef()
   const onMove = useCallback(e => {
     const el = cardRef.current; if (!el) return
@@ -625,7 +625,7 @@ export function PhotoCard({ photo, onEdit, onOpen, showProject, projects, tileIn
       )}
     </div>
   )
-}
+})
 
 // ─── PhotoEditSheet ───────────────────────────────────────────────────────────
 function PhotoEditSheet({ photo, onSave, onDelete, onClose }) {
