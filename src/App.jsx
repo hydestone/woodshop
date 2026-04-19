@@ -533,6 +533,12 @@ export default function App() {
     setTabRaw(id)
   }, [])
 
+  const handleClearSamples = useCallback(async () => {
+    await clearSampleData()
+    setSampleIds(null)
+    try { const d = await db.loadAll(); setData(d) } catch {}
+  }, [])
+
   // ── Auth gate ─────────────────────────────────────────────────────────────
   if (!authChecked) return (
     <div className="center-screen">
@@ -586,19 +592,12 @@ export default function App() {
     return 0
   }
 
-  const handleClearSamples = useCallback(async () => {
-    await clearSampleData()
-    setSampleIds(null)
-    try { const d = await db.loadAll(); setData(d) } catch {}
-  }, [])
-
   const ctx = { data, mutate, reload, tab, setTab, navigate, projId, setProjId, theme, launchTutorial, sampleIds }
 
   return (
     <AppCtx.Provider value={ctx}>
       <ToastProvider>
         <div className="app-wrapper">
-
           {/* ── Top bar ── */}
           <header className="top-bar" role="banner">
             <div className="top-bar-brand">
