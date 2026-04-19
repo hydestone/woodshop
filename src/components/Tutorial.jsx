@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 
 // ── Tutorial steps ───────────────────────────────────────────────────────────
@@ -29,7 +29,7 @@ const STEPS = [
   },
   {
     title: 'Favorite Projects',
-    body: 'Tap the ⭐ on any project card to bookmark it. Then use the Favorites toggle in the filter bar to see only starred projects.',
+    body: 'Tap the ⭐ on any project card to bookmark it. Then use the Favorites toggle in the filter bar to show only starred projects.',
     icon: '⭐',
     tab: 'projects', target: '.proj-cards-grid .proj-card',
   },
@@ -103,6 +103,36 @@ function getRect(selector, pad = 10) {
   }
 }
 
+// ── SVG Overlay with mask cutout ─────────────────────────────────────────────
+function SpotlightOverlay({ spot }) {
+  const vw = window.innerWidth, vh = window.innerHeight
+
+  if (!spot) {
+    return (
+      <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.65)', zIndex: 20001, pointerEvents: 'none' }} />
+    )
+  }
+
+  return (
+    <svg style={{ position: 'fixed', inset: 0, zIndex: 20001, pointerEvents: 'none' }} width={vw} height={vh}>
+      <defs>
+        <mask id="tut-mask">
+          <rect width={vw} height={vh} fill="white" />
+          <rect x={spot.left} y={spot.top} width={spot.width} height={spot.height} rx="14" ry="14" fill="black" />
+        </mask>
+      </defs>
+      {/* Dark overlay with hole */}
+      <rect width={vw} height={vh} fill="rgba(0,0,0,.65)" mask="url(#tut-mask)" />
+      {/* Pulsing glow ring */}
+      <rect x={spot.left} y={spot.top} width={spot.width} height={spot.height} rx="14" ry="14"
+        fill="none" stroke="rgba(37,99,235,.5)" strokeWidth="3">
+        <animate attributeName="stroke-width" values="3;6;3" dur="2s" repeatCount="indefinite" />
+        <animate attributeName="stroke-opacity" values=".5;.2;.5" dur="2s" repeatCount="indefinite" />
+      </rect>
+    </svg>
+  )
+}
+
 // ── Stretchy arrow connector ─────────────────────────────────────────────────
 function StretchyArrow({ from, to }) {
   if (!from || !to) return null
@@ -113,7 +143,7 @@ function StretchyArrow({ from, to }) {
 
   const dx = tx - fx, dy = ty - fy
   const dist = Math.sqrt(dx * dx + dy * dy)
-  if (dist < 30) return null // too close, skip arrow
+  if (dist < 30) return null
 
   const bulge = Math.min(60, dist * 0.3)
   const nx = -dy / (dist || 1) * bulge
@@ -130,21 +160,16 @@ function StretchyArrow({ from, to }) {
 
   return (
     <svg style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 20003 }} width="100%" height="100%">
-      <path
-        d={`M${fx},${fy} Q${cpx},${cpy} ${tx},${ty}`}
-        fill="none" stroke="rgba(37,99,235,.25)" strokeWidth="8" strokeLinecap="round"
-      />
-      <path
-        d={`M${fx},${fy} Q${cpx},${cpy} ${tx},${ty}`}
+      <path d={`M${fx},${fy} Q${cpx},${cpy} ${tx},${ty}`}
+        fill="none" stroke="rgba(37,99,235,.25)" strokeWidth="8" strokeLinecap="round" />
+      <path d={`M${fx},${fy} Q${cpx},${cpy} ${tx},${ty}`}
         fill="none" stroke="rgba(255,255,255,.7)" strokeWidth="2.5" strokeLinecap="round"
-        strokeDasharray={dist} strokeDashoffset={dist}
-        style={{ animation: 'arrowDraw 600ms ease forwards 200ms' }}
-      />
-      <polygon
-        points={`${tx},${ty} ${a1x},${a1y} ${a2x},${a2y}`}
-        fill="rgba(255,255,255,.7)"
-        style={{ opacity: 0, animation: 'arrowHeadIn 200ms ease forwards 700ms' }}
-      />
+        strokeDasharray={dist} strokeDashoffset={dist}>
+        <animate attributeName="stroke-dashoffset" from={dist} to="0" dur="0.6s" fill="freeze" begin="0.2s" />
+      </path>
+      <polygon points={`${tx},${ty} ${a1x},${a1y} ${a2x},${a2y}`} fill="rgba(255,255,255,.7)" opacity="0">
+        <animate attributeName="opacity" from="0" to="1" dur="0.2s" fill="freeze" begin="0.7s" />
+      </polygon>
       <circle cx={fx} cy={fy} r="5" fill="rgba(37,99,235,.8)">
         <animate attributeName="r" values="5;9;5" dur="1.8s" repeatCount="indefinite" />
         <animate attributeName="opacity" values="1;.3;1" dur="1.8s" repeatCount="indefinite" />
@@ -153,14 +178,13 @@ function StretchyArrow({ from, to }) {
   )
 }
 
-// ── Tooltip positioning — near the target ────────────────────────────────────
+// ── Tooltip positioning ──────────────────────────────────────────────────────
 function calcTipPos(spot) {
   if (!spot) return { top: '50%', left: '50%', transform: 'translate(-50%, -50%)', position: 'fixed' }
   const vw = window.innerWidth, vh = window.innerHeight
   const tipW = Math.min(340, vw - 24)
   const s = { position: 'fixed', maxWidth: 340, width: tipW }
 
-  // Prefer below target, then above, then center
   if (spot.bottom + 240 < vh) {
     s.top = spot.bottom + 16
   } else if (spot.top - 240 > 0) {
@@ -173,40 +197,6 @@ function calcTipPos(spot) {
   return s
 }
 
-// ── Inject keyframe styles ───────────────────────────────────────────────────
-const STYLE_ID = 'tutorial-v3-styles'
-function ensureStyles() {
-  if (document.getElementById(STYLE_ID)) return
-  const style = document.createElement('style')
-  style.id = STYLE_ID
-  style.textContent = `
-    @keyframes tutSpotlight {
-      0%, 100% { box-shadow: 0 0 0 4px rgba(37,99,235,.5), 0 0 24px 8px rgba(37,99,235,.2), 0 0 0 9999px rgba(0,0,0,.65); }
-      50%      { box-shadow: 0 0 0 8px rgba(37,99,235,.25), 0 0 40px 16px rgba(37,99,235,.1), 0 0 0 9999px rgba(0,0,0,.65); }
-    }
-    @keyframes tutTipIn {
-      from { opacity: 0; transform: translateY(18px) scale(.92); }
-      to   { opacity: 1; transform: translateY(0) scale(1); }
-    }
-    @keyframes tutIconBounce {
-      0%   { transform: scale(0) rotate(-20deg); }
-      60%  { transform: scale(1.25) rotate(5deg); }
-      100% { transform: scale(1) rotate(0deg); }
-    }
-    @keyframes arrowDraw {
-      to { stroke-dashoffset: 0; }
-    }
-    @keyframes arrowHeadIn {
-      to { opacity: 1; }
-    }
-    @keyframes tutOverlayIn {
-      from { opacity: 0; }
-      to   { opacity: 1; }
-    }
-  `
-  document.head.appendChild(style)
-}
-
 // ── Main Tutorial ────────────────────────────────────────────────────────────
 export default function Tutorial({ onClose, setTab }) {
   const [step, setStep] = useState(0)
@@ -215,20 +205,19 @@ export default function Tutorial({ onClose, setTab }) {
   const [visible, setVisible] = useState(false)
   const current = STEPS[step]
 
-  useEffect(() => ensureStyles(), [])
-
   // Navigate to the correct tab for this step
   useEffect(() => {
     if (current.tab) setTab(current.tab)
   }, [step, current.tab, setTab])
 
-  // Find target element after tab switch settles — with retry for lazy-loaded pages
+  // Find target element — retry up to 5 times for lazy-loaded pages
   useEffect(() => {
     setVisible(false)
     setSpot(null)
 
     let attempts = 0
-    const maxAttempts = 5
+    let timer = null
+
     const tryFind = () => {
       attempts++
       const s = getRect(current.target, 12)
@@ -236,19 +225,16 @@ export default function Tutorial({ onClose, setTab }) {
         setSpot(s)
         setTipPos(calcTipPos(s))
         setVisible(true)
-      } else if (current.target && attempts < maxAttempts) {
-        // Element not found yet — retry after 300ms (lazy-loaded pages)
-        setTimeout(tryFind, 300)
+      } else if (current.target && attempts < 5) {
+        timer = setTimeout(tryFind, 400)
       } else {
-        // No target selector, or gave up finding it — show tooltip centered
         setSpot(null)
         setTipPos(calcTipPos(null))
         setVisible(true)
       }
     }
 
-    const initialDelay = current.tab ? 600 : 200
-    const timer = setTimeout(tryFind, initialDelay)
+    timer = setTimeout(tryFind, current.tab ? 600 : 200)
     return () => clearTimeout(timer)
   }, [step, current.target, current.tab])
 
@@ -267,7 +253,6 @@ export default function Tutorial({ onClose, setTab }) {
   const next = useCallback(() => step < STEPS.length - 1 ? setStep(s => s + 1) : finish(), [step, finish])
   const prev = useCallback(() => { if (step > 0) setStep(s => s - 1) }, [step])
 
-  // Keyboard navigation
   useEffect(() => {
     const handler = e => {
       if (e.key === 'Enter' || e.key === 'ArrowRight') next()
@@ -279,38 +264,14 @@ export default function Tutorial({ onClose, setTab }) {
   }, [next, prev, finish])
 
   return createPortal(
-    <div style={{ position: 'fixed', inset: 0, zIndex: 20000, animation: 'tutOverlayIn 300ms ease' }}>
-      {/* Click-anywhere backdrop */}
-      <div style={{
-        position: 'fixed', inset: 0,
-        background: spot ? 'transparent' : 'rgba(0,0,0,.65)',
-        transition: 'background 300ms',
-      }} onClick={next} />
+    <div style={{ position: 'fixed', inset: 0, zIndex: 20000 }}>
+      {/* Click-anywhere to advance */}
+      <div style={{ position: 'fixed', inset: 0, zIndex: 20000 }} onClick={next} />
 
-      {/* Spotlight on target */}
-      {spot && visible && (
-        <div style={{
-          position: 'fixed',
-          top: spot.top, left: spot.left,
-          width: spot.width, height: spot.height,
-          borderRadius: 14,
-          boxShadow: '0 0 0 4px rgba(37,99,235,.5), 0 0 24px 8px rgba(37,99,235,.2), 0 0 0 9999px rgba(0,0,0,.65)',
-          animation: 'tutSpotlight 2.2s ease infinite',
-          pointerEvents: 'none', zIndex: 20001,
-          transition: 'all 350ms cubic-bezier(.4,0,.2,1)',
-        }} />
-      )}
+      {/* SVG overlay with spotlight cutout */}
+      {visible && <SpotlightOverlay spot={spot} />}
 
-      {/* Full overlay when no target */}
-      {!spot && visible && (
-        <div style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,.65)',
-          pointerEvents: 'none', zIndex: 20001,
-        }} />
-      )}
-
-      {/* Stretchy arrow from spotlight to tooltip */}
+      {/* Stretchy arrow */}
       {spot && visible && tipPos.top && typeof tipPos.top === 'number' && (
         <StretchyArrow
           from={spot}
@@ -318,37 +279,29 @@ export default function Tutorial({ onClose, setTab }) {
         />
       )}
 
-      {/* Tooltip card */}
+      {/* Tooltip */}
       {visible && (
         <div style={{
           ...tipPos,
           background: 'linear-gradient(135deg, rgba(15,23,42,.97), rgba(30,41,59,.97))',
           borderRadius: 18,
           padding: '28px 24px 22px',
-          boxShadow: '0 20px 60px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.08), inset 0 1px 0 rgba(255,255,255,.06)',
+          boxShadow: '0 20px 60px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.08)',
           zIndex: 20005,
-          animation: 'tutTipIn 400ms cubic-bezier(.34,1.4,.64,1) both',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
         }} key={step}>
-          {/* Icon */}
           <div style={{
-            fontSize: 38, marginBottom: 10,
-            animation: 'tutIconBounce 500ms cubic-bezier(.34,1.4,.64,1) both',
-            animationDelay: '150ms', display: 'inline-block',
+            fontSize: 38, marginBottom: 10, display: 'inline-block',
           }}>{current.icon}</div>
 
-          {/* Title */}
           <div style={{
-            fontSize: 20, fontWeight: 700,
-            color: '#F0F4F8',
+            fontSize: 20, fontWeight: 700, color: '#F0F4F8',
             marginBottom: 8, letterSpacing: '-.3px',
           }}>{current.title}</div>
 
-          {/* Body */}
           <p style={{
-            fontSize: 14, lineHeight: 1.7,
-            color: '#94A3B8',
+            fontSize: 14, lineHeight: 1.7, color: '#94A3B8',
             margin: '0 0 22px',
           }}>{current.body}</p>
 
@@ -377,14 +330,12 @@ export default function Tutorial({ onClose, setTab }) {
                   padding: '9px 18px', borderRadius: 9, border: 'none', cursor: 'pointer',
                   fontSize: 14, fontFamily: 'inherit',
                   background: 'rgba(255,255,255,.06)', color: '#64748B',
-                  transition: 'background 120ms',
                 }}>Skip</button>
               ) : (
                 <button onClick={prev} style={{
                   padding: '9px 18px', borderRadius: 9, border: 'none', cursor: 'pointer',
                   fontSize: 14, fontFamily: 'inherit',
                   background: 'rgba(255,255,255,.06)', color: '#64748B',
-                  transition: 'background 120ms',
                 }}>Back</button>
               )}
               <button onClick={next} style={{
@@ -392,7 +343,6 @@ export default function Tutorial({ onClose, setTab }) {
                 fontSize: 14, fontWeight: 600, fontFamily: 'inherit',
                 background: current.final ? '#166534' : '#2563EB',
                 color: '#fff',
-                transition: 'background 120ms',
               }}>
                 {current.final ? '🎉 Get Started' : 'Next →'}
               </button>
@@ -408,17 +358,12 @@ export default function Tutorial({ onClose, setTab }) {
 // ── Hook — auto-launch on first visit ────────────────────────────────────────
 export function useTutorialCheck() {
   const [show, setShow] = useState(() => {
-    try {
-      return !localStorage.getItem('jdh-tutorial-seen')
-    } catch { return false }
+    try { return !localStorage.getItem('jdh-tutorial-seen') } catch { return false }
   })
-
   const dismiss = useCallback(() => {
     setShow(false)
     try { localStorage.setItem('jdh-tutorial-seen', '1') } catch {}
   }, [])
-
   const launch = useCallback(() => setShow(true), [])
-
   return { showTutorial: show, dismissTutorial: dismiss, launchTutorial: launch }
 }
