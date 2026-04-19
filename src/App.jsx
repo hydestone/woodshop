@@ -1,5 +1,6 @@
 import React from 'react'
 import { useState, useEffect, useCallback, createContext, useContext, lazy, Suspense } from 'react'
+import { seedSampleData, clearSampleData, getSampleIds } from './seed.js'
 import * as db from './db.js'
 import { supabase, getSession, signOut, onAuthStateChange } from './supabase.js'
 import Auth from './pages/Auth.jsx'
@@ -413,6 +414,7 @@ export default function App() {
   const [data, setData]         = useState(null)
   const [loading, setLoading]   = useState(true)
   const [loadPhase, setLoadPhase] = useState('show') // 'show' | 'exit' | null
+  const [sampleIds, setSampleIds] = useState(null)
   const [error, setError]       = useState(null)
   const [tab, setTabRaw]        = useState('home')
   const [projId, setProjId]     = useState(null)
@@ -480,7 +482,23 @@ export default function App() {
     try {
       setError(null)
       const [d] = await Promise.all([db.loadAll(), minTime])
-      setData(d)
+
+      // Seed sample data for new users
+      const { data: { session: s } } = await supabase.auth.getSession()
+      if (s?.user && !s.user.user_metadata?.seeded_at && d.projects.length === 0) {
+        const ids = await seedSampleData()
+        if (ids) {
+          setSampleIds(ids)
+          const d2 = await db.loadAll()
+          setData(d2)
+        } else {
+          setData(d)
+        }
+      } else {
+        setData(d)
+        setSampleIds(getSampleIds(s))
+      }
+
       setLoadPhase('exit')
       setTimeout(() => setLoadPhase(null), 400)
     } catch (e) {
@@ -564,7 +582,13 @@ export default function App() {
     return 0
   }
 
-  const ctx = { data, mutate, reload, tab, setTab, navigate, projId, setProjId, theme, launchTutorial }
+  const handleClearSamples = useCallback(async () => {
+    await clearSampleData()
+    setSampleIds(null)
+    try { const d = await db.loadAll(); setData(d) } catch {}
+  }, [])
+
+  const ctx = { data, mutate, reload, tab, setTab, navigate, projId, setProjId, theme, launchTutorial, sampleIds }
 
   return (
     <AppCtx.Provider value={ctx}>
@@ -667,7 +691,18 @@ export default function App() {
                 <ProjectDetail />
               ) : (
                 <>
-                  {tab === 'home'        && <Suspense fallback={<div className="loading-skeleton-dashboard" />}><Dashboard /></Suspense>}
+                  {tab === 'home'        && <>
+                    {sampleIds?.projectId && (
+                      <div className="sample-banner">
+                        <div className="sample-banner-text">
+                          <span style={{ fontSize: 18, marginRight: 8 }}>👋</span>
+                          <span>Sample data is loaded to help you explore. Add your own projects, then clear the samples when ready.</span>
+                        </div>
+                        <button className="sample-clear-btn" onClick={handleClearSamples}>Clear sample data</button>
+                      </div>
+                    )}
+                    <Suspense fallback={<div className="loading-skeleton-dashboard" />}><Dashboard /></Suspense>
+                  </>}
                   {tab === 'projects'    && <Projects />}
                   {tab === 'shopping'    && <Shopping />}
                   {tab === 'maintenance' && <Maintenance />}

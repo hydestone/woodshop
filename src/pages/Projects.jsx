@@ -15,14 +15,14 @@ const STATUS_LABEL = { active: 'Active', planning: 'Planning', paused: 'Paused',
 
 // ─── Projects list ────────────────────────────────────────────────────────────
 export default function Projects() {
-  const { data, mutate, projId, setProjId, navigate } = useCtx()
+  const { data, mutate, projId, setProjId, navigate, sampleIds } = useCtx()
   const toast   = useToast()
   const [showAdd, setShowAdd]   = useState(false)
-  const [viewMode, setViewMode] = useState(() => { try { return sessionStorage.getItem('proj-view') || 'cards' } catch { return 'cards' } })
-  const [filter, setFilter]         = useState(() => { try { return sessionStorage.getItem('proj-filter') || 'all' } catch { return 'all' } })
-  const [showFavOnly, setShowFavOnly] = useState(() => { try { return sessionStorage.getItem('proj-fav') === 'true' } catch { return false } })
-  const [sortBy, setSortBy]           = useState(() => { try { return sessionStorage.getItem('proj-sort') || 'status' } catch { return 'status' } })
-  const [statusFilter, setStatusFilter] = useState(() => { try { return sessionStorage.getItem('proj-status') || 'all' } catch { return 'all' } })
+  const [viewMode, setViewMode] = useState('cards') // 'cards' | 'table'
+  const [filter, setFilter]         = useState('all')
+  const [showFavOnly, setShowFavOnly] = useState(false)
+  const [sortBy, setSortBy]           = useState('status')
+  const [statusFilter, setStatusFilter] = useState('all')
   const [locationFilter, setLocationFilter] = useState(() => {
     const v = window.__woodLocationFilter || ''
     window.__woodLocationFilter = ''
@@ -30,13 +30,6 @@ export default function Projects() {
   })
   const scrollRef  = useRef(null)
   const savedScroll = useRef(0)
-
-  // Persist filters
-  useEffect(() => { try { sessionStorage.setItem('proj-view', viewMode) } catch {} }, [viewMode])
-  useEffect(() => { try { sessionStorage.setItem('proj-filter', filter) } catch {} }, [filter])
-  useEffect(() => { try { sessionStorage.setItem('proj-fav', showFavOnly) } catch {} }, [showFavOnly])
-  useEffect(() => { try { sessionStorage.setItem('proj-sort', sortBy) } catch {} }, [sortBy])
-  useEffect(() => { try { sessionStorage.setItem('proj-status', statusFilter) } catch {} }, [statusFilter])
 
   // Save scroll position when navigating into a project
   const openProject = useCallback((id) => {
@@ -142,7 +135,7 @@ export default function Projects() {
       <div ref={scrollRef} className="scroll-page" style={{ paddingBottom: 100 }}>
         <div className="page-header">
           <div className="page-header-row">
-            <div style={{ display:'flex', alignItems:'center', gap:8, minWidth:0, flex:1 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:8, minWidth:0 }}>
               <h1 className="page-title">Projects</h1>
               {locationFilter && (
                 <span style={{ fontSize:11, background:'var(--green-dim,rgba(22,101,52,.12))', color:'var(--green)', borderRadius:99, padding:'2px 8px', fontWeight:600, whiteSpace:'nowrap', display:'flex', alignItems:'center', gap:4 }}>
@@ -151,49 +144,51 @@ export default function Projects() {
                 </span>
               )}
             </div>
-            {/* Star + Table toggle on title row */}
-            <div style={{ display:'flex', gap:6, alignItems:'center' }}>
-              <button
-                onClick={() => setShowFavOnly(f => !f)}
-                style={{ padding:'6px 8px', background: showFavOnly ? 'var(--accent)' : 'var(--fill)', border:'none', borderRadius:8, cursor:'pointer', display:'flex', alignItems:'center' }}
-                title={showFavOnly ? 'Show all' : 'Favorites only'}
-                aria-label={showFavOnly ? 'Show all projects' : 'Show favorites only'}
-              >
-                <IStar size={16} fill={showFavOnly ? '#fff' : 'none'} color={showFavOnly ? '#fff' : '#F59E0B'} />
-              </button>
-              <button
-                className={viewMode === 'table' ? 'btn-primary' : 'btn-secondary'}
-                style={{ padding:'5px 12px', fontSize:13 }}
-                id="table-toggle-btn"
-                onClick={() => setViewMode(v => v === 'cards' ? 'table' : 'cards')}
-              >
-                {viewMode === 'table' ? 'Cards' : 'Table'}
-              </button>
-            </div>
           </div>
-          {/* Filters row */}
-          <div style={{ display:'flex', gap:6, alignItems:'center', marginTop:8 }}>
+          {/* Filter + sort + favorites + table — single row */}
+          <div style={{ display:'flex', gap:6, alignItems:'center', marginTop:10, flexWrap:'wrap' }}>
+            {/* Category */}
             {categories.length > 0 && (
               <FilterSelect
                 value={filter}
                 onChange={setFilter}
                 options={categories.map(c => ({ value: c.name, label: c.name }))}
-                allLabel="All"
+                allLabel="All Categories"
                 label="Filter by category"
               />
             )}
+            {/* Sort */}
             <div className="filter-select-wrap">
               <select className={`filter-select${sortBy !== 'status' ? ' active' : ''}`}
                 value={sortBy} onChange={e => setSortBy(e.target.value)}
               >
-                <option value="status">Status</option>
-                <option value="name">Name</option>
-                <option value="category">Category</option>
-                <option value="year">Year</option>
-                <option value="recent">Recent</option>
+                <option value="status">By Status</option>
+                <option value="name">By Name</option>
+                <option value="category">By Category</option>
+                <option value="year">By Year</option>
+                <option value="recent">Recently Added</option>
               </select>
               <span className="filter-select-chevron" aria-hidden="true">▾</span>
             </div>
+            {/* Favorites toggle */}
+            <button
+              onClick={() => setShowFavOnly(f => !f)}
+              className={showFavOnly ? 'btn-primary' : 'btn-secondary'}
+              style={{ padding:'5px 10px', fontSize:13, display:'flex', alignItems:'center', gap:5 }}
+              title={showFavOnly ? 'Show all' : 'Favorites only'}
+            >
+              <IStar size={14} fill={showFavOnly ? '#fff' : 'none'} color={showFavOnly ? '#fff' : '#F59E0B'} />
+              {showFavOnly ? 'Favorites' : 'Favorites'}
+            </button>
+            {/* Table view — desktop only */}
+            <button
+              className={viewMode === 'table' ? 'btn-primary' : 'btn-secondary'}
+              style={{ padding:'5px 12px', fontSize:13, marginLeft:'auto' }}
+              id="table-toggle-btn"
+              onClick={() => setViewMode(v => v === 'cards' ? 'table' : 'cards')}
+            >
+              {viewMode === 'table' ? 'Card view' : 'Table view'}
+            </button>
           </div>
         </div>
 
@@ -206,7 +201,7 @@ export default function Projects() {
                 <div key={status}>
                   <span className="section-label">{STATUS_LABEL[status]}</span>
                   <div className="proj-cards-grid">
-                    {items.map(p => <MemoCard key={p.id} project={p} openProject={openProject} onFavorite={handleFavorite} onDelete={handleDelete} data={data} stepCounts={stepCountMap[p.id]} urgentCoats={urgentCoatMap[p.id] || 0} />)}
+                    {items.map(p => <MemoCard key={p.id} project={p} openProject={openProject} onFavorite={handleFavorite} onDelete={handleDelete} data={data} stepCounts={stepCountMap[p.id]} urgentCoats={urgentCoatMap[p.id] || 0} sampleProjectId={sampleIds?.projectId} />)}
                   </div>
                 </div>
               ))}
@@ -338,11 +333,12 @@ function ProjectTable({ projects, categories, statusFilter, setStatusFilter }) {
 }
 
 // ─── Project card ─────────────────────────────────────────────────────────────
-const ProjectCard = memo(function ProjectCard({ project, onOpen, data, stepCounts, urgentCoats = 0, onFavorite, onDelete }) {
+const ProjectCard = memo(function ProjectCard({ project, onOpen, data, stepCounts, urgentCoats = 0, onFavorite, onDelete, sampleProjectId }) {
   const total = stepCounts?.total || 0
   const done  = stepCounts?.done  || 0
   const rc    = urgentCoats
   const ss    = STATUS[project.status] || STATUS.planning
+  const isSample = sampleProjectId === project.id
   const [showDelete, setShowDelete] = useState(false)
   const [starBurst, setStarBurst]   = useState(false)
   const longPress = useLongPress(() => setShowDelete(true))
@@ -374,7 +370,10 @@ const ProjectCard = memo(function ProjectCard({ project, onOpen, data, stepCount
     <button className="proj-card" onClick={onOpen} {...longPress}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: total ? 10 : 0 }}>
         <div style={{ flex: 1, paddingRight: 12, minWidth: 0 }}>
-          <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 2 }}>{project.name}</div>
+          <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 2 }}>
+            {project.name}
+            {isSample && <span className="sample-badge">SAMPLE</span>}
+          </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 2 }}>
             {project.wood_type && <span style={{ fontSize: 13, color: 'var(--text-3)' }}>{project.wood_type}</span>}
             {project.category  && <span style={{ fontSize: 12, background: 'var(--blue-dim)', color: 'var(--blue)', borderRadius: 99, padding: '1px 8px', fontWeight: 500 }}>{project.category}</span>}
@@ -442,7 +441,6 @@ export function ProjectDetail() {
   const [showRon, setShowRon]   = useState(false)
   const [showQRLabel, setShowQRLabel] = useState(false)
   const [showReminder, setShowReminder] = useState(false)
-  const [detailTab, setDetailTab] = useState('overview')
 
   const project = data.projects.find(p => p.id === projId)
   if (!project) return null
@@ -596,9 +594,7 @@ export function ProjectDetail() {
               )
             })()}
           </div>
-        </div>
-        {/* Action buttons — own row */}
-        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 8 }}>
+          <div style={{ display: 'flex', gap: 4 }}>
             <button
               className="icon-btn"
               onClick={() => {
@@ -630,6 +626,7 @@ export function ProjectDetail() {
             <button className="icon-btn" onClick={() => setEditing(true)} aria-label="Edit project"><IEdit size={17} /></button>
             <button className="icon-btn" onClick={() => setConfirming(true)} aria-label="Delete project" style={{ color: 'var(--red)' }}><ITrash size={17} /></button>
           </div>
+        </div>
 
         <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 6 }}>{project.name}</h2>
 
@@ -659,66 +656,11 @@ export function ProjectDetail() {
         </div>
       </div>
 
-      {/* ── Sub-tab bar ── */}
-      <div style={{
-        display: 'flex', gap: 0, background: 'var(--surface)',
-        borderBottom: '1px solid var(--border)',
-        position: 'sticky', top: 0, zIndex: 10,
-      }}>
-        {['overview', 'steps', 'finishing', 'photos'].map(t => (
-          <button key={t} onClick={() => setDetailTab(t)} style={{
-            flex: 1, padding: '10px 0', fontSize: 13, fontWeight: 600,
-            fontFamily: 'inherit', border: 'none', cursor: 'pointer',
-            background: 'transparent',
-            color: detailTab === t ? 'var(--accent)' : 'var(--text-3)',
-            borderBottom: detailTab === t ? '2px solid var(--accent)' : '2px solid transparent',
-            transition: 'color 150ms, border-color 150ms',
-          }}>
-            {t.charAt(0).toUpperCase() + t.slice(1)}
-          </button>
-        ))}
-      </div>
+      {/* ── Two-column body ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'var(--border-2)' }} className="proj-detail-grid">
 
-      {/* ── Overview tab ── */}
-      {detailTab === 'overview' && (
-        <div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'var(--border-2)', marginTop: 1 }} className="proj-detail-grid">
-            <TimeTracker project={project} onSave={handleUpdate} />
-            <CostTracker project={project} onSave={handleUpdate} projId={projId} shopping={data.shopping} />
-          </div>
-
-          {/* Wood source */}
-          {(() => {
-            const pws = data.projectWoodSources?.find(w => w.project_id === projId)
-            const ws = pws ? data.woodStock?.find(w => w.id === pws.wood_stock_id) : null
-            if (!ws) return null
-            return (
-              <div style={{ background: 'var(--surface)', marginTop: 1, padding: '16px 20px' }}>
-                <div className="label-caps" style={{ marginBottom: 8 }}>Wood Source</div>
-                <div style={{ fontSize: 14 }}>
-                  <span style={{ fontWeight: 600 }}>{ws.species}</span>
-                  {ws.dimensions && <span style={{ color: 'var(--text-3)', marginLeft: 8 }}>{ws.dimensions}</span>}
-                  {ws.source && <span style={{ color: 'var(--text-3)', marginLeft: 8 }}>from {ws.source}</span>}
-                </div>
-              </div>
-            )
-          })()}
-
-          {/* Description */}
-          {project.description && (
-            <div style={{ background: 'var(--surface)', marginTop: 1, padding: '16px 20px' }}>
-              <div className="label-caps" style={{ marginBottom: 8 }}>Description</div>
-              <p style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.6, margin: 0 }}>{project.description}</p>
-            </div>
-          )}
-
-          <div style={{ height: 20 }} />
-        </div>
-      )}
-
-      {/* ── Steps tab ── */}
-      {detailTab === 'steps' && (
-        <div style={{ background: 'var(--surface)', marginTop: 1, padding: '20px' }}>
+        {/* Left — Build Steps */}
+        <div style={{ background: 'var(--surface)', padding: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <div>
               <div className="label-caps">Build Steps</div>
@@ -727,38 +669,38 @@ export function ProjectDetail() {
             <button className="icon-btn" onClick={() => setSub('steps-add')} aria-label="Add step"><IPlus size={18} color="var(--accent)" /></button>
           </div>
           <StepsList projId={projId} />
-          <div style={{ height: 20 }} />
         </div>
-      )}
 
-      {/* ── Finishing tab ── */}
-      {detailTab === 'finishing' && (
-        <div style={{ background: 'var(--surface)', marginTop: 1, padding: '20px' }}>
+        {/* Right — Finishing */}
+        <div style={{ background: 'var(--surface)', padding: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <div className="label-caps">Finishing</div>
             <button className="icon-btn" onClick={() => setSub('finish-add')} aria-label="Add coat"><IPlus size={18} color="var(--accent)" /></button>
           </div>
           <FinishingList projId={projId} sub={sub} setSub={setSub} />
-          <div style={{ height: 20 }} />
+        </div>
+      </div>
+
+      {/* ── Time & Cost ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'var(--border-2)', marginTop: 1 }}>
+        <TimeTracker project={project} onSave={handleUpdate} />
+        <CostTracker project={project} onSave={handleUpdate} projId={projId} shopping={data.shopping} />
+      </div>
+
+      {/* ── Photos full-width ── */}
+      <div style={{ background: 'var(--surface)', marginTop: 1, padding: '20px' }}>
+        <PhotoTimeline projId={projId} />
+      </div>
+
+      {/* ── Inspiration ── */}
+      {data.photos.filter(p => p.project_id === projId && p.photo_type === 'inspiration').length > 0 && (
+        <div style={{ background: 'var(--surface)', marginTop: 1, padding: '20px' }}>
+          <div className="label-caps" style={{ marginBottom: 12 }}>Inspiration</div>
+          <PhotoPane projId={projId} type="inspiration" inline />
         </div>
       )}
 
-      {/* ── Photos tab ── */}
-      {detailTab === 'photos' && (
-        <div>
-          <div style={{ background: 'var(--surface)', marginTop: 1, padding: '20px' }}>
-            <PhotoTimeline projId={projId} />
-          </div>
-
-          {data.photos.filter(p => p.project_id === projId && p.photo_type === 'inspiration').length > 0 && (
-            <div style={{ background: 'var(--surface)', marginTop: 1, padding: '20px' }}>
-              <div className="label-caps" style={{ marginBottom: 12 }}>Inspiration</div>
-              <PhotoPane projId={projId} type="inspiration" inline />
-            </div>
-          )}
-          <div style={{ height: 20 }} />
-        </div>
-      )}
+      <div style={{ height: 20 }} />
 
       {editing    && <ProjectSheet project={project} categories={categories} onSave={handleUpdate} onClose={() => setEditing(false)} mutate={mutate} />}
       {confirming && <ConfirmSheet message={`Delete "${project.name}"? All steps, coats, and photos will be removed. This cannot be undone.`} onConfirm={handleDelete} onClose={() => setConfirming(false)} />}
@@ -1417,16 +1359,8 @@ function ProjectSheet({ project, categories, onSave, onClose, mutate }) {
   })).filter(g => g.items.length > 0)
   const unlocated = woodStock.filter(w => !w.location_id && w.status !== 'Used up')
 
-  const [nameError, setNameError] = useState(false)
-
   const handleSave = async () => {
-    const name = refs.name.current?.value.trim()
-    if (!name) {
-      setNameError(true)
-      toast('Project name is required', 'error')
-      setTimeout(() => setNameError(false), 2000)
-      return
-    }
+    const name = refs.name.current?.value.trim(); if (!name) return
     const yearVal = refs.year.current?.value.trim()
     const fi = finishesList.find(f => f.name === finishVal)
     // Derive wood_type from selected wood stock entry's species
@@ -1450,7 +1384,7 @@ function ProjectSheet({ project, categories, onSave, onClose, mutate }) {
   return (
     <Sheet title={project ? 'Edit Project' : 'New Project'} onClose={onClose} onSave={handleSave}>
       <div className="form-group">
-        <FormCell label="Name"><input ref={refs.name} className={`form-input${nameError ? ' form-input-error form-shake' : ''}`} placeholder="Cherry Bowl" defaultValue={project?.name || ''} onChange={() => nameError && setNameError(false)} /></FormCell>
+        <FormCell label="Name"><input ref={refs.name} className="form-input" placeholder="Cherry Bowl" defaultValue={project?.name || ''} autoFocus /></FormCell>
         <ManagedSelect label="Category" value={category} onChange={setCategory}
           items={categories} addLabel="category"
           onAddNew={async name => {

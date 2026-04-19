@@ -5,7 +5,7 @@ import * as db from '../db.js'
 import { Sheet, FormCell, BulkAddSheet, ConfirmSheet, IPlus, ITrash, IEdit, ICircle, ICheck } from '../components/Shared.jsx'
 
 export default function Shopping() {
-  const { data, mutate } = useCtx()
+  const { data, mutate, sampleIds } = useCtx()
   const toast = useToast()
   const [showAdd, setShowAdd]     = useState(false)
   const [editItem, setEditItem]   = useState(null)
@@ -91,6 +91,7 @@ export default function Shopping() {
                 {active.filter(s => (s.store || 'Other') === store).map((item, i, arr) => (
                   <ShopRow key={item.id} item={item}
                     last={i === arr.length - 1}
+                    isSample={sampleIds?.shopIds?.includes(item.id)}
                     onToggle={() => toggle(item)}
                     onEdit={() => setEditItem(item)}
                     onDelete={() => setDeleteItem(item)}
@@ -112,6 +113,7 @@ export default function Shopping() {
               {done.map((item, i) => (
                 <ShopRow key={item.id} item={item}
                   last={i === done.length - 1}
+                  isSample={sampleIds?.shopIds?.includes(item.id)}
                   onToggle={() => toggle(item)}
                   onEdit={() => setEditItem(item)}
                   onDelete={() => setDeleteItem(item)}
@@ -131,7 +133,7 @@ export default function Shopping() {
   )
 }
 
-function ShopRow({ item, onToggle, onEdit, onDelete, last }) {
+function ShopRow({ item, onToggle, onEdit, onDelete, last, isSample }) {
   return (
     <div className="cell" style={{ borderBottom: last ? 'none' : '1px solid var(--border-2)' }}>
       <button className="check-btn" onClick={onToggle} aria-label={item.completed ? 'Mark not purchased' : 'Mark purchased'}>
@@ -142,6 +144,7 @@ function ShopRow({ item, onToggle, onEdit, onDelete, last }) {
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ textDecoration: item.completed ? 'line-through' : 'none', color: item.completed ? 'var(--text-3)' : 'var(--text)' }}>
           {item.name}
+          {isSample && <span className="sample-badge">SAMPLE</span>}
           {item.qty && <span style={{ color: 'var(--text-3)' }}> · {item.qty}{item.unit ? ` ${item.unit}` : ''}</span>}
           {item.cost > 0 && <span style={{ color: 'var(--green)', fontWeight: 500 }}> · ${Number(item.cost).toFixed(2)}</span>}
         </div>
