@@ -490,7 +490,7 @@ export function Lightbox({ photos, index, onClose }) {
       )}
 
       {/* Top controls */}
-      <div style={{ position: 'absolute', top: 14, right: 14, display: 'flex', gap: 8 }}>
+      <div className="lightbox-controls">
         {scale > 1 && (
           <button onClick={e => { e.stopPropagation(); reset() }}
             style={{ background: 'rgba(255,255,255,.12)', border: 'none', borderRadius: 99, padding: '6px 12px', cursor: 'pointer', color: '#fff', fontSize: 13, fontFamily: 'inherit' }}>
