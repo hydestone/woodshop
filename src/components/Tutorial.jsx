@@ -222,18 +222,33 @@ export default function Tutorial({ onClose, setTab }) {
     if (current.tab) setTab(current.tab)
   }, [step, current.tab, setTab])
 
-  // Find target element after tab switch settles
+  // Find target element after tab switch settles — with retry for lazy-loaded pages
   useEffect(() => {
     setVisible(false)
     setSpot(null)
-    // Longer delay for lazy-loaded pages, shorter for already-rendered
-    const delay = current.tab ? 500 : 150
-    const timer = setTimeout(() => {
+
+    let attempts = 0
+    const maxAttempts = 5
+    const tryFind = () => {
+      attempts++
       const s = getRect(current.target, 12)
-      setSpot(s)
-      setTipPos(calcTipPos(s))
-      setVisible(true)
-    }, delay)
+      if (s) {
+        setSpot(s)
+        setTipPos(calcTipPos(s))
+        setVisible(true)
+      } else if (current.target && attempts < maxAttempts) {
+        // Element not found yet — retry after 300ms (lazy-loaded pages)
+        setTimeout(tryFind, 300)
+      } else {
+        // No target selector, or gave up finding it — show tooltip centered
+        setSpot(null)
+        setTipPos(calcTipPos(null))
+        setVisible(true)
+      }
+    }
+
+    const initialDelay = current.tab ? 600 : 200
+    const timer = setTimeout(tryFind, initialDelay)
     return () => clearTimeout(timer)
   }, [step, current.target, current.tab])
 
@@ -279,6 +294,7 @@ export default function Tutorial({ onClose, setTab }) {
           top: spot.top, left: spot.left,
           width: spot.width, height: spot.height,
           borderRadius: 14,
+          boxShadow: '0 0 0 4px rgba(37,99,235,.5), 0 0 24px 8px rgba(37,99,235,.2), 0 0 0 9999px rgba(0,0,0,.65)',
           animation: 'tutSpotlight 2.2s ease infinite',
           pointerEvents: 'none', zIndex: 20001,
           transition: 'all 350ms cubic-bezier(.4,0,.2,1)',
