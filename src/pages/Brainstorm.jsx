@@ -23,31 +23,26 @@ export default function Brainstorm() {
   const saveNew = async () => {
     const content = composing.trim()
     if (!content) return
+    setComposing('')
+    if (composingRef.current) { composingRef.current.style.height = 'auto' }
+    const tempId = 'temp_' + Date.now()
+    const optimistic = { id: tempId, content, created_at: new Date().toISOString() }
+    mutate(d => ({ ...d, brainstorming: [optimistic, ...d.brainstorming] }))
     try {
       const note = await db.addBrainstorm(content)
-      mutate(d => ({ ...d, brainstorming: [note, ...d.brainstorming] }))
-      setComposing('')
-      if (composingRef.current) { composingRef.current.style.height = 'auto' }
-      toast('Saved', 'success')
-    } catch (e) { toast(e.message, 'error') }
+      mutate(d => ({ ...d, brainstorming: d.brainstorming.map(n => n.id === tempId ? note : n) }))
+    } catch (e) {
+      mutate(d => ({ ...d, brainstorming: d.brainstorming.filter(n => n.id !== tempId) }))
+      toast(e.message, 'error')
+    }
   }
 
   const del = async id => {
-    const item = data.brainstorming.find(n => n.id === id)
     const prev = data.brainstorming
     mutate(d => ({ ...d, brainstorming: d.brainstorming.filter(n => n.id !== id) }))
     try {
       const trashed = await db.deleteBrainstorm(id)
-      if (trashed) {
-        mutate(d => ({ ...d, trash: [trashed, ...(d.trash || [])] }))
-        toast('Note deleted', 'success', 5000, {
-          label: 'Undo',
-          onClick: async () => {
-            await db.restoreFromTrash(trashed.id, trashed)
-            mutate(d => ({ ...d, brainstorming: [item, ...d.brainstorming], trash: d.trash.filter(t => t.id !== trashed.id) }))
-          }
-        })
-      }
+      if (trashed) mutate(d => ({ ...d, trash: [trashed, ...(d.trash || [])] }))
     } catch(e) { mutate(d => ({ ...d, brainstorming: prev })); toast(e.message, 'error') }
     setDeleteNote(null)
   }

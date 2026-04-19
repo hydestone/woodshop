@@ -76,7 +76,7 @@ function YearCarousel({ year, projects, photos, onClose }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [cur, carouselPhotos.length, onClose])
 
-  if (!carouselPhotos.length) return createPortal(
+  if (!carouselPhotos.length) return (
     <div className="overlay" onClick={onClose} style={{ alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ background: 'var(--surface)', borderRadius: 16, padding: '32px 24px', maxWidth: 360, width: '90%', textAlign: 'center' }}>
         <div style={{ fontSize: 40, marginBottom: 12 }}>📷</div>
@@ -84,8 +84,7 @@ function YearCarousel({ year, projects, photos, onClose }) {
         <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 16 }}>{yearProjects.length} project{yearProjects.length !== 1 ? 's' : ''} but no finished photos uploaded.</p>
         <button className="btn-primary" style={{ width: '100%', justifyContent: 'center' }} onClick={onClose}>Close</button>
       </div>
-    </div>,
-    document.body
+    </div>
   )
 
   return (
@@ -153,7 +152,7 @@ function ProjectsByYear({ projects, photos, onDrill , isDark = false }) {
       icon: 'roundRect',
       itemWidth: 10, itemHeight: 10,
     },
-    grid: { top: 8, left: 32, right: 8, bottom: 56, containLabel: false },
+    grid: { top: 8, left: 32, right: 8, bottom: 40, containLabel: false },
     xAxis: {
       type: 'category',
       data: grouped.map(([y]) => y),
@@ -195,7 +194,7 @@ function ProjectsByYear({ projects, photos, onDrill , isDark = false }) {
 
   return (
     <div>
-      <div ref={chartRef} style={{ width:'100%', height: 220 }} />
+      <div ref={chartRef} style={{ width:'100%', height: 180 }} />
       <div style={{ fontSize:11, color:'var(--text-4)', marginTop:4 }}>Click a bar to browse that year</div>
       {carouselYear && <YearCarousel year={carouselYear} projects={projects} photos={photos} onClose={()=>setCarouselYear(null)}/>}
     </div>
@@ -430,7 +429,14 @@ function WoodSourceMap({ locations, woodStock, projectWoodSources, onLocationCli
       }
     })
     return () => { if (mapInstance.current) { mapInstance.current.remove(); mapInstance.current = null } }
-  }, [mappable, sourceCounts])
+  }, [mappable, sourceCounts, expanded])
+
+  // B6: Force Leaflet to recalculate size after layout settles
+  useEffect(() => {
+    if (mapInstance.current) {
+      setTimeout(() => mapInstance.current?.invalidateSize(), 300)
+    }
+  })
 
   if (!locations.length) return <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-3)', fontSize: 13 }}>No wood locations added yet</div>
   if (mappable.length === 0) return (
@@ -454,7 +460,7 @@ function WoodSourceMap({ locations, woodStock, projectWoodSources, onLocationCli
           </div>
         ))}
       </div>
-      {expanded && (
+      {expanded && createPortal(
         <div onClick={e => { if (e.target === e.currentTarget) setExpanded(false) }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.7)', zIndex: 2000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
           <div className="map-modal-card">
             <div className="map-modal-header">
@@ -463,7 +469,8 @@ function WoodSourceMap({ locations, woodStock, projectWoodSources, onLocationCli
             </div>
             <div ref={mapRef} style={{ flex: 1 }} />
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
@@ -643,41 +650,6 @@ export default function Dashboard() {
       </div>
       <div style={{ paddingBottom: 32 }}>
 
-        {/* ── Onboarding for new users ────────────────────────────────── */}
-        {data.projects.length === 0 && (
-          <div style={{ padding: '0 20px', marginBottom: 24 }}>
-            <div style={{ background: 'var(--surface)', borderRadius: 16, padding: '28px 24px', border: '1px solid var(--border)' }}>
-              <div style={{ fontSize: 28, marginBottom: 8 }}>👋</div>
-              <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>Welcome to your workshop</div>
-              <p style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.6, marginBottom: 20 }}>
-                Get started by completing these steps. Each one takes about a minute.
-              </p>
-              {[
-                { done: false, label: 'Create your first project', action: () => setTab('projects'), icon: '📁' },
-                { done: data.photos.length > 0, label: 'Upload a photo', action: () => setTab('photos'), icon: '📷' },
-                { done: data.maintenance.length > 0, label: 'Add a maintenance item', action: () => setTab('maintenance'), icon: '🔧' },
-                { done: data.woodStock?.length > 0, label: 'Log your wood stock', action: () => setTab('stock'), icon: '🪵' },
-              ].map((step, i) => (
-                <div key={i} onClick={step.done ? undefined : step.action}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0',
-                    borderTop: i > 0 ? '1px solid var(--border-2)' : 'none',
-                    cursor: step.done ? 'default' : 'pointer', opacity: step.done ? 0.5 : 1,
-                  }}>
-                  <span style={{ fontSize: 20, width: 32, textAlign: 'center' }}>
-                    {step.done ? '✅' : step.icon}
-                  </span>
-                  <span style={{ flex: 1, fontSize: 15, fontWeight: 500, textDecoration: step.done ? 'line-through' : 'none' }}>
-                    {step.label}
-                  </span>
-                  {!step.done && <span style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 600 }}>Go →</span>}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── Action Zone ─────────────────────────────────────────────── */}
         {urgCoats.length > 0 && <>
           <span className="section-label">Ready to Apply</span>
           <div className="group">
@@ -688,18 +660,6 @@ export default function Dashboard() {
                 <IChevR size={14} color="var(--text-4)" />
               </div>
             ))}
-          </div>
-        </>}
-
-        {upCoats.length > 0 && <>
-          <span className="section-label">Upcoming Coats</span>
-          <div className="group">
-            {upCoats.map(c => { const st = coatStatus(c); return (
-              <div key={c.id} className="cell" style={{ cursor: 'pointer' }} onClick={() => setProjId(c.project_id)}>
-                <div style={{ flex: 1 }}><div style={{ fontWeight: 500 }}>{c.product}</div><div style={{ fontSize: 13, color: 'var(--text-3)' }}>Coat {c.coat_number} · {c.proj?.name} · {fmtShort(c.applied_at)}</div></div>
-                <span style={{ fontSize: 14, color: st.color, fontWeight: 500 }}>{st.label}</span>
-              </div>
-            )})}
           </div>
         </>}
 
@@ -716,7 +676,7 @@ export default function Dashboard() {
         </>}
 
         {nextSteps.length > 0 && <>
-          <span className="section-label">Next Steps</span>
+          <span className="section-label">Active Projects</span>
           <div className="group">
             {nextSteps.map(({ p, step }) => (
               <div key={p.id} className="cell" style={{ cursor: 'pointer' }} onClick={() => setProjId(p.id)}>
@@ -727,15 +687,8 @@ export default function Dashboard() {
           </div>
         </>}
 
-        {!hasUrgent && (
-          <div className="empty" style={{ paddingTop: 32, paddingBottom: 0 }}>
-            <div className="empty-icon">✅</div>
-            <div className="empty-title">All clear</div>
-            <p className="empty-sub">No coats ready, no overdue maintenance, no pending steps.</p>
-          </div>
-        )}
+        {!hasUrgent && <div className="empty" style={{ paddingTop: 32, paddingBottom: 0 }}><div className="empty-icon">🪵</div><div className="empty-title">All clear</div><p className="empty-sub">Nothing urgent today.</p></div>}
 
-        {/* ── Continue Working ────────────────────────────────────────── */}
         {(() => {
           const recent = [...data.projects]
             .filter(p => p.status !== 'complete')
@@ -758,8 +711,6 @@ export default function Dashboard() {
             </div>
           </>)
         })()}
-
-        {/* ── Analytics ───────────────────────────────────────────────── */}
         <span className="section-label" style={{ marginTop: 28 }}>Analytics</span>
         <div className="dash-grid">
           <div className="card"><div className="label-caps-sm">Projects by Year</div><ProjectsByYear projects={data.projects} photos={data.photos} onDrill={handleDrill} isDark={theme === 'dark'} /></div>
@@ -769,41 +720,28 @@ export default function Dashboard() {
           <div className="card"><div className="label-caps-sm">Wood Source Map</div><WoodSourceMap locations={locations} woodStock={data.woodStock} projectWoodSources={data.projectWoodSources} onLocationClick={(locName) => { setTab('projects'); window.__woodLocationFilter = locName; }} /></div>
           <div className="card" style={{gridColumn:'1/-1'}}><div className="label-caps-sm">Material Flow — Species → Category → Finish</div><MaterialFlow projects={data.projects} isDark={theme === 'dark'} /></div>
         </div>
+
+        {data.photos.length > 0 && <>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '24px 20px 6px' }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.6px' }}>Recent Photos</span>
+            <button className="btn-text" onClick={() => setTab('photos')}>See all</button>
+          </div>
+          <PhotoGrid photos={data.photos.slice(0, 12)} showProject projects={data.projects} />
+        </>}
+
+        {upCoats.length > 0 && <>
+          <span className="section-label" style={{ marginTop: 8 }}>Upcoming Coats</span>
+          <div className="group">
+            {upCoats.map(c => { const st = coatStatus(c); return (
+              <div key={c.id} className="cell" style={{ cursor: 'pointer' }} onClick={() => setProjId(c.project_id)}>
+                <div style={{ flex: 1 }}><div style={{ fontWeight: 500 }}>{c.product}</div><div style={{ fontSize: 13, color: 'var(--text-3)' }}>Coat {c.coat_number} · {c.proj?.name} · {fmtShort(c.applied_at)}</div></div>
+                <span style={{ fontSize: 14, color: st.color, fontWeight: 500 }}>{st.label}</span>
+              </div>
+            )})}
+          </div>
+        </>}
       </div>
-      <AddPhotoFAB />
     </div>
   )
-}
-
-function AddPhotoFAB() {
-  const { mutate } = useCtx()
-  const toast = useToast()
-  const [uploading, setUploading] = useState(false)
-  const inputRef = useRef()
-  const handleFile = async (e) => {
-    const file = e.target.files?.[0]; if (!file) return
-    setUploading(true)
-    try {
-      const photo = await db.uploadPhoto(null, file, '', 'progress', '')
-      mutate(d => ({ ...d, photos: [photo, ...d.photos] }))
-      toast('Photo added', 'success')
-    } catch(err) { toast(err.message, 'error') }
-    finally { setUploading(false); e.target.value = '' }
-  }
-  return (<>
-    <input ref={inputRef} type="file" accept="image/*" capture="environment"
-      style={{ display:'none' }} onChange={handleFile} />
-    <button className="fab" onClick={() => inputRef.current?.click()}
-      aria-label="Add photo"
-      style={{ bottom: 'calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 16px)' }}>
-      {uploading
-        ? <div className="spinner" style={{ width:22, height:22, borderWidth:2 }}/>
-        : <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-            <circle cx="12" cy="13" r="4"/>
-          </svg>
-      }
-    </button>
-  </>)
 }
 

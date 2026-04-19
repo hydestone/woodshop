@@ -104,7 +104,6 @@ export function maintStatus(m) {
 export function Sheet({ title, onClose, onSave, saveLabel = 'Save', children }) {
   const [saving, setSaving] = useState(false)
   const savingRef = useRef(false)
-  const overlayRef = useRef(null)
 
   const handleSave = useCallback(async () => {
     if (savingRef.current || !onSave) return
@@ -124,36 +123,8 @@ export function Sheet({ title, onClose, onSave, saveLabel = 'Save', children }) 
     return () => window.removeEventListener('keydown', handler)
   }, [onClose, handleSave])
 
-  // Lock background scroll when sheet is open
-  useEffect(() => {
-    const el = overlayRef.current
-    if (!el) return
-    const prevent = e => {
-      let target = e.target
-      while (target && target !== el) {
-        if (target.classList?.contains('sheet-body')) return
-        target = target.parentElement
-      }
-      e.preventDefault()
-    }
-    el.addEventListener('touchmove', prevent, { passive: false })
-    return () => el.removeEventListener('touchmove', prevent)
-  }, [])
-
-  // iOS keyboard: shrink overlay to visual viewport height
-  useEffect(() => {
-    const vv = window.visualViewport
-    if (!vv) return
-    const el = overlayRef.current
-    if (!el) return
-    const update = () => { el.style.height = vv.height + 'px' }
-    vv.addEventListener('resize', update)
-    return () => { vv.removeEventListener('resize', update); el.style.height = '' }
-  }, [])
-
   return createPortal(
     <div
-      ref={overlayRef}
       className="overlay"
       role="dialog"
       aria-modal="true"
@@ -302,7 +273,7 @@ export function Lightbox({ photos, index, onClose }) {
   const lastDist       = useRef(null)
   const lastMid        = useRef(null)
   const dragStart      = useRef(null)
-  const panStart       = useRef(null)
+  const panStart       = useRef({ x: 0, y: 0 })
   const swipeStartX    = useRef(null)
 
   const reset = () => { setScale(1); setPan({ x: 0, y: 0 }) }
@@ -337,7 +308,7 @@ export function Lightbox({ photos, index, onClose }) {
 
   // Mouse pan
   const onMouseDown = e => { if (scale <= 1) return; dragStart.current = { x: e.clientX, y: e.clientY }; panStart.current = { ...pan } }
-  const onMouseMove = e => { if (!dragStart.current) return; setPan({ x: panStart.current.x + e.clientX - dragStart.current.x, y: panStart.current.y + e.clientY - dragStart.current.y }) }
+  const onMouseMove = e => { if (!dragStart.current || !panStart.current) return; setPan({ x: panStart.current.x + e.clientX - dragStart.current.x, y: panStart.current.y + e.clientY - dragStart.current.y }) }
   const onMouseUp   = () => { dragStart.current = null }
 
   // Touch handlers — useEffect with passive:false required for iOS Safari
@@ -372,7 +343,7 @@ export function Lightbox({ photos, index, onClose }) {
         if (lastMid.current) setPan(p => ({ x: p.x + mid.x - lastMid.current.x, y: p.y + mid.y - lastMid.current.y }))
         lastDist.current = dist
         lastMid.current  = mid
-      } else if (e.touches.length === 1 && dragStart.current) {
+      } else if (e.touches.length === 1 && dragStart.current && panStart.current) {
         setScale(s => {
           if (s <= 1) return s
           e.preventDefault()

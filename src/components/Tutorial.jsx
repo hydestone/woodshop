@@ -359,7 +359,11 @@ export default function Tutorial({ onClose, setTab }) {
 // ── Hook ─────────────────────────────────────────────────────────────────────
 export function useTutorialCheck() {
   const [show, setShow] = useState(() => {
-    try { return !localStorage.getItem('jdh-tutorial-seen') }
+    try {
+      const seen = localStorage.getItem('jdh-tutorial-seen')
+      // Only auto-launch on desktop (768px+)
+      return !seen && window.innerWidth >= 768
+    }
     catch { return false }
   })
 
