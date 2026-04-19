@@ -29,11 +29,13 @@ export default function ShopImprovements() {
       const trashed = await db.deleteShopImprovement(id)
       if (trashed) {
         mutate(d => ({ ...d, trash: [trashed, ...(d.trash || [])] }))
-        toast(`"${item?.title}" deleted`, 'success', 5000, {
+        toast(`"${item?.title || 'Item'}" deleted`, 'success', 4000, {
           label: 'Undo',
           onClick: async () => {
-            await db.restoreFromTrash(trashed.id, trashed)
-            mutate(d => ({ ...d, shopImprovements: [...d.shopImprovements, item], trash: d.trash.filter(t => t.id !== trashed.id) }))
+            try {
+              await db.restoreFromTrash(trashed.id, trashed)
+              mutate(d => ({ ...d, shopImprovements: [item, ...d.shopImprovements], trash: d.trash.filter(t => t.id !== trashed.id) }))
+            } catch(e) { toast(e.message, 'error') }
           }
         })
       }

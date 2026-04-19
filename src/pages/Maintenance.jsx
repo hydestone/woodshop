@@ -3,7 +3,7 @@ import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
 import { addToGoogleCalendar } from '../supabase.js'
-import { Sheet, FormCell, ConfirmSheet, maintStatus, fmtShort, localDt, IPlus, ITrash, IEdit, ICal, IBell } from '../components/Shared.jsx'
+import { Sheet, FormCell, ConfirmSheet, maintStatus, fmtShort, localDt, IPlus, ITrash, IEdit, ICal } from '../components/Shared.jsx'
 
 const CATEGORIES = ['Sharpening', 'Lathe', 'Bandsaw', 'Router Table', 'Shop', 'General']
 
@@ -94,8 +94,24 @@ export default function Maintenance() {
   const [expanded, setExpanded]     = useState({})
 
   const del = async id => {
+    const item = data.maintenance.find(m => m.id === id)
+    const prev = data.maintenance
     mutate(d => ({ ...d, maintenance: d.maintenance.filter(m => m.id !== id) }))
-    await db.deleteMaint(id).catch(e => toast(e.message, 'error'))
+    try {
+      const trashed = await db.deleteMaint(id)
+      if (trashed) {
+        mutate(d => ({ ...d, trash: [trashed, ...(d.trash || [])] }))
+        toast(`"${item?.name || 'Item'}" deleted`, 'success', 4000, {
+          label: 'Undo',
+          onClick: async () => {
+            try {
+              await db.restoreFromTrash(trashed.id, trashed)
+              mutate(d => ({ ...d, maintenance: [item, ...d.maintenance], trash: d.trash.filter(t => t.id !== trashed.id) }))
+            } catch(e) { toast(e.message, 'error') }
+          }
+        })
+      }
+    } catch(e) { mutate(d => ({ ...d, maintenance: prev })); toast(e.message, 'error') }
     setDeleteItem(null)
   }
 
@@ -139,6 +155,7 @@ export default function Maintenance() {
     })
   }
 
+
   const sorted = [...data.maintenance].sort((a, b) =>
     (maintStatus(a).urgent ? 0 : 1) - (maintStatus(b).urgent ? 0 : 1)
   )
@@ -159,7 +176,7 @@ export default function Maintenance() {
                   const isExp = expanded[m.id]
                   const hasSharpLog = m.category === 'Sharpening'
                   return (
-                    <div key={m.id} data-id={m.id} style={{ borderBottom: last ? 'none' : '1px solid var(--border-2)', background: 'var(--surface)' }}>
+                    <div key={m.id} style={{ borderBottom: last ? 'none' : '1px solid var(--border-2)', background: 'var(--surface)' }}>
                       <div style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div style={{ flex: 1, paddingRight: 12 }}>
                           <div style={{ fontWeight: 500 }}>{m.name}</div>

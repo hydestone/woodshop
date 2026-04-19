@@ -38,11 +38,23 @@ export default function Brainstorm() {
   }
 
   const del = async id => {
+    const item = data.brainstorming.find(n => n.id === id)
     const prev = data.brainstorming
     mutate(d => ({ ...d, brainstorming: d.brainstorming.filter(n => n.id !== id) }))
     try {
       const trashed = await db.deleteBrainstorm(id)
-      if (trashed) mutate(d => ({ ...d, trash: [trashed, ...(d.trash || [])] }))
+      if (trashed) {
+        mutate(d => ({ ...d, trash: [trashed, ...(d.trash || [])] }))
+        toast('Note deleted', 'success', 4000, {
+          label: 'Undo',
+          onClick: async () => {
+            try {
+              await db.restoreFromTrash(trashed.id, trashed)
+              mutate(d => ({ ...d, brainstorming: [item, ...d.brainstorming], trash: d.trash.filter(t => t.id !== trashed.id) }))
+            } catch(e) { toast(e.message, 'error') }
+          }
+        })
+      }
     } catch(e) { mutate(d => ({ ...d, brainstorming: prev })); toast(e.message, 'error') }
     setDeleteNote(null)
   }

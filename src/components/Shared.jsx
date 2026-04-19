@@ -104,6 +104,7 @@ export function maintStatus(m) {
 export function Sheet({ title, onClose, onSave, saveLabel = 'Save', children }) {
   const [saving, setSaving] = useState(false)
   const savingRef = useRef(false)
+  const overlayRef = useRef()
 
   const handleSave = useCallback(async () => {
     if (savingRef.current || !onSave) return
@@ -123,6 +124,24 @@ export function Sheet({ title, onClose, onSave, saveLabel = 'Save', children }) 
     return () => window.removeEventListener('keydown', handler)
   }, [onClose, handleSave])
 
+  // iOS keyboard: resize overlay to match visual viewport so sheet stays above keyboard
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv) return
+    const update = () => {
+      if (!overlayRef.current) return
+      overlayRef.current.style.height = vv.height + 'px'
+      overlayRef.current.style.top = vv.offsetTop + 'px'
+    }
+    vv.addEventListener('resize', update)
+    vv.addEventListener('scroll', update)
+    update()
+    return () => {
+      vv.removeEventListener('resize', update)
+      vv.removeEventListener('scroll', update)
+    }
+  }, [])
+
   // iOS keyboard: scroll focused input into view inside sheet-body
   useEffect(() => {
     const handleFocus = (e) => {
@@ -141,6 +160,7 @@ export function Sheet({ title, onClose, onSave, saveLabel = 'Save', children }) 
 
   return createPortal(
     <div
+      ref={overlayRef}
       className="overlay"
       role="dialog"
       aria-modal="true"

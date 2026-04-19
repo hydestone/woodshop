@@ -406,17 +406,17 @@ export async function restoreFromTrash(trashId, trashItem) {
 
   if (type === 'project') {
     const { _steps, _coats, _photos, _woodSources, ...project } = item
-    await q(supabase.from('projects').insert(project))
-    if (_steps?.length) await supabase.from('steps').insert(_steps).catch(() => {})
-    if (_coats?.length) await supabase.from('coats').insert(_coats).catch(() => {})
-    if (_photos?.length) await supabase.from('photos').insert(_photos).catch(() => {})
-    if (_woodSources?.length) await supabase.from('project_wood_sources').insert(_woodSources).catch(() => {})
+    await q(supabase.from('projects').upsert(project))
+    if (_steps?.length) await supabase.from('steps').upsert(_steps).catch(() => {})
+    if (_coats?.length) await supabase.from('coats').upsert(_coats).catch(() => {})
+    if (_photos?.length) await supabase.from('photos').upsert(_photos).catch(() => {})
+    if (_woodSources?.length) await supabase.from('project_wood_sources').upsert(_woodSources).catch(() => {})
   } else if (type === 'photo') {
     const { url, ...photo } = item
-    await q(supabase.from('photos').insert(photo))
+    await q(supabase.from('photos').upsert(photo))
   } else {
     const table = TRASH_TABLES[type]
-    if (table) await q(supabase.from(table).insert(item))
+    if (table) await q(supabase.from(table).upsert(item))
   }
 
   return q(supabase.from('trash').delete().eq('id', trashId))

@@ -39,8 +39,24 @@ export default function Resources() {
   }, [])
 
   const del = async id => {
+    const item = data.resources.find(r => r.id === id)
+    const prev = data.resources
     mutate(d => ({ ...d, resources: d.resources.filter(r => r.id !== id) }))
-    await db.deleteResource(id).catch(e => toast(e.message, 'error'))
+    try {
+      const trashed = await db.deleteResource(id)
+      if (trashed) {
+        mutate(d => ({ ...d, trash: [trashed, ...(d.trash || [])] }))
+        toast(`"${item?.title || 'Resource'}" deleted`, 'success', 4000, {
+          label: 'Undo',
+          onClick: async () => {
+            try {
+              await db.restoreFromTrash(trashed.id, trashed)
+              mutate(d => ({ ...d, resources: [item, ...d.resources], trash: d.trash.filter(t => t.id !== trashed.id) }))
+            } catch(e) { toast(e.message, 'error') }
+          }
+        })
+      }
+    } catch(e) { mutate(d => ({ ...d, resources: prev })); toast(e.message, 'error') }
     setDeleteItem(null)
   }
 
@@ -132,7 +148,7 @@ export default function Resources() {
               <span className="section-label">{cat}</span>
               <div className="group">
                 {filtered.filter(r => r.category === cat).map((r, i, arr) => (
-                  <div key={r.id} data-id={r.id} style={{ borderBottom: i < arr.length - 1 ? '1px solid var(--border-2)' : 'none', padding: '12px 16px', background: 'var(--surface)' }}>
+                  <div key={r.id} style={{ borderBottom: i < arr.length - 1 ? '1px solid var(--border-2)' : 'none', padding: '12px 16px', background: 'var(--surface)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <a href={r.url} target="_blank" rel="noopener noreferrer" style={{ fontWeight: 600, fontSize: 15, color: 'var(--accent)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -161,7 +177,7 @@ export default function Resources() {
               <span className="section-label">Other</span>
               <div className="group">
                 {filtered.filter(r => !r.category || !CATEGORIES.includes(r.category)).map((r, i, arr) => (
-                  <div key={r.id} data-id={r.id} style={{ borderBottom: i < arr.length - 1 ? '1px solid var(--border-2)' : 'none', padding: '12px 16px', background: 'var(--surface)' }}>
+                  <div key={r.id} style={{ borderBottom: i < arr.length - 1 ? '1px solid var(--border-2)' : 'none', padding: '12px 16px', background: 'var(--surface)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
                       <a href={r.url} target="_blank" rel="noopener noreferrer" style={{ fontWeight: 600, fontSize: 15, color: 'var(--accent)', textDecoration: 'none', flex: 1 }}>{r.title}</a>
                       <div style={{ display: 'flex', gap: 4 }}>

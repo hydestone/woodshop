@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, useEffect } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
@@ -8,14 +8,11 @@ export default function AllPhotos() {
   const { navigate, data, mutate } = useCtx()
   const toast = useToast()
   const [uploading, setUploading]       = useState(false)
-  const [filter, setFilter]             = useState(() => { try { return sessionStorage.getItem('photo-filter') || 'all' } catch { return 'all' } })
-  const [sortBy, setSortBy]             = useState(() => { try { return sessionStorage.getItem('photo-sort') || 'date' } catch { return 'date' } })
+  const [filter, setFilter]             = useState('all')
+  const [sortBy, setSortBy]             = useState('date')
   const [pendingFiles, setPendingFiles] = useState([])
   const [showTag, setShowTag]           = useState(false)
   const fileRef = useRef()
-
-  useEffect(() => { try { sessionStorage.setItem('photo-filter', filter) } catch {} }, [filter])
-  useEffect(() => { try { sessionStorage.setItem('photo-sort', sortBy) } catch {} }, [sortBy])
 
   const handleFiles = files => {
     const arr = Array.from(files)
@@ -50,11 +47,13 @@ export default function AllPhotos() {
           const trashed = await db.deletePhoto(photo)
           if (trashed) {
             mutate(d => ({ ...d, trash: [trashed, ...(d.trash || [])] }))
-            toast('Photo deleted', 'success', 2000, {
+            toast('Photo deleted', 'success', 4000, {
               label: 'Undo',
               onClick: async () => {
-                await db.restoreFromTrash(trashed.id, trashed)
-                mutate(d => ({ ...d, photos: [{ ...photo, url: photo.url }, ...d.photos], trash: d.trash.filter(t => t.id !== trashed.id) }))
+                try {
+                  await db.restoreFromTrash(trashed.id, trashed)
+                  mutate(d => ({ ...d, photos: [photo, ...d.photos], trash: d.trash.filter(t => t.id !== trashed.id) }))
+                } catch(e) { toast(e.message, 'error') }
               }
             })
           }
@@ -111,36 +110,37 @@ export default function AllPhotos() {
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
       <div className="scroll-page" style={{ paddingBottom: 80 }}>
         <div className="page-header">
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 8 }}>
+          <div className="page-header-row">
             <h1 className="page-title">All Photos</h1>
-            <span style={{ fontSize: 26, fontWeight: 700, color: 'var(--text-3)' }}>{data.photos.length}</span>
+            <span style={{ fontSize: 13, color: 'var(--text-3)' }}>{data.photos.length} photo{data.photos.length !== 1 ? 's' : ''}</span>
           </div>
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+        </div>
+        {/* Filters & Sort */}
+        <div className="filter-bar" style={{ paddingBottom: 8 }}>
+          <FilterSelect
+            value={filter.startsWith('cat:') ? 'all' : filter}
+            onChange={v => setFilter(v)}
+            options={['finished','portfolio','progress','inspiration','before','after'].map(t => ({ value: t, label: t.charAt(0).toUpperCase()+t.slice(1) }))}
+            allLabel="All Types"
+            label="Filter by type"
+          />
+          {projectCategories.length > 0 && (
             <FilterSelect
-              value={filter.startsWith('cat:') ? 'all' : filter}
-              onChange={v => setFilter(v)}
-              options={['finished','portfolio','progress','inspiration','before','after'].map(t => ({ value: t, label: t.charAt(0).toUpperCase()+t.slice(1) }))}
-              allLabel="All Types"
-              label="Filter by type"
+              value={filter.startsWith('cat:') ? filter.slice(4) : 'all'}
+              onChange={v => setFilter(v === 'all' ? 'all' : 'cat:' + v)}
+              options={projectCategories.map(c => ({ value: c, label: c }))}
+              allLabel="All Categories"
+              label="Filter by category"
             />
-            {projectCategories.length > 0 && (
-              <FilterSelect
-                value={filter.startsWith('cat:') ? filter.slice(4) : 'all'}
-                onChange={v => setFilter(v === 'all' ? 'all' : 'cat:' + v)}
-                options={projectCategories.map(c => ({ value: c, label: c }))}
-                allLabel="All Categories"
-                label="Filter by category"
-              />
-            )}
-            <div className="filter-select-wrap">
-              <select className={`filter-select${sortBy !== 'date' ? ' active' : ''}`}
-                value={sortBy} onChange={e => setSortBy(e.target.value)}>
-                <option value="date">Date</option>
-                <option value="project">Project</option>
-                <option value="tag">Tag</option>
-              </select>
-              <span className="filter-select-chevron" aria-hidden="true">▾</span>
-            </div>
+          )}
+          <div className="filter-select-wrap">
+            <select className={`filter-select${sortBy !== 'date' ? ' active' : ''}`}
+              value={sortBy} onChange={e => setSortBy(e.target.value)}>
+              <option value="date">Date Added</option>
+              <option value="project">By Project</option>
+              <option value="tag">By Tag</option>
+            </select>
+            <span className="filter-select-chevron" aria-hidden="true">▾</span>
           </div>
         </div>
         <DropZone onFiles={handleFiles} uploading={uploading} />
