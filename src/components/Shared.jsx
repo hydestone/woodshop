@@ -333,21 +333,27 @@ export function Lightbox({ photos, index, onClose }) {
     }
 
     const onTouchMove = e => {
-      if (e.touches.length === 2 && lastDist.current) {
+      if (e.touches.length === 2) {
+        const prevDist = lastDist.current
+        if (!prevDist) return
         e.preventDefault()
         const dx   = e.touches[0].clientX - e.touches[1].clientX
         const dy   = e.touches[0].clientY - e.touches[1].clientY
         const dist = Math.hypot(dx, dy)
-        setScale(s => Math.max(1, Math.min(10, s * (dist / lastDist.current))))
+        setScale(s => Math.max(1, Math.min(10, s * (dist / prevDist))))
         const mid = { x: (e.touches[0].clientX + e.touches[1].clientX) / 2, y: (e.touches[0].clientY + e.touches[1].clientY) / 2 }
-        if (lastMid.current) setPan(p => ({ x: p.x + mid.x - lastMid.current.x, y: p.y + mid.y - lastMid.current.y }))
+        const prevMid = lastMid.current
+        if (prevMid) setPan(p => ({ x: p.x + mid.x - (prevMid?.x ?? 0), y: p.y + mid.y - (prevMid?.y ?? 0) }))
         lastDist.current = dist
         lastMid.current  = mid
-      } else if (e.touches.length === 1 && dragStart.current && panStart.current) {
+      } else if (e.touches.length === 1) {
+        const ds = dragStart.current
+        const ps = panStart.current
+        if (!ds || !ps) return
         setScale(s => {
           if (s <= 1) return s
           e.preventDefault()
-          setPan({ x: panStart.current.x + e.touches[0].clientX - dragStart.current.x, y: panStart.current.y + e.touches[0].clientY - dragStart.current.y })
+          setPan({ x: (ps?.x ?? 0) + e.touches[0].clientX - (ds?.x ?? 0), y: (ps?.y ?? 0) + e.touches[0].clientY - (ds?.y ?? 0) })
           return s
         })
       }
@@ -355,8 +361,11 @@ export function Lightbox({ photos, index, onClose }) {
 
     const onTouchEnd = e => {
       if (e.touches.length < 2) { lastDist.current = null; lastMid.current = null }
-      if (swipeStartX.current !== null && e.changedTouches.length > 0) {
-        const diff = swipeStartX.current - e.changedTouches[0].clientX
+      const startX = swipeStartX.current
+      swipeStartX.current = null
+      dragStart.current   = null
+      if (startX !== null && e.changedTouches.length > 0) {
+        const diff = startX - e.changedTouches[0].clientX
         setScale(s => {
           if (s === 1) {
             if (diff > 60)  setCur(i => Math.min(i + 1, photos.length - 1))
@@ -365,8 +374,6 @@ export function Lightbox({ photos, index, onClose }) {
           return s
         })
       }
-      swipeStartX.current = null
-      dragStart.current   = null
     }
 
     el.addEventListener('touchstart',  onTouchStart, { passive: true  })
