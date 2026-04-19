@@ -516,7 +516,7 @@ export function Lightbox({ photos, index, onClose }) {
 }
 
 // ─── PhotoGrid ────────────────────────────────────────────────────────────────
-export function PhotoGrid({ photos, onEdit, showProject, projects, onNavigateProject }) {
+export function PhotoGrid({ photos, onEdit, showProject, projects, onNavigateProject, onCreateIdea }) {
   const [lightboxIdx, setLightboxIdx] = useState(null)
 
   if (!photos.length) return null
@@ -534,6 +534,7 @@ export function PhotoGrid({ photos, onEdit, showProject, projects, onNavigatePro
             projects={projects}
             onOpen={() => setLightboxIdx(i)}
             onNavigateProject={onNavigateProject}
+            onCreateIdea={onCreateIdea}
           />
         ))}
       </div>
@@ -545,7 +546,7 @@ export function PhotoGrid({ photos, onEdit, showProject, projects, onNavigatePro
 }
 
 // ─── PhotoCard ────────────────────────────────────────────────────────────────
-export const PhotoCard = memo(function PhotoCard({ photo, onEdit, onOpen, showProject, projects, tileIndex = 0, onNavigateProject }) {
+export const PhotoCard = memo(function PhotoCard({ photo, onEdit, onOpen, showProject, projects, tileIndex = 0, onNavigateProject, onCreateIdea }) {
   const cardRef = useRef()
   const onMove = useCallback(e => {
     const el = cardRef.current; if (!el) return
@@ -612,6 +613,16 @@ export const PhotoCard = memo(function PhotoCard({ photo, onEdit, onOpen, showPr
           aria-label="Edit photo"
         >
           <IEdit size={13} color="#fff" sw={2} />
+        </button>
+      )}
+
+      {onCreateIdea && (
+        <button
+          className="photo-overlay-btn photo-idea-btn"
+          onClick={e => { e.stopPropagation(); onCreateIdea(photo) }}
+          aria-label="Create idea from photo"
+        >
+          💡
         </button>
       )}
 

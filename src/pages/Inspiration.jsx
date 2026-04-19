@@ -5,6 +5,7 @@ import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
 import { Sheet, FormCell, TagInput } from '../components/Shared.jsx'
 import { ICamera } from '../components/Shared.jsx'
+import { supabase, getCurrentUserId } from '../supabase.js'
 
 export default function Inspiration() {
   const { data, mutate, navigate } = useCtx()
@@ -13,6 +14,7 @@ export default function Inspiration() {
   const [uploading, setUploading] = useState(false)
   const [pendingFiles, setPendingFiles] = useState([])
   const [showTag, setShowTag] = useState(false)
+  const [ideaPhoto, setIdeaPhoto] = useState(null)
 
   const photos = data.photos.filter(p => {
     const tags = p.tags ? p.tags.split(',').map(t => t.trim().toLowerCase()) : []
@@ -44,30 +46,26 @@ export default function Inspiration() {
   const edit = async (id, fields) => {
     if (fields._delete) {
       const photo = data.photos.find(p => p.id === id)
-      const prev = data.photos
       mutate(d => ({ ...d, photos: d.photos.filter(p => p.id !== id) }))
-      if (photo) {
-        try {
-          const trashed = await db.deletePhoto(photo)
-          if (trashed) {
-            mutate(d => ({ ...d, trash: [trashed, ...(d.trash || [])] }))
-            toast('Photo deleted', 'success', 4000, {
-              label: 'Undo',
-              onClick: async () => {
-                try {
-                  await db.restoreFromTrash(trashed.id, trashed)
-                  mutate(d => ({ ...d, photos: [photo, ...d.photos], trash: d.trash.filter(t => t.id !== trashed.id) }))
-                } catch(e) { toast(e.message, 'error') }
-              }
-            })
-          }
-        } catch(e) { mutate(d => ({ ...d, photos: prev })); toast(e.message, 'error') }
-      }
+      if (photo) await db.deletePhoto(photo).catch(e => toast(e.message, 'error'))
       return
     }
     mutate(d => ({ ...d, photos: d.photos.map(p => p.id === id ? { ...p, ...fields } : p) }))
     await db.updatePhoto(id, fields).catch(e => toast(e.message, 'error'))
     toast('Saved', 'success')
+  }
+
+  // F1: Create project idea from inspiration photo
+  const saveIdea = async (fields) => {
+    try {
+      const user_id = await getCurrentUserId()
+      const { error } = await supabase.from('project_ideas').insert({ ...fields, status: 'idea', user_id })
+      if (error) throw new Error(error.message)
+      setIdeaPhoto(null)
+      toast('Idea saved! View in Project Ideas.', 'success')
+    } catch (e) {
+      toast(e.message, 'error')
+    }
   }
 
   return (
@@ -89,6 +87,7 @@ export default function Inspiration() {
             showProject
             projects={data.projects}
             onNavigateProject={id => navigate('projects', id)}
+            onCreateIdea={photo => setIdeaPhoto(photo)}
           />
         ) : (
           <div className="empty" style={{ paddingTop: 60 }}>
@@ -108,8 +107,14 @@ export default function Inspiration() {
       </button>
 
       {showTag && (
-        <Sheet title="Add to Inspiration" onClose={() => { setShowTag(false); setPendingFiles([]) }}>
+        <Sheet title="Add to Inspiration" onClose={() => { setShowTag(false); setPendingFiles([]) }} onSave={async () => {}}>
           <InspirationTagBody count={pendingFiles.length} onSave={doUpload} />
+        </Sheet>
+      )}
+
+      {ideaPhoto && (
+        <Sheet title="Create Project Idea" onClose={() => setIdeaPhoto(null)} onSave={async () => {}}>
+          <IdeaFromPhotoBody photo={ideaPhoto} onSave={saveIdea} />
         </Sheet>
       )}
     </div>
@@ -132,6 +137,55 @@ function InspirationTagBody({ count, onSave }) {
       <p className="form-hint">{count} photo{count !== 1 ? 's' : ''} · will be tagged as inspiration automatically</p>
       <button className="btn-primary" style={{ width: '100%', marginTop: 12, justifyContent: 'center' }} onClick={() => onSave(caption, tags)}>
         Upload {count > 1 ? `${count} Photos` : 'Photo'}
+      </button>
+    </div>
+  )
+}
+
+function IdeaFromPhotoBody({ photo, onSave }) {
+  const [title, setTitle] = useState(photo.caption || '')
+  const [notes, setNotes] = useState('')
+  const [tags, setTags]   = useState([])
+
+  return (
+    <div>
+      {/* Photo thumbnail */}
+      <div style={{ marginBottom: 12, borderRadius: 8, overflow: 'hidden', maxHeight: 160 }}>
+        <img src={photo.url} alt="" style={{ width: '100%', objectFit: 'cover', maxHeight: 160, display: 'block' }} />
+      </div>
+
+      <div className="form-group">
+        <FormCell label="What do you want to build?">
+          <input
+            className="form-input"
+            placeholder="e.g., Walnut serving board like this"
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+            autoFocus
+          />
+        </FormCell>
+        <FormCell label="Notes">
+          <textarea
+            className="form-input"
+            placeholder="Dimensions, materials, techniques..."
+            value={notes}
+            onChange={e => setNotes(e.target.value)}
+            rows={3}
+            style={{ resize: 'vertical', minHeight: 60 }}
+          />
+        </FormCell>
+        <FormCell label="Tags" last>
+          <TagInput tags={tags} onChange={setTags} />
+        </FormCell>
+      </div>
+
+      <button
+        className="btn-primary"
+        style={{ width: '100%', marginTop: 12, justifyContent: 'center' }}
+        onClick={() => { if (title.trim()) onSave({ title: title.trim(), notes: notes.trim(), tags: tags.join(', ') }) }}
+        disabled={!title.trim()}
+      >
+        Save Idea
       </button>
     </div>
   )

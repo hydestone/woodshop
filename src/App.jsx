@@ -698,7 +698,7 @@ export default function App() {
 
             {/* ── Content ── */}
             <main className="main-area" id="main-content">
-              <ErrorBoundary key={projId || tab}>
+              <ErrorBoundary>
               {projId ? (
                 <ProjectDetail />
               ) : (

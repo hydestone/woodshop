@@ -1317,6 +1317,7 @@ body {
 }
 .photo-overlay-btn:hover { background: rgba(26,18,8,.75); }
 .photo-edit-btn { top: 6px; left: 6px; }
+.photo-idea-btn { top: 6px; right: 6px; font-size: 12px; padding: 4px 6px; }
 .photo-placeholder {
   width: 100%;
   aspect-ratio: 1;
