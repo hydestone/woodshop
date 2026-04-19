@@ -351,3 +351,49 @@ export async function toggleFavorite(id, value) {
   const { error } = await supabase.from('projects').update({ is_favorite: value }).eq('id', id)
   if (error) throw error
 }
+
+// ── Trash / Recycling Bin ────────────────────────────────────────────────────
+const TRASH_TABLES = {
+  project: 'projects', photo: 'photos', shopping: 'shopping', brainstorm: 'brainstorming',
+  maintenance: 'maintenance', finish: 'finish_products', resource: 'resources',
+  shop_improvement: 'shop_improvements', wood_stock: 'wood_stock',
+}
+
+export async function restoreFromTrash(trashId, trashItem) {
+  const { item_type: type, item_data: item } = trashItem
+
+  if (type === 'project') {
+    const { _steps, _coats, _photos, _woodSources, ...project } = item
+    await q(supabase.from('projects').upsert(project))
+    if (_steps?.length) await supabase.from('steps').upsert(_steps).catch(() => {})
+    if (_coats?.length) await supabase.from('coats').upsert(_coats).catch(() => {})
+    if (_photos?.length) await supabase.from('photos').upsert(_photos).catch(() => {})
+    if (_woodSources?.length) await supabase.from('project_wood_sources').upsert(_woodSources).catch(() => {})
+  } else if (type === 'photo') {
+    const { url, ...photo } = item
+    await q(supabase.from('photos').upsert(photo))
+  } else {
+    const table = TRASH_TABLES[type]
+    if (table) await q(supabase.from(table).upsert(item))
+  }
+
+  return q(supabase.from('trash').delete().eq('id', trashId))
+}
+
+export async function permanentDeleteTrash(trashId, trashItem) {
+  if (trashItem.item_type === 'photo' && trashItem.item_data?.storage_path) {
+    await supabase.storage.from(BUCKET).remove([trashItem.item_data.storage_path]).catch(() => {})
+  }
+  if (trashItem.item_type === 'project' && trashItem.item_data?._photos?.length) {
+    const paths = trashItem.item_data._photos.map(p => p.storage_path).filter(Boolean)
+    if (paths.length) await supabase.storage.from(BUCKET).remove(paths).catch(() => {})
+  }
+  return q(supabase.from('trash').delete().eq('id', trashId))
+}
+
+export async function emptyTrash() {
+  const { data: items } = await supabase.from('trash').select('*')
+  for (const t of (items || [])) {
+    await permanentDeleteTrash(t.id, t).catch(() => {})
+  }
+}
