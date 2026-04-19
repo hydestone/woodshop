@@ -82,6 +82,28 @@ function inToFtInStr(inches) {
   return `${pref}${ft}' ${decToFracStr(ins)}`
 }
 
+function ftInToHTML(inches, style = {}) {
+  const neg = inches < 0; inches = Math.abs(inches)
+  const ft = Math.floor(inches / 12), ins = inches % 12
+  const { w, n, d } = inchToFrac(ins, 16)
+  const fontSize = style.fontSize || 36
+  const pref = neg ? '-' : ''
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 3, ...style }}>
+      {pref}
+      {ft > 0 && <><span style={{ fontSize }}>{ft}</span><span style={{ fontSize: fontSize * 0.55, opacity: 0.7 }}>'</span><span style={{ width: 4 }} /></>}
+      {(w > 0 || (ft === 0 && n === 0)) && <span style={{ fontSize }}>{w}</span>}
+      {n > 0 && (
+        <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', fontSize: fontSize * 0.5, lineHeight: 1, marginLeft: 2 }}>
+          <span style={{ borderBottom: '1.5px solid currentColor', paddingBottom: 1 }}>{n}</span>
+          <span style={{ paddingTop: 1 }}>{d}</span>
+        </span>
+      )}
+      <span style={{ fontSize: fontSize * 0.55, opacity: 0.7 }}>"</span>
+    </span>
+  )
+}
+
 function parseLenIn(s) {
   const f = parseFracObj(s)
   return f ? fracToDecimal(f) : null
@@ -349,11 +371,11 @@ export default function ConstructionCalc() {
           </div>
         )}
 
-        {/* Main value */}
+        {/* Main value — feet-inch as primary */}
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap', minHeight: 44 }}>
           {result
             ? <span key={`${result.n}/${result.d}`} className="result-pop">
-                {fracToHTML(result, { fontSize: 36, color: '#4ADE80', fontWeight: 800 })}
+                {ftInToHTML(fracToDecimal(result), { fontSize: 36, color: '#4ADE80', fontWeight: 800 })}
               </span>
             : display
               ? <span style={{ fontSize: 28, color: '#fff', fontWeight: 700, wordBreak: 'break-all' }}>{display}</span>
@@ -361,12 +383,11 @@ export default function ConstructionCalc() {
           }
         </div>
 
-        {/* Conversions line */}
+        {/* Secondary: decimal inches + mm */}
         {activeVal && (
           <div style={{ marginTop: 6, fontSize: 12, color: '#8BA8D0', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             <span>{fracToDecimal(activeVal).toFixed(4)}"</span>
             <span>{(fracToDecimal(activeVal) * 25.4).toFixed(2)} mm</span>
-            <span>{inToFtInStr(fracToDecimal(activeVal))}</span>
           </div>
         )}
       </div>

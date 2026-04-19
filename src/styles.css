@@ -2075,11 +2075,11 @@ body {
   justify-content: center;
 }
 .cm-key:active { transform: scale(0.93); }
-.cm-key.amber { background: #92400E; color: #FDE68A; }
+.cm-key.amber { background: #FDE68A; color: #1a1a1a; }
 .cm-key.red { background: var(--red); color: #fff; font-size: 13px; font-weight: 700; }
 .cm-key.forest { background: var(--forest); color: #fff; font-size: 22px; }
 .cm-key.gray { background: var(--text-4); color: #fff; }
-.cm-key.den { background: var(--forest); color: #fff; font-size: 14px; font-weight: 700; opacity: .8; }
+.cm-key.den { background: var(--forest); color: #1a1a1a; font-size: 14px; font-weight: 700; opacity: .8; }
 .cm-key.unit { background: rgba(37,99,235,.15); color: var(--accent); font-size: 13px; font-weight: 700; }
 .cm-history {
   background: var(--fill);
