@@ -12,6 +12,8 @@ export default class ErrorBoundary extends Component {
 
   componentDidCatch(error, info) {
     console.error('Page error:', error, info.componentStack)
+    // Notify tutorial (or any listener) that a page crashed
+    window.dispatchEvent(new CustomEvent('page-crash', { detail: { error } }))
   }
 
   render() {

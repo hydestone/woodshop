@@ -95,23 +95,23 @@ export default function GlobalSearch() {
     })
     data.shopping.forEach(s => {
       if (match(s.name, s.store, s.notes))
-        hits.push({ type: 'Shopping', title: s.name, sub: s.store || '', action: () => { window.__highlightId = s.id; setTab('shopping') } })
+        hits.push({ type: 'Shopping', title: s.name, sub: s.store || '', action: () => setTab('shopping') })
     })
     data.maintenance.forEach(m => {
       if (match(m.name, m.category, m.notes))
-        hits.push({ type: 'Maintenance', title: m.name, sub: m.category || '', action: () => { window.__highlightId = m.id; setTab('maintenance') } })
+        hits.push({ type: 'Maintenance', title: m.name, sub: m.category || '', action: () => setTab('maintenance') })
     })
     data.woodStock.forEach(s => {
       if (match(s.species, s.location, s.intended_use, s.notes))
-        hits.push({ type: 'Wood Stock', title: s.species, sub: `${s.location || ''} · ${s.status || ''}`.replace(/^ · /, ''), action: () => { window.__highlightId = s.id; setTab('stock') } })
+        hits.push({ type: 'Wood Stock', title: s.species, sub: `${s.location || ''} · ${s.status || ''}`.replace(/^ · /, ''), action: () => setTab('stock') })
     })
     data.finishProducts.forEach(p => {
       if (match(p.name, p.manufacturer, p.notes, p.feedback))
-        hits.push({ type: 'Finish', title: p.name, sub: p.manufacturer || '', action: () => { window.__highlightId = p.id; setTab('finishes') } })
+        hits.push({ type: 'Finish', title: p.name, sub: p.manufacturer || '', action: () => setTab('finishes') })
     })
     data.resources.forEach(r => {
       if (match(r.title, r.url, r.notes, r.category))
-        hits.push({ type: 'Resource', title: r.title, sub: r.category || '', action: () => { window.__highlightId = r.id; setTab('resources') } })
+        hits.push({ type: 'Resource', title: r.title, sub: r.category || '', action: () => setTab('resources') })
     })
     data.brainstorming.forEach(b => {
       if (match(b.content))
@@ -149,7 +149,7 @@ export default function GlobalSearch() {
 
   return (
     <div ref={containerRef} className="search-wrap">
-      <div className={`search-input-wrap ${focused ? 'focused' : ''}`}>
+      <div data-tutorial-target="search" className={`search-input-wrap ${focused ? 'focused' : ''}`}>
         <ISearch size={15} color="var(--text-4)" sw={2} />
         <input
           ref={inputRef}

@@ -200,7 +200,7 @@ export default function Projects() {
               {groups.map(({ status, items }) => (
                 <div key={status}>
                   <span className="section-label">{STATUS_LABEL[status]}</span>
-                  <div className="proj-cards-grid">
+                  <div className="proj-cards-grid" data-tutorial-target="project-grid">
                     {items.map(p => <MemoCard key={p.id} project={p} openProject={openProject} onFavorite={handleFavorite} onDelete={handleDelete} data={data} stepCounts={stepCountMap[p.id]} urgentCoats={urgentCoatMap[p.id] || 0} sampleProjectId={sampleIds?.projectId} />)}
                   </div>
                 </div>
@@ -216,7 +216,7 @@ export default function Projects() {
           )
         }
       </div>
-      <button className="fab" onClick={() => setShowAdd(true)} aria-label="Add project">
+      <button className="fab" data-tutorial-target="add-project" onClick={() => setShowAdd(true)} aria-label="Add project">
         <IPlus size={22} color="#fff" sw={2.5} />
       </button>
       {showAdd && <ProjectSheet categories={categories} onSave={handleAdd} onClose={() => setShowAdd(false)} mutate={mutate} />}

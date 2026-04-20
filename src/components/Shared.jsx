@@ -523,7 +523,7 @@ export function PhotoGrid({ photos, onEdit, showProject, projects, onNavigatePro
 
   return (
     <>
-      <div className="photo-grid">
+      <div className="photo-grid" data-tutorial-target="photo-grid">
         {photos.map((photo, i) => (
           <PhotoCard
             key={photo.id}

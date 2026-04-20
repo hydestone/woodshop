@@ -686,7 +686,7 @@ export default function Dashboard() {
         {!hasUrgent && <div className="empty" style={{ paddingTop: 32, paddingBottom: 0 }}><div className="empty-icon">🪵</div><div className="empty-title">All clear</div><p className="empty-sub">Nothing urgent today.</p></div>}
 
         {/* Quick actions */}
-        <div style={{ display: 'flex', gap: 8, padding: '16px 20px 8px', overflowX: 'auto', scrollbarWidth: 'none' }}>
+        <div data-tutorial-target="quick-actions" style={{ display: 'flex', gap: 8, padding: '16px 20px 8px', overflowX: 'auto', scrollbarWidth: 'none' }}>
           <button className="dash-action-btn" onClick={() => setTab('projects')}>
             <IFolder size={16} color="var(--accent)" sw={1.8} /> New Project
           </button>

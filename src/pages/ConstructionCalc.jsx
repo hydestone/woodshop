@@ -354,7 +354,7 @@ export default function ConstructionCalc() {
       </div>
 
       {/* ── Display ── */}
-      <div className="cm-display">
+      <div className="cm-display" data-tutorial-target="calculator">
         {/* Status bar */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4, minHeight: 18 }}>
           <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>

@@ -6,7 +6,7 @@ import * as db from '../db.js'
 const TAGS = ['finished', 'portfolio', 'progress', 'inspiration', 'before', 'after']
 
 // ── Inline editable cell ───────────────────────────────────────────────────────
-function Cell({ value, onSave, type = 'text', options, missing, placeholder }) {
+function Cell({ value, onSave, type = 'text', options, missing }) {
   const [editing, setEditing] = useState(false)
   const [val, setVal] = useState(value || '')
 
@@ -32,9 +32,9 @@ function Cell({ value, onSave, type = 'text', options, missing, placeholder }) {
 
   if (type === 'select') return (
     <select autoFocus className="form-select" style={{ fontSize: 13, padding: '3px 6px', minWidth: 100 }}
-      value={val} onChange={e => { setVal(e.target.value); setEditing(false); if (e.target.value !== (value || '')) onSave(e.target.value) }}
-      onBlur={() => setEditing(false)}>
-      <option value="">{placeholder || '—'}</option>
+      value={val} onChange={e => setVal(e.target.value)}
+      onBlur={commit}>
+      <option value="">—</option>
       {options.map(o => <option key={o} value={o}>{o}</option>)}
     </select>
   )
@@ -79,7 +79,7 @@ function TagsCell({ tags, onSave }) {
   )
 
   return (
-    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
+    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }} onMouseLeave={() => setEditing(false)}>
       {TAGS.map(t => (
         <button key={t} onClick={() => toggle(t)} style={{
           fontSize: 11, padding: '2px 8px', borderRadius: 99, cursor: 'pointer', fontFamily: 'inherit',
@@ -88,9 +88,6 @@ function TagsCell({ tags, onSave }) {
           border: 'none', fontWeight: 600,
         }}>{t}</button>
       ))}
-      <button onClick={() => setEditing(false)} style={{
-        fontSize: 13, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-4)', padding: '0 4px', lineHeight: 1,
-      }} aria-label="Close tags">✕</button>
     </div>
   )
 }
@@ -179,22 +176,8 @@ function PhotosAudit() {
                   </td>
                   <td style={{ padding: '6px 12px' }}>
                     <Cell value={proj?.name} missing={!photo.project_id}
-                      type="select"
-                      placeholder="Select project…"
-                      options={[...projects.map(p => p.name).sort((a, b) => a.localeCompare(b)), '＋ New Project']}
-                      onSave={async v => {
-                        if (v === '＋ New Project') {
-                          const name = prompt('New project name:')
-                          if (!name?.trim()) return
-                          try {
-                            const proj = await db.addProject({ name: name.trim(), status: 'planning' })
-                            mutate(d => ({ ...d, projects: [...d.projects, proj] }))
-                            await db.updatePhoto(photo.id, { project_id: proj.id })
-                            mutate(d => ({ ...d, photos: d.photos.map(p => p.id === photo.id ? { ...p, project_id: proj.id } : p) }))
-                            toast(`Created "${name.trim()}" and linked photo`, 'success')
-                          } catch (e) { toast(e.message, 'error') }
-                          return
-                        }
+                      type="select" options={projects.map(p => p.name)}
+                      onSave={v => {
                         const p = projects.find(x => x.name === v)
                         if (p) save(photo.id, { project_id: p.id })
                       }} />
