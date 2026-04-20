@@ -395,6 +395,16 @@ export default function Tutorial({ onClose, setTab }) {
   return createPortal(
     <div style={{ position: 'fixed', inset: 0, zIndex: 20000 }}>
 
+      {/* DEBUG — remove after testing */}
+      <div style={{
+        position: 'fixed', top: 4, left: 4, zIndex: 99999,
+        background: spot ? '#166534' : '#991b1b', color: '#fff',
+        fontSize: 11, fontFamily: 'monospace', padding: '4px 8px',
+        borderRadius: 6, pointerEvents: 'none',
+      }}>
+        step={step} | target={current.target || 'none'} | spot={spot ? `FOUND ${Math.round(spot.left)},${Math.round(spot.top)} ${Math.round(spot.width)}x${Math.round(spot.height)}` : 'NULL'}
+      </div>
+
       {/* Overlay with spotlight cutout */}
       <Overlay spot={spot} onClick={next} />
 
