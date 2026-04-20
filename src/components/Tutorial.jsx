@@ -227,12 +227,34 @@ function calcTipPos(spot) {
 
   const vw = window.innerWidth, vh = window.innerHeight
   const tipW = Math.min(340, vw - 24)
+  const tipH = 220 // approximate tooltip height
+  const gap = 20   // minimum gap between spotlight and tooltip
   const s = { position: 'fixed', maxWidth: 340, width: tipW }
 
-  // Prefer below, then above, then center
-  if (spot.bottom + 240 < vh) s.top = spot.bottom + 16
-  else if (spot.top - 240 > 0) s.top = spot.top - 250
-  else s.top = Math.max(60, vh / 2 - 120)
+  const spaceBelow = vh - spot.bottom - gap
+  const spaceAbove = spot.top - gap
+  const spaceRight = vw - spot.right - gap
+  const spaceLeft = spot.left - gap
+
+  // Prefer below, then above, then right side, then overlap center
+  if (spaceBelow >= tipH) {
+    s.top = spot.bottom + gap
+  } else if (spaceAbove >= tipH) {
+    s.top = spot.top - tipH - gap
+  } else if (spaceRight >= tipW && spot.height > tipH) {
+    // Target is tall — place to the right
+    s.top = Math.max(12, spot.cy - tipH / 2)
+    s.left = spot.right + gap
+    return s
+  } else if (spaceLeft >= tipW && spot.height > tipH) {
+    // Target is tall — place to the left
+    s.top = Math.max(12, spot.cy - tipH / 2)
+    s.left = spot.left - tipW - gap
+    return s
+  } else {
+    // Last resort — place at top of screen
+    s.top = 12
+  }
 
   // Center horizontally on target, clamp to edges
   s.left = Math.max(12, Math.min(vw - tipW - 12, spot.cx - tipW / 2))
@@ -366,7 +388,14 @@ export default function Tutorial({ onClose, setTab }) {
   if (!visible) return null
 
   const tipRect = tipPos.top && typeof tipPos.top === 'number'
-    ? { left: tipPos.left || 0, right: (tipPos.left || 0) + 340, top: tipPos.top, bottom: tipPos.top + 200 }
+    ? {
+        left: tipPos.left || 0,
+        right: (tipPos.left || 0) + 340,
+        top: tipPos.top,
+        bottom: tipPos.top + 200,
+        cx: (tipPos.left || 0) + 170,
+        cy: tipPos.top + 100,
+      }
     : null
 
   return createPortal(
@@ -375,8 +404,8 @@ export default function Tutorial({ onClose, setTab }) {
       {/* Overlay with spotlight cutout */}
       <Overlay spot={spot} onClick={next} />
 
-      {/* Arrow from spotlight to tooltip */}
-      {spot && tipRect && <Arrow from={spot} to={tipRect} />}
+      {/* Arrow from tooltip to spotlight */}
+      {spot && tipRect && <Arrow from={tipRect} to={spot} />}
 
       {/* Tooltip card */}
       <div style={{
