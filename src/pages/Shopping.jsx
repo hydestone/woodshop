@@ -72,7 +72,7 @@ export default function Shopping() {
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
       <div className="scroll-page" style={{ paddingBottom: 80 }}>
-        <div className="page-header">
+        <div className="page-header" data-tutorial-target="shopping-page">
           <div className="page-header-row">
             <h1 className="page-title">Shopping List</h1>
             {done.length > 0 && (

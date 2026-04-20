@@ -28,13 +28,13 @@ const STEPS = [
     title: 'Welcome to JDH Woodworks',
     body: 'This quick tour shows you the key features. Takes about 2 minutes. Tap Next to start, or Skip to explore on your own.',
     icon: '🪵',
-    tab: null, target: null,
+    tab: 'home', target: '[data-tutorial-target="app-logo"]',
   },
   {
     title: 'Dashboard',
     body: 'Your home screen shows what needs attention today: coats ready to apply, overdue maintenance, and active project next steps.',
     icon: '🏠',
-    tab: 'home', target: null,
+    tab: 'home', target: '[data-tutorial-target="dashboard"]',
   },
   {
     title: 'Quick Actions',
@@ -46,7 +46,7 @@ const STEPS = [
     title: 'Projects',
     body: 'Track every build. Set status, wood type, finish, and category. Each project has steps, finishing coats, photos, and notes.',
     icon: '📁',
-    tab: 'projects', target: null,
+    tab: 'projects', target: '[data-tutorial-target="projects-header"]',
   },
   {
     title: 'Favorite Projects',
@@ -82,13 +82,13 @@ const STEPS = [
     title: 'Shopping List',
     body: 'Keep a running list organized by store. Add costs and tag items to projects. Find it under More → Build.',
     icon: '🛒',
-    tab: 'shopping', target: null,
+    tab: 'shopping', target: '[data-tutorial-target="shopping-page"]',
   },
   {
     title: 'Wood Stock',
     body: 'Track your lumber: species, dimensions, moisture content, and drying progress. Link entries to projects so you know where each piece went.',
     icon: '🪵',
-    tab: 'stock', target: null,
+    tab: 'stock', target: '[data-tutorial-target="stock-page"]',
   },
   {
     title: 'Search Everything',
@@ -100,7 +100,7 @@ const STEPS = [
     title: 'You\'re All Set!',
     body: 'Explore the app, add your first project, and start tracking your builds. Tap Help in More → Settings anytime for tips. We\'d love your feedback!',
     icon: '🎉',
-    tab: 'home', target: null, final: true,
+    tab: 'home', target: '[data-tutorial-target="app-logo"]', final: true,
   },
 ]
 
@@ -125,65 +125,52 @@ function getRect(selector, pad = 10) {
   }
 }
 
-// ─── Four-div overlay ────────────────────────────────────────────────────────
-// Creates a dark overlay with a rectangular cutout by placing four divs
-// around the target area. No masks, no clip-path, no box-shadow tricks.
-// 100% browser compatible.
-//
-//  ┌──────────────────────────┐
-//  │          TOP             │
-//  ├─────┬──────────┬─────────┤
-//  │LEFT │  (hole)  │  RIGHT  │
-//  ├─────┴──────────┴─────────┤
-//  │         BOTTOM           │
-//  └──────────────────────────┘
+// ─── Overlay with clip-path cutout ───────────────────────────────────────────
+// Single div covering the full screen. When a target exists, a polygon
+// clip-path traces around the outside and dips inward to create a hole.
+// One element, one background, no stacking context issues.
 
 function Overlay({ spot, onClick }) {
-  const bg = 'rgba(0,0,0,.65)'
-
-  if (!spot) {
-    return <div onClick={onClick} style={{ position: 'fixed', inset: 0, background: bg, zIndex: 20001 }} />
+  const style = {
+    position: 'fixed', inset: 0,
+    background: 'rgba(0,0,0,.85)',
+    zIndex: 20001,
   }
 
-  const vw = window.innerWidth
-  const vh = window.innerHeight
-  const { top, left, width, height } = spot
+  if (spot) {
+    const { top, left, width, height } = spot
+    const r = left + width, b = top + height
+    const vw = window.innerWidth, vh = window.innerHeight
+    // U-shape polygon: traces down the left side, dips around the hole, continues to bottom-right, up to top
+    style.clipPath = `polygon(
+      0px 0px,
+      0px ${vh}px,
+      ${left}px ${vh}px,
+      ${left}px ${top}px,
+      ${r}px ${top}px,
+      ${r}px ${b}px,
+      ${left}px ${b}px,
+      ${left}px ${vh}px,
+      ${vw}px ${vh}px,
+      ${vw}px 0px
+    )`
+  }
 
   return (
     <>
-      {/* Top */}
-      <div onClick={onClick} style={{
-        position: 'fixed', top: 0, left: 0,
-        width: vw, height: Math.max(0, top),
-        background: bg, zIndex: 20001,
-      }} />
-      {/* Bottom */}
-      <div onClick={onClick} style={{
-        position: 'fixed', top: top + height, left: 0,
-        width: vw, height: Math.max(0, vh - top - height),
-        background: bg, zIndex: 20001,
-      }} />
-      {/* Left */}
-      <div onClick={onClick} style={{
-        position: 'fixed', top: top, left: 0,
-        width: Math.max(0, left), height: height,
-        background: bg, zIndex: 20001,
-      }} />
-      {/* Right */}
-      <div onClick={onClick} style={{
-        position: 'fixed', top: top, left: left + width,
-        width: Math.max(0, vw - left - width), height: height,
-        background: bg, zIndex: 20001,
-      }} />
-      {/* Glow ring — rounded border over the hole */}
-      <div style={{
-        position: 'fixed', top, left, width, height,
-        border: '3px solid rgba(37,99,235,.5)',
-        borderRadius: 14,
-        pointerEvents: 'none',
-        zIndex: 20002,
-        animation: 'tutGlow 2s ease-in-out infinite',
-      }} />
+      <div onClick={onClick} style={style} />
+      {spot && (
+        <div style={{
+          position: 'fixed',
+          top: spot.top, left: spot.left,
+          width: spot.width, height: spot.height,
+          border: '3px solid rgba(37,99,235,.7)',
+          borderRadius: 14,
+          boxShadow: '0 0 20px 4px rgba(37,99,235,.3), inset 0 0 20px 4px rgba(37,99,235,.1)',
+          pointerEvents: 'none',
+          zIndex: 20002,
+        }} />
+      )}
     </>
   )
 }
@@ -218,25 +205,15 @@ function Arrow({ from, to }) {
       width="100%" height="100%">
       {/* Glow under arrow */}
       <path d={`M${fx},${fy} Q${cpx},${cpy} ${tx},${ty}`}
-        fill="none" stroke="rgba(37,99,235,.2)" strokeWidth="8" strokeLinecap="round" />
+        fill="none" stroke="rgba(37,99,235,.3)" strokeWidth="8" strokeLinecap="round" />
       {/* Arrow line */}
       <path d={`M${fx},${fy} Q${cpx},${cpy} ${tx},${ty}`}
-        fill="none" stroke="rgba(255,255,255,.65)" strokeWidth="2" strokeLinecap="round"
-        strokeDasharray={dist} strokeDashoffset={dist}>
-        <animate attributeName="stroke-dashoffset" from={dist} to="0"
-          dur="0.5s" fill="freeze" begin="0.2s" />
-      </path>
+        fill="none" stroke="rgba(255,255,255,.8)" strokeWidth="2.5" strokeLinecap="round" />
       {/* Arrowhead */}
       <polygon points={`${tx},${ty} ${a1x},${a1y} ${a2x},${a2y}`}
-        fill="rgba(255,255,255,.65)" opacity="0">
-        <animate attributeName="opacity" from="0" to="1"
-          dur="0.15s" fill="freeze" begin="0.6s" />
-      </polygon>
+        fill="rgba(255,255,255,.8)" />
       {/* Pulsing source dot */}
-      <circle cx={fx} cy={fy} r="4" fill="rgba(37,99,235,.7)">
-        <animate attributeName="r" values="4;8;4" dur="2s" repeatCount="indefinite" />
-        <animate attributeName="opacity" values=".7;.2;.7" dur="2s" repeatCount="indefinite" />
-      </circle>
+      <circle cx={fx} cy={fy} r="6" fill="rgba(37,99,235,.8)" />
     </svg>
   )
 }
@@ -394,16 +371,6 @@ export default function Tutorial({ onClose, setTab }) {
 
   return createPortal(
     <div style={{ position: 'fixed', inset: 0, zIndex: 20000 }}>
-
-      {/* DEBUG — remove after testing */}
-      <div style={{
-        position: 'fixed', top: 4, left: 4, zIndex: 99999,
-        background: spot ? '#166534' : '#991b1b', color: '#fff',
-        fontSize: 11, fontFamily: 'monospace', padding: '4px 8px',
-        borderRadius: 6, pointerEvents: 'none',
-      }}>
-        step={step} | target={current.target || 'none'} | spot={spot ? `FOUND ${Math.round(spot.left)},${Math.round(spot.top)} ${Math.round(spot.width)}x${Math.round(spot.height)}` : 'NULL'}
-      </div>
 
       {/* Overlay with spotlight cutout */}
       <Overlay spot={spot} onClick={next} />

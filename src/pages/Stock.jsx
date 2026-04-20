@@ -432,7 +432,7 @@ export default function Stock() {
   return (
     <div style={{height:'100%',display:'flex',flexDirection:'column',position:'relative'}}>
       <div className="scroll-page" style={{paddingBottom:80}}>
-        <div className="page-header">
+        <div className="page-header" data-tutorial-target="stock-page">
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
             <h1 className="page-title">Wood Stock</h1>
             <button className={showTools?'btn-primary':'btn-secondary'} style={{padding:'5px 12px',fontSize:13}} onClick={()=>setShowTools(s=>!s)}>

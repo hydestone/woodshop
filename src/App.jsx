@@ -600,7 +600,7 @@ export default function App() {
         <div className="app-wrapper">
           {/* ── Top bar ── */}
           <header className="top-bar" role="banner">
-            <div className="top-bar-brand">
+            <div className="top-bar-brand" data-tutorial-target="app-logo">
               <img src="/New_Logo.png" alt="" aria-hidden="true" className="top-bar-logo" />
               <div className="top-bar-title">JDH <span className="top-bar-accent">WOODWORKS</span></div>
             </div>

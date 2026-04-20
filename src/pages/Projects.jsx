@@ -133,7 +133,7 @@ export default function Projects() {
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div ref={scrollRef} className="scroll-page" style={{ paddingBottom: 100 }}>
-        <div className="page-header">
+        <div className="page-header" data-tutorial-target="projects-header">
           <div className="page-header-row">
             <div style={{ display:'flex', alignItems:'center', gap:8, minWidth:0 }}>
               <h1 className="page-title">Projects</h1>

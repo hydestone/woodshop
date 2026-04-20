@@ -637,7 +637,7 @@ export default function Dashboard() {
 
   return (
     <div className="scroll-page">
-      <div className="page-header">
+      <div className="page-header" data-tutorial-target="dashboard">
         <p className="page-subtitle">
           <span className="live-dot" aria-hidden="true" />
           {today}
