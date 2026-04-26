@@ -695,7 +695,7 @@ export default function App() {
               {projId ? (
                 <ProjectDetail />
               ) : (
-                <>
+                <div key={tab}>
                   {tab === 'home'        && <>
                     {sampleIds?.projectId && (
                       <div className="sample-banner">
@@ -732,7 +732,7 @@ export default function App() {
                     {tab === 'calculators' && <Calculators />}
                     {tab === 'trash'       && <Trash />}
                   </Suspense>
-                </>
+                </div>
               )}
               </ErrorBoundary>
 

@@ -2,7 +2,7 @@ import * as echarts from 'echarts'
 import { useMemo, useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useCtx } from '../App.jsx'
-import { coatStatus, maintStatus, fmtShort, fmt, IChevR, IChevL, IFolder, ICamera, ICart, ISaw, PhotoGrid, KineticTitle } from '../components/Shared.jsx'
+import { coatStatus, maintStatus, fmtShort, fmt, IChevR, IChevL, IFolder, ICamera, ICart, ISaw, ITree, PhotoGrid, KineticTitle } from '../components/Shared.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
 
@@ -30,7 +30,7 @@ function DrillList({ title, projects, onBack, onOpen }) {
       </div>
       <div className="scroll-page" style={{ paddingBottom: 40 }}>
         {projects.length === 0 ? (
-          <div className="empty"><div className="empty-icon">🪵</div><div className="empty-title">No projects</div></div>
+          <div className="empty"><div className="empty-icon"><ITree size={32} color="var(--text-3)" sw={1.5} /></div><div className="empty-title">No projects</div></div>
         ) : (
           <div className="group" style={{ marginTop: 12 }}>
             {projects.map((p, i) => (
@@ -82,7 +82,7 @@ function YearCarousel({ year, projects, photos, onClose }) {
   if (!carouselPhotos.length) return (
     <div className="overlay" onClick={onClose} style={{ alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ background: 'var(--surface)', borderRadius: 16, padding: '32px 24px', maxWidth: 360, width: '90%', textAlign: 'center' }}>
-        <div style={{ fontSize: 40, marginBottom: 12 }}>📷</div>
+        <div style={{ marginBottom: 12 }}><ICamera size={36} color="var(--text-3)" sw={1.5} /></div>
         <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 8 }}>{year} — No photos yet</div>
         <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 16 }}>{yearProjects.length} project{yearProjects.length !== 1 ? 's' : ''} but no finished photos uploaded.</p>
         <button className="btn-primary" style={{ width: '100%', justifyContent: 'center' }} onClick={onClose}>Close</button>
@@ -686,7 +686,7 @@ export default function Dashboard() {
           </div>
         </>}
 
-        {!hasUrgent && <div className="empty" style={{ paddingTop: 32, paddingBottom: 0 }}><div className="empty-icon">🪵</div><div className="empty-title">All clear</div><p className="empty-sub">Nothing urgent today.</p></div>}
+        {!hasUrgent && <div className="empty" style={{ paddingTop: 32, paddingBottom: 0 }}><div className="empty-icon"><ITree size={32} color="var(--text-3)" sw={1.5} /></div><div className="empty-title">All clear</div><p className="empty-sub">Nothing urgent today.</p></div>}
 
         {/* Quick actions */}
         <div data-tutorial-target="quick-actions" style={{ display: 'flex', gap: 8, padding: '16px 20px 8px', overflowX: 'auto', scrollbarWidth: 'none' }}>
