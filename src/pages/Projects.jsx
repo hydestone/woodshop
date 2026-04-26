@@ -6,7 +6,7 @@ import * as db from '../db.js'
 import { addToGoogleCalendar } from '../supabase.js'
 import {
   Sheet, FormCell, BulkAddSheet, ConfirmSheet, DropZone, PhotoGrid, TagInput, FilterSelect,
-  STATUS, coatStatus, fmtShort, localDt, useLongPress,
+  STATUS, coatStatus, fmtShort, localDt, useLongPress, BeforeAfterCompare,
   IPlus, ITrash, ICircle, ICheck, IChevR, IChevL, IEdit, ICal, ICamera, IBell, IGrid, IStar,
 } from '../components/Shared.jsx'
 
@@ -441,6 +441,7 @@ export function ProjectDetail() {
   const [showRon, setShowRon]   = useState(false)
   const [showQRLabel, setShowQRLabel] = useState(false)
   const [showReminder, setShowReminder] = useState(false)
+  const [dtab, setDtab]         = useState('overview')
 
   const project = data.projects.find(p => p.id === projId)
   if (!project) return null
@@ -568,6 +569,16 @@ export function ProjectDetail() {
   const photos     = data.photos.filter(p => p.project_id === projId)
   const stepsDone  = steps.filter(s => s.completed).length
 
+  // Overview tab data
+  const timeEntries = project.time_entries ? JSON.parse(project.time_entries) : []
+  const totalMins = timeEntries.reduce((s, e) => s + (e.minutes || 0), 0)
+  const beforePhoto = photos.find(p => p.tags?.split(',').map(t=>t.trim()).includes('before'))
+  const afterPhoto  = photos.find(p => p.tags?.split(',').map(t=>t.trim()).includes('after'))
+  const edit = async (id, fields) => {
+    mutate(d => ({ ...d, photos: d.photos.map(p => p.id === id ? { ...p, ...fields } : p) }))
+    await db.updatePhoto(id, fields).catch(e => toast(e.message, 'error'))
+  }
+
   return (
     <div style={{ height: '100%', overflowY: 'auto', background: 'var(--bg)' }} className="slide-in">
 
@@ -656,11 +667,90 @@ export function ProjectDetail() {
         </div>
       </div>
 
-      {/* ── Two-column body ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'var(--border-2)' }} className="proj-detail-grid">
+      {/* ── Sub-tab bar ── */}
+      <div className="detail-tabs" style={{ display: 'flex', gap: 0, borderBottom: '2px solid var(--border-2)', margin: '0', background: 'var(--surface)' }}>
+        {[
+          { id: 'overview', label: 'Overview' },
+          { id: 'steps',    label: `Steps${steps.length ? ` (${stepsDone}/${steps.length})` : ''}` },
+          { id: 'finishing', label: `Finishing${coats.length ? ` (${coats.length})` : ''}` },
+          { id: 'photos',   label: `Photos${photos.length ? ` (${photos.length})` : ''}` },
+        ].map(t => (
+          <button key={t.id} onClick={() => setDtab(t.id)} style={{
+            flex: 1, padding: '12px 8px', border: 'none', cursor: 'pointer',
+            fontSize: 13, fontWeight: dtab === t.id ? 700 : 500,
+            fontFamily: 'inherit',
+            color: dtab === t.id ? 'var(--accent)' : 'var(--text-3)',
+            background: 'transparent',
+            borderBottom: dtab === t.id ? '2px solid var(--accent)' : '2px solid transparent',
+            marginBottom: -2,
+            transition: 'color 150ms, border-color 150ms',
+          }}>{t.label}</button>
+        ))}
+      </div>
 
-        {/* Left — Build Steps */}
-        <div style={{ background: 'var(--surface)', padding: '20px' }}>
+      {/* ── OVERVIEW TAB ── */}
+      {dtab === 'overview' && (
+        <div style={{ animation: 'contentFadeIn 200ms ease both' }}>
+          {/* Summary grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8, padding: '16px 16px 0' }}>
+            {steps.length > 0 && (
+              <div className="card" style={{ textAlign: 'center', cursor: 'pointer' }} onClick={() => setDtab('steps')}>
+                <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--accent)' }}>{stepsDone}/{steps.length}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>Steps done</div>
+              </div>
+            )}
+            {coats.length > 0 && (
+              <div className="card" style={{ textAlign: 'center', cursor: 'pointer' }} onClick={() => setDtab('finishing')}>
+                <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--green)' }}>{coats.filter(c => c.applied_at).length}/{coats.length}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>Coats applied</div>
+              </div>
+            )}
+            {photos.length > 0 && (
+              <div className="card" style={{ textAlign: 'center', cursor: 'pointer' }} onClick={() => setDtab('photos')}>
+                <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--purple)' }}>{photos.length}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>Photos</div>
+              </div>
+            )}
+            {totalMins > 0 && (
+              <div className="card" style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--orange)' }}>{totalMins >= 60 ? Math.floor(totalMins/60) + 'h' : totalMins + 'm'}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>Time logged</div>
+              </div>
+            )}
+          </div>
+
+          {/* Before/After */}
+          {beforePhoto && afterPhoto && (
+            <div style={{ padding: '16px' }}>
+              <div className="label-caps" style={{ marginBottom: 8 }}>Before / After</div>
+              <BeforeAfterCompare beforeUrl={beforePhoto.url} afterUrl={afterPhoto.url} />
+            </div>
+          )}
+
+          {/* Notes */}
+          {project.notes && (
+            <div style={{ padding: '0 16px 16px' }}>
+              <div className="label-caps" style={{ marginBottom: 8 }}>Notes</div>
+              <div style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{project.notes}</div>
+            </div>
+          )}
+
+          {/* Recent photos preview */}
+          {photos.length > 0 && (
+            <div style={{ padding: '0 16px 16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <div className="label-caps">Recent photos</div>
+                <button className="btn-text" style={{ fontSize: 12 }} onClick={() => setDtab('photos')}>View all →</button>
+              </div>
+              <PhotoGrid photos={photos.slice(0, 6)} onEdit={edit} />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── STEPS TAB ── */}
+      {dtab === 'steps' && (
+        <div style={{ background: 'var(--surface)', padding: '20px', animation: 'contentFadeIn 200ms ease both' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <div>
               <div className="label-caps">Build Steps</div>
@@ -670,37 +760,40 @@ export function ProjectDetail() {
           </div>
           <StepsList projId={projId} />
         </div>
+      )}
 
-        {/* Right — Finishing */}
-        <div style={{ background: 'var(--surface)', padding: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <div className="label-caps">Finishing</div>
-            <button className="icon-btn" onClick={() => setSub('finish-add')} aria-label="Add coat"><IPlus size={18} color="var(--accent)" /></button>
+      {/* ── FINISHING TAB ── */}
+      {dtab === 'finishing' && (
+        <div style={{ animation: 'contentFadeIn 200ms ease both' }}>
+          <div style={{ background: 'var(--surface)', padding: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <div className="label-caps">Finishing</div>
+              <button className="icon-btn" onClick={() => setSub('finish-add')} aria-label="Add coat"><IPlus size={18} color="var(--accent)" /></button>
+            </div>
+            <FinishingList projId={projId} sub={sub} setSub={setSub} />
           </div>
-          <FinishingList projId={projId} sub={sub} setSub={setSub} />
-        </div>
-      </div>
-
-      {/* ── Time & Cost ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'var(--border-2)', marginTop: 1 }}>
-        <TimeTracker project={project} onSave={handleUpdate} />
-        <CostTracker project={project} onSave={handleUpdate} projId={projId} shopping={data.shopping} />
-      </div>
-
-      {/* ── Photos full-width ── */}
-      <div style={{ background: 'var(--surface)', marginTop: 1, padding: '20px' }}>
-        <PhotoTimeline projId={projId} />
-      </div>
-
-      {/* ── Inspiration ── */}
-      {data.photos.filter(p => p.project_id === projId && p.photo_type === 'inspiration').length > 0 && (
-        <div style={{ background: 'var(--surface)', marginTop: 1, padding: '20px' }}>
-          <div className="label-caps" style={{ marginBottom: 12 }}>Inspiration</div>
-          <PhotoPane projId={projId} type="inspiration" inline />
+          {/* Time & Cost */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'var(--border-2)', marginTop: 1 }}>
+            <TimeTracker project={project} onSave={handleUpdate} />
+            <CostTracker project={project} onSave={handleUpdate} projId={projId} shopping={data.shopping} />
+          </div>
         </div>
       )}
 
-      <div style={{ height: 20 }} />
+      {/* ── PHOTOS TAB ── */}
+      {dtab === 'photos' && (
+        <div style={{ animation: 'contentFadeIn 200ms ease both' }}>
+          <div style={{ background: 'var(--surface)', padding: '20px' }}>
+            <PhotoTimeline projId={projId} />
+          </div>
+          {data.photos.filter(p => p.project_id === projId && p.photo_type === 'inspiration').length > 0 && (
+            <div style={{ background: 'var(--surface)', marginTop: 1, padding: '20px' }}>
+              <div className="label-caps" style={{ marginBottom: 12 }}>Inspiration</div>
+              <PhotoPane projId={projId} type="inspiration" inline />
+            </div>
+          )}
+        </div>
+      )}
 
       {editing    && <ProjectSheet project={project} categories={categories} onSave={handleUpdate} onClose={() => setEditing(false)} mutate={mutate} />}
       {confirming && <ConfirmSheet message={`Delete "${project.name}"? All steps, coats, and photos will be removed. This cannot be undone.`} onConfirm={handleDelete} onClose={() => setConfirming(false)} />}

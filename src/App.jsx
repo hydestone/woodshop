@@ -8,7 +8,7 @@ import { ToastProvider } from './components/Toast.jsx'
 import GlobalSearch from './components/Search.jsx'
 import {
   IFolder, ICart, IWrench, ICamera, ITree, IBulb, ISaw,
-  IStar, ICheck, IGrid, IIdea, IBrain, IDollar, ITrash,
+  IStar, ICheck, IGrid, IIdea, IBrain, IDollar, ITrash, IBell,
   IBook, IHouse, IImage, ILayers, IMore, IClose,
   coatStatus, maintStatus,
 } from './components/Shared.jsx'
@@ -36,6 +36,7 @@ const Costs       = lazy(() => import('./pages/Costs.jsx'))
 const Audit       = lazy(() => import('./pages/Audit.jsx'))
 const Help        = lazy(() => import('./pages/Help.jsx'))
 const SmokeTest   = lazy(() => import('./pages/SmokeTest.jsx'))
+const BetaQuestionnaire = lazy(() => import('./pages/BetaQuestionnaire.jsx'))
 const Calculators = lazy(() => import('./pages/Calculators.jsx'))
 const Trash       = lazy(() => import('./pages/Trash.jsx'))
 import Tutorial, { useTutorialCheck } from './components/Tutorial.jsx'
@@ -85,6 +86,7 @@ const NAV_SECTIONS = [
       { id: 'costs',       label: 'Costs',             Icon: IDollar },
       { id: 'import',      label: 'Bulk Import',       Icon: ICamera },
       { id: 'trash',       label: 'Recycling Bin',     Icon: ITrash  },
+      { id: 'beta',        label: 'Beta Feedback',     Icon: IBell   },
       { id: 'help',        label: 'Help',              Icon: IBook   },
     ],
   },
@@ -728,6 +730,7 @@ export default function App() {
                     {tab === 'costs'       && <Costs />}
                     {tab === 'audit'       && <Audit />}
                     {tab === 'help'        && <Help />}
+                    {tab === 'beta'        && <BetaQuestionnaire />}
                     {tab === 'smoketest'   && <SmokeTest />}
                     {tab === 'calculators' && <Calculators />}
                     {tab === 'trash'       && <Trash />}
