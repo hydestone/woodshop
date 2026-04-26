@@ -236,7 +236,8 @@ function QRModal({ onClose }) {
                 } catch (e) { /* cancelled */ }
               } else {
                 await navigator.clipboard.writeText(url)
-                alert('Link copied to clipboard!')
+                const btn = document.activeElement
+                if (btn) { const orig = btn.textContent; btn.textContent = '✓ Copied!'; setTimeout(() => btn.textContent = orig, 1500) }
               }
             }}
             style={{
@@ -598,6 +599,7 @@ export default function App() {
     <AppCtx.Provider value={ctx}>
       <ToastProvider>
         <div className="app-wrapper">
+          <a href="#main-content" className="skip-link">Skip to content</a>
           {/* ── Top bar ── */}
           <header className="top-bar" role="banner">
             <div className="top-bar-brand" data-tutorial-target="app-logo">
@@ -777,6 +779,21 @@ export default function App() {
             role="dialog"
             aria-modal="true"
             aria-label="More navigation"
+            ref={el => {
+              if (!el) return
+              // Focus trap
+              const focusable = el.querySelectorAll('button, [role="button"], [tabindex="0"], a, input, select, textarea')
+              if (focusable.length) focusable[0].focus()
+              const trap = e => {
+                if (e.key === 'Escape') { setShowMore(false); return }
+                if (e.key !== 'Tab') return
+                const first = focusable[0], last = focusable[focusable.length - 1]
+                if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus() }
+                else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus() }
+              }
+              el.addEventListener('keydown', trap)
+              el._cleanup = () => el.removeEventListener('keydown', trap)
+            }}
           >
             <div className="sheet" onClick={e => e.stopPropagation()}>
               <div className="sheet-handle" />

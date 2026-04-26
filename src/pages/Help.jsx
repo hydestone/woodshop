@@ -13,7 +13,7 @@ const SECTIONS = [
       'Convert a Project Idea to a project with one tap.',
       'Use the ← → arrows in the project header to step through projects.',
       'Filter by status (Active, Planning, etc.) and sort by name, category, or year.',
-      'Favorites star in the project header bookmarks it for quick access. You can also tap the ⭐ on any project card.',
+      'Favorites star in the project header bookmarks it for quick access. You can also tap the star on any project card.',
       'Use the Favorites toggle button in the Projects filter bar to show only starred projects.',
       'Calendar button adds a reminder to Google Calendar or Apple Reminders.',
     ],
@@ -25,7 +25,7 @@ const SECTIONS = [
       'Capture things you want to build someday — no commitment required.',
       'Add a title, notes, and tags.',
       'Tap "→ Project" to instantly convert an idea into a real project in Planning status.',
-      'From the Inspiration page, tap the 💡 button on any photo to create an idea directly from it.',
+      'From the Inspiration page, tap the lightbulb button on any photo to create an idea directly from it.',
     ],
   },
   {
@@ -55,7 +55,7 @@ const SECTIONS = [
       'All Photos shows every photo across all projects.',
       'Finished Work shows photos tagged as "finished".',
       'Inspiration: drag-drop or tap + to add mood board photos. Tag any photo as "inspiration" and it appears here.',
-      'Tap the 💡 button on any inspiration photo to turn it into a Project Idea.',
+      'Tap the lightbulb button on any inspiration photo to turn it into a Project Idea.',
       "Click a photo's project name to jump directly to that project.",
       'Wood Stock Gallery shows photos of raw lumber.',
     ],
@@ -152,7 +152,7 @@ export default function Help() {
         {/* Replay tutorial */}
         <div style={{ padding: '0 16px 16px' }}>
           <button className="btn-secondary" style={{ width: '100%', justifyContent: 'center', gap: 8 }} onClick={launchTutorial}>
-            🎓 Replay Tutorial
+            Replay Tutorial
           </button>
         </div>
 

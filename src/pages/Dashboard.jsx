@@ -6,7 +6,10 @@ import { coatStatus, maintStatus, fmtShort, fmt, IChevR, IChevL, IFolder, ICamer
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
 
-const SC = { active:'var(--accent)', planning:'#7C3AED', paused:'var(--orange)', complete:'var(--green)' }
+// Read CSS variable values for ECharts (which can't use var() directly)
+const cv = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+
+const SC = { active:'var(--accent)', planning:'var(--purple)', paused:'var(--orange)', complete:'var(--green)' }
 const SL = { active:'Active', planning:'Planning', paused:'Paused', complete:'Complete' }
 const SO = ['complete','active','planning','paused']
 
@@ -141,8 +144,8 @@ function ProjectsByYear({ projects, photos, onDrill , isDark = false }) {
     tooltip: {
       trigger: 'axis',
       axisPointer: { type: 'shadow' },
-      backgroundColor: dark ? '#1C2333' : '#fff',
-      borderColor: dark ? 'rgba(240,246,252,.1)' : '#E2E8F0',
+      backgroundColor: cv('--chart-bg'),
+      borderColor: cv('--chart-border'),
       textStyle: { color: EC.text(dark), fontSize: 12 },
     },
     legend: {
@@ -217,8 +220,8 @@ function SpeciesDonut({ projects, onDrill , isDark = false }) {
     tooltip: {
       trigger: 'item',
       formatter: '{b}: {c} ({d}%)',
-      backgroundColor: dark ? '#1C2333' : '#fff',
-      borderColor: dark ? 'rgba(240,246,252,.1)' : '#E2E8F0',
+      backgroundColor: cv('--chart-bg'),
+      borderColor: cv('--chart-border'),
       textStyle: { color: EC.text(dark), fontSize: 12 },
     },
     legend: {
@@ -290,8 +293,8 @@ function CategoryHeatmap({ projects, categories, onDrill , isDark = false }) {
     backgroundColor: 'transparent',
     tooltip: {
       formatter: p => `${cats[p.value[1]]} / ${years[p.value[0]]}: ${p.value[2]} project${p.value[2]!==1?'s':''}`,
-      backgroundColor: dark ? '#1C2333' : '#fff',
-      borderColor: dark ? 'rgba(240,246,252,.1)' : '#E2E8F0',
+      backgroundColor: cv('--chart-bg'),
+      borderColor: cv('--chart-border'),
       textStyle: { color: EC.text(dark), fontSize: 12 },
     },
     grid: { top: 8, left: 80, right: 8, bottom: 24 },
@@ -311,8 +314,8 @@ function CategoryHeatmap({ projects, categories, onDrill , isDark = false }) {
       min: 0, max: Math.max(1, ...data.map(d => d[2])),
       show: false,
       inRange: { color: dark
-        ? ['#161B22','#0D4429','#006D32','#26A641','#39D353']
-        : ['#F0F4F8','#BBDBB4','#6EB86E','#26A641','#166534']
+        ? [cv('--chart-green-1'),cv('--chart-green-2'),cv('--chart-green-3'),cv('--chart-green-4'),cv('--chart-green-5')]
+        : [cv('--chart-green-1'),cv('--chart-green-2'),cv('--chart-green-3'),cv('--chart-green-4'),cv('--chart-green-5')]
       },
     },
     series: [{
@@ -320,7 +323,7 @@ function CategoryHeatmap({ projects, categories, onDrill , isDark = false }) {
       data,
       label: { show: true, color: '#fff', fontSize: 10, formatter: p => p.value[2] || '' },
       emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,.3)' } },
-      itemStyle: { borderRadius: 3, borderWidth: 2, borderColor: dark ? '#161B22' : '#F0F4F8' },
+      itemStyle: { borderRadius: 3, borderWidth: 2, borderColor: cv('--chart-green-1') },
       animationDelay: (i) => i * 15,
     }],
   })
@@ -358,8 +361,8 @@ function FinishUsage({ projects, onDrill , isDark = false }) {
     backgroundColor: 'transparent',
     tooltip: {
       trigger: 'axis', axisPointer:{type:'none'},
-      backgroundColor: dark ? '#1C2333' : '#fff',
-      borderColor: dark ? 'rgba(240,246,252,.1)' : '#E2E8F0',
+      backgroundColor: cv('--chart-bg'),
+      borderColor: cv('--chart-border'),
       textStyle: { color: EC.text(dark), fontSize: 12 },
     },
     grid: { top:4, left:4, right:40, bottom:4, containLabel:true },
@@ -510,16 +513,16 @@ function useECharts(ref, getOption, deps, isDark) {
 
 // ── Theme colours ──────────────────────────────────────────────────────────────
 const EC = {
-  text:   (dark) => dark ? '#C9D1D9' : '#374151',
-  text2:  (dark) => dark ? '#8B949E' : '#6B7280',
-  bg:     (dark) => dark ? '#161B22' : '#FFFFFF',
-  grid:   (dark) => dark ? 'rgba(240,246,252,.06)' : 'rgba(0,0,0,.06)',
-  accent: '#1D4ED8',
-  green:  '#166534',
-  orange: '#B45309',
-  purple: '#7C3AED',
+  text:   () => cv('--chart-text'),
+  text2:  () => cv('--text-3'),
+  bg:     () => cv('--chart-bg'),
+  grid:   () => cv('--chart-grid'),
+  accent: cv('--accent'),
+  green:  cv('--green'),
+  orange: cv('--orange'),
+  purple: cv('--purple'),
   teal:   '#0891B2',
-  palette: ['#1D4ED8','#166534','#B45309','#7C3AED','#0891B2','#BE185D','#15803D','#9333EA'],
+  palette: [cv('--accent'), cv('--green'), cv('--orange'), cv('--purple'), '#0891B2', '#BE185D', '#15803D', '#9333EA'],
 }
 
 
@@ -561,8 +564,8 @@ function MaterialFlow({ projects , isDark = false }) {
     backgroundColor: 'transparent',
     tooltip: {
       trigger:'item',
-      backgroundColor: dark ? '#1C2333' : '#fff',
-      borderColor: dark ? 'rgba(240,246,252,.1)' : '#E2E8F0',
+      backgroundColor: cv('--chart-bg'),
+      borderColor: cv('--chart-border'),
       textStyle: { color:EC.text(dark), fontSize:12 },
       formatter: p => p.data.source
         ? `${p.data.source.slice(2)} → ${p.data.target.slice(2)}: ${p.data.value}`

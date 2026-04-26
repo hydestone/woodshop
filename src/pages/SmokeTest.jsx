@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { useToast } from '../components/Toast.jsx'
 
 // ── Test data ─────────────────────────────────────────────────────────────────
 const TESTS = [
@@ -150,6 +151,7 @@ const STATUS_COLOR = { untested: 'var(--text-4)', pass: 'var(--forest)', fail: '
 const STATUS_BG = { untested: 'transparent', pass: 'var(--green-dim)', fail: 'var(--red-dim)', skip: 'var(--fill)' }
 
 export default function SmokeTest() {
+  const toast = useToast()
   const [results, setResults] = useState(() => {
     try { return JSON.parse(localStorage.getItem('smoketest-results') || '{}') } catch { return {} }
   })
@@ -195,7 +197,7 @@ export default function SmokeTest() {
         ''
       ])
     ].filter(l => l !== undefined).join('\n')
-    navigator.clipboard.writeText(lines).then(() => alert('Results copied to clipboard'))
+    navigator.clipboard.writeText(lines).then(() => toast('Results copied to clipboard', 'success'))
   }
 
   return (

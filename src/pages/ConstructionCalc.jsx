@@ -331,7 +331,7 @@ export default function ConstructionCalc() {
   // ── Display string ──────────────────────────────────────────────────────
   const eqLine = [
     left ? fracToHTML(left, { fontSize: 16, color: 'rgba(255,255,255,.5)' }) : null,
-    op ? <span key="op" style={{ fontSize: 18, color: '#F59E0B', fontWeight: 700, margin: '0 4px' }}>{op}</span> : null,
+    op ? <span key="op" style={{ fontSize: 18, color: 'var(--orange)', fontWeight: 700, margin: '0 4px' }}>{op}</span> : null,
     !result && parsedDisplay && op
       ? fracToHTML(parsedDisplay, { fontSize: 16, color: 'rgba(255,255,255,.5)' })
       : null,
@@ -359,9 +359,9 @@ export default function ConstructionCalc() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4, minHeight: 18 }}>
           <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
             {memory && <span className="cm-indicator">M</span>}
-            {mode === 'enhanced' && <span className="cm-indicator" style={{ background: 'rgba(45,90,61,.4)', color: '#4ADE80' }}>ENH</span>}
+            {mode === 'enhanced' && <span className="cm-indicator" style={{ background: 'var(--green-dim)', color: 'var(--green)' }}>ENH</span>}
           </div>
-          {conMode && <span style={{ fontSize: 11, color: '#8BA8D0', textTransform: 'uppercase' }}>{conMode}</span>}
+          {conMode && <span style={{ fontSize: 11, color: 'var(--text-3)', textTransform: 'uppercase' }}>{conMode}</span>}
         </div>
 
         {/* Equation line */}
@@ -375,7 +375,7 @@ export default function ConstructionCalc() {
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap', minHeight: 44 }}>
           {result
             ? <span key={`${result.n}/${result.d}`} className="result-pop">
-                {ftInToHTML(fracToDecimal(result), { fontSize: 36, color: '#4ADE80', fontWeight: 800 })}
+                {ftInToHTML(fracToDecimal(result), { fontSize: 36, color: 'var(--green)', fontWeight: 800 })}
               </span>
             : display
               ? <span style={{ fontSize: 28, color: '#fff', fontWeight: 700, wordBreak: 'break-all' }}>{display}</span>
@@ -385,7 +385,7 @@ export default function ConstructionCalc() {
 
         {/* Secondary: decimal inches + mm */}
         {activeVal && (
-          <div style={{ marginTop: 6, fontSize: 12, color: '#8BA8D0', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ marginTop: 6, fontSize: 12, color: 'var(--text-3)', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             <span>{fracToDecimal(activeVal).toFixed(4)}"</span>
             <span>{(fracToDecimal(activeVal) * 25.4).toFixed(2)} mm</span>
           </div>

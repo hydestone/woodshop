@@ -630,7 +630,7 @@ function CalcNotes() {
         style={{ width: '100%', minHeight: 320, fontSize: 14, lineHeight: 1.7 }}
       />
       {notes && (
-        <button className="btn-text" style={{ marginTop: 8, color: 'var(--red)' }} onClick={() => { if (window.confirm('Clear notes?')) save('') }}>
+        <button className="btn-text" style={{ marginTop: 8, color: 'var(--red)' }} onClick={() => save('')}>
           Clear notes
         </button>
       )}

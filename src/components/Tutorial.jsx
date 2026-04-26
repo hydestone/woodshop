@@ -1,176 +1,171 @@
 /**
- * Tutorial.jsx — JDH Woodworks Guided Tour
+ * Tutorial.jsx — JDH Woodworks Guided Tour (v5)
  * 
- * Architecture decisions:
- * 
- * 1. SPOTLIGHT: Four positioned <div> elements around the target create the
- *    dark overlay with a rectangular hole. No SVG masks, no CSS box-shadow
- *    tricks, no clip-path. 100% browser compatibility.
- *    
- * 2. TARGET DETECTION: MutationObserver watches the DOM for the target element
- *    to appear. Fires the exact frame the element paints — no setTimeout
- *    polling. Falls back to a 4-second timeout if the element never appears.
- *    
- * 3. CRASH AWARENESS: Listens for 'page-crash' CustomEvent dispatched by
- *    ErrorBoundary. If the page behind the tutorial crashes, the tutorial
- *    immediately shows a "page didn't load" message instead of a dark screen.
- *    
- * 4. ARROW: SVG quadratic bezier curve with animated draw and arrowhead.
- *    Connects the spotlight center to the nearest edge of the tooltip.
+ * Architecture: clip-path overlay, MutationObserver, crash-aware.
+ * Polish: animated transitions, pulsing glow, icon bounce,
+ *         CSS-animated arrow, step dots, confetti finale.
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
+import { ITree, IHouse, IZap, IFolder, IStar, IPlus, ISaw, ICamera, IBulb, ICart, ISearch, IParty } from './Shared.jsx'
 
 // ─── Steps ───────────────────────────────────────────────────────────────────
 const STEPS = [
   {
     title: 'Welcome to JDH Woodworks',
-    body: 'This quick tour shows you the key features. Takes about 2 minutes. Tap Next to start, or Skip to explore on your own.',
-    icon: '🪵',
+    body: 'Your personal workshop management app. This quick tour shows you the key features.',
+    Icon: ITree,
     tab: 'home', target: '[data-tutorial-target="app-logo"]',
   },
   {
     title: 'Dashboard',
-    body: 'Your home screen shows what needs attention today: coats ready to apply, overdue maintenance, and active project next steps.',
-    icon: '🏠',
+    body: 'Your command center. See what needs attention today — coats to apply, overdue maintenance, and active project next steps.',
+    Icon: IHouse,
     tab: 'home', target: '[data-tutorial-target="dashboard"]',
   },
   {
     title: 'Quick Actions',
-    body: 'Jump to common tasks right from the dashboard. New project, add a photo, shopping list, or calculator.',
-    icon: '⚡',
+    body: 'Jump to common tasks right from here. New project, add a photo, shopping list, or calculator.',
+    Icon: IZap,
     tab: 'home', target: '[data-tutorial-target="quick-actions"]',
   },
   {
     title: 'Projects',
-    body: 'Track every build. Set status, wood type, finish, and category. Each project has steps, finishing coats, photos, and notes.',
-    icon: '📁',
+    body: 'Track every build from start to finish. Set status, wood species, finish, and category. Each project has steps, coats, photos, and notes.',
+    Icon: IFolder,
     tab: 'projects', target: '[data-tutorial-target="projects-header"]',
   },
   {
     title: 'Favorite Projects',
-    body: 'Tap the ⭐ on any project card to bookmark it. Then use the Favorites toggle in the filter bar to show only starred projects.',
-    icon: '⭐',
+    body: 'Tap the star on any project card to bookmark it. Use the Favorites toggle to filter down to just your starred projects.',
+    Icon: IStar,
     tab: 'projects', target: '[data-tutorial-target="project-grid"]',
   },
   {
     title: 'Add a Project',
-    body: 'Tap the + button to create a new project. Or convert a Project Idea when you\'re ready to start building.',
-    icon: '➕',
+    body: 'Tap + to create a new project, or convert a Project Idea when you\'re ready to build.',
+    Icon: IPlus,
     tab: 'projects', target: '[data-tutorial-target="add-project"]',
   },
   {
     title: 'Construction Calculator',
-    body: 'Fractions, feet-inch math, pitch/rise/run, diagonals, stairs, and compound miter. Memory and history included. Right in your tab bar.',
-    icon: '📐',
+    body: 'Fractions, feet-inch math, pitch/rise/run, diagonals, stairs, and compound miter. Memory and history built in.',
+    Icon: ISaw,
     tab: 'calculators', target: '[data-tutorial-target="calculator"]',
   },
   {
     title: 'Photos',
-    body: 'Upload progress photos, before/after shots, and finished pieces. Tag photos as "finished" for your gallery, or "portfolio" for your public page.',
-    icon: '📷',
+    body: 'Upload progress shots, before/after, and finished pieces. Tag as "finished" for your gallery or "portfolio" for your public page.',
+    Icon: ICamera,
     tab: 'photos', target: '[data-tutorial-target="photo-grid"]',
   },
   {
-    title: 'Inspiration → Ideas',
-    body: 'Save inspiration photos, then tap the 💡 on any of them to create a Project Idea. Ideas can later be converted into full projects with one tap.',
-    icon: '💡',
+    title: 'Inspiration to Ideas',
+    body: 'Save inspiration photos, then tap the lightbulb to create a Project Idea. Ideas convert to full projects with one tap.',
+    Icon: IBulb,
     tab: 'inspiration', target: '[data-tutorial-target="photo-grid"]',
   },
   {
     title: 'Shopping List',
-    body: 'Keep a running list organized by store. Add costs and tag items to projects. Find it under More → Build.',
-    icon: '🛒',
+    body: 'Keep a running list organized by store. Add costs and tag items to projects. Find it under More.',
+    Icon: ICart,
     tab: 'shopping', target: '[data-tutorial-target="shopping-page"]',
   },
   {
     title: 'Wood Stock',
-    body: 'Track your lumber: species, dimensions, moisture content, and drying progress. Link entries to projects so you know where each piece went.',
-    icon: '🪵',
+    body: 'Track your lumber inventory: species, dimensions, moisture content, and drying progress over time.',
+    Icon: ITree,
     tab: 'stock', target: '[data-tutorial-target="stock-page"]',
   },
   {
     title: 'Search Everything',
-    body: 'The search bar finds projects, wood stock, finishes, photos, and more across the entire app. Just start typing.',
-    icon: '🔍',
+    body: 'Find projects, wood stock, finishes, photos, and more across the entire app. Just start typing.',
+    Icon: ISearch,
     tab: null, target: '[data-tutorial-target="search"]',
   },
   {
     title: 'You\'re All Set!',
-    body: 'Explore the app, add your first project, and start tracking your builds. Tap Help in More → Settings anytime for tips. We\'d love your feedback!',
-    icon: '🎉',
+    body: 'Start building. Tap Help anytime for tips.',
+    Icon: IParty,
     tab: 'home', target: '[data-tutorial-target="app-logo"]', final: true,
   },
 ]
 
-// ─── Get element rect with padding ───────────────────────────────────────────
-function getRect(selector, pad = 10) {
-  if (!selector) return null
-  const el = document.querySelector(selector)
+// ─── CSS ─────────────────────────────────────────────────────────────────────
+const CSS_ID = 'tut-v5'
+function injectCSS() {
+  if (document.getElementById(CSS_ID)) return
+  const s = document.createElement('style')
+  s.id = CSS_ID
+  s.textContent = `
+    @keyframes tutGlow {
+      0%, 100% { border-color: rgba(59,130,246,.8); box-shadow: 0 0 18px 4px rgba(59,130,246,.3), inset 0 0 18px 4px rgba(59,130,246,.08); }
+      50%      { border-color: rgba(59,130,246,.35); box-shadow: 0 0 36px 10px rgba(59,130,246,.15), inset 0 0 36px 10px rgba(59,130,246,.04); }
+    }
+    @keyframes tutTipIn {
+      from { opacity: 0; transform: translateY(12px) scale(.96); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes tutIconPop {
+      0%   { transform: scale(0) rotate(-12deg); }
+      60%  { transform: scale(1.25) rotate(3deg); }
+      100% { transform: scale(1) rotate(0); }
+    }
+    @keyframes tutArrowIn {
+      from { stroke-dashoffset: var(--len); }
+      to   { stroke-dashoffset: 0; }
+    }
+    @keyframes tutHeadIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes tutConfetti {
+      0%   { transform: translateY(0) rotate(0); opacity: 1; }
+      100% { transform: translateY(110vh) rotate(600deg); opacity: 0; }
+    }
+    .tut-btn { transition: transform 80ms; }
+    .tut-btn:active { transform: scale(.94); }
+  `
+  document.head.appendChild(s)
+}
+
+// ─── Get rect ────────────────────────────────────────────────────────────────
+function getRect(sel, pad = 10) {
+  if (!sel) return null
+  const el = document.querySelector(sel)
   if (!el) return null
-  // Scroll target into view if needed
   el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
   const r = el.getBoundingClientRect()
   if (r.width === 0 && r.height === 0) return null
   return {
-    top: r.top - pad,
-    left: r.left - pad,
-    width: r.width + pad * 2,
-    height: r.height + pad * 2,
-    cx: r.left + r.width / 2,
-    cy: r.top + r.height / 2,
-    bottom: r.bottom + pad,
-    right: r.right + pad,
+    top: r.top - pad, left: r.left - pad,
+    width: r.width + pad * 2, height: r.height + pad * 2,
+    cx: r.left + r.width / 2, cy: r.top + r.height / 2,
+    bottom: r.bottom + pad, right: r.right + pad,
   }
 }
 
-// ─── Overlay with clip-path cutout ───────────────────────────────────────────
-// Single div covering the full screen. When a target exists, a polygon
-// clip-path traces around the outside and dips inward to create a hole.
-// One element, one background, no stacking context issues.
-
+// ─── Overlay ─────────────────────────────────────────────────────────────────
 function Overlay({ spot, onClick }) {
-  const style = {
+  const s = {
     position: 'fixed', inset: 0,
-    background: 'rgba(0,0,0,.85)',
+    background: 'rgba(0,0,0,.82)',
     zIndex: 20001,
+    transition: 'clip-path 400ms cubic-bezier(.4,0,.2,1)',
   }
-
   if (spot) {
-    const { top, left, width, height } = spot
-    const r = left + width, b = top + height
+    const r = spot.left + spot.width, b = spot.top + spot.height
     const vw = window.innerWidth, vh = window.innerHeight
-    // U-shape polygon: traces down the left side, dips around the hole, continues to bottom-right, up to top
-    style.clipPath = `polygon(
-      0px 0px,
-      0px ${vh}px,
-      ${left}px ${vh}px,
-      ${left}px ${top}px,
-      ${r}px ${top}px,
-      ${r}px ${b}px,
-      ${left}px ${b}px,
-      ${left}px ${vh}px,
-      ${vw}px ${vh}px,
-      ${vw}px 0px
-    )`
+    s.clipPath = `polygon(0 0,0 ${vh}px,${spot.left}px ${vh}px,${spot.left}px ${spot.top}px,${r}px ${spot.top}px,${r}px ${b}px,${spot.left}px ${b}px,${spot.left}px ${vh}px,${vw}px ${vh}px,${vw}px 0)`
   }
-
   return (
     <>
-      <div onClick={onClick} style={style} />
-      {spot && (
-        <div style={{
-          position: 'fixed',
-          top: spot.top, left: spot.left,
-          width: spot.width, height: spot.height,
-          border: '3px solid rgba(37,99,235,.7)',
-          borderRadius: 14,
-          boxShadow: '0 0 20px 4px rgba(37,99,235,.3), inset 0 0 20px 4px rgba(37,99,235,.1)',
-          pointerEvents: 'none',
-          zIndex: 20002,
-        }} />
-      )}
+      <div onClick={onClick} style={s} />
+      {spot && <div style={{
+        position: 'fixed', top: spot.top, left: spot.left,
+        width: spot.width, height: spot.height,
+        border: '3px solid rgba(59,130,246,.8)',
+        borderRadius: 14, pointerEvents: 'none', zIndex: 20002,
+        animation: 'tutGlow 2s ease-in-out infinite',
+      }} />}
     </>
   )
 }
@@ -179,318 +174,213 @@ function Overlay({ spot, onClick }) {
 function Arrow({ from, to }) {
   if (!from || !to) return null
 
-  const fx = from.cx, fy = from.cy
-  const tx = Math.max(to.left + 20, Math.min(to.right - 20, fx))
-  const ty = fy < to.top ? to.top : fy > to.bottom ? to.bottom : to.top
+  // from = tooltip rect, to = spotlight rect
+  const fx = Math.max(from.left + 10, Math.min(from.right - 10, to.cx))
+  const fy = to.cy < from.top ? from.top : to.cy > from.bottom ? from.bottom : from.top
+  const tx = Math.max(to.left + 10, Math.min(to.right - 10, from.cx))
+  const ty = from.cy < to.top ? to.top : from.cy > to.bottom ? to.bottom : to.top
 
   const dx = tx - fx, dy = ty - fy
   const dist = Math.sqrt(dx * dx + dy * dy)
-  if (dist < 40) return null
+  if (dist < 30) return null
 
-  const bulge = Math.min(60, dist * 0.3)
+  const bulge = Math.min(45, dist * 0.22)
   const nx = -dy / (dist || 1) * bulge
   const ny = dx / (dist || 1) * bulge
-  const cpx = (fx + tx) / 2 + nx
-  const cpy = (fy + ty) / 2 + ny
+  const cx = (fx + tx) / 2 + nx
+  const cy = (fy + ty) / 2 + ny
 
-  const angle = Math.atan2(ty - cpy, tx - cpx)
-  const aLen = 10
-  const a1x = tx - aLen * Math.cos(angle - 0.4)
-  const a1y = ty - aLen * Math.sin(angle - 0.4)
-  const a2x = tx - aLen * Math.cos(angle + 0.4)
-  const a2y = ty - aLen * Math.sin(angle + 0.4)
+  const a = Math.atan2(ty - cy, tx - cx)
+  const L = 11
+  const a1x = tx - L * Math.cos(a - 0.35), a1y = ty - L * Math.sin(a - 0.35)
+  const a2x = tx - L * Math.cos(a + 0.35), a2y = ty - L * Math.sin(a + 0.35)
 
   return (
     <svg style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 20003 }}
       width="100%" height="100%">
-      {/* Glow under arrow */}
-      <path d={`M${fx},${fy} Q${cpx},${cpy} ${tx},${ty}`}
-        fill="none" stroke="rgba(37,99,235,.3)" strokeWidth="8" strokeLinecap="round" />
-      {/* Arrow line */}
-      <path d={`M${fx},${fy} Q${cpx},${cpy} ${tx},${ty}`}
-        fill="none" stroke="rgba(255,255,255,.8)" strokeWidth="2.5" strokeLinecap="round" />
-      {/* Arrowhead */}
+      <path d={`M${fx},${fy} Q${cx},${cy} ${tx},${ty}`}
+        fill="none" stroke="rgba(59,130,246,.15)" strokeWidth="10" strokeLinecap="round" />
+      <path d={`M${fx},${fy} Q${cx},${cy} ${tx},${ty}`}
+        fill="none" stroke="rgba(255,255,255,.8)" strokeWidth="2" strokeLinecap="round"
+        strokeDasharray={dist}
+        style={{ '--len': dist, animation: 'tutArrowIn 450ms ease-out 200ms both' }} />
       <polygon points={`${tx},${ty} ${a1x},${a1y} ${a2x},${a2y}`}
-        fill="rgba(255,255,255,.8)" />
-      {/* Pulsing source dot */}
-      <circle cx={fx} cy={fy} r="6" fill="rgba(37,99,235,.8)" />
+        fill="rgba(255,255,255,.8)"
+        style={{ animation: 'tutHeadIn 150ms ease 550ms both' }} />
     </svg>
   )
 }
 
-// ─── Tooltip position ────────────────────────────────────────────────────────
+// ─── Dots ────────────────────────────────────────────────────────────────────
+function Dots({ i, n }) {
+  return (
+    <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+      {Array.from({ length: n }, (_, k) => (
+        <div key={k} style={{
+          width: k === i ? 16 : 6, height: 6, borderRadius: 3,
+          background: k === i ? '#3B82F6' : k < i ? 'rgba(59,130,246,.4)' : 'rgba(255,255,255,.1)',
+          transition: 'all 300ms ease',
+        }} />
+      ))}
+    </div>
+  )
+}
+
+// ─── Confetti ────────────────────────────────────────────────────────────────
+function Confetti() {
+  const C = ['#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6','#EC4899','#2D5A3D']
+  return (
+    <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 20006, overflow: 'hidden' }}>
+      {Array.from({ length: 50 }, (_, i) => (
+        <div key={i} style={{
+          position: 'absolute', top: -12,
+          left: `${Math.random() * 100}%`,
+          width: 4 + Math.random() * 6,
+          height: Math.random() > .5 ? (4 + Math.random() * 6) : (8 + Math.random() * 10),
+          borderRadius: Math.random() > .5 ? '50%' : 2,
+          background: C[i % C.length],
+          animation: `tutConfetti ${2 + Math.random() * 2.5}s ease-in ${Math.random() * 1.2}s both`,
+        }} />
+      ))}
+    </div>
+  )
+}
+
+// ─── Tip position ────────────────────────────────────────────────────────────
 function calcTipPos(spot) {
-  if (!spot) return {
-    position: 'fixed', top: '50%', left: '50%',
-    transform: 'translate(-50%, -50%)',
-  }
-
+  if (!spot) return { position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)' }
   const vw = window.innerWidth, vh = window.innerHeight
-  const tipW = Math.min(340, vw - 24)
-  const tipH = 220 // approximate tooltip height
-  const gap = 20   // minimum gap between spotlight and tooltip
-  const s = { position: 'fixed', maxWidth: 340, width: tipW }
+  const tw = Math.min(320, vw - 24), th = 210, gap = 20
+  const s = { position: 'fixed', maxWidth: 320, width: tw }
 
-  const spaceBelow = vh - spot.bottom - gap
-  const spaceAbove = spot.top - gap
-  const spaceRight = vw - spot.right - gap
-  const spaceLeft = spot.left - gap
+  if (vh - spot.bottom - gap >= th) s.top = spot.bottom + gap
+  else if (spot.top - gap >= th) s.top = spot.top - th - gap
+  else if (vw - spot.right - gap >= tw) { s.top = Math.max(12, spot.cy - th / 2); s.left = spot.right + gap; return s }
+  else if (spot.left - gap >= tw) { s.top = Math.max(12, spot.cy - th / 2); s.left = spot.left - tw - gap; return s }
+  else s.top = 12
 
-  // Prefer below, then above, then right side, then overlap center
-  if (spaceBelow >= tipH) {
-    s.top = spot.bottom + gap
-  } else if (spaceAbove >= tipH) {
-    s.top = spot.top - tipH - gap
-  } else if (spaceRight >= tipW && spot.height > tipH) {
-    // Target is tall — place to the right
-    s.top = Math.max(12, spot.cy - tipH / 2)
-    s.left = spot.right + gap
-    return s
-  } else if (spaceLeft >= tipW && spot.height > tipH) {
-    // Target is tall — place to the left
-    s.top = Math.max(12, spot.cy - tipH / 2)
-    s.left = spot.left - tipW - gap
-    return s
-  } else {
-    // Last resort — place at top of screen
-    s.top = 12
-  }
-
-  // Center horizontally on target, clamp to edges
-  s.left = Math.max(12, Math.min(vw - tipW - 12, spot.cx - tipW / 2))
+  s.left = Math.max(12, Math.min(vw - tw - 12, spot.cx - tw / 2))
   return s
 }
 
-// ─── Main Tutorial Component ─────────────────────────────────────────────────
+// ─── Main ────────────────────────────────────────────────────────────────────
 export default function Tutorial({ onClose, setTab }) {
-  const [step, setStep]       = useState(0)
-  const [spot, setSpot]       = useState(null)
-  const [tipPos, setTipPos]   = useState({})
+  const [step, setStep] = useState(0)
+  const [spot, setSpot] = useState(null)
+  const [tipPos, setTipPos] = useState({})
   const [visible, setVisible] = useState(false)
   const [crashed, setCrashed] = useState(false)
-  const observerRef = useRef(null)
-  const timeoutRef  = useRef(null)
-  const current = STEPS[step]
+  const obsRef = useRef(null)
+  const tmRef  = useRef(null)
+  const cur = STEPS[step]
 
-  // ── Navigate to correct tab ────────────────────────────────────────────
+  useEffect(() => injectCSS(), [])
+
+  useEffect(() => { if (cur.tab) setTab(cur.tab) }, [step, cur.tab, setTab])
+
   useEffect(() => {
-    if (current.tab) setTab(current.tab)
-  }, [step, current.tab, setTab])
+    setVisible(false); setSpot(null); setCrashed(false)
+    const cleanup = () => {
+      if (obsRef.current) { obsRef.current.disconnect(); obsRef.current = null }
+      if (tmRef.current) { clearTimeout(tmRef.current); tmRef.current = null }
+    }
+    cleanup()
 
-  // ── Find target via MutationObserver ───────────────────────────────────
-  useEffect(() => {
-    setVisible(false)
-    setSpot(null)
-    setCrashed(false)
-
-    // Clean up previous observers/timers
-    if (observerRef.current) { observerRef.current.disconnect(); observerRef.current = null }
-    if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null }
-
-    // No target for this step — show centered tooltip immediately
-    if (!current.target) {
-      const delay = current.tab ? 400 : 100
-      timeoutRef.current = setTimeout(() => {
-        setSpot(null)
-        setTipPos(calcTipPos(null))
-        setVisible(true)
-      }, delay)
-      return
+    if (!cur.target) {
+      tmRef.current = setTimeout(() => { setSpot(null); setTipPos(calcTipPos(null)); setVisible(true) }, cur.tab ? 400 : 100)
+      return cleanup
     }
 
-    // Try finding the target element
     const tryFind = () => {
-      const s = getRect(current.target, 12)
-      if (s) {
-        if (observerRef.current) { observerRef.current.disconnect(); observerRef.current = null }
-        if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null }
-        setSpot(s)
-        setTipPos(calcTipPos(s))
-        setVisible(true)
-        return true
-      }
+      const s = getRect(cur.target, 12)
+      if (s) { cleanup(); setSpot(s); setTipPos(calcTipPos(s)); setVisible(true); return true }
       return false
     }
 
-    // Initial attempt after tab switch settles
-    const initialDelay = current.tab ? 500 : 100
-    timeoutRef.current = setTimeout(() => {
+    tmRef.current = setTimeout(() => {
       if (tryFind()) return
+      obsRef.current = new MutationObserver(() => tryFind())
+      obsRef.current.observe(document.getElementById('main-content') || document.body, { childList: true, subtree: true })
+      tmRef.current = setTimeout(() => { cleanup(); setSpot(null); setTipPos(calcTipPos(null)); setVisible(true) }, 4000)
+    }, cur.tab ? 500 : 100)
 
-      // Not found yet — watch the DOM
-      observerRef.current = new MutationObserver(() => tryFind())
-      const root = document.getElementById('main-content') || document.body
-      observerRef.current.observe(root, { childList: true, subtree: true })
+    return cleanup
+  }, [step, cur.target, cur.tab])
 
-      // Give up after 4 seconds
-      timeoutRef.current = setTimeout(() => {
-        if (observerRef.current) { observerRef.current.disconnect(); observerRef.current = null }
-        // Element never appeared — show tooltip without spotlight
-        setSpot(null)
-        setTipPos(calcTipPos(null))
-        setVisible(true)
-      }, 4000)
-    }, initialDelay)
-
-    return () => {
-      if (observerRef.current) { observerRef.current.disconnect(); observerRef.current = null }
-      if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null }
-    }
-  }, [step, current.target, current.tab])
-
-  // ── Listen for page crashes ────────────────────────────────────────────
   useEffect(() => {
-    const handleCrash = () => {
-      setCrashed(true)
-      if (observerRef.current) { observerRef.current.disconnect(); observerRef.current = null }
-      if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null }
-      setSpot(null)
-      setTipPos(calcTipPos(null))
-      setVisible(true)
-    }
-    window.addEventListener('page-crash', handleCrash)
-    return () => window.removeEventListener('page-crash', handleCrash)
+    const h = () => { setCrashed(true); setSpot(null); setTipPos(calcTipPos(null)); setVisible(true) }
+    window.addEventListener('page-crash', h)
+    return () => window.removeEventListener('page-crash', h)
   }, [step])
 
-  // ── Reposition on resize ───────────────────────────────────────────────
   useEffect(() => {
-    const onResize = () => {
-      const s = current.target ? getRect(current.target, 12) : null
-      setSpot(s)
-      setTipPos(calcTipPos(s))
-    }
-    window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
-  }, [current.target])
+    const h = () => { const s = cur.target ? getRect(cur.target, 12) : null; setSpot(s); setTipPos(calcTipPos(s)) }
+    window.addEventListener('resize', h)
+    return () => window.removeEventListener('resize', h)
+  }, [cur.target])
 
-  // ── Navigation ─────────────────────────────────────────────────────────
   const finish = useCallback(() => { setTab('home'); onClose() }, [setTab, onClose])
-  const next = useCallback(() => {
-    if (step < STEPS.length - 1) setStep(s => s + 1)
-    else finish()
-  }, [step, finish])
-  const prev = useCallback(() => {
-    if (step > 0) setStep(s => s - 1)
-  }, [step])
+  const next = useCallback(() => step < STEPS.length - 1 ? setStep(s => s + 1) : finish(), [step, finish])
+  const prev = useCallback(() => { if (step > 0) setStep(s => s - 1) }, [step])
 
-  // ── Keyboard ───────────────────────────────────────────────────────────
   useEffect(() => {
-    const handler = e => {
+    const h = e => {
       if (e.key === 'Enter' || e.key === 'ArrowRight') next()
       if (e.key === 'ArrowLeft') prev()
       if (e.key === 'Escape') finish()
     }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
   }, [next, prev, finish])
 
-  // ── Render ─────────────────────────────────────────────────────────────
   if (!visible) return null
 
-  const tipRect = tipPos.top && typeof tipPos.top === 'number'
-    ? {
-        left: tipPos.left || 0,
-        right: (tipPos.left || 0) + 340,
-        top: tipPos.top,
-        bottom: tipPos.top + 200,
-        cx: (tipPos.left || 0) + 170,
-        cy: tipPos.top + 100,
-      }
+  const tr = tipPos.top && typeof tipPos.top === 'number'
+    ? { left: tipPos.left || 0, right: (tipPos.left || 0) + 320, top: tipPos.top, bottom: tipPos.top + 210, cx: (tipPos.left || 0) + 160, cy: tipPos.top + 105 }
     : null
 
   return createPortal(
     <div style={{ position: 'fixed', inset: 0, zIndex: 20000 }}>
-
-      {/* Overlay with spotlight cutout */}
       <Overlay spot={spot} onClick={next} />
+      {spot && tr && <Arrow from={tr} to={spot} />}
+      {cur.final && <Confetti />}
 
-      {/* Arrow from tooltip to spotlight */}
-      {spot && tipRect && <Arrow from={tipRect} to={spot} />}
-
-      {/* Tooltip card */}
       <div style={{
         ...tipPos,
-        background: 'linear-gradient(135deg, rgba(15,23,42,.97), rgba(30,41,59,.97))',
-        borderRadius: 18,
-        padding: '28px 24px 22px',
-        boxShadow: '0 20px 60px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.08)',
+        background: 'linear-gradient(145deg, rgba(15,23,42,.97), rgba(30,41,59,.95))',
+        borderRadius: 18, padding: '22px 20px 18px',
+        boxShadow: '0 20px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.06), inset 0 1px 0 rgba(255,255,255,.04)',
         zIndex: 20005,
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
+        backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+        animation: 'tutTipIn 300ms cubic-bezier(.34,1.2,.64,1) both',
+        overflow: 'hidden',
       }} key={step}>
-
-        {/* Icon */}
-        <div style={{ fontSize: 38, marginBottom: 10 }}>
-          {current.icon}
-        </div>
-
-        {/* Title */}
+        {/* Top accent bar */}
         <div style={{
-          fontSize: 20, fontWeight: 700, color: '#F0F4F8',
-          marginBottom: 8, letterSpacing: '-.3px',
-        }}>
-          {current.title}
+          position: 'absolute', top: 0, left: 0, right: 0, height: 3,
+          background: cur.final ? 'linear-gradient(90deg,#10B981,#3B82F6,#8B5CF6)' : 'linear-gradient(90deg,#1D4ED8,#3B82F6)',
+          borderRadius: '18px 18px 0 0',
+        }} />
+        <div style={{ marginBottom: 8, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, borderRadius: 12, background: cur.final ? 'rgba(16,185,129,.15)' : 'rgba(59,130,246,.12)', animation: 'tutIconPop 350ms cubic-bezier(.34,1.2,.64,1) 80ms both' }}>
+          <cur.Icon size={24} color={cur.final ? '#10B981' : '#3B82F6'} sw={2} />
         </div>
-
-        {/* Body */}
-        <p style={{
-          fontSize: 14, lineHeight: 1.7, color: '#94A3B8',
-          margin: '0 0 20px',
-        }}>
-          {current.body}
-        </p>
-
-        {/* Crash warning */}
-        {crashed && (
-          <div style={{
-            background: 'rgba(239,68,68,.15)', border: '1px solid rgba(239,68,68,.3)',
-            borderRadius: 8, padding: '8px 12px', marginBottom: 12,
-            fontSize: 12, color: '#FCA5A5',
-          }}>
-            This page didn't load. Tap Next to continue the tour.
-          </div>
-        )}
-
-        {/* Progress bar */}
-        <div style={{
-          height: 3, borderRadius: 2,
-          background: 'rgba(255,255,255,.06)',
-          marginBottom: 16, overflow: 'hidden',
-        }}>
-          <div style={{
-            height: '100%', borderRadius: 2,
-            background: '#2563EB',
-            width: `${((step + 1) / STEPS.length) * 100}%`,
-            transition: 'width 400ms ease',
-          }} />
-        </div>
-
-        {/* Controls */}
+        <div style={{ fontSize: 18, fontWeight: 700, color: '#F1F5F9', marginBottom: 5, letterSpacing: '-.2px' }}>{cur.title}</div>
+        <p style={{ fontSize: 13, lineHeight: 1.6, color: '#94A3B8', margin: '0 0 16px' }}>{cur.body}</p>
+        {crashed && <div style={{ background: 'rgba(239,68,68,.1)', border: '1px solid rgba(239,68,68,.2)', borderRadius: 8, padding: '6px 10px', marginBottom: 10, fontSize: 12, color: '#FCA5A5' }}>Page didn't load. Tap Next to continue.</div>}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: 12, color: '#475569' }}>
-            {step + 1} / {STEPS.length}
-          </span>
-          <div style={{ display: 'flex', gap: 8 }}>
-            {step === 0 ? (
-              <button onClick={finish} style={{
-                padding: '9px 18px', borderRadius: 9, border: 'none', cursor: 'pointer',
-                fontSize: 14, fontFamily: 'inherit',
-                background: 'rgba(255,255,255,.06)', color: '#64748B',
-              }}>Skip</button>
-            ) : (
-              <button onClick={prev} style={{
-                padding: '9px 18px', borderRadius: 9, border: 'none', cursor: 'pointer',
-                fontSize: 14, fontFamily: 'inherit',
-                background: 'rgba(255,255,255,.06)', color: '#64748B',
-              }}>Back</button>
-            )}
-            <button onClick={next} style={{
-              padding: '9px 22px', borderRadius: 9, border: 'none', cursor: 'pointer',
-              fontSize: 14, fontWeight: 600, fontFamily: 'inherit',
-              background: current.final ? '#166534' : '#2563EB',
-              color: '#fff',
+          <Dots i={step} n={STEPS.length} />
+          <div style={{ display: 'flex', gap: 6 }}>
+            {step === 0
+              ? <button className="tut-btn" onClick={finish} style={{ padding: '7px 14px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit', background: 'rgba(255,255,255,.06)', color: '#64748B' }}>Skip</button>
+              : <button className="tut-btn" onClick={prev} style={{ padding: '7px 14px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit', background: 'rgba(255,255,255,.06)', color: '#64748B' }}>Back</button>
+            }
+            <button className="tut-btn" onClick={next} style={{
+              padding: '7px 18px', borderRadius: 10, border: 'none', cursor: 'pointer',
+              fontSize: 13, fontWeight: 600, fontFamily: 'inherit',
+              background: cur.final ? 'linear-gradient(135deg,#059669,#10B981)' : 'linear-gradient(135deg,#1D4ED8,#3B82F6)',
+              color: '#fff', boxShadow: cur.final ? '0 3px 12px rgba(16,185,129,.3)' : '0 3px 12px rgba(37,99,235,.3)',
             }}>
-              {current.final ? '🎉 Get Started' : 'Next →'}
+              {cur.final ? 'Get Started →' : 'Next →'}
             </button>
           </div>
         </div>
@@ -500,15 +390,9 @@ export default function Tutorial({ onClose, setTab }) {
   )
 }
 
-// ─── Hook — auto-launch on first visit ───────────────────────────────────────
 export function useTutorialCheck() {
-  const [show, setShow] = useState(() => {
-    try { return !localStorage.getItem('jdh-tutorial-seen') } catch { return false }
-  })
-  const dismiss = useCallback(() => {
-    setShow(false)
-    try { localStorage.setItem('jdh-tutorial-seen', '1') } catch {}
-  }, [])
+  const [show, setShow] = useState(() => { try { return !localStorage.getItem('jdh-tutorial-seen') } catch { return false } })
+  const dismiss = useCallback(() => { setShow(false); try { localStorage.setItem('jdh-tutorial-seen', '1') } catch {} }, [])
   const launch = useCallback(() => setShow(true), [])
   return { showTutorial: show, dismissTutorial: dismiss, launchTutorial: launch }
 }

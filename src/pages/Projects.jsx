@@ -120,7 +120,7 @@ export default function Projects() {
   const handleFavorite = useCallback(async (id, value) => {
     mutate(d => ({ ...d, projects: d.projects.map(p => p.id === id ? { ...p, is_favorite: value } : p) }))
     await db.toggleFavorite(id, value).catch(e => toast(e.message, 'error'))
-    toast(value ? '⭐ Added to favorites' : 'Removed from favorites', 'success')
+    toast(value ? 'Added to favorites' : 'Removed from favorites', 'success')
   }, [mutate, toast])
 
   const handleDelete = useCallback(async (id) => {
@@ -601,7 +601,7 @@ export function ProjectDetail() {
                 const next = !project.is_favorite
                 mutate(d => ({ ...d, projects: d.projects.map(p => p.id === projId ? { ...p, is_favorite: next } : p) }))
                 db.toggleFavorite(projId, next).catch(e => toast(e.message, 'error'))
-                toast(next ? '⭐ Added to favorites' : 'Removed from favorites', 'success')
+                toast(next ? 'Added to favorites' : 'Removed from favorites', 'success')
               }}
               aria-label={project.is_favorite ? 'Remove from favorites' : 'Add to favorites'}
               title={project.is_favorite ? 'Remove from favorites' : 'Add to favorites'}
@@ -1242,7 +1242,7 @@ function PhotoPane({ projId, type, showAll, inline }) {
   const handleFavorite = useCallback(async (id, value) => {
     mutate(d => ({ ...d, projects: d.projects.map(p => p.id === id ? { ...p, is_favorite: value } : p) }))
     await db.toggleFavorite(id, value).catch(e => toast(e.message, 'error'))
-    toast(value ? '⭐ Added to favorites' : 'Removed from favorites', 'success')
+    toast(value ? 'Added to favorites' : 'Removed from favorites', 'success')
   }, [mutate, toast])
 
   const handleDelete = useCallback(async (id) => {
