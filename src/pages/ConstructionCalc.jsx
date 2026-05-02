@@ -364,14 +364,12 @@ export default function ConstructionCalc() {
           {conMode && <span style={{ fontSize: 11, color: 'var(--text-3)', textTransform: 'uppercase' }}>{conMode}</span>}
         </div>
 
-        {/* Equation line */}
-        {eqLine.length > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', marginBottom: 4, minHeight: 22 }}>
-            {eqLine}
-          </div>
-        )}
+        {/* Equation line — always rendered, hidden when empty */}
+        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', marginBottom: 4, minHeight: 22, visibility: eqLine.length > 0 ? 'visible' : 'hidden' }}>
+          {eqLine.length > 0 ? eqLine : <span>&nbsp;</span>}
+        </div>
 
-        {/* Main value — feet-inch as primary */}
+        {/* Main value */}
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap', minHeight: 44 }}>
           {result
             ? <span key={`${result.n}/${result.d}`} className="result-pop">
@@ -383,13 +381,15 @@ export default function ConstructionCalc() {
           }
         </div>
 
-        {/* Secondary: decimal inches + mm */}
-        {activeVal && (
-          <div style={{ marginTop: 6, fontSize: 12, color: 'var(--text-3)', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <span>{fracToDecimal(activeVal).toFixed(4)}"</span>
-            <span>{(fracToDecimal(activeVal) * 25.4).toFixed(2)} mm</span>
-          </div>
-        )}
+        {/* Secondary: decimal inches + mm — always rendered, hidden when empty */}
+        <div style={{ marginTop: 6, fontSize: 12, color: 'var(--text-3)', display: 'flex', gap: 12, flexWrap: 'wrap', minHeight: 18, visibility: activeVal ? 'visible' : 'hidden' }}>
+          {activeVal ? (
+            <>
+              <span>{fracToDecimal(activeVal).toFixed(4)}"</span>
+              <span>{(fracToDecimal(activeVal) * 25.4).toFixed(2)} mm</span>
+            </>
+          ) : <span>&nbsp;</span>}
+        </div>
       </div>
 
       {/* ── History tape (collapsible) ── */}

@@ -435,6 +435,13 @@ export default function App() {
     try { localStorage.setItem('jdh-theme', theme) } catch {}
   }, [theme])
 
+  // Detect standalone PWA mode (iOS fallback)
+  useEffect(() => {
+    if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
+      document.documentElement.classList.add('pwa-standalone')
+    }
+  }, [])
+
   const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark')
   const [showQR, setShowQR] = useState(false)
   const [showFeedback, setShowFeedback] = useState(false)

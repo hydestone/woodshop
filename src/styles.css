@@ -2253,12 +2253,7 @@ body {
   border-radius: var(--r-md);
   padding: 14px 16px 12px;
   margin-bottom: 8px;
-  flex: 1;
-  min-height: 100px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  overflow: hidden;
+  flex-shrink: 0;
 }
 .cm-indicator {
   font-size: 9px;
@@ -3006,6 +3001,22 @@ body {
   .scroll-page { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px)); }
   .fab { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 10px); }
   .fab.fab-secondary { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 62px); }
+}
+
+/* Standalone + mobile combined — ensures override on iPhone PWA */
+@media (display-mode: standalone) and (max-width: 767px) {
+  :root { --tabbar-h: 48px; }
+  .tabbar { padding-top: 4px; padding-bottom: env(safe-area-inset-bottom, 0px) !important; }
+  .scroll-page { padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px)) !important; }
+  .fab { bottom: calc(48px + env(safe-area-inset-bottom, 0px) + 10px) !important; }
+  .fab.fab-secondary { bottom: calc(48px + env(safe-area-inset-bottom, 0px) + 62px) !important; }
+}
+/* iOS fallback — JS adds .pwa-standalone to <html> */
+@media (max-width: 767px) {
+  .pwa-standalone .tabbar { padding-top: 4px; padding-bottom: env(safe-area-inset-bottom, 0px) !important; }
+  .pwa-standalone .scroll-page { padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px)) !important; }
+  .pwa-standalone .fab { bottom: calc(48px + env(safe-area-inset-bottom, 0px) + 10px) !important; }
+  .pwa-standalone .fab.fab-secondary { bottom: calc(48px + env(safe-area-inset-bottom, 0px) + 62px) !important; }
 }
 
 /* ─── Dashboard lazy-load skeleton ──────────────────────────────────────────── */
