@@ -3001,10 +3001,11 @@ body {
     box-shadow: 0 2px 12px rgba(0,0,0,.3);
   }
   /* Tighter padding in PWA mode — no browser chrome */
-  .tabbar { padding-bottom: env(safe-area-inset-bottom, 0px); }
+  :root { --tabbar-h: 48px; }
+  .tabbar { padding-top: 4px; padding-bottom: env(safe-area-inset-bottom, 0px); }
   .scroll-page { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px)); }
-  .fab { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 12px); }
-  .fab.fab-secondary { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 72px); }
+  .fab { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 10px); }
+  .fab.fab-secondary { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 62px); }
 }
 
 /* ─── Dashboard lazy-load skeleton ──────────────────────────────────────────── */

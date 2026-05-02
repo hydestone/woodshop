@@ -95,6 +95,13 @@ const NAV_SECTIONS = [
 // Flat list for mobile "more" menu and badge lookups
 const ALL_NAV = NAV_SECTIONS.flatMap(s => s.items)
 
+// Mobile More menu — only show essentials (desktop sidebar shows everything)
+const MOBILE_MORE_IDS = new Set([
+  'ideas', 'shopping', 'stock', 'maintenance',
+  'finishes', 'finished',
+  'settings', 'help',
+])
+
 
 const MOBILE_TABS = [
   { id: 'home',        label: 'Home',     Icon: IHouse  },
@@ -835,9 +842,11 @@ export default function App() {
                   </a>
                 </div>
 
-                {/* Grouped nav sections — skip items already in tab bar */}
+                {/* Grouped nav sections — mobile shows essentials only */}
                 {NAV_SECTIONS.map(section => {
-                  const items = section.items.filter(t => !['home','projects','calculators','photos'].includes(t.id))
+                  const items = section.items.filter(t =>
+                    !['home','projects','calculators','photos'].includes(t.id) && MOBILE_MORE_IDS.has(t.id)
+                  )
                   if (!items.length) return null
                   // Give the first (null-label) section a "Workshop" heading in mobile more menu
                   const label = section.label || 'Build'
