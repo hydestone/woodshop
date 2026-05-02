@@ -691,6 +691,42 @@ export function ProjectDetail() {
       {/* ── OVERVIEW TAB ── */}
       {dtab === 'overview' && (
         <div style={{ animation: 'contentFadeIn 200ms ease both' }}>
+
+          {/* Empty state — nothing tracked yet */}
+          {steps.length === 0 && coats.length === 0 && photos.length === 0 && totalMins === 0 && !project.notes && (
+            <div style={{ padding: '32px 20px 24px' }}>
+              <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                <div style={{ fontSize: 13, color: 'var(--text-4)', fontWeight: 500, letterSpacing: '.3px' }}>Nothing tracked yet</div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 340, margin: '0 auto' }}>
+                <button className="btn-secondary" onClick={() => setSub('steps-add')}
+                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', textAlign: 'left', width: '100%' }}>
+                  <ICheck size={20} color="var(--accent)" sw={2} />
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>Add build steps</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 1 }}>Break your build into milestones</div>
+                  </div>
+                </button>
+                <button className="btn-secondary" onClick={() => setDtab('photos')}
+                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', textAlign: 'left', width: '100%' }}>
+                  <ICamera size={20} color="var(--accent)" sw={2} />
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>Add a photo</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 1 }}>Document your progress</div>
+                  </div>
+                </button>
+                <button className="btn-secondary" onClick={() => setDtab('finishing')}
+                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', textAlign: 'left', width: '100%' }}>
+                  <IGrid size={20} color="var(--accent)" sw={2} />
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>Track finishing</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 1 }}>Log coats and dry times</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Summary grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8, padding: '16px 16px 0' }}>
             {steps.length > 0 && (
