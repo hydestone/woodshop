@@ -697,7 +697,7 @@ export default function App() {
               {projId ? (
                 <ProjectDetail />
               ) : (
-                <div key={tab}>
+                <div key={tab} style={{ height: '100%', overflow: 'auto' }}>
                   {tab === 'home'        && <>
                     {sampleIds?.projectId && (
                       <div className="sample-banner">
