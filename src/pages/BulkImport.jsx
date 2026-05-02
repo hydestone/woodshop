@@ -3,6 +3,7 @@ import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
 import { uid } from '../db.js'
+import { ICamera } from '../components/Shared.jsx'
 
 const DEST = { NEW: 'new', EXISTING: 'existing', STOCK: 'stock' }
 
@@ -270,7 +271,7 @@ export default function BulkImport() {
             onDragLeave={() => dropRef.current?.classList.remove('drag-over')}
             onClick={() => fileRef.current?.click()}
             style={{ margin: '16px 20px', border: '2px dashed var(--border)', borderRadius: 12, padding: '56px 24px', textAlign: 'center', cursor: 'pointer', background: 'var(--fill-2)' }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>📸</div>
+            <div style={{ marginBottom: 12 }}><ICamera size={48} color="var(--text-3)" sw={1.2} /></div>
             <div style={{ fontWeight: 600, fontSize: 16, color: 'var(--text-2)', marginBottom: 6 }}>Drop photos here</div>
             <p style={{ fontSize: 13, color: 'var(--text-3)' }}>Or click to select. Multiple files supported.</p>
           </div>

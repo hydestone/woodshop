@@ -3,7 +3,7 @@ import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
 import { addToGoogleCalendar, addToAppleReminders } from '../supabase.js'
-import { Sheet, FormCell, ConfirmSheet, DropZone, STOCK_STATUS, fmt, IPlus, ITrash, IEdit, ICal, IBell, ICamera } from '../components/Shared.jsx'
+import { Sheet, FormCell, ConfirmSheet, DropZone, STOCK_STATUS, fmt, IPlus, ITrash, IEdit, ICal, IBell, ICamera, ITree, IDrop } from '../components/Shared.jsx'
 
 const STATUS_ORDER = ['Freshly cut','Drying','Ready to use','Used up']
 
@@ -511,7 +511,7 @@ export default function Stock() {
             )
           })}
           {!data.woodStock.length&&(
-            <div className="empty"><div className="empty-icon">🌲</div><div className="empty-title">No stock entries</div><p className="empty-sub">Add a location above, then add stock entries</p></div>
+            <div className="empty"><div className="empty-icon"><ITree size={32} color="var(--text-3)" sw={1.5} /></div><div className="empty-title">No stock entries</div><p className="empty-sub">Add a location above, then add stock entries</p></div>
           )}
         </div>
       </div>
@@ -550,7 +550,7 @@ export function WoodStockGallery() {
 
   if (stockPhotos.length === 0) return (
     <div className="empty" style={{ paddingTop: 40 }}>
-      <div className="empty-icon">🪵</div>
+      <div className="empty-icon"><ITree size={32} color="var(--text-3)" sw={1.5} /></div>
       <div className="empty-title">No stock photos yet</div>
       <p className="empty-sub">Add photos to your wood stock entries to build a gallery of raw lumber and blanks</p>
     </div>
@@ -707,7 +707,7 @@ function MoistureLog({ item, onClose, onAdded }) {
         <div style={{padding:'10px 16px'}}><button className="btn-primary" style={{width:'100%',justifyContent:'center'}} onClick={addReading}>Save</button></div>
       </div>}
       {loading?<div style={{textAlign:'center',padding:32}}><div className="spinner" style={{margin:'0 auto'}}/></div>
-        :log.length===0?<div className="empty" style={{padding:'32px 0'}}><div className="empty-icon">💧</div><div className="empty-title">No readings yet</div></div>
+        :log.length===0?<div className="empty" style={{padding:'32px 0'}}><div className="empty-icon"><IDrop size={32} color="var(--text-3)" sw={1.5} /></div><div className="empty-title">No readings yet</div></div>
         :<div className="group">{log.sort((a,b)=>new Date(b.logged_at)-new Date(a.logged_at)).map((r,i)=>(
           <div key={r.id} className="cell" style={{borderBottom:i<log.length-1?'1px solid var(--border-2)':'none'}}>
             <div style={{flex:1}}><div style={{fontWeight:600,fontSize:16}}>{r.reading}%</div>{r.notes&&<div style={{fontSize:13,color:'var(--text-3)',marginTop:2}}>{r.notes}</div>}</div>

@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
-import { Sheet, FormCell, BulkAddSheet, ConfirmSheet, IPlus, ITrash, IEdit, ICircle, ICheck } from '../components/Shared.jsx'
+import { Sheet, FormCell, BulkAddSheet, ConfirmSheet, IPlus, ITrash, IEdit, ICircle, ICheck, ICart } from '../components/Shared.jsx'
 
 export default function Shopping() {
   const { data, mutate, sampleIds } = useCtx()
@@ -102,7 +102,7 @@ export default function Shopping() {
           ))}
           {!active.length && !done.length && (
             <div className="empty">
-              <div className="empty-icon">🛒</div>
+              <div className="empty-icon"><ICart size={32} color="var(--text-3)" sw={1.5} /></div>
               <div className="empty-title">List is empty</div>
               <p className="empty-sub">Click + to add items</p>
             </div>

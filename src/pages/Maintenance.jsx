@@ -3,7 +3,7 @@ import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
 import { addToGoogleCalendar } from '../supabase.js'
-import { Sheet, FormCell, ConfirmSheet, maintStatus, fmtShort, localDt, IPlus, ITrash, IEdit, ICal } from '../components/Shared.jsx'
+import { Sheet, FormCell, ConfirmSheet, maintStatus, fmtShort, localDt, IPlus, ITrash, IEdit, ICal, IWrench } from '../components/Shared.jsx'
 
 const CATEGORIES = ['Sharpening', 'Lathe', 'Bandsaw', 'Router Table', 'Shop', 'General']
 
@@ -218,7 +218,7 @@ export default function Maintenance() {
           ))}
           {!data.maintenance.length && (
             <div className="empty">
-              <div className="empty-icon">🔧</div>
+              <div className="empty-icon"><IWrench size={32} color="var(--text-3)" sw={1.5} /></div>
               <div className="empty-title">No maintenance items</div>
               <p className="empty-sub">Track sharpening, oiling, and recurring shop tasks</p>
             </div>

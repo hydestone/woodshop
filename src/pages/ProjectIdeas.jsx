@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
-import { Sheet, FormCell, TagInput, ConfirmSheet, IPlus, ITrash } from '../components/Shared.jsx'
+import { Sheet, FormCell, TagInput, ConfirmSheet, IPlus, ITrash, IBulb } from '../components/Shared.jsx'
 import * as db from '../db.js'
 import { supabase, getCurrentUserId } from '../supabase.js'
 
@@ -88,7 +88,7 @@ export default function ProjectIdeas() {
           <div className="empty"><div className="spinner" /></div>
         ) : active.length === 0 ? (
           <div className="empty" style={{ paddingTop: 60 }}>
-            <div className="empty-icon">💡</div>
+            <div className="empty-icon"><IBulb size={32} color="var(--text-3)" sw={1.5} /></div>
             <div className="empty-title">No ideas yet</div>
             <p className="empty-sub">Capture something you want to build someday</p>
             <button className="btn-primary" style={{ marginTop: 16 }} onClick={() => setShowAdd(true)}>Add First Idea</button>

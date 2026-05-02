@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useCtx } from '../App.jsx'
-import { PhotoGrid, FilterSelect } from '../components/Shared.jsx'
+import { PhotoGrid, FilterSelect, ITrophy } from '../components/Shared.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
 
@@ -88,7 +88,7 @@ export default function FinishedWork() {
         </div>
         {photos.length === 0 ? (
           <div className="empty" style={{ paddingTop: 60 }}>
-            <div className="empty-icon">🏆</div>
+            <div className="empty-icon"><ITrophy size={32} color="var(--text-3)" sw={1.5} /></div>
             <div className="empty-title">No finished pieces yet</div>
             <p className="empty-sub">Tag any photo with "finished" to show it here</p>
             <button

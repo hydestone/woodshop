@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
-import { Sheet, FormCell, ConfirmSheet, IPlus, ITrash, IEdit, ICircle, ICheck } from '../components/Shared.jsx'
+import { Sheet, FormCell, ConfirmSheet, IPlus, ITrash, IEdit, ICircle, ICheck, IHouse } from '../components/Shared.jsx'
 
 const CATEGORIES = ['Wish List', 'Planned Upgrade', 'Layout Idea', 'Tool Acquisition', 'Safety', 'Other']
 const autoExpand = e => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px' }
@@ -106,7 +106,7 @@ export default function ShopImprovements() {
           ))}
           {!items.length && (
             <div className="empty">
-              <div className="empty-icon">🏠</div>
+              <div className="empty-icon"><IHouse size={32} color="var(--text-3)" sw={1.5} /></div>
               <div className="empty-title">{filter === 'active' ? 'Nothing planned yet' : 'Nothing completed yet'}</div>
               <p className="empty-sub">Track planned upgrades, wish list items, and layout ideas</p>
             </div>

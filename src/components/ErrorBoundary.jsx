@@ -1,4 +1,5 @@
 import { Component } from 'react'
+import { IAlert } from './Shared.jsx'
 
 export default class ErrorBoundary extends Component {
   constructor(props) {
@@ -23,7 +24,7 @@ export default class ErrorBoundary extends Component {
           height: '100%', display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center', padding: 32, textAlign: 'center'
         }}>
-          <div style={{ fontSize: 40, marginBottom: 16 }}>⚠️</div>
+          <div style={{ marginBottom: 16 }}><IAlert size={40} color="var(--orange)" sw={1.5} /></div>
           <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8, color: 'var(--text)' }}>
             Something went wrong
           </div>

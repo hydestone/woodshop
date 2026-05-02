@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
-import { Sheet, FormCell, ConfirmSheet, IPlus, ITrash, IEdit } from '../components/Shared.jsx'
+import { Sheet, FormCell, ConfirmSheet, IPlus, ITrash, IEdit, IPalette } from '../components/Shared.jsx'
 
 const autoExpand = e => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px' }
 
@@ -133,7 +133,7 @@ export default function Finishes() {
             </div>
           ) : (
             <div className="empty">
-              <div className="empty-icon">🎨</div>
+              <div className="empty-icon"><IPalette size={32} color="var(--text-3)" sw={1.5} /></div>
               <div className="empty-title">{search ? 'No results' : 'No finishes yet'}</div>
               <p className="empty-sub">
                 {search ? `No finishes matching "${search}"` : 'Build your finish library with notes and feedback on each product'}

@@ -3,6 +3,7 @@ import { useCtx } from '../App.jsx'
 import * as db from '../db.js'
 import { useToast } from '../components/Toast.jsx'
 import { supabase } from '../supabase.js'
+import { IDollar, ICart } from '../components/Shared.jsx'
 
 export default function Costs() {
   const { data, mutate } = useCtx()
@@ -69,7 +70,7 @@ export default function Costs() {
         {tab === 'projects' && (
           projectCosts.length === 0 ? (
             <div className="empty" style={{ paddingTop:40 }}>
-              <div className="empty-icon">💰</div>
+              <div className="empty-icon"><IDollar size={32} color="var(--text-3)" sw={1.5} /></div>
               <div className="empty-title">No project costs yet</div>
               <p className="empty-sub">Add a cost field to shopping list items and tag them to a project</p>
             </div>
@@ -103,7 +104,7 @@ export default function Costs() {
         {tab === 'shop' && (
           shopItems.length === 0 ? (
             <div className="empty" style={{ paddingTop:40 }}>
-              <div className="empty-icon">🛒</div>
+              <div className="empty-icon"><ICart size={32} color="var(--text-3)" sw={1.5} /></div>
               <div className="empty-title">No general shop costs yet</div>
               <p className="empty-sub">Add costs to shopping list items not tagged to a project</p>
             </div>

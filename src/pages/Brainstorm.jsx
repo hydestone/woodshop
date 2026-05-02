@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
-import { ConfirmSheet, ITrash, IEdit } from '../components/Shared.jsx'
+import { ConfirmSheet, ITrash, IEdit, IBulb } from '../components/Shared.jsx'
 
 const fmtDate = iso => new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
 
@@ -129,7 +129,7 @@ export default function Brainstorm() {
           ))}
           {!data.brainstorming.length && (
             <div className="empty">
-              <div className="empty-icon">💡</div>
+              <div className="empty-icon"><IBulb size={32} color="var(--text-3)" sw={1.5} /></div>
               <div className="empty-title">Nothing yet</div>
               <p className="empty-sub">Type an idea above and click Save</p>
             </div>

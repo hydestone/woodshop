@@ -7,7 +7,7 @@ import { addToGoogleCalendar } from '../supabase.js'
 import {
   Sheet, FormCell, BulkAddSheet, ConfirmSheet, DropZone, PhotoGrid, TagInput, FilterSelect,
   STATUS, coatStatus, fmtShort, localDt, useLongPress, BeforeAfterCompare,
-  IPlus, ITrash, ICircle, ICheck, IChevR, IChevL, IEdit, ICal, ICamera, IBell, IGrid, IStar,
+  IPlus, ITrash, ICircle, ICheck, IChevR, IChevL, IEdit, ICal, ICamera, IBell, IGrid, IStar, IList,
 } from '../components/Shared.jsx'
 
 const STATUS_ORDER = ['active', 'planning', 'paused', 'complete']
@@ -207,7 +207,7 @@ export default function Projects() {
               ))}
               {!filtered.length && (
                 <div className="empty">
-                  <div className="empty-icon">📋</div>
+                  <div className="empty-icon"><IList size={32} color="var(--text-3)" sw={1.5} /></div>
                   <div className="empty-title">{filter === 'all' ? 'No projects yet' : `No ${filter} projects`}</div>
                   <p className="empty-sub">{filter === 'all' ? 'Click + to start your first build' : 'Try a different category filter'}</p>
                 </div>
@@ -322,7 +322,7 @@ function ProjectTable({ projects, categories, statusFilter, setStatusFilter }) {
         </table>
         {!projects.length && (
           <div className="empty">
-            <div className="empty-icon">📋</div>
+            <div className="empty-icon"><IList size={32} color="var(--text-3)" sw={1.5} /></div>
             <div className="empty-title">No {statusFilter === 'all' ? '' : statusFilter + ' '}projects</div>
             <p className="empty-sub">{statusFilter !== 'all' ? 'Try a different status filter' : 'Click + to add your first project'}</p>
           </div>
@@ -1418,7 +1418,7 @@ function PhotoPane({ projId, type, showAll, inline }) {
         <DropZone onFiles={handleFiles} uploading={uploading} />
         {photos.length > 0
           ? <PhotoGrid photos={photos} onEdit={edit} />
-          : <div className="empty"><div className="empty-icon">📷</div><div className="empty-title">No photos yet</div></div>
+          : <div className="empty"><div className="empty-icon"><ICamera size={32} color="var(--text-3)" sw={1.5} /></div><div className="empty-title">No photos yet</div></div>
         }
       </div>
       <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => handleFiles(e.target.files)} />

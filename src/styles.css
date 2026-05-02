@@ -753,7 +753,7 @@ body {
   gap: 14px;
   padding: 4px 0;
   flex: 1;
-  justify-content: center;
+  justify-content: flex-start;
 }
 .top-bar-logo { height: 60px; width: 60px; flex-shrink: 0; object-fit: contain; transition: filter 200ms ease; }
 [data-theme='dark'] .top-bar-logo { filter: brightness(0) invert(1); }

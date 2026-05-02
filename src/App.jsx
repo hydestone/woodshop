@@ -155,7 +155,11 @@ function FeedbackModal({ session, onClose }) {
       <div onClick={e=>e.stopPropagation()} style={{ background:'var(--surface)', borderRadius:20, padding:'28px 24px', width:'100%', maxWidth:380, display:'flex', flexDirection:'column', gap:16, boxShadow:'var(--shadow-xl)' }}>
         {sent ? (
           <>
-            <div style={{ fontSize:40, textAlign:'center' }}>🙏</div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 4 }}>
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/>
+              </svg>
+            </div>
             <div style={{ textAlign:'center', fontWeight:700, fontSize:18 }}>Thanks for the feedback!</div>
             <button className="btn-primary" style={{ width:'100%', justifyContent:'center' }} onClick={onClose}>Done</button>
           </>
@@ -723,7 +727,9 @@ export default function App() {
                     {sampleIds?.projectId && (
                       <div className="sample-banner">
                         <div className="sample-banner-text">
-                          <span style={{ fontSize: 18, marginRight: 8 }}>👋</span>
+                          <span style={{ marginRight: 8, display: 'flex', alignItems: 'center' }}>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                          </span>
                           <span>Sample data is loaded to help you explore. Add your own projects, then clear the samples when ready.</span>
                         </div>
                         <button className="sample-clear-btn" onClick={handleClearSamples}>Clear sample data</button>

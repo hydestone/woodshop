@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
-import { ConfirmSheet } from '../components/Shared.jsx'
+import { ConfirmSheet, IFolder, ICamera, ICart, IBulb, IWrench, IPalette, IBook, IHouse, ITree, ITrash as ITrashIcon, IList } from '../components/Shared.jsx'
 import * as db from '../db.js'
 import { photoUrl } from '../supabase.js'
 
@@ -11,10 +11,15 @@ const TYPE_LABELS = {
   shop_improvement: 'Shop Improvement', wood_stock: 'Wood Stock',
 }
 
-const TYPE_ICONS = {
-  project: '📁', photo: '📷', shopping: '🛒', brainstorm: '💡',
-  maintenance: '🔧', finish: '🎨', resource: '📚',
-  shop_improvement: '🏠', wood_stock: '🪵',
+const TYPE_ICON_COMPONENTS = {
+  project: IFolder, photo: ICamera, shopping: ICart, brainstorm: IBulb,
+  maintenance: IWrench, finish: IPalette, resource: IBook,
+  shop_improvement: IHouse, wood_stock: ITree,
+}
+
+function TypeIcon({ type, size = 22 }) {
+  const Ic = TYPE_ICON_COMPONENTS[type] || IList
+  return <Ic size={size} color="var(--text-3)" sw={1.5} />
 }
 
 function itemName(t) {
@@ -117,7 +122,7 @@ export default function Trash() {
                   fontSize: 12, fontWeight: 600, fontFamily: 'inherit',
                   background: filter === type ? 'var(--accent)' : 'var(--fill)',
                   color: filter === type ? '#fff' : 'var(--text-3)',
-                }}>{TYPE_ICONS[type]} {TYPE_LABELS[type]} ({count})</button>
+                }}><TypeIcon type={type} size={14} /> {TYPE_LABELS[type]} ({count})</button>
             )
           })}
         </div>
@@ -126,7 +131,7 @@ export default function Trash() {
       <div className="scroll-page" style={{ paddingBottom: 40 }}>
         {filtered.length === 0 ? (
           <div className="empty" style={{ paddingTop: 60 }}>
-            <div className="empty-icon">🗑️</div>
+            <div className="empty-icon"><ITrashIcon size={32} color="var(--text-3)" sw={1.5} /></div>
             <div className="empty-title">{trash.length === 0 ? 'Recycling bin is empty' : 'No items in this filter'}</div>
             <p className="empty-sub">{trash.length === 0 ? 'Deleted items appear here for 30 days before being permanently removed' : 'Try a different filter'}</p>
           </div>
@@ -143,7 +148,7 @@ export default function Trash() {
                   {thumbUrl ? (
                     <img src={thumbUrl} alt="" style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 6, flexShrink: 0 }} />
                   ) : (
-                    <span style={{ fontSize: 24, flexShrink: 0, width: 44, textAlign: 'center' }}>{TYPE_ICONS[t.item_type] || '📄'}</span>
+                    <span style={{ flexShrink: 0, width: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><TypeIcon type={t.item_type} size={24} /></span>
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 600, fontSize: 15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

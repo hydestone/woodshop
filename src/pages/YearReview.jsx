@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { useCtx } from '../App.jsx'
+import { ITree, ICal } from '../components/Shared.jsx'
 
 const STATUS_COLORS = { active:'var(--accent)', planning:'#7C3AED', paused:'var(--orange)', complete:'var(--green)' }
 const CAT_COLORS = ['#1D4ED8','#166534','#B45309','#7C3AED','#0891B2','#BE185D','#15803D','#9333EA']
@@ -99,7 +100,7 @@ export default function YearReview() {
       <div className="scroll-page" style={{ paddingBottom: 40 }}>
         <div style={{ padding: '12px 0' }}>
           {drilledProjects.length === 0 ? (
-            <div className="empty"><div className="empty-icon">🪵</div><div className="empty-title">No projects</div></div>
+            <div className="empty"><div className="empty-icon"><ITree size={32} color="var(--text-3)" sw={1.5} /></div><div className="empty-title">No projects</div></div>
           ) : (
             <div className="group">
               {drilledProjects.map((p, i) => (
@@ -139,7 +140,7 @@ export default function YearReview() {
       <div style={{ padding: '0 20px 40px' }}>
         {stats.projs.length === 0 ? (
           <div className="empty" style={{ paddingTop: 40 }}>
-            <div className="empty-icon">📅</div>
+            <div className="empty-icon"><ICal size={32} color="var(--text-3)" sw={1.5} /></div>
             <div className="empty-title">No projects in {year}</div>
             <p className="empty-sub">Add a year_completed to your projects to see your review</p>
           </div>

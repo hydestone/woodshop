@@ -1,4 +1,11 @@
 import { useCtx } from '../App.jsx'
+import { IFolder, IBulb, ITree, IHouse, ICamera, IWrench, IDollar, IBook, IBrain, ILink, ISearch, ILayers, IGrid } from '../components/Shared.jsx'
+
+const ICON_MAP = {
+  '📁': IFolder, '💡': IBulb, '🪵': ITree, '🏠': IHouse, '📷': ICamera,
+  '🔧': IWrench, '💰': IDollar, '📚': IBook, '✏️': IBrain, '🌐': ILink,
+  '🔍': ISearch, '⚙️': ILayers, '📱': IGrid,
+}
 
 const SECTIONS = [
   {
@@ -159,7 +166,7 @@ export default function Help() {
         {SECTIONS.map(section => (
           <div key={section.title} style={{ marginBottom: 24 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 16px 8px' }}>
-              <span style={{ fontSize: 20 }}>{section.icon}</span>
+              {(() => { const Ic = ICON_MAP[section.icon]; return Ic ? <Ic size={20} color="var(--accent)" sw={1.8} /> : null })()}
               <span style={{ fontWeight: 700, fontSize: 16 }}>{section.title}</span>
             </div>
             <div className="group">
