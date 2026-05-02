@@ -2,7 +2,7 @@ import { useState, useRef, useMemo } from 'react'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
-import { DropZone, PhotoGrid, Sheet, FormCell, TagInput, ICamera, IPlus, FilterSelect } from '../components/Shared.jsx'
+import { PhotoGrid, Sheet, FormCell, TagInput, ICamera, IPlus, FilterSelect } from '../components/Shared.jsx'
 import PhotoTriage from '../components/PhotoTriage.jsx'
 
 export default function AllPhotos() {
@@ -130,6 +130,14 @@ export default function AllPhotos() {
     return photos
   }
 
+  const [dragging, setDragging] = useState(false)
+  const dragCount = useRef(0)
+
+  const onGridDragEnter = e => { e.preventDefault(); dragCount.current++; setDragging(true) }
+  const onGridDragLeave = () => { dragCount.current--; if (dragCount.current <= 0) { setDragging(false); dragCount.current = 0 } }
+  const onGridDragOver = e => e.preventDefault()
+  const onGridDrop = e => { e.preventDefault(); setDragging(false); dragCount.current = 0; handleFiles(e.dataTransfer.files) }
+
   if (showTriage) {
     return <PhotoTriage onClose={() => setShowTriage(false)} />
   }
@@ -137,10 +145,48 @@ export default function AllPhotos() {
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
       <div className="scroll-page" style={{ paddingBottom: 80 }}>
-        <div className="page-header">
-          <div className="page-header-row">
-            <h1 className="page-title">All Photos</h1>
-            <span style={{ fontSize: 13, color: 'var(--text-3)' }}>{data.photos.length} photo{data.photos.length !== 1 ? 's' : ''}</span>
+        {/* Compact header with inline filters */}
+        <div style={{ padding: '16px 16px 0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+              <h1 className="page-title" style={{ margin: 0 }}>All Photos</h1>
+              <span style={{ fontSize: 13, color: 'var(--text-3)' }}>{data.photos.length}</span>
+            </div>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              <FilterSelect
+                value={filter.startsWith('cat:') ? 'all' : filter}
+                onChange={v => setFilter(v)}
+                options={[
+                  ...(unsortedCount > 0 ? [{ value: 'unsorted', label: `Inbox (${unsortedCount})` }] : []),
+                  { value: 'finished', label: 'Finished' },
+                  { value: 'portfolio', label: 'Portfolio' },
+                  { value: 'progress', label: 'Progress' },
+                  { value: 'inspiration', label: 'Inspiration' },
+                  { value: 'before', label: 'Before' },
+                  { value: 'after', label: 'After' },
+                ]}
+                allLabel="All Types"
+                label="Filter by type"
+              />
+              {projectCategories.length > 0 && (
+                <FilterSelect
+                  value={filter.startsWith('cat:') ? filter.slice(4) : 'all'}
+                  onChange={v => setFilter(v === 'all' ? 'all' : 'cat:' + v)}
+                  options={projectCategories.map(c => ({ value: c, label: c }))}
+                  allLabel="All Categories"
+                  label="Filter by category"
+                />
+              )}
+              <div className="filter-select-wrap">
+                <select className={`filter-select${sortBy !== 'date' ? ' active' : ''}`}
+                  value={sortBy} onChange={e => setSortBy(e.target.value)}>
+                  <option value="date">Date Added</option>
+                  <option value="project">By Project</option>
+                  <option value="tag">By Tag</option>
+                </select>
+                <span className="filter-select-chevron" aria-hidden="true">▾</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -149,62 +195,44 @@ export default function AllPhotos() {
           <div
             onClick={() => setFilter('unsorted')}
             style={{
-              margin: '0 16px 12px', padding: '12px 16px',
+              margin: '0 16px 12px', padding: '10px 14px',
               background: 'var(--orange-dim)', borderRadius: 10,
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
               cursor: 'pointer', border: '1px solid var(--orange)',
-              transition: 'background 150ms',
             }}
           >
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>
-                {unsortedCount} unsorted photo{unsortedCount !== 1 ? 's' : ''}
-              </div>
-              <div style={{ fontSize: 12, color: 'var(--text-3)' }}>Tap to view, or Sort to assign to projects</div>
-            </div>
-            <button className="btn-primary" style={{ padding: '8px 16px', fontSize: 13, flexShrink: 0 }} onClick={e => { e.stopPropagation(); setShowTriage(true) }}>
-              Sort
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+              {unsortedCount} unsorted
+            </span>
+            <button className="btn-primary" style={{ padding: '6px 14px', fontSize: 12, flexShrink: 0 }} onClick={e => { e.stopPropagation(); setShowTriage(true) }}>
+              Sort →
             </button>
           </div>
         )}
 
-        {/* Filters & Sort */}
-        <div className="filter-bar" style={{ paddingBottom: 8 }}>
-          <FilterSelect
-            value={filter.startsWith('cat:') ? 'all' : filter}
-            onChange={v => setFilter(v)}
-            options={[
-              { value: 'unsorted', label: `Unsorted (${unsortedCount})` },
-              { value: 'finished', label: 'Finished' },
-              { value: 'portfolio', label: 'Portfolio' },
-              { value: 'progress', label: 'Progress' },
-              { value: 'inspiration', label: 'Inspiration' },
-              { value: 'before', label: 'Before' },
-              { value: 'after', label: 'After' },
-            ]}
-            allLabel="All Types"
-            label="Filter by type"
-          />
-          {projectCategories.length > 0 && (
-            <FilterSelect
-              value={filter.startsWith('cat:') ? filter.slice(4) : 'all'}
-              onChange={v => setFilter(v === 'all' ? 'all' : 'cat:' + v)}
-              options={projectCategories.map(c => ({ value: c, label: c }))}
-              allLabel="All Categories"
-              label="Filter by category"
-            />
+        {/* Photo grid with drag-drop */}
+        <div
+          onDragEnter={onGridDragEnter}
+          onDragLeave={onGridDragLeave}
+          onDragOver={onGridDragOver}
+          onDrop={onGridDrop}
+          style={{
+            position: 'relative',
+            ...(dragging ? { outline: '3px dashed var(--accent)', outlineOffset: -3, borderRadius: 12, background: 'var(--accent-dim)' } : {}),
+            transition: 'background 150ms, outline 150ms',
+            minHeight: 200,
+          }}
+        >
+          {dragging && (
+            <div style={{
+              position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              zIndex: 10, pointerEvents: 'none',
+            }}>
+              <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--accent)', background: 'var(--surface)', padding: '8px 20px', borderRadius: 8, boxShadow: 'var(--shadow-lg)' }}>
+                Drop to upload
+              </span>
+            </div>
           )}
-          <div className="filter-select-wrap">
-            <select className={`filter-select${sortBy !== 'date' ? ' active' : ''}`}
-              value={sortBy} onChange={e => setSortBy(e.target.value)}>
-              <option value="date">Date Added</option>
-              <option value="project">By Project</option>
-              <option value="tag">By Tag</option>
-            </select>
-            <span className="filter-select-chevron" aria-hidden="true">▾</span>
-          </div>
-        </div>
-        <DropZone onFiles={handleFiles} uploading={uploading} />
         {(() => {
           const filtered = getFiltered()
           if (filtered.length > 0) {
@@ -229,6 +257,7 @@ export default function AllPhotos() {
             </div>
           )
         })()}
+        </div>
       </div>
 
       {/* Quick Upload — hidden input */}
