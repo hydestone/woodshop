@@ -423,6 +423,8 @@ export default function App() {
   const [sampleIds, setSampleIds] = useState(null)
   const [error, setError]       = useState(null)
   const [tab, setTabRaw]        = useState('home')
+  const [tabKey, setTabKey]     = useState(0)
+  const [tabDir, setTabDir]     = useState('right')
   const [projId, setProjId]     = useState(null)
   const [showMore, setShowMore] = useState(false)
   const [theme, setTheme] = useState(() => {
@@ -538,10 +540,15 @@ export default function App() {
   const mutate = useCallback(fn => setData(prev => fn({ ...prev })), [])
 
   const setTab = useCallback(id => {
+    const allIds  = ALL_NAV.map(t => t.id)
+    const fromIdx = allIds.indexOf(tab)
+    const toIdx   = allIds.indexOf(id)
+    setTabDir(toIdx >= fromIdx || fromIdx === -1 ? 'right' : 'left')
+    setTabKey(k => k + 1)
     setProjId(null)
     setShowMore(false)
     setTabRaw(id)
-  }, [])
+  }, [tab])
 
   // navigate(tab, projId) — sets tab AND project without the null reset
   const navigate = useCallback((id, pid = null) => {
@@ -711,7 +718,7 @@ export default function App() {
               {projId ? (
                 <ProjectDetail />
               ) : (
-                <>
+                <div key={tabKey} className={`tab-panel tab-panel--${tabDir}`}>
                   {tab === 'home'        && <>
                     {sampleIds?.projectId && (
                       <div className="sample-banner">
@@ -749,7 +756,7 @@ export default function App() {
                     {tab === 'calculators' && <Calculators />}
                     {tab === 'trash'       && <Trash />}
                   </Suspense>
-                </>
+                </div>
               )}
               </ErrorBoundary>
 

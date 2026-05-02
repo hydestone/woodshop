@@ -1804,6 +1804,25 @@ body {
   z-index: 10;
 }
 
+/* ─── Tab transition panel ───────────────────────────────────────────────── */
+.tab-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+@keyframes tabSlideFromRight {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes tabSlideFromLeft {
+  from { opacity: 0; transform: translateX(-24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.tab-panel--right { animation: tabSlideFromRight 220ms cubic-bezier(.32,.72,0,1) both; }
+.tab-panel--left  { animation: tabSlideFromLeft  220ms cubic-bezier(.32,.72,0,1) both; }
+
 
 /* ═══════════════════════════════════════════════════════════════════════════
    UTILITY CLASSES — semantic, dark-mode-aware, replaces inline styles
