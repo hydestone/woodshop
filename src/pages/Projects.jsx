@@ -948,7 +948,7 @@ function StepsList({ projId }) {
               </div>
             ) : (
               <div style={{ fontSize: 14, textDecoration: s.completed ? 'line-through' : 'none', color: s.completed ? 'var(--text-4)' : 'var(--text)', cursor: 'text' }}
-                onDoubleClick={() => { setEditId(s.id); setEditVal(s.title) }}>
+                onClick={() => { setEditId(s.id); setEditVal(s.title) }}>
                 {s.title}
               </div>
             )}
