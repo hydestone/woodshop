@@ -921,11 +921,11 @@ body {
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   border-bottom: 1px solid var(--border);
-  padding: 16px 20px 12px;
+  padding: 12px 16px 10px;
   flex-shrink: 0;
 }
 .page-title {
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 700;
   letter-spacing: -.3px;
   color: var(--text);
@@ -3000,6 +3000,11 @@ body {
     cursor: pointer;
     box-shadow: 0 2px 12px rgba(0,0,0,.3);
   }
+  /* Tighter padding in PWA mode — no browser chrome */
+  .tabbar { padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .scroll-page { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px)); }
+  .fab { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 12px); }
+  .fab.fab-secondary { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 72px); }
 }
 
 /* ─── Dashboard lazy-load skeleton ──────────────────────────────────────────── */

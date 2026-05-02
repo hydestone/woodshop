@@ -1,10 +1,8 @@
 import { useState, useRef } from 'react'
 import { useCtx } from '../App.jsx'
-import { PhotoGrid, DropZone } from '../components/Shared.jsx'
+import { PhotoGrid, Sheet, FormCell, TagInput, ICamera } from '../components/Shared.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
-import { Sheet, FormCell, TagInput } from '../components/Shared.jsx'
-import { ICamera } from '../components/Shared.jsx'
 import { supabase, getCurrentUserId } from '../supabase.js'
 
 export default function Inspiration() {
@@ -12,6 +10,7 @@ export default function Inspiration() {
   const toast = useToast()
   const fileRef = useRef()
   const [uploading, setUploading] = useState(false)
+  const [dragging, setDragging] = useState(false)
   const [pendingFiles, setPendingFiles] = useState([])
   const [showTag, setShowTag] = useState(false)
   const [ideaPhoto, setIdeaPhoto] = useState(null)
@@ -71,14 +70,31 @@ export default function Inspiration() {
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div className="scroll-page">
-        <div className="page-header">
-          <div className="page-header-row">
-            <h1 className="page-title">Inspiration</h1>
-            <span style={{ fontSize: 13, color: 'var(--text-3)' }}>{photos.length} photo{photos.length !== 1 ? 's' : ''}</span>
+        <div style={{ padding: '12px 16px 10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+              <h1 className="page-title" style={{ margin: 0 }}>Inspiration</h1>
+              <span style={{ fontSize: 13, color: 'var(--text-3)' }}>{photos.length}</span>
+            </div>
           </div>
         </div>
 
-        <DropZone onFiles={handleFiles} uploading={uploading} />
+        <div
+          onDragEnter={e => { e.preventDefault(); setDragging(true) }}
+          onDragLeave={() => setDragging(false)}
+          onDragOver={e => e.preventDefault()}
+          onDrop={e => { e.preventDefault(); setDragging(false); handleFiles(e.dataTransfer.files) }}
+          style={{
+            position: 'relative', minHeight: 200,
+            ...(dragging ? { outline: '3px dashed var(--accent)', outlineOffset: -3, borderRadius: 12, background: 'var(--accent-dim)' } : {}),
+            transition: 'background 150ms',
+          }}
+        >
+          {dragging && (
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, pointerEvents: 'none' }}>
+              <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--accent)', background: 'var(--surface)', padding: '8px 20px', borderRadius: 8, boxShadow: 'var(--shadow-lg)' }}>Drop to upload</span>
+            </div>
+          )}
 
         {photos.length > 0 ? (
           <PhotoGrid
@@ -91,11 +107,12 @@ export default function Inspiration() {
           />
         ) : (
           <div className="empty" style={{ paddingTop: 60 }}>
-            <div className="empty-icon">✨</div>
-            <div className="empty-title">No inspiration photos yet</div>
+            <ICamera size={32} color="var(--text-3)" sw={1.5} />
+            <div className="empty-title" style={{ marginTop: 12 }}>No inspiration photos yet</div>
             <p className="empty-sub">Drag photos here or tap + to add</p>
           </div>
         )}
+        </div>
       </div>
 
       <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => handleFiles(e.target.files)} />

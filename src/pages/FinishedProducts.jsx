@@ -60,9 +60,20 @@ export default function FinishedWork() {
       <div className="scroll-page" style={{ paddingBottom: 40 }}>
         <div className="page-header">
           <div className="page-header-row">
-            <h1 className="page-title">Finished Work</h1>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 13, color: 'var(--text-3)' }}>{photos.length} piece{photos.length !== 1 ? 's' : ''}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <h1 className="page-title">Finished Work</h1>
+              <span style={{ fontSize: 13, color: 'var(--text-3)' }}>{photos.length}</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              {projectCategories.length > 0 && (
+                <FilterSelect
+                  value={catFilter}
+                  onChange={setCatFilter}
+                  options={projectCategories.map(c => ({ value: c, label: c }))}
+                  allLabel="All Categories"
+                  label="Filter by category"
+                />
+              )}
               {photos.length > 0 && (
                 <button
                   className={editMode ? 'btn-primary' : 'btn-secondary'}
@@ -75,18 +86,6 @@ export default function FinishedWork() {
             </div>
           </div>
         </div>
-
-        {projectCategories.length > 0 && (
-          <div className="filter-bar" style={{ paddingBottom: 8 }}>
-            <FilterSelect
-              value={catFilter}
-              onChange={setCatFilter}
-              options={projectCategories.map(c => ({ value: c, label: c }))}
-              allLabel="All Categories"
-              label="Filter by category"
-            />
-          </div>
-        )}
         {photos.length === 0 ? (
           <div className="empty" style={{ paddingTop: 60 }}>
             <div className="empty-icon">🏆</div>
