@@ -1797,6 +1797,13 @@ body {
 }
 .slide-in { animation: slideInRight 200ms cubic-bezier(.32,.72,0,1) forwards; }
 
+/* Project detail sub-tab bar — sticky so it stays visible when scrolling */
+.detail-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
 
 /* ═══════════════════════════════════════════════════════════════════════════
    UTILITY CLASSES — semantic, dark-mode-aware, replaces inline styles
