@@ -1804,6 +1804,13 @@ body {
   z-index: 10;
 }
 
+/* Project detail header actions — secondary items hidden on mobile, more button hidden on desktop */
+.proj-detail-more { display: none; }
+@media (max-width: 767px) {
+  .proj-detail-secondary { display: none; }
+  .proj-detail-more { display: flex; }
+}
+
 /* ─── Tab transition panel ───────────────────────────────────────────────── */
 .tab-panel {
   flex: 1;

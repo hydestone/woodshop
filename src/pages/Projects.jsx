@@ -441,6 +441,7 @@ export function ProjectDetail() {
   const [showRon, setShowRon]   = useState(false)
   const [showQRLabel, setShowQRLabel] = useState(false)
   const [showReminder, setShowReminder] = useState(false)
+  const [showActions, setShowActions] = useState(false)
   const [dtab, setDtab]         = useState('overview')
 
   const project = data.projects.find(p => p.id === projId)
@@ -619,20 +620,23 @@ export function ProjectDetail() {
             >
               <IStar size={17} fill={project.is_favorite ? 'var(--yellow,#F59E0B)' : 'none'} color={project.is_favorite ? 'var(--yellow,#F59E0B)' : 'var(--text-3)'} />
             </button>
-            <button className="icon-btn" onClick={() => setShowReminder(true)} aria-label="Add reminder" title="Add to calendar / reminders">
+            <button className="icon-btn proj-detail-secondary" onClick={() => setShowReminder(true)} aria-label="Add reminder" title="Add to calendar / reminders">
               <IBell size={17} color="var(--accent)" />
             </button>
-            <button className="icon-btn" onClick={handleShare} aria-label="Share project" title="Copy share link">
+            <button className="icon-btn proj-detail-secondary" onClick={handleShare} aria-label="Share project" title="Copy share link">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
                 <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
               </svg>
             </button>
-            <button className="icon-btn" onClick={handlePrint} aria-label="Print / PDF" title="Print or save as PDF">
+            <button className="icon-btn proj-detail-secondary" onClick={handlePrint} aria-label="Print / PDF" title="Print or save as PDF">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
                 <rect x="6" y="14" width="12" height="8"/>
               </svg>
+            </button>
+            <button className="icon-btn proj-detail-more" onClick={() => setShowActions(true)} aria-label="More actions">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
             </button>
             <button className="icon-btn" onClick={() => setEditing(true)} aria-label="Edit project"><IEdit size={17} /></button>
             <button className="icon-btn" onClick={() => setConfirming(true)} aria-label="Delete project" style={{ color: 'var(--red)' }}><ITrash size={17} /></button>
@@ -836,6 +840,33 @@ export function ProjectDetail() {
       {showRon    && <RonSwansonModal onClose={() => setShowRon(false)} />}
       {showQRLabel && <QRLabelSheet project={project} onClose={() => setShowQRLabel(false)} />}
       {showReminder && <ReminderSheet project={project} onClose={() => setShowReminder(false)} />}
+      {showActions && (
+        <Sheet title="More" onClose={() => setShowActions(false)} onSave={null}>
+          <div className="form-group">
+            <div className="more-item" style={{ padding: '14px 16px', borderBottom: '1px solid var(--border-2)' }}
+              onClick={() => { setShowActions(false); setShowReminder(true) }} role="button" tabIndex={0}>
+              <IBell size={20} color="var(--accent)" sw={1.8} />
+              <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>Add reminder</span>
+            </div>
+            <div className="more-item" style={{ padding: '14px 16px', borderBottom: '1px solid var(--border-2)' }}
+              onClick={() => { setShowActions(false); handleShare() }} role="button" tabIndex={0}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+              </svg>
+              <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>Share project</span>
+            </div>
+            <div className="more-item" style={{ padding: '14px 16px', borderBottom: 'none' }}
+              onClick={() => { setShowActions(false); handlePrint() }} role="button" tabIndex={0}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                <rect x="6" y="14" width="12" height="8"/>
+              </svg>
+              <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>Print / PDF</span>
+            </div>
+          </div>
+        </Sheet>
+      )}
 
       {/* Add steps sheet */}
       {sub === 'steps-add' && (
