@@ -1089,6 +1089,10 @@ body {
   transition: box-shadow 150ms ease, transform 150ms ease;
 }
 .fab:hover { transform: scale(1.04); box-shadow: var(--shadow-lg); }
+.fab.fab-secondary {
+  bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 76px);
+  width: 44px; height: 44px; border-radius: 22px;
+}
 .fab:active { transform: scale(.97); }
 .fab:disabled { opacity: .5; cursor: default; transform: none; }
 
@@ -2846,6 +2850,7 @@ body {
   .scroll-page { padding-bottom: 20px; }
 
   .fab { bottom: 24px; }
+  .fab.fab-secondary { bottom: 84px; }
 
   .page-header { padding-top: 20px; }
 
