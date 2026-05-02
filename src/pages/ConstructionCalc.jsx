@@ -343,7 +343,7 @@ export default function ConstructionCalc() {
   )
 
   return (
-    <div style={{ padding: '0 12px 40px', maxWidth: 480, margin: '0 auto' }}>
+    <div style={{ padding: '0 12px', maxWidth: 480, margin: '0 auto', height: '100%', display: 'flex', flexDirection: 'column' }}>
 
       {/* ── Mode toggle ── */}
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>

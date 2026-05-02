@@ -685,7 +685,7 @@ export default function Calculators() {
           ))}
         </div>
       </div>
-      <div className="scroll-page" style={{ paddingTop: 16 }}>
+      <div className="scroll-page" style={{ paddingTop: 16, flex: 1 }}>
         {tab === 'construction' && <ConstructionCalc />}
         {tab === 'boardfoot' && <BoardFoot />}
         {tab === 'converter' && <UnitConverter />}

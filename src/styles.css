@@ -2249,7 +2249,12 @@ body {
   border-radius: var(--r-md);
   padding: 14px 16px 12px;
   margin-bottom: 8px;
+  flex: 1;
   min-height: 100px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: hidden;
 }
 .cm-indicator {
   font-size: 9px;
@@ -2266,6 +2271,7 @@ body {
   border-radius: 8px;
   padding: 2px;
   gap: 2px;
+  flex-shrink: 0;
 }
 .cm-mode-toggle button {
   background: none;
@@ -2288,6 +2294,7 @@ body {
   display: flex;
   gap: 4px;
   margin-bottom: 6px;
+  flex-shrink: 0;
 }
 .cm-mem-btn {
   flex: 1;
@@ -2309,6 +2316,7 @@ body {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 5px;
+  flex-shrink: 0;
 }
 .cm-key {
   background: var(--fill);
@@ -2338,8 +2346,9 @@ body {
   border-radius: var(--r-sm);
   padding: 10px 12px;
   margin-bottom: 8px;
-  max-height: 200px;
+  max-height: 120px;
   overflow-y: auto;
+  flex-shrink: 0;
 }
 .cm-history-item {
   display: flex;
@@ -2747,7 +2756,7 @@ body {
 
   .sidebar { display: none; }
 
-  .scroll-page { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 8px); }
+  .scroll-page { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px)); }
 
   .toast-container { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 10px); }
 
