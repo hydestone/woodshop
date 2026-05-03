@@ -100,7 +100,7 @@ export default function FinishedWork() {
             </button>
           </div>
         ) : (
-          <PhotoGrid photos={photos} onEdit={editMode ? edit : undefined} />
+          <PhotoGrid photos={photos} onEdit={edit} />
         )}
       </div>
     </div>

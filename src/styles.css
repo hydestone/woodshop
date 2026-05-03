@@ -717,6 +717,7 @@ body {
   text-transform: uppercase;
 }
 .top-bar-accent { color: #2D5A3D; }
+[data-theme="dark"] .top-bar-accent { color: #4ADE80; }
 
 /* ─── App body ───────────────────────────────────────────────────────────── */
 .app { display: flex; flex: 1; overflow: hidden; }
