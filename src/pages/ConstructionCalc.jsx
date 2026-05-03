@@ -437,68 +437,100 @@ export default function ConstructionCalc() {
           <button className="cm-mem-btn" onClick={memClear} disabled={!memory}>MC</button>
         </div>
 
-        {/* Keypad: [digits 3col] [fractions col] [operators 2col] */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr) 1px repeat(2,1fr)', gap: 3, flex: '0 0 auto' }}>
+        {/* Keypad + construction column side by side */}
+        <div style={{ display: 'flex', gap: 3, flex: '0 0 auto' }}>
 
-          {/* Digit rows + fraction col + op col — row by row */}
-          {/* Row 1 */}
-          <Btn onClick={() => appendDigit('7')}>7</Btn>
-          <Btn onClick={() => appendDigit('8')}>8</Btn>
-          <Btn onClick={() => appendDigit('9')}>9</Btn>
-          <div style={{ background: 'rgba(255,255,255,.06)' }} />
-          <Btn cls="op" onClick={() => pressOp('÷')}>÷</Btn>
-          <Btn cls="ac" onClick={pressAC}>AC</Btn>
+          {/* Left: digits/ops + fraction row */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 3 }}>
+            {/* Main 5-row keypad */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr) 2px repeat(2,1fr)', gap: 3 }}>
+              <Btn onClick={() => appendDigit('7')}>7</Btn>
+              <Btn onClick={() => appendDigit('8')}>8</Btn>
+              <Btn onClick={() => appendDigit('9')}>9</Btn>
+              <div style={{ background: 'rgba(255,255,255,.06)' }} />
+              <Btn cls="op" onClick={() => pressOp('÷')}>÷</Btn>
+              <Btn cls="ac" onClick={pressAC}>AC</Btn>
 
-          {/* Row 2 */}
-          <Btn onClick={() => appendDigit('4')}>4</Btn>
-          <Btn onClick={() => appendDigit('5')}>5</Btn>
-          <Btn onClick={() => appendDigit('6')}>6</Btn>
-          <div style={{ background: 'rgba(255,255,255,.06)' }} />
-          <Btn cls="op" onClick={() => pressOp('×')}>×</Btn>
-          <Btn cls="del" onClick={pressBackspace}>⌫</Btn>
+              <Btn onClick={() => appendDigit('4')}>4</Btn>
+              <Btn onClick={() => appendDigit('5')}>5</Btn>
+              <Btn onClick={() => appendDigit('6')}>6</Btn>
+              <div style={{ background: 'rgba(255,255,255,.06)' }} />
+              <Btn cls="op" onClick={() => pressOp('×')}>×</Btn>
+              <Btn cls="del" onClick={pressBackspace}>⌫</Btn>
 
-          {/* Row 3 */}
-          <Btn onClick={() => appendDigit('1')}>1</Btn>
-          <Btn onClick={() => appendDigit('2')}>2</Btn>
-          <Btn onClick={() => appendDigit('3')}>3</Btn>
-          <div style={{ background: 'rgba(255,255,255,.06)' }} />
-          <Btn cls="op" onClick={() => pressOp('−')}>−</Btn>
-          <Btn cls="unit" onClick={() => appendChar("'")} title="feet">ft '</Btn>
+              <Btn onClick={() => appendDigit('1')}>1</Btn>
+              <Btn onClick={() => appendDigit('2')}>2</Btn>
+              <Btn onClick={() => appendDigit('3')}>3</Btn>
+              <div style={{ background: 'rgba(255,255,255,.06)' }} />
+              <Btn cls="op" onClick={() => pressOp('−')}>−</Btn>
+              <Btn cls="unit" onClick={() => appendChar("'")} title="feet">ft '</Btn>
 
-          {/* Row 4 */}
-          <Btn onClick={() => appendDigit('0')}>0</Btn>
-          <Btn onClick={() => appendDigit('.')}>.</Btn>
-          <Btn cls="unit" onClick={() => appendChar('/')} title="fraction slash">/</Btn>
-          <div style={{ background: 'rgba(255,255,255,.06)' }} />
-          <Btn cls="op" onClick={() => pressOp('+')}>+</Btn>
-          <Btn cls="unit" onClick={() => appendChar('"')} title="inches">in "</Btn>
+              <Btn onClick={() => appendDigit('0')}>0</Btn>
+              <Btn onClick={() => appendDigit('.')}>.</Btn>
+              <Btn cls="unit" onClick={() => appendChar('/')} title="fraction slash">/</Btn>
+              <div style={{ background: 'rgba(255,255,255,.06)' }} />
+              <Btn cls="op" onClick={() => pressOp('+')}>+</Btn>
+              <Btn cls="unit" onClick={() => appendChar('"')} title="inches">in "</Btn>
 
-          {/* Row 5: blank x3 | divider | = spans 2 */}
-          <Btn cls="fn" onClick={pressSqrt} title="Square root (R)">√</Btn>
-          <Btn cls="fn" onClick={pressSq} title="Square">x²</Btn>
-          <Btn cls="fn" onClick={pressPi} title="Pi (P)">π</Btn>
-          <div style={{ background: 'rgba(255,255,255,.06)' }} />
-          <Btn cls="eq span2" onClick={pressEquals} style={{ gridColumn: 'span 2' }}>=</Btn>
+              <Btn cls="fn" onClick={pressSqrt} title="Square root (R)">√</Btn>
+              <Btn cls="fn" onClick={pressSq} title="Square">x²</Btn>
+              <Btn cls="fn" onClick={pressPi} title="Pi (P)">π</Btn>
+              <div style={{ background: 'rgba(255,255,255,.06)' }} />
+              <Btn cls="eq" onClick={pressEquals} style={{ gridColumn: 'span 2' }}>=</Btn>
+            </div>
 
-        </div>
+            {/* Fraction denominators */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 3 }}>
+              {[2,4,8,16].map(d => (
+                <Btn key={d} cls="frac" onClick={() => setDenominator(d)}>/{d}</Btn>
+              ))}
+            </div>
+          </div>
 
-        {/* Fraction denominators row */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 3, marginTop: 3 }}>
-          {[2,4,8,16].map(d => (
-            <Btn key={d} cls="frac" onClick={() => setDenominator(d)}>/{ d}</Btn>
-          ))}
-        </div>
+          {/* Thin vertical separator */}
+          <div style={{ width: 2, background: 'rgba(255,255,255,.06)', flexShrink: 0 }} />
 
-        {/* Construction functions */}
-        <div style={{ marginTop: 8, overflowY: 'auto', flex: 1 }}>
-          <div className="cm-con-grid">
-            {[['pitch','△','Pitch'],['diag','⬜','Diagonal'],['stairs','▤','Stairs'],['circle','○','Circle'],['miter','∠','Miter'],['help','?','Help']].map(([id, icon, label]) => (
-              <button key={id} className={`cm-con-btn${id !== 'help' && conMode === id ? ' active' : ''}${id === 'help' ? ' help' : ''}`}
-                onClick={() => id === 'help' ? setShowHelp(h => !h) : setConMode(conMode === id ? null : id)}>
-                <span className="cm-con-icon">{icon}</span>{label}
+          {/* Right: 6 construction function buttons in a single column */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 3, width: 52, flexShrink: 0 }}>
+            {[
+              ['pitch',  '△', 'Pitch'],
+              ['diag',   '▭', 'Diag'],
+              ['stairs', '▤', 'Stair'],
+              ['circle', '○', 'Circle'],
+              ['miter',  '∠', 'Miter'],
+              ['help',   '?', 'Help'],
+            ].map(([id, icon, label]) => (
+              <button
+                key={id}
+                onClick={() => id === 'help' ? setShowHelp(h => !h) : setConMode(conMode === id ? null : id)}
+                style={{
+                  flex: 1,
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1,
+                  background: (id !== 'help' && conMode === id)
+                    ? 'rgba(45,90,61,.4)'
+                    : id === 'help' && showHelp
+                      ? 'rgba(37,99,235,.2)'
+                      : 'var(--calc-key2)',
+                  border: (id !== 'help' && conMode === id)
+                    ? '1px solid var(--forest)'
+                    : id === 'help' && showHelp
+                      ? '1px solid var(--accent)'
+                      : '1px solid rgba(255,255,255,.08)',
+                  cursor: 'pointer',
+                  padding: '2px 2px',
+                  minHeight: 0,
+                  color: (id !== 'help' && conMode === id) ? 'var(--forest)' : id === 'help' && showHelp ? 'var(--accent)' : '#94A3B8',
+                }}
+              >
+                <span style={{ fontSize: 13, lineHeight: 1 }}>{icon}</span>
+                <span style={{ fontSize: 9, fontWeight: 700, fontFamily: 'inherit', textTransform: 'uppercase', letterSpacing: '.3px', lineHeight: 1 }}>{label}</span>
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Construction function panels */}
+        <div style={{ overflowY: 'auto', flex: 1, marginTop: 6 }}>
 
           {conMode === 'pitch' && (
             <ConPanel title="Pitch · Rise · Run" hint="Enter any two values to solve.">
