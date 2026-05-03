@@ -149,7 +149,7 @@ export default function AllPhotos() {
   const onGridDrop = e => { e.preventDefault(); setDragging(false); dragCount.current = 0; handleFiles(e.dataTransfer.files) }
 
   if (showTriage) {
-    return <PhotoTriage onClose={() => setShowTriage(false)} />
+    return <PhotoTriage onClose={() => setShowTriage(false)} onNewProject={() => { setShowTriage(false); setShowNewProject(true) }} />
   }
 
   return (

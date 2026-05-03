@@ -101,7 +101,7 @@ function SwipeCard({ photo, onAssign, onSkip, projects }) {
 }
 
 // ─── Mobile Triage View ──────────────────────────────────────────────────────
-function MobileTriage({ photos, projects, onAssign, onSkip, onClose, statusPills }) {
+function MobileTriage({ photos, projects, onAssign, onSkip, onClose, statusBar }) {
   const [idx, setIdx] = useState(0)
   const photo = photos[idx]
 
@@ -150,7 +150,7 @@ function MobileTriage({ photos, projects, onAssign, onSkip, onClose, statusPills
         <div style={{ fontSize: 11, color: 'var(--c-text-faint)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 8 }}>
           Assign to project
         </div>
-        {statusPills && <div style={{ marginBottom: 8, overflowX: 'auto', scrollbarWidth: 'none' }}>{statusPills}</div>}
+        {statusBar && <div style={{ marginBottom: 8 }}>{statusBar}</div>}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, maxHeight: 140, overflowY: 'auto' }}>
           {projects.map(p => (
             <button key={p.id} onClick={() => assign(p.id)} style={{
@@ -172,7 +172,7 @@ function MobileTriage({ photos, projects, onAssign, onSkip, onClose, statusPills
 }
 
 // ─── Desktop Triage View ─────────────────────────────────────────────────────
-function DesktopTriage({ photos, projects, onAssign, onClose, statusPills }) {
+function DesktopTriage({ photos, projects, onAssign, onClose, statusBar }) {
   const [selected, setSelected] = useState(new Set())
   const [draggedOver, setDraggedOver] = useState(null)
   const [dragData, setDragData] = useState(null)
@@ -316,7 +316,7 @@ function DesktopTriage({ photos, projects, onAssign, onClose, statusPills }) {
           <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--c-text-faint)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 8 }}>
             Drop onto project
           </div>
-          {statusPills && <div style={{ marginBottom: 10 }}>{statusPills}</div>}
+          {statusBar && <div style={{ marginBottom: 10 }}>{statusBar}</div>}
           {projects.map(p => {
             const isOver = draggedOver === p.id
             return (
@@ -359,7 +359,7 @@ function DesktopTriage({ photos, projects, onAssign, onClose, statusPills }) {
 }
 
 // ─── Main PhotoTriage Component ──────────────────────────────────────────────
-export default function PhotoTriage({ onClose }) {
+export default function PhotoTriage({ onClose, onNewProject }) {
   const { data, mutate } = useCtx()
   const toast = useToast()
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
@@ -415,22 +415,34 @@ export default function PhotoTriage({ onClose }) {
 
   const skip = useCallback(() => {}, [])
 
-  const statusPills = (
-    <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-      {['all','active','planning','paused','complete'].map(s => (
-        <button key={s} onClick={() => setStatusFilter(s)} style={{
-          padding: '4px 10px', fontSize: 12, fontWeight: 600, cursor: 'pointer',
-          fontFamily: 'inherit', borderRadius: 0, textTransform: 'capitalize',
-          background: statusFilter === s ? 'var(--navy)' : 'var(--c-bg-subtle)',
-          color: statusFilter === s ? 'var(--white)' : 'var(--c-text-muted)',
-          border: '1.5px solid var(--c-border)',
-        }}>{s === 'all' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1)}</button>
-      ))}
+  const statusBar = (
+    <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 10 }}>
+      <div className="filter-select-wrap" style={{ flex: 1 }}>
+        <select
+          className="filter-select"
+          value={statusFilter}
+          onChange={e => setStatusFilter(e.target.value)}
+          style={{ width: '100%', minWidth: 0 }}
+        >
+          <option value="all">All Projects</option>
+          <option value="active">Active</option>
+          <option value="planning">Planning</option>
+          <option value="paused">Paused</option>
+          <option value="complete">Complete</option>
+        </select>
+        <span className="filter-select-chevron" aria-hidden="true">▾</span>
+      </div>
+      {onNewProject && (
+        <button className="btn-secondary" style={{ padding: '5px 10px', fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}
+          onClick={onNewProject}>
+          + New Project
+        </button>
+      )}
     </div>
   )
 
   if (isMobile) {
-    return <MobileTriage photos={unsorted} projects={projects} onAssign={assign} onSkip={skip} onClose={onClose} statusPills={statusPills} />
+    return <MobileTriage photos={unsorted} projects={projects} onAssign={assign} onSkip={skip} onClose={onClose} statusBar={statusBar} />
   }
-  return <DesktopTriage photos={unsorted} projects={projects} onAssign={assign} onClose={onClose} statusPills={statusPills} />
+  return <DesktopTriage photos={unsorted} projects={projects} onAssign={assign} onClose={onClose} statusBar={statusBar} />
 }

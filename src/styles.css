@@ -401,7 +401,7 @@
 
 /* Dark mode: top bar */
 [data-theme="dark"] .top-bar {
-  background: linear-gradient(rgba(15,23,42,0.92), rgba(15,23,42,0.92)), url(/shavings.jpg) center/cover no-repeat;
+  background: linear-gradient(rgba(15,23,42,0.75), rgba(15,23,42,0.75)), url(/shavings.jpg) center/cover no-repeat;
   border-bottom-color: rgba(240,246,252,.08);
 }
 
@@ -690,7 +690,7 @@ body {
   padding-bottom: 10px;
   padding-left: 20px;
   padding-right: 20px;
-  background: linear-gradient(rgba(255,255,255,0.88), rgba(255,255,255,0.88)), url(/shavings.jpg) center/cover no-repeat;
+  background: linear-gradient(rgba(255,255,255,0.72), rgba(255,255,255,0.72)), url(/shavings.jpg) center/cover no-repeat;
   border-bottom: 1px solid var(--c-border);
   flex-shrink: 0;
   gap: 16px;
