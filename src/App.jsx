@@ -430,6 +430,7 @@ export default function App() {
   const [tabKey, setTabKey]     = useState(0)
   const [tabDir, setTabDir]     = useState('right')
   const [projId, setProjId]     = useState(null)
+  const [tabAction, setTabAction] = useState(null)
   const [showMore, setShowMore] = useState(false)
   const [theme, setTheme] = useState(() => {
     try { return localStorage.getItem('jdh-theme') || 'dark' } catch { return 'dark' }
@@ -620,7 +621,7 @@ export default function App() {
     return 0
   }
 
-  const ctx = { data, mutate, reload, tab, setTab, navigate, projId, setProjId, theme, launchTutorial, sampleIds }
+  const ctx = { data, mutate, reload, tab, setTab, navigate, projId, setProjId, theme, launchTutorial, sampleIds, tabAction, setTabAction }
 
   return (
     <AppCtx.Provider value={ctx}>

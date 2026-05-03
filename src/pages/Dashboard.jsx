@@ -590,7 +590,7 @@ function MaterialFlow({ projects , isDark = false }) {
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 export default function Dashboard() {
-  const { data, setProjId, setTab, navigate, theme } = useCtx()
+  const { data, setProjId, setTab, navigate, theme, setTabAction } = useCtx()
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
   const locations = data.woodLocations || []
 
@@ -648,7 +648,7 @@ export default function Dashboard() {
         <KineticTitle text="Today" className="page-title" delay={80} />
         {/* Quick actions — directly under title */}
         <div data-tutorial-target="quick-actions" style={{ display: 'flex', gap: 8, paddingTop: 10, overflowX: 'auto', scrollbarWidth: 'none', marginLeft: -2 }}>
-          <button className="dash-action-btn" onClick={() => setTab('projects')}>
+          <button className="dash-action-btn" onClick={() => { setTabAction('new-project'); setTab('projects') }}>
             <IFolder size={16} color="var(--accent)" sw={1.8} /> New Project
           </button>
           <button className="dash-action-btn" onClick={() => setTab('photos')}>

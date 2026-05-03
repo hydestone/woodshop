@@ -15,7 +15,7 @@ const STATUS_LABEL = { active: 'Active', planning: 'Planning', paused: 'Paused',
 
 // ─── Projects list ────────────────────────────────────────────────────────────
 export default function Projects() {
-  const { data, mutate, projId, setProjId, navigate, sampleIds } = useCtx()
+  const { data, mutate, projId, setProjId, navigate, sampleIds, tabAction, setTabAction } = useCtx()
   const toast   = useToast()
   const [showAdd, setShowAdd]   = useState(false)
   const [viewMode, setViewMode] = useState('cards') // 'cards' | 'table'
@@ -23,6 +23,14 @@ export default function Projects() {
   const [showFavOnly, setShowFavOnly] = useState(false)
   const [sortBy, setSortBy]           = useState('status')
   const [statusFilter, setStatusFilter] = useState('all')
+
+  // Consume tabAction — e.g. open new project modal immediately on mount
+  useEffect(() => {
+    if (tabAction === 'new-project') {
+      setShowAdd(true)
+      setTabAction(null)
+    }
+  }, [tabAction])
   const [locationFilter, setLocationFilter] = useState(() => {
     const v = window.__woodLocationFilter || ''
     window.__woodLocationFilter = ''
@@ -649,9 +657,32 @@ export function ProjectDetail() {
           {project.category && <span style={{ fontSize: 12, background: 'var(--blue-dim)', color: 'var(--blue)', borderRadius: 99, padding: '2px 10px', fontWeight: 600, flexShrink: 0 }}>{project.category}</span>}
           {project.wood_type && <span style={{ fontSize: 13, color: 'var(--c-text-muted)', flexShrink: 0 }}>{project.wood_type}</span>}
           {project.year_completed && <span style={{ fontSize: 13, color: 'var(--c-text-faint)', flexShrink: 0 }}>{project.year_completed}</span>}
-          <button className="badge-pill" style={{ background: ss.bg, color: ss.color, border: 'none', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }} onClick={cycleStatus} title="Tap to change status">
-            {project.status} ▾
-          </button>
+          <select
+            value={project.status}
+            onChange={async e => {
+              const next = e.target.value
+              if (next === project.status) return
+              try {
+                await db.updateProject(project.id, { status: next })
+                mutate(d => ({ ...d, projects: d.projects.map(p => p.id === project.id ? { ...p, status: next } : p) }))
+                if (next === 'complete' && project.status !== 'complete') setShowRon(true)
+              } catch (err) { toast(err.message, 'error') }
+            }}
+            style={{
+              appearance: 'none', WebkitAppearance: 'none',
+              background: ss.bg, color: ss.color,
+              border: 'none', borderRadius: 99,
+              padding: '2px 20px 2px 10px', fontSize: 12, fontWeight: 600,
+              fontFamily: 'inherit', cursor: 'pointer', flexShrink: 0,
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='${encodeURIComponent(ss.color)}' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
+              backgroundRepeat: 'no-repeat', backgroundPosition: 'right 6px center',
+            }}
+          >
+            <option value="planning">Planning</option>
+            <option value="active">Active</option>
+            <option value="paused">Paused</option>
+            <option value="complete">Complete</option>
+          </select>
           <span style={{ width: 1, height: 16, background: 'var(--c-border)', flexShrink: 0, margin: '0 2px' }} />
           {[
             { id: 'overview',  label: 'Overview' },
