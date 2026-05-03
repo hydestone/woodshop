@@ -126,58 +126,76 @@ function BoardFoot() {
   const bfQty = bf ? Math.round(bf * q * 1000) / 1000 : null
   const estCost = bfQty && cost ? (bfQty * (parseFloat(cost) || 0)).toFixed(2) : null
 
+  const clearFields = () => { setT(''); setW(''); setL(''); setQty('1'); setCost('') }
+
   const addTally = () => {
     if (!bfQty) return
     setTally(p => [...p, { desc: `${t||'?'}" × ${w||'?'}" × ${l||'?'}" ×${q}`, bf: bfQty, cost: estCost ? parseFloat(estCost) : 0 }])
   }
 
+  const totalBF = Math.round(tally.reduce((s, r) => s + r.bf, 0) * 1000) / 1000
+  const totalCost = tally.reduce((s, r) => s + r.cost, 0)
+  const hasCost = tally.some(r => r.cost > 0)
+
   return (
-    <div style={{ padding: '0 20px 40px', maxWidth: 640, margin: '0 auto' }}>
-      <p style={{ fontSize: 12, color: 'var(--c-text-faint)', margin: '12px 0' }}>BF = T × W × L ÷ 144 · Accepts fractions: 3/4, 1 3/8</p>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-        <LenInput label="Thickness (in)" value={t} onChange={setT} placeholder="3/4" />
-        <LenInput label="Width (in)" value={w} onChange={setW} placeholder="6" />
-        <LenInput label="Length (in)" value={l} onChange={setL} placeholder="96" />
-      </div>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        <LenInput label="Qty" value={qty} onChange={setQty} placeholder="1" />
-        <LenInput label="$/BF (optional)" value={cost} onChange={setCost} placeholder="5.00" />
-      </div>
-
-      <div className="result-box" style={{ marginBottom: 12 }}>
-        <div>
-          <div key={bfQty} className={`metric-num${bfQty ? ' result-appear' : ''}`}>{bfQty ?? '—'}</div>
-          <div className="metric-sub">board feet{bf && bfQty !== bf ? ` (${q}× ${bf} BF)` : ''}</div>
+    <div style={{ display: 'flex', gap: 0, height: '100%', overflow: 'hidden' }}>
+      <div style={{ flex: '0 0 auto', width: 320, padding: '12px 16px', overflowY: 'auto', borderRight: '2px solid var(--c-border)' }}>
+        <p style={{ fontSize: 12, color: 'var(--c-text-faint)', margin: '0 0 12px' }}>BF = T × W × L ÷ 144 · Fractions OK: 3/4, 1 3/8</p>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
+          <LenInput label="Thickness (in)" value={t} onChange={setT} placeholder="3/4" />
+          <LenInput label="Width (in)" value={w} onChange={setW} placeholder="6" />
+          <LenInput label="Length (in)" value={l} onChange={setL} placeholder="96" />
         </div>
-        {estCost && (
-          <div style={{ textAlign: 'right' }}>
-            <div className="metric-green">${estCost}</div>
-            <div className="metric-sub">est. cost</div>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
+          <LenInput label="Qty" value={qty} onChange={setQty} placeholder="1" />
+          <LenInput label="$/BF (optional)" value={cost} onChange={setCost} placeholder="5.00" />
+        </div>
+        <div className="result-box" style={{ marginBottom: 10 }}>
+          <div>
+            <div key={bfQty} className={`metric-num${bfQty ? ' result-appear' : ''}`}>{bfQty ?? '—'}</div>
+            <div className="metric-sub">board feet{bf && bfQty !== bf ? ` (${q}× ${bf} BF)` : ''}</div>
           </div>
-        )}
+          {estCost && (
+            <div style={{ textAlign: 'right' }}>
+              <div className="metric-green">${estCost}</div>
+              <div className="metric-sub">est. cost</div>
+            </div>
+          )}
+        </div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button className="btn-primary" style={{ flex: 2, justifyContent: 'center' }} onClick={addTally} disabled={!bfQty}>+ Add to tally</button>
+          <button className="btn-secondary" style={{ flex: 1, justifyContent: 'center' }} onClick={clearFields}>Clear</button>
+        </div>
       </div>
 
-      <button className="btn-secondary" style={{ width: '100%', justifyContent: 'center', marginBottom: 20 }} onClick={addTally} disabled={!bfQty}>
-        + Add to tally
-      </button>
-
-      {tally.length > 0 && (
-        <SectionCard title="Running Tally">
-          <div className="tally-table">
-            {tally.map((r, i) => (
-              <div key={i} className="tally-row">
-                <span style={{ color: 'var(--c-text-muted)' }}>{r.desc}</span>
-                <span style={{ fontWeight: 700 }}>{r.bf} BF{r.cost > 0 ? ` · $${r.cost.toFixed(2)}` : ''}</span>
-              </div>
-            ))}
-            <div className="tally-row total">
-              <span>Total</span>
-              <span>{Math.round(tally.reduce((s,r) => s+r.bf, 0)*1000)/1000} BF{tally.some(r=>r.cost>0) ? ` · $${tally.reduce((s,r)=>s+r.cost,0).toFixed(2)}` : ''}</span>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+        <div className="cm-tape-header">
+          <span>RUNNING TALLY</span>
+          {tally.length > 0 && (
+            <button onClick={() => setTally([])} style={{ background: 'none', border: 'none', color: '#E0F7D0', cursor: 'pointer', fontSize: 11, fontFamily: 'var(--tape-font)' }}>[CLEAR]</button>
+          )}
+        </div>
+        <div className="cm-tape" style={{ flex: 1, maxWidth: '100%' }}>
+          {tally.length === 0 ? (
+            <div style={{ padding: '20px 10px', color: 'var(--calc-tape-dim)', fontFamily: 'var(--tape-font)', fontSize: 12, textAlign: 'center', opacity: 0.6 }}>
+              — tally is empty —<br /><span style={{ fontSize: 10 }}>add entries from the left panel</span>
             </div>
-          </div>
-          <button className="btn-text" style={{ marginTop: 8, color: 'var(--red)' }} onClick={() => setTally([])}>Clear tally</button>
-        </SectionCard>
-      )}
+          ) : (
+            <>
+              {tally.map((r, i) => (
+                <div key={i} className="cm-tape-row" style={{ background: i % 2 === 0 ? 'var(--calc-tape-bg1)' : 'var(--calc-tape-bg2)' }}>
+                  <span className="cm-tape-dim" style={{ fontSize: 11 }}>{r.desc}</span>
+                  <span style={{ fontFamily: 'var(--tape-font)', fontWeight: 700, whiteSpace: 'nowrap' }}>{r.bf} BF{r.cost > 0 ? ` · $${r.cost.toFixed(2)}` : ''}</span>
+                </div>
+              ))}
+              <div className="cm-tape-row tape-result" style={{ marginTop: 4, borderTop: '2px solid var(--calc-tape-dim)' }}>
+                <span style={{ fontFamily: 'var(--tape-font)', letterSpacing: '.5px' }}>TOTAL</span>
+                <span className="tape-val">{totalBF} BF{hasCost ? ` · $${totalCost.toFixed(2)}` : ''}</span>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
@@ -297,15 +315,17 @@ function ffd(cuts, stockLengths, kerf) {
 }
 
 function TrimCuts() {
+  const STOCK_OPTS = [8, 10, 12, 14, 16]
+  const [stockSel, setStockSel] = useState([8, 10, 12])
+  const [kerf, setKerf]   = useState('0.125')
   const [cuts, setCuts] = useState([
     { id:1, len:'', qty:1, label:'' },
     { id:2, len:'', qty:1, label:'' },
   ])
-  const [stock, setStock] = useState("8', 10', 12'")
-  const [kerf, setKerf]   = useState('0.125')
   const [result, setResult] = useState(null)
   const [error, setError]   = useState(null)
 
+  const toggleStock = ft => setStockSel(s => s.includes(ft) ? s.filter(x=>x!==ft) : [...s, ft].sort((a,b)=>a-b))
   const upd = (id, f, v) => setCuts(c => c.map(x => x.id===id ? {...x,[f]:v} : x))
   const addRow = () => {
     const newId = Date.now()
@@ -320,124 +340,162 @@ function TrimCuts() {
       return v > 0 ? { length: Math.round(v*16)/16, qty: Math.max(1,parseInt(c.qty)||1), label: c.label.trim() } : null
     }).filter(Boolean)
     if (!pc.length) { setError('Enter at least one cut.'); return }
-    const sl = stock.split(/[,\s]+/).map(s => { const v=parseLenIn(s); return v?Math.round(v*8)/8:null }).filter(Boolean)
-    if (!sl.length) { setError("Enter stock lengths e.g. 8', 10', 12' or 96"); return }
-    const k = parseFloat(kerf)||0.125
+    if (!stockSel.length) { setError('Select at least one stock length.'); return }
+    const sl = stockSel.map(ft => ft * 12)
+    const k = parseFloat(kerf) || 0.125
     if (Math.max(...pc.map(c=>c.length))+k > Math.max(...sl)) { setError('A cut is longer than all stock lengths.'); return }
     const r = ffd(pc, sl, k)
     if (!r) { setError('Could not fit all cuts.'); return }
     r.pc = pc; setResult(r)
   }
 
-  return (
-    <div style={{ padding: '0 20px 40px', maxWidth: 640, margin: '0 auto' }}>
-      <p style={{ fontSize: 12, color: 'var(--c-text-faint)', margin: '12px 0' }}>
-        Enter lengths in inches (48), feet (4'), or ft/in (4'6"). Fractions OK: 3 7/8
-      </p>
+  const waste = result
+    ? Math.round((1 - result.boards.reduce((s,b)=>s+b.used,0) / result.boards.reduce((s,b)=>s+b.sl,0)) * 100)
+    : null
 
-      {/* Cut list */}
-      <SectionCard>
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) 52px 32px', gap: 5, marginBottom: 6 }}>
-          {['Length', 'Qty', ''].map(h => (
-            <div key={h} className="calc-label" style={{ marginBottom: 0, textAlign: 'center' }}>{h}</div>
+  return (
+    <div style={{ display:'flex', flexDirection:'column', height:'100%', overflow:'hidden' }}>
+
+      {/* Top bar: stock checkboxes + kerf */}
+      <div style={{ padding:'10px 16px 8px', borderBottom:'1px solid var(--c-border)', flexShrink:0, display:'flex', alignItems:'center', gap:16, flexWrap:'wrap' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+          <span className="calc-label" style={{ marginBottom:0, whiteSpace:'nowrap' }}>STOCK LENGTH</span>
+          {STOCK_OPTS.map(ft => (
+            <label key={ft} style={{ display:'flex', alignItems:'center', gap:4, cursor:'pointer', userSelect:'none' }}>
+              <input type="checkbox" checked={stockSel.includes(ft)} onChange={() => toggleStock(ft)}
+                style={{ width:15, height:15, cursor:'pointer', accentColor:'var(--accent)' }} />
+              <span style={{ fontSize:13, fontWeight:600, color: stockSel.includes(ft) ? 'var(--c-text-primary)' : 'var(--c-text-muted)' }}>{ft}'</span>
+            </label>
           ))}
         </div>
-        {cuts.map((c, i) => (
-          <div key={c.id} style={{ marginBottom: 8 }}>
-            <div className="trim-row" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) 52px 32px', gap: 5, marginBottom: 4, alignItems: 'center' }}>
-              <input
-                id={'len-' + c.id}
-                className="calc-input"
-                value={c.len}
+        <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+          <span className="calc-label" style={{ marginBottom:0, whiteSpace:'nowrap' }}>KERF (in)</span>
+          <input className="calc-input" type="number" step="0.0625" value={kerf}
+            onChange={e => setKerf(e.target.value)}
+            style={{ width:72, textAlign:'center', padding:'6px 8px', fontSize:13 }} />
+        </div>
+        <button className="btn-primary" style={{ padding:'6px 18px', fontSize:13, marginLeft:'auto' }} onClick={calc}>
+          Calculate
+        </button>
+      </div>
+
+      {/* Middle: cut list left, greenbar results right */}
+      <div style={{ display:'flex', flex:1, overflow:'hidden', minHeight:0 }}>
+
+        {/* Cut list */}
+        <div style={{ flex:'0 0 auto', width:380, padding:'10px 14px', overflowY:'auto', borderRight:'2px solid var(--c-border)' }}>
+          <p style={{ fontSize:11, color:'var(--c-text-faint)', margin:'0 0 10px' }}>
+            Lengths in inches (48), feet (4'), or ft/in (4'6"). Fractions OK: 3 7/8
+          </p>
+
+          {/* Column headers */}
+          <div style={{ display:'grid', gridTemplateColumns:'minmax(0,2.5fr) 48px minmax(0,2fr) 28px', gap:4, marginBottom:4 }}>
+            {['Length','Qty','Label',''].map(h => (
+              <div key={h} className="calc-label" style={{ marginBottom:0, textAlign:'center' }}>{h}</div>
+            ))}
+          </div>
+
+          {/* Cut rows — all 4 on one line */}
+          {cuts.map(c => (
+            <div key={c.id} style={{ display:'grid', gridTemplateColumns:'minmax(0,2.5fr) 48px minmax(0,2fr) 28px', gap:4, marginBottom:5, alignItems:'center' }}>
+              <input id={'len-'+c.id} className="calc-input" value={c.len}
                 onChange={e => upd(c.id,'len',e.target.value)}
                 placeholder="48 or 4'6&quot;"
-                onKeyDown={e => e.key==='Enter' && addRow()}
-              />
-              <input
-                className="calc-input"
-                type="number" min="1" value={c.qty}
+                style={{ fontSize:13, padding:'7px 8px' }}
+                onKeyDown={e => e.key==='Enter' && addRow()} />
+              <input className="calc-input" type="number" min="1" value={c.qty}
                 onChange={e => upd(c.id,'qty',e.target.value)}
-                style={{ textAlign: 'center' }}
-              />
-              <button
-                onClick={() => setCuts(cc => cc.filter(x => x.id!==c.id))}
-                disabled={cuts.length===1}
-                className="icon-btn"
-                style={{ color: 'var(--red)', opacity: cuts.length===1 ? .3 : 1, justifySelf: 'center' }}
-              >×</button>
-            </div>
-            <div className="trim-label-row" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 4 }}>
-              <input
-                className="calc-input"
-                value={c.label}
+                style={{ textAlign:'center', fontSize:13, padding:'7px 4px' }} />
+              <input className="calc-input" value={c.label}
                 onChange={e => upd(c.id,'label',e.target.value)}
-                placeholder="Label (optional)"
-                style={{ fontSize: 13 }}
-              />
+                placeholder="label"
+                style={{ fontSize:12, padding:'7px 6px' }} />
+              <button onClick={() => setCuts(cc => cc.filter(x=>x.id!==c.id))}
+                disabled={cuts.length===1} className="icon-btn"
+                style={{ color:'var(--red)', opacity:cuts.length===1?.3:1, fontSize:16 }}>×</button>
             </div>
-          </div>
-        ))}
-        <button className="btn-text" onClick={addRow} style={{ fontSize: 13 }}>+ Add cut</button>
-      </SectionCard>
+          ))}
+          <button className="btn-text" onClick={addRow} style={{ fontSize:12, marginTop:4 }}>+ Add cut</button>
 
-      {/* Stock + kerf */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
-        <LenInput label="Stock lengths (comma-separated)" value={stock} onChange={setStock} placeholder="8', 10', 12'" />
-        <div style={{ width: 88 }}>
-          <div className="calc-label">Kerf (in)</div>
-          <input className="calc-input" type="number" step="0.0625" value={kerf} onChange={e => setKerf(e.target.value)} style={{ width: '100%' }} />
+          {error && <div className="warn-box" style={{ marginTop:10 }}>{error}</div>}
+        </div>
+
+        {/* Greenbar results tape */}
+        <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', minWidth:0 }}>
+          <div className="cm-tape-header">
+            <span>CUT SUMMARY</span>
+            {result && <span style={{ fontFamily:'var(--tape-font)', fontSize:11, color:'#b0d8a0' }}>
+              {waste}% WASTE
+            </span>}
+          </div>
+          <div className="cm-tape" style={{ flex:1, maxWidth:'100%' }}>
+            {!result ? (
+              <div style={{ padding:'20px 10px', color:'var(--calc-tape-dim)', fontFamily:'var(--tape-font)', fontSize:12, textAlign:'center', opacity:0.6 }}>
+                — enter cuts and press Calculate —
+              </div>
+            ) : (
+              <>
+                <div className="cm-tape-row tape-result" style={{ borderBottom:'2px solid var(--calc-tape-dim)', marginBottom:4 }}>
+                  <span style={{ fontFamily:'var(--tape-font)' }}>BOARDS NEEDED</span>
+                  <span className="tape-val">{result.boards.length} pcs</span>
+                </div>
+                {Object.entries(result.summary).sort(([a],[b])=>+a-+b).map(([len,cnt], i) => (
+                  <div key={len} className="cm-tape-row" style={{ background: i%2===0?'var(--calc-tape-bg1)':'var(--calc-tape-bg2)' }}>
+                    <span className="cm-tape-dim">{inToFtInStr(+len)}</span>
+                    <span style={{ fontFamily:'var(--tape-font)', fontWeight:700 }}>× {cnt}</span>
+                  </div>
+                ))}
+                <div className="cm-tape-row" style={{ borderTop:'1px solid var(--calc-tape-dim)', marginTop:8, paddingTop:6 }}>
+                  <span className="cm-tape-dim">WASTE</span>
+                  <span style={{ fontFamily:'var(--tape-font)', color: waste>30?'#e87070':'var(--calc-tape-txt)' }}>{waste}%</span>
+                </div>
+                {result.pc?.length > 0 && (
+                  <>
+                    <div className="cm-tape-row tape-result" style={{ borderTop:'2px solid var(--calc-tape-dim)', marginTop:8, borderBottom:'1px solid var(--calc-tape-dim)' }}>
+                      <span style={{ fontFamily:'var(--tape-font)' }}>CUT LIST</span>
+                    </div>
+                    {result.pc.map((p, i) => (
+                      <div key={i} className="cm-tape-row" style={{ background: i%2===0?'var(--calc-tape-bg1)':'var(--calc-tape-bg2)' }}>
+                        <span className="cm-tape-dim">{p.label || inToFtInStr(p.length)}</span>
+                        <span style={{ fontFamily:'var(--tape-font)' }}>{inToFtInStr(p.length)} × {p.qty}</span>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
 
-      {error && <div className="warn-box">{error}</div>}
-      <button className="btn-primary" style={{ width: '100%', justifyContent: 'center', marginBottom: 20 }} onClick={calc}>
-        Calculate
-      </button>
-
+      {/* Bottom: board cut diagrams */}
       {result && (
-        <>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
-            {Object.entries(result.summary).sort(([a],[b])=>+a-+b).map(([len,cnt]) => (
-              <div key={len} className="card-navy" style={{ padding: '10px 16px', textAlign: 'center', borderRadius: 0 }}>
-                <div style={{ fontSize: 26, fontWeight: 900, color: 'var(--white)' }}>{cnt}</div>
-                <div style={{ fontSize: 12, color: 'var(--sb-text)' }}>× {inToFtInStr(+len)}</div>
-              </div>
-            ))}
-            <div style={{ flex:1, minWidth:70, background:'var(--c-bg-surface)', borderRadius:0, padding:'10px 16px', border:'1px solid var(--c-border-light)', textAlign:'center' }}>
-              <div style={{ fontSize:22, fontWeight:700, color:'var(--orange)' }}>
-                {Math.round((1-result.boards.reduce((s,b)=>s+b.used,0)/result.boards.reduce((s,b)=>s+b.sl,0))*100)}%
-              </div>
-              <div style={{ fontSize:11, color:'var(--c-text-muted)' }}>waste</div>
-            </div>
-          </div>
-
+        <div style={{ borderTop:'2px solid var(--c-border)', padding:'10px 14px', overflowY:'auto', maxHeight:280, flexShrink:0 }}>
+          <div className="calc-label" style={{ marginBottom:8 }}>BOARD CUT PLANS</div>
           {result.boards.map((b, bi) => (
-            <div key={bi} className="card" style={{ marginBottom: 8 }}>
-              <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6, fontSize:13 }}>
+            <div key={bi} style={{ marginBottom:10 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4, fontSize:12 }}>
                 <span style={{ fontWeight:700 }}>Board {bi+1} · <span style={{ color:'var(--accent)' }}>{inToFtInStr(b.sl)}</span></span>
                 <span style={{ color:'var(--c-text-faint)' }}>waste {inToFtInStr(Math.max(0,b.sl-b.used))}</span>
               </div>
-              <div style={{ display:'flex', height:24, borderRadius:6, overflow:'hidden', border:'1px solid var(--c-border-light)' }}>
+              <div style={{ display:'flex', height:22, borderRadius:0, overflow:'hidden', border:'1px solid var(--c-border-light)' }}>
                 {b.cuts.map((cut,ci) => (
                   <div key={ci} title={inToFtInStr(cut)} style={{
-                    width:`${(cut/b.sl)*100}%`,
-                    background:CUT_COLS[ci%CUT_COLS.length],
+                    width:`${(cut/b.sl)*100}%`, background:CUT_COLS[ci%CUT_COLS.length],
                     display:'flex', alignItems:'center', justifyContent:'center',
                     fontSize:9, fontWeight:700, color:'#fff', overflow:'hidden',
                     borderRight:ci<b.cuts.length-1?'1px solid rgba(255,255,255,.3)':'none',
-                  }}>
-                    {(cut/b.sl)>0.12?inToFtInStr(cut):''}
-                  </div>
+                  }}>{(cut/b.sl)>0.1?inToFtInStr(cut):''}</div>
                 ))}
-                {b.sl-b.used>0.05&&(
+                {b.sl-b.used>0.05 && (
                   <div style={{ flex:1, background:'repeating-linear-gradient(45deg,var(--c-bg-subtle),var(--c-bg-subtle) 4px,var(--c-border-light) 4px,var(--c-border-light) 8px)' }} />
                 )}
               </div>
-              <div style={{ display:'flex', flexWrap:'wrap', gap:5, marginTop:8 }}>
+              <div style={{ display:'flex', flexWrap:'wrap', gap:4, marginTop:5 }}>
                 {b.cuts.map((cut,ci) => {
                   const m = result.pc?.find(p=>Math.abs(p.length-cut)<0.01)
                   return (
-                    <span key={ci} style={{ fontSize:11, padding:'2px 8px', borderRadius:99, fontWeight:600, background:CUT_COLS[ci%CUT_COLS.length]+'22', color:CUT_COLS[ci%CUT_COLS.length], border:`1px solid ${CUT_COLS[ci%CUT_COLS.length]}44` }}>
+                    <span key={ci} style={{ fontSize:10, padding:'1px 7px', borderRadius:99, fontWeight:600, background:CUT_COLS[ci%CUT_COLS.length]+'22', color:CUT_COLS[ci%CUT_COLS.length], border:`1px solid ${CUT_COLS[ci%CUT_COLS.length]}44` }}>
                       {m?.label||inToFtInStr(cut)}
                     </span>
                   )
@@ -445,7 +503,7 @@ function TrimCuts() {
               </div>
             </div>
           ))}
-        </>
+        </div>
       )}
     </div>
   )
@@ -690,14 +748,18 @@ export default function Calculators() {
           ))}
         </div>
       </div>
-      <div className="scroll-page" style={{ paddingTop: 16, flex: 1 }}>
-        {tab === 'construction' && <ConstructionCalc />}
-        {tab === 'boardfoot' && <BoardFoot />}
-        {tab === 'converter' && <UnitConverter />}
-        {tab === 'trim'      && <TrimCuts />}
-        {tab === 'sheet'     && <SheetGoods />}
-        {tab === 'notes'     && <CalcNotes />}
-      </div>
+      {(tab === 'construction' || tab === 'boardfoot' || tab === 'trim')
+        ? <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            {tab === 'construction' && <ConstructionCalc />}
+            {tab === 'boardfoot'    && <BoardFoot />}
+            {tab === 'trim'         && <TrimCuts />}
+          </div>
+        : <div className="scroll-page" style={{ paddingTop: 16, flex: 1 }}>
+            {tab === 'converter' && <UnitConverter />}
+            {tab === 'sheet'     && <SheetGoods />}
+            {tab === 'notes'     && <CalcNotes />}
+          </div>
+      }
     </div>
   )
 }
