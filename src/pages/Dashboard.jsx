@@ -689,18 +689,6 @@ export default function Dashboard() {
           </div>
         </>}
 
-        {nextSteps.length > 0 && <>
-          <span className="section-label">Active Projects</span>
-          <div className="group">
-            {nextSteps.map(({ p, step }) => (
-              <div key={p.id} className="cell" style={{ cursor: 'pointer' }} onClick={() => setProjId(p.id)}>
-                <div style={{ flex: 1 }}><div style={{ fontWeight: 500 }}>{p.name}</div><div style={{ fontSize: 13, color: 'var(--c-text-muted)' }}>Next: {step.title}</div></div>
-                <IChevR size={14} color="var(--c-text-faint)" />
-              </div>
-            ))}
-          </div>
-        </>}
-
         {!hasUrgent && <div className="empty" style={{ paddingTop: 32, paddingBottom: 0 }}><div className="empty-icon"><ITree size={32} color="var(--c-text-muted)" sw={1.5} /></div><div className="empty-title">All clear</div><p className="empty-sub">Nothing urgent today.</p></div>}
 
         {(() => {
