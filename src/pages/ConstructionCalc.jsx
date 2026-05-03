@@ -571,10 +571,10 @@ export default function ConstructionCalc() {
       </div>
 
       {/* ── Right: Greenbar tape ── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden', borderLeft: '3px solid #1a3a1a' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden', borderLeft: '1px solid var(--c-border)' }}>
         <div className="cm-tape-header">
           <span>CALCULATION TAPE</span>
-          <button onClick={() => setHistory([])} style={{ background: 'none', border: 'none', color: '#E0F7D0', cursor: 'pointer', fontSize: 11, fontFamily: 'var(--tape-font)' }}>
+          <button onClick={() => setHistory([])} style={{ background: 'none', border: 'none', color: 'var(--c-text-muted)', cursor: 'pointer', fontSize: 11, fontFamily: 'var(--tape-font)' }}>
             [CLEAR]
           </button>
         </div>

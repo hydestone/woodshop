@@ -172,7 +172,7 @@ function BoardFoot() {
         <div className="cm-tape-header">
           <span>RUNNING TALLY</span>
           {tally.length > 0 && (
-            <button onClick={() => setTally([])} style={{ background: 'none', border: 'none', color: '#E0F7D0', cursor: 'pointer', fontSize: 11, fontFamily: 'var(--tape-font)' }}>[CLEAR]</button>
+            <button onClick={() => setTally([])} style={{ background: 'none', border: 'none', color: 'var(--c-text-muted)', cursor: 'pointer', fontSize: 11, fontFamily: 'var(--tape-font)' }}>[CLEAR]</button>
           )}
         </div>
         <div className="cm-tape" style={{ flex: 1, maxWidth: '100%' }}>
