@@ -2521,7 +2521,7 @@ body {
   -webkit-appearance: none;
   background: var(--c-bg-subtle);
   border: 1.5px solid var(--c-border);
-  border-radius: var(--r-sm);
+  border-radius: 0;
   padding: 7px 32px 7px 12px;
   font-size: 14px;
   font-weight: 500;
@@ -2986,18 +2986,18 @@ body {
     padding-top: 4px;
     padding-bottom: env(safe-area-inset-bottom, 0px);
     /* Fully opaque — eliminates iOS compositing bleed in home indicator zone */
-    background: #ffffff;
+    background: rgb(22, 27, 34);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
-  [data-theme="dark"] .tabbar {
-    background: rgb(22, 27, 34);
-    border-top-color: rgba(240,246,252,.08);
+  [data-theme="light"] .tabbar {
+    background: #ffffff;
+    border-top-color: rgba(0,0,0,.08);
   }
-  /* Match html/body to tabbar — prevents OS black showing in safe area zone */
-  html, body { background: #ffffff; }
-  [data-theme="dark"] html,
-  [data-theme="dark"] body { background: rgb(22, 27, 34); }
+  /* Default = dark (app default). Light mode gets the override. */
+  html, body { background: rgb(22, 27, 34); }
+  html[data-theme="light"],
+  [data-theme="light"] body { background: #ffffff; }
 
   .scroll-page { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px)); }
   .fab { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 10px); }
@@ -3010,14 +3010,14 @@ body {
   .tabbar {
     padding-top: 4px;
     padding-bottom: env(safe-area-inset-bottom, 0px) !important;
-    background: #ffffff !important;
+    background: rgb(22, 27, 34) !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
   }
-  [data-theme="dark"] .tabbar { background: rgb(22, 27, 34) !important; }
-  html, body { background: #ffffff !important; }
-  [data-theme="dark"] html,
-  [data-theme="dark"] body { background: rgb(22, 27, 34) !important; }
+  [data-theme="light"] .tabbar { background: #ffffff !important; }
+  html, body { background: rgb(22, 27, 34) !important; }
+  html[data-theme="light"],
+  [data-theme="light"] body { background: #ffffff !important; }
   .scroll-page { padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px)) !important; }
   .fab { bottom: calc(48px + env(safe-area-inset-bottom, 0px) + 10px) !important; }
   .fab.fab-secondary { bottom: calc(48px + env(safe-area-inset-bottom, 0px) + 62px) !important; }
@@ -3025,17 +3025,17 @@ body {
 /* iOS fallback — JS adds .pwa-standalone to <html> */
 @media (max-width: 767px) {
   html.pwa-standalone,
-  .pwa-standalone body { background: #ffffff !important; }
-  [data-theme="dark"] html.pwa-standalone,
-  [data-theme="dark"] .pwa-standalone body { background: rgb(22, 27, 34) !important; }
+  .pwa-standalone body { background: rgb(22, 27, 34) !important; }
+  html.pwa-standalone[data-theme="light"],
+  [data-theme="light"] .pwa-standalone body { background: #ffffff !important; }
   .pwa-standalone .tabbar {
     padding-top: 4px;
     padding-bottom: env(safe-area-inset-bottom, 0px) !important;
-    background: #ffffff !important;
+    background: rgb(22, 27, 34) !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
   }
-  [data-theme="dark"] .pwa-standalone .tabbar { background: rgb(22, 27, 34) !important; }
+  [data-theme="light"] .pwa-standalone .tabbar { background: #ffffff !important; }
   .pwa-standalone .scroll-page { padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px)) !important; }
   .pwa-standalone .fab { bottom: calc(48px + env(safe-area-inset-bottom, 0px) + 10px) !important; }
   .pwa-standalone .fab.fab-secondary { bottom: calc(48px + env(safe-area-inset-bottom, 0px) + 62px) !important; }

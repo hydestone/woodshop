@@ -53,6 +53,9 @@
     <link rel="apple-touch-startup-image" media="screen and (device-width: 360px) and (device-height: 780px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="/splash-2340x1080.png" />
 
     <title>JDH Woodworks</title>
+    <!-- Sync theme before first paint — no flash of wrong background -->
+    <script>try{var t=localStorage.getItem("jdh-theme")||"dark";document.documentElement.setAttribute("data-theme",t)}catch(e){document.documentElement.setAttribute("data-theme","dark")}</script>
+
   </head>
   <body>
     <div id="root"></div>
