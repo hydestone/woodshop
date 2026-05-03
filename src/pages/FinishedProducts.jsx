@@ -7,8 +7,8 @@ import * as db from '../db.js'
 export default function FinishedWork() {
   const { data, mutate, setTab } = useCtx()
   const toast = useToast()
-  const [editMode, setEditMode] = useState(false)
   const [catFilter, setCatFilter] = useState('all')
+  const [sortBy, setSortBy]       = useState('newest')
 
   const allFinished = data.photos.filter(p => p.tags?.split(',').map(t => t.trim()).includes('finished'))
 
@@ -22,9 +22,19 @@ export default function FinishedWork() {
     allFinished.map(p => projMap[p.project_id]?.category).filter(Boolean)
   )].sort()
 
-  const photos = catFilter === 'all'
+  const filtered = catFilter === 'all'
     ? allFinished
     : allFinished.filter(p => projMap[p.project_id]?.category === catFilter)
+
+  const photos = useMemo(() => {
+    const arr = [...filtered]
+    if (sortBy === 'newest')   return arr.sort((a,b) => new Date(b.created_at) - new Date(a.created_at))
+    if (sortBy === 'oldest')   return arr.sort((a,b) => new Date(a.created_at) - new Date(b.created_at))
+    if (sortBy === 'category') return arr.sort((a,b) => (projMap[a.project_id]?.category||'').localeCompare(projMap[b.project_id]?.category||''))
+    if (sortBy === 'year')     return arr.sort((a,b) => (projMap[b.project_id]?.year_completed||0) - (projMap[a.project_id]?.year_completed||0))
+    if (sortBy === 'project')  return arr.sort((a,b) => (projMap[a.project_id]?.name||'').localeCompare(projMap[b.project_id]?.name||''))
+    return arr
+  }, [filtered, sortBy, projMap])
 
   const edit = async (id, fields) => {
     if (fields._delete) {
@@ -74,15 +84,16 @@ export default function FinishedWork() {
                   label="Filter by category"
                 />
               )}
-              {photos.length > 0 && (
-                <button
-                  className={editMode ? 'btn-primary' : 'btn-secondary'}
-                  style={{ padding: '5px 12px', fontSize: 13 }}
-                  onClick={() => setEditMode(e => !e)}
-                >
-                  {editMode ? 'Done' : 'Edit'}
-                </button>
-              )}
+              <div className="filter-select-wrap">
+                <select className="filter-select" value={sortBy} onChange={e => setSortBy(e.target.value)}>
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                  <option value="year">By Year</option>
+                  <option value="category">By Category</option>
+                  <option value="project">By Project</option>
+                </select>
+                <span className="filter-select-chevron" aria-hidden="true">▾</span>
+              </div>
             </div>
           </div>
         </div>
@@ -91,11 +102,7 @@ export default function FinishedWork() {
             <div className="empty-icon"><ITrophy size={32} color="var(--c-text-muted)" sw={1.5} /></div>
             <div className="empty-title">No finished pieces yet</div>
             <p className="empty-sub">Tag any photo with "finished" to show it here</p>
-            <button
-              className="btn-primary"
-              style={{ marginTop: 16 }}
-              onClick={() => setTab('photos')}
-            >
+            <button className="btn-primary" style={{ marginTop: 16 }} onClick={() => setTab('photos')}>
               Go to Photos
             </button>
           </div>

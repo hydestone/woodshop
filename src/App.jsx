@@ -22,7 +22,7 @@ import Stock, { WoodStockGallery } from './pages/Stock.jsx'
 import Brainstorm       from './pages/Brainstorm.jsx'
 import Finishes         from './pages/Finishes.jsx'
 import Resources        from './pages/Resources.jsx'
-import ShopImprovements from './pages/ShopImprovements.jsx'
+import ShopTools from './pages/ShopTools.jsx'
 import AllPhotos        from './pages/Photos.jsx'
 import FinishedProducts from './pages/FinishedProducts.jsx'
 import Inspiration      from './pages/Inspiration.jsx'
@@ -70,8 +70,7 @@ const NAV_SECTIONS = [
   {
     label: 'Workshop',
     items: [
-      { id: 'maintenance', label: 'Shop Maintenance',  Icon: IWrench },
-      { id: 'shop',        label: 'Shop Improvements', Icon: IHouse  },
+      { id: 'shoptools',   label: 'Shop & Tools',      Icon: IWrench },
       { id: 'calculators', label: 'Calculators',        Icon: ICalc   },
       { id: 'finishes',    label: 'Finishes',          Icon: ILayers },
       { id: 'resources',   label: 'Resources',         Icon: IBook   },
@@ -95,7 +94,7 @@ const ALL_NAV = NAV_SECTIONS.flatMap(s => s.items)
 
 // Mobile More menu — only show essentials (desktop sidebar shows everything)
 const MOBILE_MORE_IDS = new Set([
-  'ideas', 'shopping', 'stock', 'maintenance',
+  'ideas', 'shopping', 'stock', 'shoptools', 'shoptools',
   'finishes', 'finished',
   'settings', 'help',
 ])
@@ -530,6 +529,7 @@ export default function App() {
   const badgeFor = id => {
     if (id === 'projects')    return urgentCoats
     if (id === 'maintenance') return urgentMaint
+    if (id === 'shoptools') return urgentMaint
     if (id === 'shopping')    return shopCount
     if (id === 'trash')       return trashCount
     return 0
@@ -655,11 +655,12 @@ export default function App() {
                   {tab === 'projects'    && <Projects />}
                   {tab === 'shopping'    && <Shopping />}
                   {tab === 'maintenance' && <Maintenance />}
+                  {tab === 'shoptools'   && <ShopTools />}
                   {tab === 'stock'       && <Stock />}
                   {tab === 'brainstorm'  && <Brainstorm />}
                   {tab === 'finishes'    && <Finishes />}
                   {tab === 'resources'   && <Resources />}
-                  {tab === 'shop'        && <ShopImprovements />}
+                  
                   {tab === 'photos'      && <AllPhotos />}
                   {tab === 'finished'    && <FinishedProducts />}
                   {tab === 'inspiration' && <Inspiration />}
