@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
@@ -43,11 +43,6 @@ const SPEC_FIELDS = {
   'Other Power Tools':  ['Power','Speed','Capacity'],
   'Other Hand Tools':   ['Size','Material'],
 }
-
-// ─── localStorage tools store ─────────────────────────────────────────────────
-const TOOLS_KEY = 'shop-tools-v1'
-function loadTools() { try { return JSON.parse(localStorage.getItem(TOOLS_KEY)) || [] } catch { return [] } }
-function saveTools(t) { try { localStorage.setItem(TOOLS_KEY, JSON.stringify(t)) } catch {} }
 
 // ─── Shop Improvements tab (unchanged logic) ──────────────────────────────────
 const IMP_CATS = ['Wish List', 'Planned Upgrade', 'Layout Idea', 'Tool Acquisition', 'Safety', 'Other']
@@ -181,27 +176,33 @@ function IdeaSheet({ item, onSave, onClose }) {
 
 // ─── Tools Inventory tab ──────────────────────────────────────────────────────
 function ToolsInventory() {
+  const { data, mutate } = useCtx()
   const toast = useToast()
-  const [tools, setTools]       = useState(loadTools)
   const [showAdd, setShowAdd]   = useState(false)
   const [editTool, setEditTool] = useState(null)
   const [delTool, setDelTool]   = useState(null)
   const [catFilter, setCatFilter] = useState('all')
 
-  const persist = (next) => { setTools(next); saveTools(next) }
+  const tools = data.tools || []
 
-  const save = (fields) => {
+  const save = async (fields) => {
     if (editTool) {
-      persist(tools.map(t => t.id === editTool.id ? { ...t, ...fields } : t))
+      mutate(d => ({ ...d, tools: d.tools.map(t => t.id === editTool.id ? { ...t, ...fields } : t) }))
+      await db.updateTool(editTool.id, fields).catch(e => toast(e.message, 'error'))
       toast('Saved', 'success'); setEditTool(null)
     } else {
-      persist([...tools, { id: Date.now().toString(36), created_at: new Date().toISOString(), ...fields }])
-      toast('Added', 'success'); setShowAdd(false)
+      try {
+        const tool = await db.addTool(fields)
+        mutate(d => ({ ...d, tools: [...(d.tools||[]), tool] }))
+        toast('Added', 'success'); setShowAdd(false)
+      } catch(e) { toast(e.message, 'error') }
     }
   }
 
-  const del = (id) => {
-    persist(tools.filter(t => t.id !== id))
+  const del = async (id) => {
+    const prev = data.tools
+    mutate(d => ({ ...d, tools: d.tools.filter(t => t.id !== id) }))
+    await db.deleteTool(id).catch(e => { mutate(d => ({ ...d, tools: prev })); toast(e.message, 'error') })
     toast('Deleted', 'success'); setDelTool(null)
   }
 

@@ -43,7 +43,7 @@ async function q(promise) {
 export async function loadAll() {
   const safe = (promise, fallback = []) => promise.then(r => r.data ?? fallback).catch(() => fallback)
   const [projects, steps, coats, maintenance, shopping, photos,
-         woodStock, brainstorming, finishProducts, resources, shopImprovements, categories, woodLocations, projectWoodSources, species, finishes] = await Promise.all([
+         woodStock, brainstorming, finishProducts, resources, shopImprovements, categories, woodLocations, projectWoodSources, species, finishes, tools] = await Promise.all([
     safe(supabase.from('projects').select('*').order('created_at')),
     safe(supabase.from('steps').select('*').limit(1000).order('sort_order')),
     safe(supabase.from('coats').select('*').limit(500).order('coat_number')),
@@ -60,6 +60,7 @@ export async function loadAll() {
     safe(supabase.from('project_wood_sources').select('*')),
     safeWithCache('species', supabase.from('species').select('*').order('name')),
     safeWithCache('finishes', supabase.from('finishes').select('*').order('name')),
+    safe(supabase.from('tools').select('*').order('created_at')),
   ])
   return {
     projects,
@@ -78,6 +79,7 @@ export async function loadAll() {
     projectWoodSources,
     species,
     finishes,
+    tools,
   }
 }
 
@@ -270,6 +272,18 @@ export async function updateShopImprovement(id, fields) {
 }
 export async function deleteShopImprovement(id) {
   return q(supabase.from('shop_improvements').delete().eq('id', id))
+}
+
+// ── Tools ─────────────────────────────────────────────────────────────────────
+export async function addTool(fields) {
+  const user_id = await getUserId()
+  return q(supabase.from('tools').insert({ id: uid(), created_at: isoNow(), user_id, ...fields }).select().single())
+}
+export async function updateTool(id, fields) {
+  return q(supabase.from('tools').update(fields).eq('id', id))
+}
+export async function deleteTool(id) {
+  return q(supabase.from('tools').delete().eq('id', id))
 }
 
 // ── Categories ────────────────────────────────────────────────────────────────
