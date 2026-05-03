@@ -29,10 +29,10 @@ import Inspiration      from './pages/Inspiration.jsx'
 import ProjectIdeas     from './pages/ProjectIdeas.jsx'
 
 // Pages — lazy (less frequent)
-const YearReview  = lazy(() => import('./pages/YearReview.jsx'))
+import YearReview  from './pages/YearReview.jsx'
+import Costs       from './pages/Costs.jsx'
 const Settings    = lazy(() => import('./pages/Settings.jsx'))
 const BulkImport  = lazy(() => import('./pages/BulkImport.jsx'))
-const Costs       = lazy(() => import('./pages/Costs.jsx'))
 const Audit       = lazy(() => import('./pages/Audit.jsx'))
 const Help        = lazy(() => import('./pages/Help.jsx'))
 const SmokeTest   = lazy(() => import('./pages/SmokeTest.jsx'))
