@@ -6,7 +6,7 @@ import { PhotoGrid, Sheet, FormCell, TagInput, ICamera, IPlus, FilterSelect } fr
 import PhotoTriage from '../components/PhotoTriage.jsx'
 
 export default function AllPhotos() {
-  const { navigate, data, mutate } = useCtx()
+  const { navigate, data, mutate, setTab, setTabAction } = useCtx()
   const toast = useToast()
   const [uploading, setUploading]       = useState(false)
   const [filter, setFilter]             = useState('all')
@@ -249,7 +249,6 @@ export default function AllPhotos() {
               <>
                 {filter === 'unsorted' && (
                   <div style={{ padding: '0 16px 12px' }}>
-                    {/* Status filters */}
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
                       {[
                         { id: 'all',      label: 'All' },
@@ -272,6 +271,12 @@ export default function AllPhotos() {
                         color: includeComplete ? 'var(--forest)' : 'var(--c-text-muted)',
                         border: `1.5px solid ${includeComplete ? 'var(--forest)' : 'var(--c-border)'}`,
                       }}>+ Complete</button>
+                      <button onClick={() => { setTabAction('new-project'); setTab('projects') }} style={{
+                        padding: '5px 12px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                        fontFamily: 'inherit', borderRadius: 0, marginLeft: 'auto',
+                        background: 'var(--accent)', color: '#fff',
+                        border: '1.5px solid var(--accent)',
+                      }}>+ New Project</button>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                       <button className="btn-primary" style={{ padding: '8px 20px', fontSize: 13 }} onClick={() => setShowTriage(true)}>

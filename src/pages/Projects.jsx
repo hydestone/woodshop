@@ -155,6 +155,25 @@ export default function Projects() {
           </div>
           {/* Filter + sort + favorites + table — single row */}
           <div style={{ display:'flex', gap:6, alignItems:'center', marginTop:10, flexWrap:'wrap' }}>
+            {/* Status pills */}
+            <div style={{ display: 'flex', gap: 4 }}>
+              {[
+                { id: 'all',      label: 'All' },
+                { id: 'active',   label: 'Active' },
+                { id: 'planning', label: 'Planning' },
+                { id: 'paused',   label: 'Paused' },
+                { id: 'complete', label: 'Complete' },
+              ].map(s => (
+                <button key={s.id} onClick={() => setStatusFilter(s.id)} style={{
+                  padding: '7px 11px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                  fontFamily: 'inherit', borderRadius: 0,
+                  background: statusFilter === s.id ? 'var(--navy)' : 'var(--c-bg-subtle)',
+                  color: statusFilter === s.id ? 'var(--white)' : 'var(--c-text-muted)',
+                  border: '1.5px solid var(--c-border)',
+                  transition: 'background 120ms, color 120ms',
+                }}>{s.label}</button>
+              ))}
+            </div>
             {/* Category */}
             {categories.length > 0 && (
               <FilterSelect
@@ -181,17 +200,30 @@ export default function Projects() {
             {/* Favorites toggle */}
             <button
               onClick={() => setShowFavOnly(f => !f)}
-              className={showFavOnly ? 'btn-primary' : 'btn-secondary'}
-              style={{ padding:'5px 10px', fontSize:13, display:'flex', alignItems:'center', gap:5 }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                padding: '7px 12px', fontSize: 14, fontWeight: 500,
+                fontFamily: 'inherit', cursor: 'pointer',
+                background: showFavOnly ? 'var(--navy)' : 'var(--c-bg-subtle)',
+                color: showFavOnly ? 'var(--white)' : 'var(--c-text-primary)',
+                border: '1.5px solid var(--c-border)', borderRadius: 0,
+                transition: 'background 150ms, color 150ms',
+              }}
               title={showFavOnly ? 'Show all' : 'Favorites only'}
             >
               <IStar size={14} fill={showFavOnly ? '#fff' : 'none'} color={showFavOnly ? '#fff' : '#F59E0B'} />
-              {showFavOnly ? 'Favorites' : 'Favorites'}
+              Favorites
             </button>
             {/* Table view — desktop only */}
             <button
-              className={viewMode === 'table' ? 'btn-primary' : 'btn-secondary'}
-              style={{ padding:'5px 12px', fontSize:13, marginLeft:'auto' }}
+              style={{
+                padding: '7px 12px', fontSize: 14, fontWeight: 500,
+                fontFamily: 'inherit', cursor: 'pointer', marginLeft: 'auto',
+                background: viewMode === 'table' ? 'var(--navy)' : 'var(--c-bg-subtle)',
+                color: viewMode === 'table' ? 'var(--white)' : 'var(--c-text-primary)',
+                border: '1.5px solid var(--c-border)', borderRadius: 0,
+                transition: 'background 150ms, color 150ms',
+              }}
               id="table-toggle-btn"
               onClick={() => setViewMode(v => v === 'cards' ? 'table' : 'cards')}
             >
@@ -716,6 +748,17 @@ export function ProjectDetail() {
           )}
           {project.gift_recipient&& <span style={{ fontSize: 12, color: 'var(--c-text-muted)' }}>🎁 {project.gift_recipient}</span>}
           {project.description   && <span style={{ fontSize: 12, color: 'var(--c-text-muted)' }}>{project.description}</span>}
+          {(() => {
+            const pws = (data.projectWoodSources || []).find(s => s.project_id === projId)
+            const stock = pws ? (data.woodStock || []).find(w => w.id === pws.wood_stock_id) : null
+            if (!stock) return null
+            return (
+              <button className="btn-text" style={{ fontSize: 12, color: 'var(--accent)', padding: 0 }}
+                onClick={() => setTab('stock')} title="View in Wood Stock">
+                🪵 {stock.species || 'Wood Stock'} ↗
+              </button>
+            )
+          })()}
         </div>
       </div>
 
