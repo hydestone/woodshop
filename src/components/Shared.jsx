@@ -45,6 +45,20 @@ export const IMore     = p => <I {...p} d="M5 12h.01M12 12h.01M19 12h.01" sw={3}
 export const IBell     = p => <I {...p} d={['M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9','M13.73 21a2 2 0 0 1-3.46 0']} />
 export const ISearch   = p => <I {...p} d={['M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z','M21 21l-4.35-4.35']} />
 export const ISaw      = p => <I {...p} d={['M3 9h13l4 3-4 3H3V9z','M7 9v6','M10 9v6','M13 9v6','M1 12h2']} />
+export const ICalc     = ({ size = 24, color = 'currentColor', sw = 1.8, ...rest }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" {...rest}>
+    {/* + top-left */}
+    <line x1="4" y1="6" x2="8" y2="6"/><line x1="6" y1="4" x2="6" y2="8"/>
+    {/* - top-right */}
+    <line x1="16" y1="6" x2="20" y2="6"/>
+    {/* × bottom-left */}
+    <line x1="4" y1="16" x2="8" y2="20"/><line x1="8" y1="16" x2="4" y2="20"/>
+    {/* ÷ bottom-right */}
+    <line x1="16" y1="18" x2="20" y2="18"/>
+    <circle cx="18" cy="15" r="0.8" fill={color} stroke="none"/>
+    <circle cx="18" cy="21" r="0.8" fill={color} stroke="none"/>
+  </svg>
+)
 export const IDollar   = p => <I {...p} d={['M12 2v20','M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6']} />
 export const IBrain    = p => <I {...p} d={['M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.84A2.5 2.5 0 0 1 9.5 2','M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.84A2.5 2.5 0 0 0 14.5 2']} />
 export const IIdea    = p => <I {...p} d={['M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z','M9 21h6','M9.5 17.5h5']} />

@@ -7,7 +7,7 @@ import Auth from './pages/Auth.jsx'
 import { ToastProvider } from './components/Toast.jsx'
 import GlobalSearch from './components/Search.jsx'
 import {
-  IFolder, ICart, IWrench, ICamera, ITree, IBulb, ISaw,
+  IFolder, ICart, IWrench, ICamera, ITree, IBulb, ICalc,
   IStar, ICheck, IGrid, IIdea, IBrain, IDollar, ITrash, IBell,
   IBook, IHouse, IImage, ILayers, IMore, IClose,
   coatStatus, maintStatus,
@@ -74,7 +74,7 @@ const NAV_SECTIONS = [
     items: [
       { id: 'maintenance', label: 'Shop Maintenance',  Icon: IWrench },
       { id: 'shop',        label: 'Shop Improvements', Icon: IHouse  },
-      { id: 'calculators', label: 'Calculators',        Icon: ISaw    },
+      { id: 'calculators', label: 'Calculators',        Icon: ICalc   },
       { id: 'finishes',    label: 'Finishes',          Icon: ILayers },
       { id: 'resources',   label: 'Resources',         Icon: IBook   },
     ],
@@ -86,7 +86,7 @@ const NAV_SECTIONS = [
       { id: 'costs',       label: 'Costs',             Icon: IDollar },
       { id: 'import',      label: 'Bulk Import',       Icon: ICamera },
       { id: 'trash',       label: 'Recycling Bin',     Icon: ITrash  },
-      { id: 'beta',        label: 'Beta Feedback',     Icon: IBell   },
+      { id: 'beta',        label: 'Feedback',          Icon: IBell   },
       { id: 'help',        label: 'Help',              Icon: IBook   },
     ],
   },
@@ -106,95 +106,12 @@ const MOBILE_MORE_IDS = new Set([
 const MOBILE_TABS = [
   { id: 'home',        label: 'Home',     Icon: IHouse  },
   { id: 'projects',    label: 'Projects', Icon: IFolder },
-  { id: 'calculators', label: 'Calc',     Icon: ISaw    },
+  { id: 'calculators', label: 'Calc',     Icon: ICalc   },
   { id: 'photos',      label: 'Photos',   Icon: ICamera },
   { id: 'more',        label: 'More',     Icon: IMore   },
 ]
 
 
-
-// ── Feedback Modal ─────────────────────────────────────────────────────────────
-// Posts to a Google Apps Script webhook → Google Sheet
-// Deploy your own: https://script.google.com → new project → paste handler below
-const FEEDBACK_WEBHOOK = 'https://script.google.com/macros/s/AKfycbzyB_ThPvl4xc8DDEwE7_QwjmGBlAsXwerQTnqw8N45pLAIgBsW3uBQ7RSkUZzz4E0/exec'
-
-function FeedbackModal({ session, onClose }) {
-  const [msg, setMsg]       = useState('')
-  const [rating, setRating] = useState(0)
-  const [sent, setSent]     = useState(false)
-  const [sending, setSending] = useState(false)
-
-  const send = async () => {
-    if (!msg.trim()) return
-    setSending(true)
-    try {
-      await fetch(FEEDBACK_WEBHOOK, {
-        method: 'POST',
-        mode: 'no-cors',  // Apps Script requires no-cors
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: session?.user?.email || 'unknown',
-          user_id: session?.user?.id || 'unknown',
-          rating,
-          message: msg.trim(),
-          page: window.location.pathname,
-          timestamp: new Date().toISOString(),
-          app: 'JDH Woodworks',
-        }),
-      })
-      setSent(true)
-    } catch (e) {
-      // no-cors swallows errors — treat as success
-      setSent(true)
-    }
-    setSending(false)
-  }
-
-  return (
-    <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.6)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:3000, padding:24 }}>
-      <div onClick={e=>e.stopPropagation()} style={{ background:'var(--c-bg-surface)', borderRadius:20, padding:'28px 24px', width:'100%', maxWidth:380, display:'flex', flexDirection:'column', gap:16, boxShadow:'var(--shadow-xl)' }}>
-        {sent ? (
-          <>
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 4 }}>
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/>
-              </svg>
-            </div>
-            <div style={{ textAlign:'center', fontWeight:700, fontSize:18 }}>Thanks for the feedback!</div>
-            <button className="btn-primary" style={{ width:'100%', justifyContent:'center' }} onClick={onClose}>Done</button>
-          </>
-        ) : (
-          <>
-            <div style={{ fontWeight:700, fontSize:18 }}>Send Feedback</div>
-            <div style={{ display:'flex', gap:8, justifyContent:'center' }}>
-              {[1,2,3,4,5].map(n => (
-                <button key={n} onClick={() => setRating(n)}
-                  style={{ fontSize:24, background:'none', border:'none', cursor:'pointer', opacity: rating >= n ? 1 : 0.3, transition:'opacity 150ms' }}>
-                  ⭐
-                </button>
-              ))}
-            </div>
-            <textarea
-              className="form-input"
-              placeholder="What's working? What's not? Any ideas?"
-              value={msg}
-              onChange={e => setMsg(e.target.value)}
-              rows={5}
-              style={{ resize:'vertical', minHeight:100 }}
-              autoFocus
-            />
-            <div style={{ display:'flex', gap:10 }}>
-              <button className="btn-secondary" style={{ flex:1, justifyContent:'center' }} onClick={onClose}>Cancel</button>
-              <button className="btn-primary" style={{ flex:1, justifyContent:'center' }} onClick={send} disabled={!msg.trim() || sending}>
-                {sending ? 'Sending…' : 'Send'}
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  )
-}
 
 // ── QR Code Modal ─────────────────────────────────────────────────────────────
 function QRModal({ onClose }) {
@@ -451,7 +368,6 @@ export default function App() {
 
   const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark')
   const [showQR, setShowQR] = useState(false)
-  const [showFeedback, setShowFeedback] = useState(false)
   const [isOffline, setIsOffline] = useState(!navigator.onLine)
   const { showTutorial, dismissTutorial, launchTutorial } = useTutorialCheck()
   const [needsPassword, setNeedsPassword] = useState(false)
@@ -688,9 +604,9 @@ export default function App() {
                 ))}
               </div>
               <div style={{ padding: '12px 8px', borderTop: '1px solid var(--sb-divider)' }}>
-                <button className="sidebar-footer-btn" onClick={() => setShowFeedback(true)}>
+                <button className="sidebar-footer-btn" onClick={() => setTab('beta')}>
                   <IBrain size={16} color="currentColor" sw={1.8} />
-                  Send Feedback
+                  Feedback
                 </button>
                 <button className="sidebar-footer-btn" onClick={() => setShowQR(true)}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -794,7 +710,6 @@ export default function App() {
 
         {/* QR Code modal */}
         {showQR && <QRModal onClose={() => setShowQR(false)} />}
-        {showFeedback && <FeedbackModal session={session} onClose={() => setShowFeedback(false)} />}
         {showTutorial && <Tutorial onClose={dismissTutorial} setTab={setTab} />}
       {isOffline && (
         <div className="offline-banner">
@@ -839,9 +754,9 @@ export default function App() {
                 {/* Portfolio links */}
                 <div className="form-group" style={{ marginBottom: 8 }}>
                   <div className="more-item" style={{ borderBottom: '1px solid var(--c-border-light)', padding: '13px 16px' }}
-                    onClick={() => { setShowMore(false); setShowFeedback(true) }} role="button" tabIndex={0}>
+                    onClick={() => { setShowMore(false); setTab('beta') }} role="button" tabIndex={0}>
                     <IBrain size={20} color="var(--accent)" sw={1.8} />
-                    <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>Send Feedback</span>
+                    <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>Feedback</span>
                   </div>
                   <div className="more-item" style={{ borderBottom: '1px solid var(--c-border-light)', padding: '13px 16px' }}
                     onClick={() => { setShowMore(false); setShowQR(true) }} role="button" tabIndex={0}>
