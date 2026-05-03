@@ -101,7 +101,7 @@ function SwipeCard({ photo, onAssign, onSkip, projects }) {
 }
 
 // ─── Mobile Triage View ──────────────────────────────────────────────────────
-function MobileTriage({ photos, projects, onAssign, onSkip, onClose }) {
+function MobileTriage({ photos, projects, onAssign, onSkip, onClose, statusPills }) {
   const [idx, setIdx] = useState(0)
   const photo = photos[idx]
 
@@ -150,6 +150,7 @@ function MobileTriage({ photos, projects, onAssign, onSkip, onClose }) {
         <div style={{ fontSize: 11, color: 'var(--c-text-faint)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 8 }}>
           Assign to project
         </div>
+        {statusPills && <div style={{ marginBottom: 8, overflowX: 'auto', scrollbarWidth: 'none' }}>{statusPills}</div>}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, maxHeight: 140, overflowY: 'auto' }}>
           {projects.map(p => (
             <button key={p.id} onClick={() => assign(p.id)} style={{
@@ -171,7 +172,7 @@ function MobileTriage({ photos, projects, onAssign, onSkip, onClose }) {
 }
 
 // ─── Desktop Triage View ─────────────────────────────────────────────────────
-function DesktopTriage({ photos, projects, onAssign, onClose }) {
+function DesktopTriage({ photos, projects, onAssign, onClose, statusPills }) {
   const [selected, setSelected] = useState(new Set())
   const [draggedOver, setDraggedOver] = useState(null)
   const [dragData, setDragData] = useState(null)
@@ -312,9 +313,10 @@ function DesktopTriage({ photos, projects, onAssign, onClose }) {
           borderLeft: '1px solid var(--c-border)', padding: 12,
           background: 'var(--c-bg-subtle)',
         }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--c-text-faint)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 10 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--c-text-faint)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 8 }}>
             Drop onto project
           </div>
+          {statusPills && <div style={{ marginBottom: 10 }}>{statusPills}</div>}
           {projects.map(p => {
             const isOver = draggedOver === p.id
             return (
@@ -361,6 +363,7 @@ export default function PhotoTriage({ onClose }) {
   const { data, mutate } = useCtx()
   const toast = useToast()
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+  const [statusFilter, setStatusFilter] = useState('all') // 'all'|'active'|'planning'|'paused'|'complete'
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -377,16 +380,16 @@ export default function PhotoTriage({ onClose }) {
   )
 
   const projects = useMemo(() => {
-    const active = data.projects
-      .filter(p => p.status !== 'complete')
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-
-    // Add thumbnail for desktop folder view
-    return active.map(p => {
+    let list = [...data.projects]
+    if (statusFilter !== 'all') {
+      list = list.filter(p => p.status === statusFilter)
+    }
+    list = list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    return list.map(p => {
       const photo = data.photos.find(ph => ph.project_id === p.id)
       return { ...p, _thumb: photo ? (photo.url || photoUrl(photo.storage_path)) : null }
     })
-  }, [data.projects, data.photos])
+  }, [data.projects, data.photos, statusFilter])
 
   const assign = useCallback(async (photoId, projectId) => {
     // Optimistic update
@@ -412,8 +415,22 @@ export default function PhotoTriage({ onClose }) {
 
   const skip = useCallback(() => {}, [])
 
+  const statusPills = (
+    <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+      {['all','active','planning','paused','complete'].map(s => (
+        <button key={s} onClick={() => setStatusFilter(s)} style={{
+          padding: '4px 10px', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+          fontFamily: 'inherit', borderRadius: 0, textTransform: 'capitalize',
+          background: statusFilter === s ? 'var(--navy)' : 'var(--c-bg-subtle)',
+          color: statusFilter === s ? 'var(--white)' : 'var(--c-text-muted)',
+          border: '1.5px solid var(--c-border)',
+        }}>{s === 'all' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1)}</button>
+      ))}
+    </div>
+  )
+
   if (isMobile) {
-    return <MobileTriage photos={unsorted} projects={projects} onAssign={assign} onSkip={skip} onClose={onClose} />
+    return <MobileTriage photos={unsorted} projects={projects} onAssign={assign} onSkip={skip} onClose={onClose} statusPills={statusPills} />
   }
-  return <DesktopTriage photos={unsorted} projects={projects} onAssign={assign} onClose={onClose} />
+  return <DesktopTriage photos={unsorted} projects={projects} onAssign={assign} onClose={onClose} statusPills={statusPills} />
 }

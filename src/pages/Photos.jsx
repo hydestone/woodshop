@@ -6,7 +6,7 @@ import { PhotoGrid, Sheet, FormCell, TagInput, ICamera, IPlus, FilterSelect } fr
 import PhotoTriage from '../components/PhotoTriage.jsx'
 
 export default function AllPhotos() {
-  const { navigate, data, mutate, setTab, setTabAction } = useCtx()
+  const { navigate, data, mutate } = useCtx()
   const toast = useToast()
   const [uploading, setUploading]       = useState(false)
   const [filter, setFilter]             = useState('all')
@@ -16,6 +16,7 @@ export default function AllPhotos() {
   const [pendingFiles, setPendingFiles] = useState([])
   const [showTag, setShowTag]           = useState(false)
   const [showTriage, setShowTriage]     = useState(false)
+  const [showNewProject, setShowNewProject] = useState(false)
   const fileRef = useRef()
   const quickRef = useRef()
 
@@ -244,57 +245,61 @@ export default function AllPhotos() {
           )}
         {(() => {
           const filtered = getFiltered()
-          if (filtered.length > 0) {
-            return (
-              <>
-                {filter === 'unsorted' && (
-                  <div style={{ padding: '0 16px 12px' }}>
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
-                      {[
-                        { id: 'all',      label: 'All' },
-                        { id: 'active',   label: 'Active' },
-                        { id: 'planning', label: 'Planning' },
-                        { id: 'paused',   label: 'Paused' },
-                      ].map(s => (
-                        <button key={s.id} onClick={() => setUnsortedStatus(s.id)} style={{
-                          padding: '5px 12px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                          fontFamily: 'inherit', borderRadius: 0,
-                          background: unsortedStatus === s.id ? 'var(--navy)' : 'var(--c-bg-subtle)',
-                          color: unsortedStatus === s.id ? 'var(--white)' : 'var(--c-text-muted)',
-                          border: '1.5px solid var(--c-border)',
-                        }}>{s.label}</button>
-                      ))}
-                      <button onClick={() => setIncludeComplete(v => !v)} style={{
+          return (
+            <>
+              {/* Unsorted controls — always visible when in unsorted view */}
+              {filter === 'unsorted' && (
+                <div style={{ padding: '0 16px 12px' }}>
+                  {/* Row 1: Status filters */}
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
+                    {[
+                      { id: 'all',      label: 'All' },
+                      { id: 'active',   label: 'Active' },
+                      { id: 'planning', label: 'Planning' },
+                      { id: 'paused',   label: 'Paused' },
+                    ].map(s => (
+                      <button key={s.id} onClick={() => setUnsortedStatus(s.id)} style={{
                         padding: '5px 12px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
                         fontFamily: 'inherit', borderRadius: 0,
-                        background: includeComplete ? 'var(--forest-dim)' : 'var(--c-bg-subtle)',
-                        color: includeComplete ? 'var(--forest)' : 'var(--c-text-muted)',
-                        border: `1.5px solid ${includeComplete ? 'var(--forest)' : 'var(--c-border)'}`,
-                      }}>+ Complete</button>
-                      <button onClick={() => { setTabAction('new-project'); setTab('projects') }} style={{
-                        padding: '5px 12px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                        fontFamily: 'inherit', borderRadius: 0, marginLeft: 'auto',
-                        background: 'var(--accent)', color: '#fff',
-                        border: '1.5px solid var(--accent)',
-                      }}>+ New Project</button>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                      <button className="btn-primary" style={{ padding: '8px 20px', fontSize: 13 }} onClick={() => setShowTriage(true)}>
+                        background: unsortedStatus === s.id ? 'var(--navy)' : 'var(--c-bg-subtle)',
+                        color: unsortedStatus === s.id ? 'var(--white)' : 'var(--c-text-muted)',
+                        border: '1.5px solid var(--c-border)',
+                      }}>{s.label}</button>
+                    ))}
+                    <button onClick={() => setIncludeComplete(v => !v)} style={{
+                      padding: '5px 12px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                      fontFamily: 'inherit', borderRadius: 0,
+                      background: includeComplete ? 'var(--forest-dim)' : 'var(--c-bg-subtle)',
+                      color: includeComplete ? 'var(--forest)' : 'var(--c-text-muted)',
+                      border: `1.5px solid ${includeComplete ? 'var(--forest)' : 'var(--c-border)'}`,
+                    }}>+ Complete</button>
+                  </div>
+                  {/* Row 2: Sort action + New Project (separate row) */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <button className="btn-secondary" style={{ padding: '6px 14px', fontSize: 13 }}
+                      onClick={() => setShowNewProject(true)}>
+                      + New Project
+                    </button>
+                    {filtered.length > 0 && (
+                      <button className="btn-primary" style={{ padding: '6px 14px', fontSize: 13 }}
+                        onClick={() => setShowTriage(true)}>
                         Sort {filtered.length} photo{filtered.length !== 1 ? 's' : ''} →
                       </button>
-                    </div>
+                    )}
                   </div>
-                )}
-                <PhotoGrid photos={filtered} onEdit={edit} showProject projects={data.projects} onNavigateProject={id => navigate('projects', id)} />
-              </>
-            )
-          }
-          return (
-            <div className="empty" style={{ paddingTop: 60 }}>
-              <ICamera size={32} color="var(--c-text-muted)" sw={1.5} />
-              <div className="empty-title" style={{ marginTop: 12 }}>{filter === 'unsorted' ? 'Inbox is empty' : filter === 'all' ? 'No photos yet' : 'No photos in this filter'}</div>
-              <p className="empty-sub">{filter === 'unsorted' ? 'Use Quick Upload to add photos for sorting later' : filter === 'all' ? 'Drop photos above or tap the camera button' : 'Try a different filter above'}</p>
-            </div>
+                </div>
+              )}
+              {filtered.length > 0
+                ? <PhotoGrid photos={filtered} onEdit={edit} showProject projects={data.projects} onNavigateProject={id => navigate('projects', id)} />
+                : (
+                  <div className="empty" style={{ paddingTop: 60 }}>
+                    <ICamera size={32} color="var(--c-text-muted)" sw={1.5} />
+                    <div className="empty-title" style={{ marginTop: 12 }}>{filter === 'unsorted' ? 'No photos match' : filter === 'all' ? 'No photos yet' : 'No photos in this filter'}</div>
+                    <p className="empty-sub">{filter === 'unsorted' ? 'Try a different filter above' : filter === 'all' ? 'Drop photos above or tap the camera button' : 'Try a different filter above'}</p>
+                  </div>
+                )
+              }
+            </>
           )
         })()}
         </div>
@@ -329,6 +334,20 @@ export default function AllPhotos() {
           onClose={() => { setShowTag(false); setPendingFiles([]) }}
         />
       )}
+      {showNewProject && (
+        <QuickNewProjectSheet
+          categories={data.categories || []}
+          onSave={async fields => {
+            try {
+              const proj = await db.addProject(fields)
+              mutate(d => ({ ...d, projects: [proj, ...d.projects] }))
+              toast(`"${fields.name}" created`, 'success')
+              setShowNewProject(false)
+            } catch (e) { toast(e.message, 'error') }
+          }}
+          onClose={() => setShowNewProject(false)}
+        />
+      )}
     </div>
   )
 }
@@ -355,6 +374,31 @@ function PhotoTagSheet({ count, onSave, onClose }) {
       </div>
       <p style={{ fontSize: 13, color: 'var(--c-text-muted)', marginBottom: 8 }}>Tags</p>
       <TagInput tags={tags} onChange={setTags} />
+    </Sheet>
+  )
+}
+
+function QuickNewProjectSheet({ categories, onSave, onClose }) {
+  const [name, setName] = useState('')
+  const [status, setStatus] = useState('active')
+  return (
+    <Sheet title="New Project" onClose={onClose} onSave={async () => {
+      if (!name.trim()) return
+      await onSave({ name: name.trim(), status, description: '' })
+    }} saveLabel="Create">
+      <div className="form-group">
+        <FormCell label="Name">
+          <input className="form-input" placeholder="Project name" value={name}
+            onChange={e => setName(e.target.value)} autoFocus />
+        </FormCell>
+        <FormCell label="Status" last>
+          <select className="form-select" value={status} onChange={e => setStatus(e.target.value)}>
+            <option value="planning">Planning</option>
+            <option value="active">Active</option>
+            <option value="paused">Paused</option>
+          </select>
+        </FormCell>
+      </div>
     </Sheet>
   )
 }
