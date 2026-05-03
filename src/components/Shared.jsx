@@ -665,9 +665,11 @@ export const PhotoCard = memo(function PhotoCard({ photo, onEdit, onOpen, showPr
       {showEdit && (
         <PhotoEditSheet
           photo={photo}
+          projects={projects}
           onSave={async fields => { await onEdit(photo.id, fields); setShowEdit(false) }}
           onDelete={onEdit ? async () => { await onEdit(photo.id, { _delete: true }); setShowEdit(false) } : null}
           onClose={() => setShowEdit(false)}
+          onOpenLightbox={() => { setShowEdit(false); onOpen && onOpen() }}
         />
       )}
     </div>
@@ -675,23 +677,41 @@ export const PhotoCard = memo(function PhotoCard({ photo, onEdit, onOpen, showPr
 })
 
 // ─── PhotoEditSheet ───────────────────────────────────────────────────────────
-function PhotoEditSheet({ photo, onSave, onDelete, onClose }) {
-  const [caption, setCaption] = useState(photo.caption || '')
-  const [tags, setTags]       = useState(photo.tags ? photo.tags.split(',').map(t => t.trim()).filter(Boolean) : [])
-  const [confirm, setConfirm] = useState(false)
+function PhotoEditSheet({ photo, projects, onSave, onDelete, onClose, onOpenLightbox }) {
+  const [caption, setCaption]   = useState(photo.caption || '')
+  const [tags, setTags]         = useState(photo.tags ? photo.tags.split(',').map(t => t.trim()).filter(Boolean) : [])
+  const [projectId, setProjectId] = useState(photo.project_id || '')
+  const [photoType, setPhotoType] = useState(photo.photo_type || 'progress')
+  const [confirm, setConfirm]   = useState(false)
 
   if (confirm) return (
     <ConfirmSheet
-      message={`Delete this photo? This cannot be undone.`}
+      message="Delete this photo? It will go to Trash."
       onConfirm={onDelete}
       onClose={() => setConfirm(false)}
     />
   )
 
+  const activeProjects = projects ? [...projects].sort((a,b) => a.name.localeCompare(b.name)) : []
+
   return (
-    <Sheet title="Edit Photo" onClose={onClose} onSave={() => onSave({ caption, tags: tags.join(',') })}>
+    <Sheet title="Edit Photo" onClose={onClose} onSave={() => onSave({
+      caption,
+      tags: tags.join(','),
+      project_id: projectId || null,
+      photo_type: photoType,
+    })}>
+      {/* Preview tap to open */}
+      {onOpenLightbox && (
+        <div style={{ marginBottom: 12, borderRadius: 0, overflow: 'hidden', cursor: 'pointer', maxHeight: 180, position: 'relative' }} onClick={onOpenLightbox}>
+          <img src={photo.url} alt="" style={{ width: '100%', height: 180, objectFit: 'cover', display: 'block' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ color: '#fff', fontSize: 13, fontWeight: 700, background: 'rgba(0,0,0,.4)', padding: '4px 12px', borderRadius: 99 }}>Tap to view full size</span>
+          </div>
+        </div>
+      )}
       <div className="form-group">
-        <FormCell label="Caption" last>
+        <FormCell label="Caption">
           <input
             className="form-input"
             value={caption}
@@ -700,8 +720,23 @@ function PhotoEditSheet({ photo, onSave, onDelete, onClose }) {
             autoFocus
           />
         </FormCell>
+        <FormCell label="Type">
+          <select className="form-select" value={photoType} onChange={e => setPhotoType(e.target.value)}>
+            {['progress','finished','portfolio','before','after','inspiration','unsorted'].map(t => (
+              <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
+            ))}
+          </select>
+        </FormCell>
+        <FormCell label="Project" last>
+          <select className="form-select" value={projectId} onChange={e => setProjectId(e.target.value)}>
+            <option value="">— Unassigned —</option>
+            {activeProjects.map(p => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+        </FormCell>
       </div>
-      <p style={{ fontSize: 13, color: 'var(--c-text-muted)', marginBottom: 8 }}>Tags</p>
+      <p style={{ fontSize: 13, color: 'var(--c-text-muted)', marginBottom: 8, marginTop: 12 }}>Tags</p>
       <TagInput tags={tags} onChange={setTags} />
       {onDelete && (
         <button className="btn-danger" onClick={() => setConfirm(true)} style={{ marginTop: 20 }}>

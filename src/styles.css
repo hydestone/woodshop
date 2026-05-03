@@ -1433,8 +1433,8 @@ body {
 /* ─── Photos ─────────────────────────────────────────────────────────────── */
 .photo-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 10px;
   padding: 16px 20px;
 }
 .photo-card {
@@ -2987,7 +2987,7 @@ body {
 
   .form-label { min-width: 160px; }
 
-  .photo-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .photo-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
 
   .search-input-wrap { width: 220px; }
 
@@ -3021,7 +3021,7 @@ body {
 
 /* ─── desktop-lg (@media (min-width: 1024px)) ──────────────────── */
 @media (min-width: 1024px) {
-  .photo-grid { grid-template-columns: repeat(4, 1fr); }
+  .photo-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 /* ─── desktop-xl (@media (min-width: 1200px)) ──────────────────── */
@@ -3031,7 +3031,7 @@ body {
 
 /* ─── desktop-xxl (@media (min-width: 1400px)) ─────────────────── */
 @media (min-width: 1400px) {
-  .photo-grid { grid-template-columns: repeat(5, 1fr); }
+  .photo-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
 /* ─── reduced-motion (@media (prefers-reduced-motion: no-preference)) ─ */
