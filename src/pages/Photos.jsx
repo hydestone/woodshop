@@ -149,7 +149,28 @@ export default function AllPhotos() {
   const onGridDrop = e => { e.preventDefault(); setDragging(false); dragCount.current = 0; handleFiles(e.dataTransfer.files) }
 
   if (showTriage) {
-    return <PhotoTriage onClose={() => setShowTriage(false)} onNewProject={() => { setShowTriage(false); setShowNewProject(true) }} />
+    return (
+      <>
+        <PhotoTriage
+          onClose={() => setShowTriage(false)}
+          onNewProject={() => setShowNewProject(true)}
+        />
+        {showNewProject && (
+          <QuickNewProjectSheet
+            categories={data.categories || []}
+            onSave={async fields => {
+              try {
+                const proj = await db.addProject(fields)
+                mutate(d => ({ ...d, projects: [proj, ...d.projects] }))
+                toast(`"${fields.name}" created`, 'success')
+                setShowNewProject(false)
+              } catch (e) { toast(e.message, 'error') }
+            }}
+            onClose={() => setShowNewProject(false)}
+          />
+        )}
+      </>
+    )
   }
 
   return (
