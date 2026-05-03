@@ -84,7 +84,7 @@ function SwipeCard({ photo, onAssign, onSkip, projects }) {
         <div style={{
           position: 'absolute', top: 20, left: 20,
           background: 'rgba(16,185,129,.8)', color: '#fff',
-          padding: '8px 16px', borderRadius: 8, fontSize: 16, fontWeight: 700,
+          padding: '8px 16px', borderRadius: 0, fontSize: 16, fontWeight: 700,
           opacity: Math.min((offset.x - 40) / 60, 1),
         }}>SKIP →</div>
       )}
@@ -92,7 +92,7 @@ function SwipeCard({ photo, onAssign, onSkip, projects }) {
         <div style={{
           position: 'absolute', top: 20, right: 20,
           background: 'rgba(239,68,68,.8)', color: '#fff',
-          padding: '8px 16px', borderRadius: 8, fontSize: 16, fontWeight: 700,
+          padding: '8px 16px', borderRadius: 0, fontSize: 16, fontWeight: 700,
           opacity: Math.min((-offset.x - 40) / 60, 1),
         }}>← SKIP</div>
       )}
@@ -154,7 +154,7 @@ function MobileTriage({ photos, projects, onAssign, onSkip, onClose }) {
           {projects.map(p => (
             <button key={p.id} onClick={() => assign(p.id)} style={{
               display: 'flex', alignItems: 'center', gap: 6,
-              padding: '8px 14px', borderRadius: 99,
+              padding: '8px 14px', borderRadius: 0,
               border: '1px solid var(--c-border)', background: 'var(--c-bg-surface)',
               fontSize: 13, fontWeight: 500, color: 'var(--c-text-primary)',
               cursor: 'pointer', fontFamily: 'inherit',
@@ -246,7 +246,7 @@ function DesktopTriage({ photos, projects, onAssign, onClose }) {
           </span>
           {projects.slice(0, 8).map(p => (
             <button key={p.id} onClick={() => bulkAssign(p.id)} style={{
-              padding: '6px 12px', borderRadius: 99,
+              padding: '6px 12px', borderRadius: 0,
               border: '1px solid var(--accent)', background: 'var(--c-bg-surface)',
               fontSize: 12, fontWeight: 600, color: 'var(--accent)',
               cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
@@ -272,7 +272,7 @@ function DesktopTriage({ photos, projects, onAssign, onClose }) {
                 onClick={() => toggleSelect(photo.id)}
                 style={{
                   position: 'relative', aspectRatio: '1/1',
-                  borderRadius: 10, overflow: 'hidden', cursor: 'grab',
+                  borderRadius: 0, overflow: 'hidden', cursor: 'grab',
                   border: selected.has(photo.id) ? '3px solid var(--accent)' : '3px solid transparent',
                   transition: 'border-color 120ms, transform 120ms',
                   transform: selected.has(photo.id) ? 'scale(0.95)' : 'scale(1)',
@@ -326,7 +326,7 @@ function DesktopTriage({ photos, projects, onAssign, onClose }) {
                 style={{
                   display: 'flex', alignItems: 'center', gap: 10,
                   padding: '12px 14px', marginBottom: 4,
-                  borderRadius: 10,
+                  borderRadius: 0,
                   border: isOver ? '2px solid var(--accent)' : '2px solid transparent',
                   background: isOver ? 'var(--accent-dim)' : 'var(--c-bg-surface)',
                   transition: 'all 150ms',

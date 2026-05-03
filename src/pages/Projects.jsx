@@ -1302,13 +1302,13 @@ function PhotoTimeline({ projId }) {
         {photos.length > 0 && (
           <div style={{ display: 'flex', gap: 4 }}>
             <button onClick={() => setViewMode('grid')} style={{
-              padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+              padding: '4px 10px', borderRadius: 0, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
               fontSize: 12, fontWeight: 600,
               background: viewMode === 'grid' ? 'var(--accent)' : 'var(--c-bg-subtle)',
               color: viewMode === 'grid' ? '#fff' : 'var(--c-text-muted)',
             }}>Grid</button>
             <button onClick={() => setViewMode('timeline')} style={{
-              padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+              padding: '4px 10px', borderRadius: 0, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
               fontSize: 12, fontWeight: 600,
               background: viewMode === 'timeline' ? 'var(--accent)' : 'var(--c-bg-subtle)',
               color: viewMode === 'timeline' ? '#fff' : 'var(--c-text-muted)',
@@ -1403,7 +1403,7 @@ function PhotoPane({ projId, type, showAll, inline }) {
           display: 'flex', alignItems: 'center', gap: 6,
           marginTop: 12, padding: '8px 14px',
           background: 'var(--accent)', color: 'var(--white)',
-          border: 'none', borderRadius: 8, cursor: 'pointer',
+          border: 'none', borderRadius: 0, cursor: 'pointer',
           fontSize: 13, fontWeight: 600, fontFamily: 'inherit',
           opacity: uploading ? .6 : 1,
         }}

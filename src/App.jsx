@@ -255,7 +255,7 @@ function QRModal({ onClose }) {
             }}
             style={{
               flex: 1, padding: '11px', background: '#2D5A3D', color: '#fff',
-              border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700,
+              border: 'none', borderRadius: 0, fontSize: 15, fontWeight: 700,
               cursor: 'pointer', fontFamily: 'inherit',
             }}
           >
@@ -265,7 +265,7 @@ function QRModal({ onClose }) {
             onClick={onClose}
             style={{
               flex: 1, padding: '11px', background: '#0F1E38', color: '#fff',
-              border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700,
+              border: 'none', borderRadius: 0, fontSize: 15, fontWeight: 700,
               cursor: 'pointer', fontFamily: 'inherit',
             }}
           >
@@ -397,7 +397,7 @@ function SetPasswordScreen({ session, onComplete }) {
           <button type="submit" disabled={loading} style={{
             width: '100%', padding: '12px', fontSize: 15, fontWeight: 700,
             background: loading ? '#9CA3AF' : '#2D5A3D',
-            color: '#fff', border: 'none', borderRadius: 8,
+            color: '#fff', border: 'none', borderRadius: 0,
             cursor: loading ? 'not-allowed' : 'pointer',
             fontFamily: 'inherit', letterSpacing: '.2px',
             transition: 'background 150ms',

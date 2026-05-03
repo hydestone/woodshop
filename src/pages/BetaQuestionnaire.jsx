@@ -60,7 +60,7 @@ function RatingInput({ value, onChange }) {
     <div style={{ display: 'flex', gap: 4, margin: '8px 0' }}>
       {[1,2,3,4,5,6,7,8,9,10].map(n => (
         <button key={n} onClick={() => onChange(n)} style={{
-          width: 36, height: 36, borderRadius: 8,
+          width: 36, height: 36, borderRadius: 0,
           border: value === n ? '2px solid var(--accent)' : '1px solid var(--c-border)',
           background: value === n ? 'var(--accent-dim)' : 'var(--c-bg-surface)',
           color: value === n ? 'var(--accent)' : 'var(--c-text-primary)',
@@ -100,7 +100,7 @@ function SingleSelect({ options, value, onChange }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4, margin: '8px 0' }}>
       {options.map(opt => (
         <button key={opt} onClick={() => onChange(opt)} style={{
-          padding: '10px 14px', borderRadius: 10, textAlign: 'left',
+          padding: '10px 14px', borderRadius: 0, textAlign: 'left',
           border: value === opt ? '2px solid var(--accent)' : '1px solid var(--c-border)',
           background: value === opt ? 'var(--accent-dim)' : 'var(--c-bg-surface)',
           color: value === opt ? 'var(--accent)' : 'var(--c-text-primary)',
