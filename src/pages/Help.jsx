@@ -174,8 +174,8 @@ export default function Help() {
                 <div key={i} style={{
                   padding: '10px 16px',
                   fontSize: 14,
-                  color: 'var(--text-2)',
-                  borderBottom: i < section.items.length - 1 ? '1px solid var(--border-2)' : 'none',
+                  color: 'var(--c-text-body)',
+                  borderBottom: i < section.items.length - 1 ? '1px solid var(--c-border-light)' : 'none',
                   lineHeight: 1.5,
                 }}>
                   {item}
@@ -185,7 +185,7 @@ export default function Help() {
           </div>
         ))}
 
-        <div style={{ padding: '8px 16px 32px', fontSize: 12, color: 'var(--text-4)', textAlign: 'center' }}>
+        <div style={{ padding: '8px 16px 32px', fontSize: 12, color: 'var(--c-text-faint)', textAlign: 'center' }}>
           JDH Woodworks · Built for the shop, not the office
         </div>
       </div>

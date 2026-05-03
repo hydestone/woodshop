@@ -18,7 +18,7 @@ function Cell({ value, onSave, type = 'text', options, missing }) {
   const style = {
     padding: '4px 8px', fontSize: 13, borderRadius: 6, cursor: 'pointer',
     background: missing ? 'var(--red-dim)' : 'transparent',
-    color: missing ? 'var(--red)' : val ? 'var(--text)' : 'var(--text-4)',
+    color: missing ? 'var(--red)' : val ? 'var(--c-text-primary)' : 'var(--c-text-faint)',
     border: missing ? '1px solid var(--red)' : '1px solid transparent',
     minWidth: 80, display: 'inline-block', whiteSpace: 'nowrap',
     maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis',
@@ -69,8 +69,8 @@ function TagsCell({ tags, onSave }) {
         : arr.map(t => (
           <span key={t} style={{
             fontSize: 11, padding: '2px 7px', borderRadius: 99,
-            background: t === 'finished' ? 'var(--green-dim)' : t === 'portfolio' ? 'var(--blue-dim)' : 'var(--fill)',
-            color: t === 'finished' ? 'var(--forest)' : t === 'portfolio' ? 'var(--blue)' : 'var(--text-3)',
+            background: t === 'finished' ? 'var(--green-dim)' : t === 'portfolio' ? 'var(--blue-dim)' : 'var(--c-bg-subtle)',
+            color: t === 'finished' ? 'var(--forest)' : t === 'portfolio' ? 'var(--blue)' : 'var(--c-text-muted)',
             fontWeight: 600,
           }}>{t}</span>
         ))
@@ -83,8 +83,8 @@ function TagsCell({ tags, onSave }) {
       {TAGS.map(t => (
         <button key={t} onClick={() => toggle(t)} style={{
           fontSize: 11, padding: '2px 8px', borderRadius: 99, cursor: 'pointer', fontFamily: 'inherit',
-          background: arr.includes(t) ? (t === 'finished' ? 'var(--forest)' : t === 'portfolio' ? 'var(--accent)' : '#555') : 'var(--fill)',
-          color: arr.includes(t) ? '#fff' : 'var(--text-3)',
+          background: arr.includes(t) ? (t === 'finished' ? 'var(--forest)' : t === 'portfolio' ? 'var(--accent)' : '#555') : 'var(--c-bg-subtle)',
+          color: arr.includes(t) ? '#fff' : 'var(--c-text-muted)',
           border: 'none', fontWeight: 600,
         }}>{t}</button>
       ))}
@@ -128,7 +128,7 @@ function PhotosAudit() {
   return (
     <div>
       {/* Summary pills */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', padding: '12px 20px', borderBottom: '1px solid var(--border-2)' }}>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', padding: '12px 20px', borderBottom: '1px solid var(--c-border-light)' }}>
         {[
           { id: 'all', label: `All (${counts.total})` },
           { id: 'no-tags', label: `No tags (${counts.noTags})`, warn: counts.noTags > 0 },
@@ -139,8 +139,8 @@ function PhotosAudit() {
           <button key={f.id} onClick={() => setFilter(f.id)} style={{
             padding: '4px 12px', borderRadius: 99, border: 'none', cursor: 'pointer',
             fontSize: 12, fontWeight: 600, fontFamily: 'inherit',
-            background: filter === f.id ? '#0F1E38' : f.warn ? 'var(--red-dim)' : 'var(--fill)',
-            color: filter === f.id ? '#fff' : f.warn ? 'var(--red)' : 'var(--text-3)',
+            background: filter === f.id ? '#0F1E38' : f.warn ? 'var(--red-dim)' : 'var(--c-bg-subtle)',
+            color: filter === f.id ? '#fff' : f.warn ? 'var(--red)' : 'var(--c-text-muted)',
           }}>{f.label}</button>
         ))}
       </div>
@@ -149,20 +149,20 @@ function PhotosAudit() {
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
-            <tr style={{ borderBottom: '1px solid var(--border-2)', background: 'var(--fill)' }}>
-              <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--text-3)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.5px', width: 56 }}>Photo</th>
-              <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--text-3)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.5px' }}>Caption</th>
-              <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--text-3)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.5px' }}>Tags</th>
-              <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--text-3)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.5px' }}>Project</th>
-              <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--text-3)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.5px' }}>Type</th>
-              <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--text-3)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.5px' }}>Date</th>
+            <tr style={{ borderBottom: '1px solid var(--c-border-light)', background: 'var(--c-bg-subtle)' }}>
+              <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--c-text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.5px', width: 56 }}>Photo</th>
+              <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--c-text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.5px' }}>Caption</th>
+              <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--c-text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.5px' }}>Tags</th>
+              <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--c-text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.5px' }}>Project</th>
+              <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--c-text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.5px' }}>Type</th>
+              <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--c-text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.5px' }}>Date</th>
             </tr>
           </thead>
           <tbody>
             {filtered.map((photo, i) => {
               const proj = projects.find(p => p.id === photo.project_id)
               return (
-                <tr key={photo.id} style={{ borderBottom: '1px solid var(--border-2)', background: i % 2 === 0 ? 'transparent' : 'var(--fill)' }}>
+                <tr key={photo.id} style={{ borderBottom: '1px solid var(--c-border-light)', background: i % 2 === 0 ? 'transparent' : 'var(--c-bg-subtle)' }}>
                   <td style={{ padding: '6px 12px' }}>
                     <img src={photo.url} alt="" style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 6, display: 'block' }} />
                   </td>
@@ -187,7 +187,7 @@ function PhotosAudit() {
                       type="select" options={['progress', 'finished', 'inspiration', 'before', 'after']}
                       onSave={v => save(photo.id, { photo_type: v })} />
                   </td>
-                  <td style={{ padding: '6px 12px', color: 'var(--text-4)', fontSize: 12, whiteSpace: 'nowrap' }}>
+                  <td style={{ padding: '6px 12px', color: 'var(--c-text-faint)', fontSize: 12, whiteSpace: 'nowrap' }}>
                     {photo.created_at ? new Date(photo.created_at).toLocaleDateString() : '—'}
                   </td>
                 </tr>
@@ -196,7 +196,7 @@ function PhotosAudit() {
           </tbody>
         </table>
         {filtered.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-4)' }}>Nothing to show</div>
+          <div style={{ textAlign: 'center', padding: '40px', color: 'var(--c-text-faint)' }}>Nothing to show</div>
         )}
       </div>
     </div>
@@ -244,7 +244,7 @@ function ProjectsAudit() {
   return (
     <div>
       {/* Summary pills */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', padding: '12px 20px', borderBottom: '1px solid var(--border-2)' }}>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', padding: '12px 20px', borderBottom: '1px solid var(--c-border-light)' }}>
         {[
           { id: 'all', label: `All (${counts.total})` },
           { id: 'no-wood', label: `No wood source (${counts.noWood})`, warn: counts.noWood > 0 },
@@ -255,8 +255,8 @@ function ProjectsAudit() {
           <button key={f.id} onClick={() => setFilter(f.id)} style={{
             padding: '4px 12px', borderRadius: 99, border: 'none', cursor: 'pointer',
             fontSize: 12, fontWeight: 600, fontFamily: 'inherit',
-            background: filter === f.id ? '#0F1E38' : f.warn ? 'var(--red-dim)' : 'var(--fill)',
-            color: filter === f.id ? '#fff' : f.warn ? 'var(--red)' : 'var(--text-3)',
+            background: filter === f.id ? '#0F1E38' : f.warn ? 'var(--red-dim)' : 'var(--c-bg-subtle)',
+            color: filter === f.id ? '#fff' : f.warn ? 'var(--red)' : 'var(--c-text-muted)',
           }}>{f.label}</button>
         ))}
       </div>
@@ -265,15 +265,15 @@ function ProjectsAudit() {
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
-            <tr style={{ borderBottom: '1px solid var(--border-2)', background: 'var(--fill)' }}>
+            <tr style={{ borderBottom: '1px solid var(--c-border-light)', background: 'var(--c-bg-subtle)' }}>
               {['Project', 'Status', 'Category', 'Wood source', 'Wood type', 'Finish', 'Year', 'Gift / recipient'].map(h => (
-                <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--text-3)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.5px', whiteSpace: 'nowrap' }}>{h}</th>
+                <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--c-text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.5px', whiteSpace: 'nowrap' }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {filtered.map((proj, i) => (
-              <tr key={proj.id} style={{ borderBottom: '1px solid var(--border-2)', background: i % 2 === 0 ? 'transparent' : 'var(--fill)' }}>
+              <tr key={proj.id} style={{ borderBottom: '1px solid var(--c-border-light)', background: i % 2 === 0 ? 'transparent' : 'var(--c-bg-subtle)' }}>
                 <td style={{ padding: '6px 12px', fontWeight: 600, whiteSpace: 'nowrap' }}>
                   <Cell value={proj.name}
                     onSave={v => save(proj.id, { name: v })} />
@@ -291,8 +291,8 @@ function ProjectsAudit() {
                 <td style={{ padding: '6px 12px' }}>
                   <div style={{
                     fontSize: 12, padding: '3px 8px', borderRadius: 6,
-                    background: !proj._stock ? 'var(--red-dim)' : 'var(--fill)',
-                    color: !proj._stock ? 'var(--red)' : 'var(--text-3)',
+                    background: !proj._stock ? 'var(--red-dim)' : 'var(--c-bg-subtle)',
+                    color: !proj._stock ? 'var(--red)' : 'var(--c-text-muted)',
                     border: !proj._stock ? '1px solid var(--red)' : '1px solid transparent',
                     whiteSpace: 'nowrap',
                   }}>
@@ -323,7 +323,7 @@ function ProjectsAudit() {
           </tbody>
         </table>
         {filtered.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-4)' }}>Nothing to show</div>
+          <div style={{ textAlign: 'center', padding: '40px', color: 'var(--c-text-faint)' }}>Nothing to show</div>
         )}
       </div>
     </div>
@@ -339,12 +339,12 @@ export default function Audit() {
       <div className="page-header" style={{ paddingBottom: 0 }}>
         <h1 className="page-title">Data Audit</h1>
         <p className="page-subtitle">Click any cell to edit inline. Missing fields are highlighted.</p>
-        <div style={{ display: 'flex', gap: 0, marginTop: 12, borderBottom: '1px solid var(--border-2)' }}>
+        <div style={{ display: 'flex', gap: 0, marginTop: 12, borderBottom: '1px solid var(--c-border-light)' }}>
           {[{ id: 'photos', label: 'Photos' }, { id: 'projects', label: 'Projects' }].map(t => (
             <button key={t.id} onClick={() => setTab(t.id)} style={{
               padding: '8px 20px', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
               fontSize: 14, fontWeight: 600, background: 'transparent',
-              color: tab === t.id ? 'var(--accent)' : 'var(--text-3)',
+              color: tab === t.id ? 'var(--accent)' : 'var(--c-text-muted)',
               borderBottom: tab === t.id ? '2px solid var(--accent)' : '2px solid transparent',
               marginBottom: -1,
             }}>{t.label}</button>

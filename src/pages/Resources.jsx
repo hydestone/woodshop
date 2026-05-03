@@ -110,8 +110,8 @@ export default function Resources() {
                   <button key={c} onClick={() => setFilter(c)} style={{
                     padding: '4px 12px', borderRadius: 99, border: 'none', cursor: 'pointer', flexShrink: 0,
                     fontSize: 13, fontWeight: 500, fontFamily: 'inherit',
-                    background: filter === c ? 'var(--accent)' : 'var(--fill)',
-                    color: filter === c ? '#fff' : 'var(--text-2)',
+                    background: filter === c ? 'var(--accent)' : 'var(--c-bg-subtle)',
+                    color: filter === c ? '#fff' : 'var(--c-text-body)',
                   }} aria-pressed={filter === c}>{c}</button>
                 ))}
               </div>
@@ -128,7 +128,7 @@ export default function Resources() {
         <div style={{ paddingBottom: 24 }}>
           {filtered.length === 0 && (
             <div className="empty">
-              <div className="empty-icon"><IBook size={32} color="var(--text-3)" sw={1.5} /></div>
+              <div className="empty-icon"><IBook size={32} color="var(--c-text-muted)" sw={1.5} /></div>
               <div className="empty-title">No resources yet</div>
               <p className="empty-sub">
                 {resources.length === 0
@@ -148,16 +148,16 @@ export default function Resources() {
               <span className="section-label">{cat}</span>
               <div className="group">
                 {filtered.filter(r => r.category === cat).map((r, i, arr) => (
-                  <div key={r.id} style={{ borderBottom: i < arr.length - 1 ? '1px solid var(--border-2)' : 'none', padding: '12px 16px', background: 'var(--surface)' }}>
+                  <div key={r.id} style={{ borderBottom: i < arr.length - 1 ? '1px solid var(--c-border-light)' : 'none', padding: '12px 16px', background: 'var(--c-bg-surface)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <a href={r.url} target="_blank" rel="noopener noreferrer" style={{ fontWeight: 600, fontSize: 15, color: 'var(--accent)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}>
                           {r.title}
                           <ILink size={12} color="var(--accent)" />
                         </a>
-                        {r.notes && <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4, lineHeight: 1.5 }}>{r.notes}</div>}
+                        {r.notes && <div style={{ fontSize: 13, color: 'var(--c-text-muted)', marginTop: 4, lineHeight: 1.5 }}>{r.notes}</div>}
                         <div style={{ marginTop: 4 }}>
-                          <span style={{ fontSize: 11, background: 'var(--fill)', color: 'var(--text-3)', borderRadius: 99, padding: '2px 8px' }}>{r.category}</span>
+                          <span style={{ fontSize: 11, background: 'var(--c-bg-subtle)', color: 'var(--c-text-muted)', borderRadius: 99, padding: '2px 8px' }}>{r.category}</span>
                         </div>
                       </div>
                       <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
@@ -177,7 +177,7 @@ export default function Resources() {
               <span className="section-label">Other</span>
               <div className="group">
                 {filtered.filter(r => !r.category || !CATEGORIES.includes(r.category)).map((r, i, arr) => (
-                  <div key={r.id} style={{ borderBottom: i < arr.length - 1 ? '1px solid var(--border-2)' : 'none', padding: '12px 16px', background: 'var(--surface)' }}>
+                  <div key={r.id} style={{ borderBottom: i < arr.length - 1 ? '1px solid var(--c-border-light)' : 'none', padding: '12px 16px', background: 'var(--c-bg-surface)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
                       <a href={r.url} target="_blank" rel="noopener noreferrer" style={{ fontWeight: 600, fontSize: 15, color: 'var(--accent)', textDecoration: 'none', flex: 1 }}>{r.title}</a>
                       <div style={{ display: 'flex', gap: 4 }}>

@@ -74,7 +74,7 @@ export default function Brainstorm() {
 
       <div className="scroll-page" style={{ paddingBottom: 24 }}>
         {/* Compose area */}
-        <div style={{ padding: '16px 20px', background: 'var(--surface)', borderBottom: '1px solid var(--border)', display: 'flex', gap: 12, alignItems: 'flex-end' }}>
+        <div style={{ padding: '16px 20px', background: 'var(--c-bg-surface)', borderBottom: '1px solid var(--c-border)', display: 'flex', gap: 12, alignItems: 'flex-end' }}>
           <textarea
             ref={composingRef}
             className="form-textarea"
@@ -98,7 +98,7 @@ export default function Brainstorm() {
         {/* Notes list */}
         <div style={{ paddingBottom: 24 }}>
           {data.brainstorming.map(note => (
-            <div key={note.id} style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border-2)', padding: '14px 20px' }}>
+            <div key={note.id} style={{ background: 'var(--c-bg-surface)', borderBottom: '1px solid var(--c-border-light)', padding: '14px 20px' }}>
               {editId === note.id ? (
                 <div>
                   <textarea
@@ -115,9 +115,9 @@ export default function Brainstorm() {
                 </div>
               ) : (
                 <div>
-                  <p style={{ fontSize: 15, lineHeight: 1.65, whiteSpace: 'pre-wrap', color: 'var(--text)' }}>{note.content}</p>
+                  <p style={{ fontSize: 15, lineHeight: 1.65, whiteSpace: 'pre-wrap', color: 'var(--c-text-primary)' }}>{note.content}</p>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
-                    <span style={{ fontSize: 12, color: 'var(--text-4)' }}>{fmtDate(note.created_at)}</span>
+                    <span style={{ fontSize: 12, color: 'var(--c-text-faint)' }}>{fmtDate(note.created_at)}</span>
                     <div style={{ display: 'flex', gap: 4 }}>
                       <button className="icon-btn" onClick={() => { setEditId(note.id); setEditVal(note.content) }} aria-label="Edit note"><IEdit size={15} /></button>
                       <button className="icon-btn" onClick={() => setDeleteNote(note)} aria-label="Delete note"><ITrash size={15} /></button>
@@ -129,7 +129,7 @@ export default function Brainstorm() {
           ))}
           {!data.brainstorming.length && (
             <div className="empty">
-              <div className="empty-icon"><IBulb size={32} color="var(--text-3)" sw={1.5} /></div>
+              <div className="empty-icon"><IBulb size={32} color="var(--c-text-muted)" sw={1.5} /></div>
               <div className="empty-title">Nothing yet</div>
               <p className="empty-sub">Type an idea above and click Save</p>
             </div>

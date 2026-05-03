@@ -19,7 +19,7 @@ const TYPE_ICON_COMPONENTS = {
 
 function TypeIcon({ type, size = 22 }) {
   const Ic = TYPE_ICON_COMPONENTS[type] || IList
-  return <Ic size={size} color="var(--text-3)" sw={1.5} />
+  return <Ic size={size} color="var(--c-text-muted)" sw={1.5} />
 }
 
 function itemName(t) {
@@ -110,8 +110,8 @@ export default function Trash() {
             style={{
               padding: '4px 12px', borderRadius: 99, border: 'none', cursor: 'pointer',
               fontSize: 12, fontWeight: 600, fontFamily: 'inherit',
-              background: filter === 'all' ? 'var(--accent)' : 'var(--fill)',
-              color: filter === 'all' ? '#fff' : 'var(--text-3)',
+              background: filter === 'all' ? 'var(--accent)' : 'var(--c-bg-subtle)',
+              color: filter === 'all' ? '#fff' : 'var(--c-text-muted)',
             }}>All ({trash.length})</button>
           {types.map(type => {
             const count = trash.filter(t => t.item_type === type).length
@@ -120,8 +120,8 @@ export default function Trash() {
                 style={{
                   padding: '4px 12px', borderRadius: 99, border: 'none', cursor: 'pointer',
                   fontSize: 12, fontWeight: 600, fontFamily: 'inherit',
-                  background: filter === type ? 'var(--accent)' : 'var(--fill)',
-                  color: filter === type ? '#fff' : 'var(--text-3)',
+                  background: filter === type ? 'var(--accent)' : 'var(--c-bg-subtle)',
+                  color: filter === type ? '#fff' : 'var(--c-text-muted)',
                 }}><TypeIcon type={type} size={14} /> {TYPE_LABELS[type]} ({count})</button>
             )
           })}
@@ -131,7 +131,7 @@ export default function Trash() {
       <div className="scroll-page" style={{ paddingBottom: 40 }}>
         {filtered.length === 0 ? (
           <div className="empty" style={{ paddingTop: 60 }}>
-            <div className="empty-icon"><ITrashIcon size={32} color="var(--text-3)" sw={1.5} /></div>
+            <div className="empty-icon"><ITrashIcon size={32} color="var(--c-text-muted)" sw={1.5} /></div>
             <div className="empty-title">{trash.length === 0 ? 'Recycling bin is empty' : 'No items in this filter'}</div>
             <p className="empty-sub">{trash.length === 0 ? 'Deleted items appear here for 30 days before being permanently removed' : 'Try a different filter'}</p>
           </div>
@@ -143,7 +143,7 @@ export default function Trash() {
               return (
                 <div key={t.id} style={{
                   padding: '14px 16px', display: 'flex', gap: 12, alignItems: 'center',
-                  borderBottom: i < filtered.length - 1 ? '1px solid var(--border-2)' : 'none',
+                  borderBottom: i < filtered.length - 1 ? '1px solid var(--c-border-light)' : 'none',
                 }}>
                   {thumbUrl ? (
                     <img src={thumbUrl} alt="" style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 6, flexShrink: 0 }} />
@@ -154,7 +154,7 @@ export default function Trash() {
                     <div style={{ fontWeight: 600, fontSize: 15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {itemName(t)}
                     </div>
-                    <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>
+                    <div style={{ fontSize: 12, color: 'var(--c-text-muted)', marginTop: 2 }}>
                       {TYPE_LABELS[t.item_type]} · deleted {daysAgo(t.deleted_at)} · {daysLeft(t.deleted_at)}
                     </div>
                   </div>

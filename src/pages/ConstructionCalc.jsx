@@ -361,7 +361,7 @@ export default function ConstructionCalc() {
             {memory && <span className="cm-indicator">M</span>}
             {mode === 'enhanced' && <span className="cm-indicator" style={{ background: 'var(--green-dim)', color: 'var(--green)' }}>ENH</span>}
           </div>
-          {conMode && <span style={{ fontSize: 11, color: 'var(--text-3)', textTransform: 'uppercase' }}>{conMode}</span>}
+          {conMode && <span style={{ fontSize: 11, color: 'var(--c-text-muted)', textTransform: 'uppercase' }}>{conMode}</span>}
         </div>
 
         {/* Equation line — always rendered, hidden when empty */}
@@ -382,7 +382,7 @@ export default function ConstructionCalc() {
         </div>
 
         {/* Secondary: decimal inches + mm — always rendered, hidden when empty */}
-        <div style={{ marginTop: 6, fontSize: 12, color: 'var(--text-3)', display: 'flex', gap: 12, flexWrap: 'wrap', minHeight: 18, visibility: activeVal ? 'visible' : 'hidden' }}>
+        <div style={{ marginTop: 6, fontSize: 12, color: 'var(--c-text-muted)', display: 'flex', gap: 12, flexWrap: 'wrap', minHeight: 18, visibility: activeVal ? 'visible' : 'hidden' }}>
           {activeVal ? (
             <>
               <span>{fracToDecimal(activeVal).toFixed(4)}"</span>
@@ -396,15 +396,15 @@ export default function ConstructionCalc() {
       {showHistory && history.length > 0 && (
         <div className="cm-history">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.5px' }}>History</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--c-text-muted)', textTransform: 'uppercase', letterSpacing: '.5px' }}>History</span>
             <button onClick={() => { setHistory([]); setShowHistory(false) }} style={{ background: 'none', border: 'none', fontSize: 11, color: 'var(--red)', cursor: 'pointer', fontFamily: 'inherit' }}>Clear</button>
           </div>
           {history.map((h, i) => (
             <button key={h.ts} onClick={() => recallHistory(h)} className="cm-history-item">
-              <span style={{ color: 'var(--text-3)', fontSize: 12 }}>
+              <span style={{ color: 'var(--c-text-muted)', fontSize: 12 }}>
                 {fracToHTML(h.left, { fontSize: 12 })} {h.op} {fracToHTML(h.right, { fontSize: 12 })}
               </span>
-              <span style={{ fontWeight: 700, color: 'var(--text)' }}>= {fracToHTML(h.result, { fontSize: 13 })}</span>
+              <span style={{ fontWeight: 700, color: 'var(--c-text-primary)' }}>= {fracToHTML(h.result, { fontSize: 13 })}</span>
             </button>
           ))}
         </div>
@@ -597,7 +597,7 @@ export default function ConstructionCalc() {
               const { w, n, d } = inchToFrac(dec, den)
               return (
                 <div key={den} className="cm-conv-cell">
-                  <div style={{ fontSize: 9, color: 'var(--text-4)' }}>1/{den}"</div>
+                  <div style={{ fontSize: 9, color: 'var(--c-text-faint)' }}>1/{den}"</div>
                   <strong style={{ fontSize: 12 }}>{n === 0 ? `${w}"` : `${w > 0 ? w + ' ' : ''}${n}/${d}"`}</strong>
                 </div>
               )
@@ -614,8 +614,8 @@ export default function ConstructionCalc() {
 function ConPanel({ title, hint, children }) {
   return (
     <div className="cm-con-panel">
-      <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>{title}</div>
-      {hint && <p style={{ fontSize: 11, color: 'var(--text-4)', marginBottom: 10, lineHeight: 1.5 }}>{hint}</p>}
+      <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--c-text-primary)', marginBottom: 4 }}>{title}</div>
+      {hint && <p style={{ fontSize: 11, color: 'var(--c-text-faint)', marginBottom: 10, lineHeight: 1.5 }}>{hint}</p>}
       {children}
     </div>
   )
@@ -631,7 +631,7 @@ function ConInput({ label, value, onSet, computed, isLen }) {
 
   return (
     <div className="cm-con-input-wrap">
-      <div style={{ fontSize: 11, color: 'var(--text-4)', marginBottom: 3 }}>{label}</div>
+      <div style={{ fontSize: 11, color: 'var(--c-text-faint)', marginBottom: 3 }}>{label}</div>
       <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
         <div className={`cm-con-value${isComputed ? ' computed' : ''}${displayVal ? ' has-value' : ''}`}>
           {displayVal || '—'}
@@ -645,7 +645,7 @@ function ConInput({ label, value, onSet, computed, isLen }) {
 function ConResult({ label, value }) {
   return (
     <div className="cm-con-result-item">
-      <span style={{ fontSize: 11, color: 'var(--text-4)' }}>{label}</span>
+      <span style={{ fontSize: 11, color: 'var(--c-text-faint)' }}>{label}</span>
       <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--forest)' }}>{value}</span>
     </div>
   )
@@ -654,8 +654,8 @@ function ConResult({ label, value }) {
 function HelpItem({ title, desc }) {
   return (
     <div style={{ marginBottom: 12 }}>
-      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 2 }}>{title}</div>
-      <p style={{ fontSize: 12, color: 'var(--text-3)', lineHeight: 1.5, margin: 0 }}>{desc}</p>
+      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--c-text-primary)', marginBottom: 2 }}>{title}</div>
+      <p style={{ fontSize: 12, color: 'var(--c-text-muted)', lineHeight: 1.5, margin: 0 }}>{desc}</p>
     </div>
   )
 }
@@ -671,13 +671,13 @@ function PitchViz({ rise, run }) {
       {/* Triangle */}
       <polygon points={`${pad},${rH + pad} ${rW + pad},${rH + pad} ${pad},${pad}`} fill="rgba(74,222,128,.08)" stroke="rgba(74,222,128,.6)" strokeWidth="1.5" />
       {/* Labels */}
-      <text x={pad + rW / 2} y={rH + pad + 16} textAnchor="middle" fill="var(--text-3)" fontSize="10" fontFamily="system-ui">Run: {inToFtInStr(run)}</text>
-      <text x={pad - 14} y={pad + rH / 2} textAnchor="middle" fill="var(--text-3)" fontSize="10" fontFamily="system-ui" transform={`rotate(-90,${pad - 14},${pad + rH / 2})`}>Rise: {inToFtInStr(rise)}</text>
+      <text x={pad + rW / 2} y={rH + pad + 16} textAnchor="middle" fill="var(--c-text-muted)" fontSize="10" fontFamily="system-ui">Run: {inToFtInStr(run)}</text>
+      <text x={pad - 14} y={pad + rH / 2} textAnchor="middle" fill="var(--c-text-muted)" fontSize="10" fontFamily="system-ui" transform={`rotate(-90,${pad - 14},${pad + rH / 2})`}>Rise: {inToFtInStr(rise)}</text>
       <text x={pad + rW / 2 + 8} y={pad + rH / 2 - 4} textAnchor="middle" fill="#4ADE80" fontSize="10" fontWeight="700" fontFamily="system-ui" transform={`rotate(${-Math.atan(rise / run) * 180 / Math.PI},${pad + rW / 2 + 8},${pad + rH / 2 - 4})`}>
         Rafter: {inToFtInStr(Math.sqrt(rise * rise + run * run))}
       </text>
       {/* Right angle marker */}
-      <polyline points={`${pad + 12},${rH + pad} ${pad + 12},${rH + pad - 12} ${pad},${rH + pad - 12}`} fill="none" stroke="var(--text-4)" strokeWidth="1" />
+      <polyline points={`${pad + 12},${rH + pad} ${pad + 12},${rH + pad - 12} ${pad},${rH + pad - 12}`} fill="none" stroke="var(--c-text-faint)" strokeWidth="1" />
     </svg>
   )
 }
@@ -688,9 +688,9 @@ function DiagViz({ w, h }) {
   const pad = 24
   return (
     <svg viewBox={`0 0 ${rW + pad * 2} ${rH + pad * 2}`} style={{ width: '100%', maxHeight: 100, margin: '10px 0' }}>
-      <rect x={pad} y={pad} width={rW} height={rH} fill="none" stroke="var(--text-4)" strokeWidth="1" strokeDasharray="4,3" />
+      <rect x={pad} y={pad} width={rW} height={rH} fill="none" stroke="var(--c-text-faint)" strokeWidth="1" strokeDasharray="4,3" />
       <line x1={pad} y1={rH + pad} x2={rW + pad} y2={pad} stroke="#4ADE80" strokeWidth="1.5" />
-      <text x={pad + rW / 2} y={rH + pad + 14} textAnchor="middle" fill="var(--text-3)" fontSize="10" fontFamily="system-ui">{inToFtInStr(w)}</text>
+      <text x={pad + rW / 2} y={rH + pad + 14} textAnchor="middle" fill="var(--c-text-muted)" fontSize="10" fontFamily="system-ui">{inToFtInStr(w)}</text>
       <text x={pad + rW / 2 + 6} y={pad + rH / 2 - 4} textAnchor="middle" fill="#4ADE80" fontSize="10" fontWeight="700" fontFamily="system-ui">
         {inToFtInStr(Math.sqrt(w * w + h * h))}
       </text>
@@ -711,11 +711,11 @@ function StairsViz({ riserH, tread, numRisers }) {
         </g>
       ))}
       {/* Riser label */}
-      <text x={12} y={h - 20 - stepH / 2} textAnchor="middle" fill="var(--text-4)" fontSize="8" fontFamily="system-ui" transform={`rotate(-90,12,${h - 20 - stepH / 2})`}>
+      <text x={12} y={h - 20 - stepH / 2} textAnchor="middle" fill="var(--c-text-faint)" fontSize="8" fontFamily="system-ui" transform={`rotate(-90,12,${h - 20 - stepH / 2})`}>
         {decToFracStr(riserH)}
       </text>
       {/* Tread label */}
-      <text x={20 + stepW / 2} y={h - 10} textAnchor="middle" fill="var(--text-4)" fontSize="8" fontFamily="system-ui">
+      <text x={20 + stepW / 2} y={h - 10} textAnchor="middle" fill="var(--c-text-faint)" fontSize="8" fontFamily="system-ui">
         {tread}"
       </text>
     </svg>

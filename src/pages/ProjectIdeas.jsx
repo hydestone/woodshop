@@ -88,7 +88,7 @@ export default function ProjectIdeas() {
           <div className="empty"><div className="spinner" /></div>
         ) : active.length === 0 ? (
           <div className="empty" style={{ paddingTop: 60 }}>
-            <div className="empty-icon"><IBulb size={32} color="var(--text-3)" sw={1.5} /></div>
+            <div className="empty-icon"><IBulb size={32} color="var(--c-text-muted)" sw={1.5} /></div>
             <div className="empty-title">No ideas yet</div>
             <p className="empty-sub">Capture something you want to build someday</p>
             <button className="btn-primary" style={{ marginTop: 16 }} onClick={() => setShowAdd(true)}>Add First Idea</button>
@@ -98,7 +98,7 @@ export default function ProjectIdeas() {
             {active.map((idea, i) => (
               <div key={idea.id} style={{
                 padding: '14px 16px',
-                borderBottom: i < active.length - 1 ? '1px solid var(--border-2)' : 'none',
+                borderBottom: i < active.length - 1 ? '1px solid var(--c-border-light)' : 'none',
                 cursor: 'pointer',
               }}
                 onClick={() => { setEditing(idea); setShowAdd(true) }}
@@ -107,7 +107,7 @@ export default function ProjectIdeas() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 2 }}>{idea.title}</div>
                     {idea.notes && (
-                      <div style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 6, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineClamp: 2 }}>
+                      <div style={{ fontSize: 13, color: 'var(--c-text-muted)', marginBottom: 6, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineClamp: 2 }}>
                         {idea.notes}
                       </div>
                     )}

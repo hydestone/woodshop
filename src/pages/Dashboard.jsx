@@ -22,7 +22,7 @@ function DrillList({ title, projects, onBack, onOpen }) {
           <button className="back-btn" onClick={onBack}>← Back</button>
           <h1 className="page-title" style={{ margin: 0, fontSize: 20 }}>
             {title}
-            <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-3)', marginLeft: 8 }}>
+            <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--c-text-muted)', marginLeft: 8 }}>
               {projects.length} project{projects.length !== 1 ? 's' : ''}
             </span>
           </h1>
@@ -30,21 +30,21 @@ function DrillList({ title, projects, onBack, onOpen }) {
       </div>
       <div className="scroll-page" style={{ paddingBottom: 40 }}>
         {projects.length === 0 ? (
-          <div className="empty"><div className="empty-icon"><ITree size={32} color="var(--text-3)" sw={1.5} /></div><div className="empty-title">No projects</div></div>
+          <div className="empty"><div className="empty-icon"><ITree size={32} color="var(--c-text-muted)" sw={1.5} /></div><div className="empty-title">No projects</div></div>
         ) : (
           <div className="group" style={{ marginTop: 12 }}>
             {projects.map((p, i) => (
               <div key={p.id} onClick={() => onOpen(p.id)}
-                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', borderBottom: i < projects.length - 1 ? '1px solid var(--border-2)' : 'none', cursor: 'pointer' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', borderBottom: i < projects.length - 1 ? '1px solid var(--c-border-light)' : 'none', cursor: 'pointer' }}
               >
-                <div style={{ width: 9, height: 9, borderRadius: 2, background: SC[p.status] || 'var(--text-4)', flexShrink: 0 }} />
+                <div style={{ width: 9, height: 9, borderRadius: 2, background: SC[p.status] || 'var(--c-text-faint)', flexShrink: 0 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 600, fontSize: 15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>
+                  <div style={{ fontSize: 12, color: 'var(--c-text-muted)', marginTop: 2 }}>
                     {[p.wood_type, p.category, p.finish_used, p.gift_recipient && '🎁 ' + p.gift_recipient].filter(Boolean).join(' · ')}
                   </div>
                 </div>
-                <IChevR size={14} color="var(--text-4)" />
+                <IChevR size={14} color="var(--c-text-faint)" />
               </div>
             ))}
           </div>
@@ -81,10 +81,10 @@ function YearCarousel({ year, projects, photos, onClose }) {
 
   if (!carouselPhotos.length) return (
     <div className="overlay" onClick={onClose} style={{ alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ background: 'var(--surface)', borderRadius: 16, padding: '32px 24px', maxWidth: 360, width: '90%', textAlign: 'center' }}>
-        <div style={{ marginBottom: 12 }}><ICamera size={36} color="var(--text-3)" sw={1.5} /></div>
+      <div style={{ background: 'var(--c-bg-surface)', borderRadius: 16, padding: '32px 24px', maxWidth: 360, width: '90%', textAlign: 'center' }}>
+        <div style={{ marginBottom: 12 }}><ICamera size={36} color="var(--c-text-muted)" sw={1.5} /></div>
         <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 8 }}>{year} — No photos yet</div>
-        <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 16 }}>{yearProjects.length} project{yearProjects.length !== 1 ? 's' : ''} but no finished photos uploaded.</p>
+        <p style={{ fontSize: 13, color: 'var(--c-text-muted)', marginBottom: 16 }}>{yearProjects.length} project{yearProjects.length !== 1 ? 's' : ''} but no finished photos uploaded.</p>
         <button className="btn-primary" style={{ width: '100%', justifyContent: 'center' }} onClick={onClose}>Close</button>
       </div>
     </div>
@@ -193,12 +193,12 @@ function ProjectsByYear({ projects, photos, onDrill , isDark = false }) {
     return () => chart.off('click', handler)
   }, [grouped])
 
-  if (!grouped.length) return <div style={{ textAlign:'center', padding:'24px 0', color:'var(--text-3)', fontSize:13 }}>No years set on projects yet</div>
+  if (!grouped.length) return <div style={{ textAlign:'center', padding:'24px 0', color:'var(--c-text-muted)', fontSize:13 }}>No years set on projects yet</div>
 
   return (
     <div>
       <div ref={chartRef} style={{ width:'100%', height: 180 }} />
-      <div style={{ fontSize:11, color:'var(--text-4)', marginTop:4 }}>Click a bar to browse that year</div>
+      <div style={{ fontSize:11, color:'var(--c-text-faint)', marginTop:4 }}>Click a bar to browse that year</div>
       {carouselYear && <YearCarousel year={carouselYear} projects={projects} photos={photos} onClose={()=>setCarouselYear(null)}/>}
     </div>
   )
@@ -251,7 +251,7 @@ function SpeciesDonut({ projects, onDrill , isDark = false }) {
     return () => chart.off('click', handler)
   }, [data, onDrill])
 
-  if (!data.length) return <div style={{textAlign:'center',padding:'24px 0',color:'var(--text-3)',fontSize:13}}>No species logged yet</div>
+  if (!data.length) return <div style={{textAlign:'center',padding:'24px 0',color:'var(--c-text-muted)',fontSize:13}}>No species logged yet</div>
   return <div ref={chartRef} style={{ width:'100%', height: 220 }} />
 }
 
@@ -339,7 +339,7 @@ function CategoryHeatmap({ projects, categories, onDrill , isDark = false }) {
   }, [cats, onDrill])
 
   if (!years.length || !cats.length) return (
-    <div style={{ textAlign:'center', padding:'24px 0', color:'var(--text-3)', fontSize:13 }}>
+    <div style={{ textAlign:'center', padding:'24px 0', color:'var(--c-text-muted)', fontSize:13 }}>
       Add categories + years to projects
     </div>
   )
@@ -388,7 +388,7 @@ function FinishUsage({ projects, onDrill , isDark = false }) {
     return ()=>chart.off('click',handler)
   },[data,onDrill])
 
-  if (!data.length) return <div style={{textAlign:'center',padding:'24px 0',color:'var(--text-3)',fontSize:13}}>No finishes logged yet</div>
+  if (!data.length) return <div style={{textAlign:'center',padding:'24px 0',color:'var(--c-text-muted)',fontSize:13}}>No finishes logged yet</div>
   return <div ref={chartRef} style={{ width:'100%', height: Math.max(120, data.length*28) }} />
 }
 
@@ -437,25 +437,25 @@ function WoodSourceMap({ locations, woodStock, projectWoodSources, onLocationCli
     return () => { if (mapInstance.current) { mapInstance.current.remove(); mapInstance.current = null } }
   }, [mappable, sourceCounts, expanded])
 
-  if (!locations.length) return <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-3)', fontSize: 13 }}>No wood locations added yet</div>
+  if (!locations.length) return <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--c-text-muted)', fontSize: 13 }}>No wood locations added yet</div>
   if (mappable.length === 0) return (
     <div>{locations.map(l => (
-      <div key={l.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid var(--border-2)' }}>
-        <span style={{ fontSize: 12, color: 'var(--text-2)' }}>{l.name}</span>
-        <span style={{ fontSize: 12, color: 'var(--text-3)' }}>{sourceCounts[l.id] || 0} projects</span>
+      <div key={l.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid var(--c-border-light)' }}>
+        <span style={{ fontSize: 12, color: 'var(--c-text-body)' }}>{l.name}</span>
+        <span style={{ fontSize: 12, color: 'var(--c-text-muted)' }}>{sourceCounts[l.id] || 0} projects</span>
       </div>
     ))}</div>
   )
   return (
     <div>
-      <div ref={mapRef} onClick={() => setExpanded(true)} style={{ height: 200, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--border-2)', cursor: 'pointer', position: 'relative' }}>
+      <div ref={mapRef} onClick={() => setExpanded(true)} style={{ height: 200, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--c-border-light)', cursor: 'pointer', position: 'relative' }}>
         <div style={{ position: 'absolute', bottom: 8, right: 8, zIndex: 1000, background: 'rgba(255,255,255,.85)', borderRadius: 6, padding: '3px 8px', fontSize: 11, fontWeight: 600, color: '#333', pointerEvents: 'none' }}>⤢ Expand</div>
       </div>
       <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
         {locations.slice(0, 4).map(l => (
           <div key={l.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-            <span style={{ color: 'var(--text-2)' }}>{l.name}</span>
-            <span style={{ color: 'var(--text-3)' }}>{sourceCounts[l.id] || 0} uses</span>
+            <span style={{ color: 'var(--c-text-body)' }}>{l.name}</span>
+            <span style={{ color: 'var(--c-text-muted)' }}>{sourceCounts[l.id] || 0} uses</span>
           </div>
         ))}
       </div>
@@ -514,7 +514,7 @@ function useECharts(ref, getOption, deps, isDark) {
 // ── Theme colours ──────────────────────────────────────────────────────────────
 const EC = {
   text:   () => cv('--chart-text'),
-  text2:  () => cv('--text-3'),
+  text2:  () => cv('--c-text-muted'),
   bg:     () => cv('--chart-bg'),
   grid:   () => cv('--chart-grid'),
   accent: cv('--accent'),
@@ -584,7 +584,7 @@ function MaterialFlow({ projects , isDark = false }) {
   })
 
   useECharts(chartRef, getOption, [nodes, links], isDark)
-  if (!nodes.length) return <div style={{textAlign:'center',padding:'24px 0',color:'var(--text-3)',fontSize:13}}>Log species + categories to see material flow</div>
+  if (!nodes.length) return <div style={{textAlign:'center',padding:'24px 0',color:'var(--c-text-muted)',fontSize:13}}>Log species + categories to see material flow</div>
   return <div ref={chartRef} style={{ width:'100%', height: Math.max(160, nodes.length * 18) }} />
 }
 
@@ -655,8 +655,8 @@ export default function Dashboard() {
             {urgCoats.map(c => (
               <div key={c.id} className="cell" style={{ cursor: 'pointer' }} onClick={() => setProjId(c.project_id)}>
                 <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--white)', background: 'var(--orange)', borderRadius: 6, padding: '2px 8px', flexShrink: 0 }}>Now</span>
-                <div style={{ flex: 1 }}><div style={{ fontWeight: 500 }}>{c.product}</div><div style={{ fontSize: 13, color: 'var(--text-3)' }}>Coat {c.coat_number} · {c.proj?.name}</div></div>
-                <IChevR size={14} color="var(--text-4)" />
+                <div style={{ flex: 1 }}><div style={{ fontWeight: 500 }}>{c.product}</div><div style={{ fontSize: 13, color: 'var(--c-text-muted)' }}>Coat {c.coat_number} · {c.proj?.name}</div></div>
+                <IChevR size={14} color="var(--c-text-faint)" />
               </div>
             ))}
           </div>
@@ -668,7 +668,7 @@ export default function Dashboard() {
             {urgMaint.map(m => { const st = maintStatus(m); return (
               <div key={m.id} className="cell">
                 <span style={{ fontSize: 12, fontWeight: 600, color: st.color, background: st.color === 'var(--red)' ? 'var(--red-dim)' : 'var(--orange-dim)', borderRadius: 6, padding: '2px 8px', flexShrink: 0 }}>{st.label}</span>
-                <div style={{ flex: 1 }}><div style={{ fontWeight: 500 }}>{m.name}</div><div style={{ fontSize: 13, color: 'var(--text-3)' }}>{m.category}</div></div>
+                <div style={{ flex: 1 }}><div style={{ fontWeight: 500 }}>{m.name}</div><div style={{ fontSize: 13, color: 'var(--c-text-muted)' }}>{m.category}</div></div>
               </div>
             )})}
           </div>
@@ -679,14 +679,14 @@ export default function Dashboard() {
           <div className="group">
             {nextSteps.map(({ p, step }) => (
               <div key={p.id} className="cell" style={{ cursor: 'pointer' }} onClick={() => setProjId(p.id)}>
-                <div style={{ flex: 1 }}><div style={{ fontWeight: 500 }}>{p.name}</div><div style={{ fontSize: 13, color: 'var(--text-3)' }}>Next: {step.title}</div></div>
-                <IChevR size={14} color="var(--text-4)" />
+                <div style={{ flex: 1 }}><div style={{ fontWeight: 500 }}>{p.name}</div><div style={{ fontSize: 13, color: 'var(--c-text-muted)' }}>Next: {step.title}</div></div>
+                <IChevR size={14} color="var(--c-text-faint)" />
               </div>
             ))}
           </div>
         </>}
 
-        {!hasUrgent && <div className="empty" style={{ paddingTop: 32, paddingBottom: 0 }}><div className="empty-icon"><ITree size={32} color="var(--text-3)" sw={1.5} /></div><div className="empty-title">All clear</div><p className="empty-sub">Nothing urgent today.</p></div>}
+        {!hasUrgent && <div className="empty" style={{ paddingTop: 32, paddingBottom: 0 }}><div className="empty-icon"><ITree size={32} color="var(--c-text-muted)" sw={1.5} /></div><div className="empty-title">All clear</div><p className="empty-sub">Nothing urgent today.</p></div>}
 
         {/* Quick actions */}
         <div data-tutorial-target="quick-actions" style={{ display: 'flex', gap: 8, padding: '16px 20px 8px', overflowX: 'auto', scrollbarWidth: 'none' }}>
@@ -715,12 +715,12 @@ export default function Dashboard() {
             <div className="group">
               {recent.map(p => (
                 <div key={p.id} className="cell" style={{ cursor:'pointer' }} onClick={() => setProjId(p.id)}>
-                  <div style={{ width:9, height:9, borderRadius:2, background:SC[p.status]||'var(--text-4)', flexShrink:0 }}/>
+                  <div style={{ width:9, height:9, borderRadius:2, background:SC[p.status]||'var(--c-text-faint)', flexShrink:0 }}/>
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ fontWeight:600, fontSize:15 }}>{p.name}</div>
-                    <div style={{ fontSize:12, color:'var(--text-3)' }}>{[p.wood_type, p.category].filter(Boolean).join(' · ')}</div>
+                    <div style={{ fontSize:12, color:'var(--c-text-muted)' }}>{[p.wood_type, p.category].filter(Boolean).join(' · ')}</div>
                   </div>
-                  <IChevR size={14} color="var(--text-4)" />
+                  <IChevR size={14} color="var(--c-text-faint)" />
                 </div>
               ))}
             </div>
@@ -738,7 +738,7 @@ export default function Dashboard() {
 
         {data.photos.length > 0 && <>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '24px 20px 6px' }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.6px' }}>Recent Photos</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--c-text-muted)', textTransform: 'uppercase', letterSpacing: '.6px' }}>Recent Photos</span>
             <button className="btn-text" onClick={() => setTab('photos')}>See all</button>
           </div>
           <PhotoGrid photos={data.photos.slice(0, 12)} showProject projects={data.projects} />
@@ -749,7 +749,7 @@ export default function Dashboard() {
           <div className="group">
             {upCoats.map(c => { const st = coatStatus(c); return (
               <div key={c.id} className="cell" style={{ cursor: 'pointer' }} onClick={() => setProjId(c.project_id)}>
-                <div style={{ flex: 1 }}><div style={{ fontWeight: 500 }}>{c.product}</div><div style={{ fontSize: 13, color: 'var(--text-3)' }}>Coat {c.coat_number} · {c.proj?.name} · {fmtShort(c.applied_at)}</div></div>
+                <div style={{ flex: 1 }}><div style={{ fontWeight: 500 }}>{c.product}</div><div style={{ fontSize: 13, color: 'var(--c-text-muted)' }}>Coat {c.coat_number} · {c.proj?.name} · {fmtShort(c.applied_at)}</div></div>
                 <span style={{ fontSize: 14, color: st.color, fontWeight: 500 }}>{st.label}</span>
               </div>
             )})}

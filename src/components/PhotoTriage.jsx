@@ -120,21 +120,21 @@ function MobileTriage({ photos, projects, onAssign, onSkip, onClose }) {
     return (
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 32, textAlign: 'center' }}>
         <ICheck size={48} color="var(--green)" sw={2} />
-        <h2 style={{ fontSize: 20, fontWeight: 700, margin: '16px 0 8px', color: 'var(--text)' }}>All sorted!</h2>
-        <p style={{ color: 'var(--text-3)', fontSize: 14 }}>No unsorted photos remaining.</p>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: '16px 0 8px', color: 'var(--c-text-primary)' }}>All sorted!</h2>
+        <p style={{ color: 'var(--c-text-muted)', fontSize: 14 }}>No unsorted photos remaining.</p>
         <button className="btn-primary" style={{ marginTop: 20 }} onClick={onClose}>Done</button>
       </div>
     )
   }
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--c-bg-raised)' }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', flexShrink: 0 }}>
         <button className="back-btn" onClick={onClose}>
           <IChevL size={16} color="currentColor" sw={2.2} /> Back
         </button>
-        <span style={{ fontSize: 13, color: 'var(--text-3)', fontWeight: 600 }}>
+        <span style={{ fontSize: 13, color: 'var(--c-text-muted)', fontWeight: 600 }}>
           {idx + 1} of {photos.length}
         </span>
         <button className="btn-text" onClick={skip} style={{ fontSize: 13 }}>Skip →</button>
@@ -146,8 +146,8 @@ function MobileTriage({ photos, projects, onAssign, onSkip, onClose }) {
       </div>
 
       {/* Project pills */}
-      <div style={{ flexShrink: 0, padding: '12px 16px', borderTop: '1px solid var(--border)' }}>
-        <div style={{ fontSize: 11, color: 'var(--text-4)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 8 }}>
+      <div style={{ flexShrink: 0, padding: '12px 16px', borderTop: '1px solid var(--c-border)' }}>
+        <div style={{ fontSize: 11, color: 'var(--c-text-faint)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 8 }}>
           Assign to project
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, maxHeight: 140, overflowY: 'auto' }}>
@@ -155,8 +155,8 @@ function MobileTriage({ photos, projects, onAssign, onSkip, onClose }) {
             <button key={p.id} onClick={() => assign(p.id)} style={{
               display: 'flex', alignItems: 'center', gap: 6,
               padding: '8px 14px', borderRadius: 99,
-              border: '1px solid var(--border)', background: 'var(--surface)',
-              fontSize: 13, fontWeight: 500, color: 'var(--text)',
+              border: '1px solid var(--c-border)', background: 'var(--c-bg-surface)',
+              fontSize: 13, fontWeight: 500, color: 'var(--c-text-primary)',
               cursor: 'pointer', fontFamily: 'inherit',
               transition: 'background 120ms',
             }}>
@@ -210,8 +210,8 @@ function DesktopTriage({ photos, projects, onAssign, onClose }) {
     return (
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 32, textAlign: 'center' }}>
         <ICheck size={48} color="var(--green)" sw={2} />
-        <h2 style={{ fontSize: 20, fontWeight: 700, margin: '16px 0 8px', color: 'var(--text)' }}>All sorted!</h2>
-        <p style={{ color: 'var(--text-3)', fontSize: 14 }}>No unsorted photos remaining.</p>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: '16px 0 8px', color: 'var(--c-text-primary)' }}>All sorted!</h2>
+        <p style={{ color: 'var(--c-text-muted)', fontSize: 14 }}>No unsorted photos remaining.</p>
         <button className="btn-primary" style={{ marginTop: 20 }} onClick={onClose}>Done</button>
       </div>
     )
@@ -220,11 +220,11 @@ function DesktopTriage({ photos, projects, onAssign, onClose }) {
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid var(--c-border)', flexShrink: 0 }}>
         <button className="back-btn" onClick={onClose}>
           <IChevL size={16} color="currentColor" sw={2.2} /> Back
         </button>
-        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>
+        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--c-text-primary)' }}>
           {photos.length} unsorted photo{photos.length !== 1 ? 's' : ''}
         </span>
         {selected.size > 0 && (
@@ -238,7 +238,7 @@ function DesktopTriage({ photos, projects, onAssign, onClose }) {
       {selected.size > 0 && (
         <div style={{
           display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px',
-          background: 'var(--accent-dim)', borderBottom: '1px solid var(--border)',
+          background: 'var(--accent-dim)', borderBottom: '1px solid var(--c-border)',
           flexShrink: 0, overflowX: 'auto',
         }}>
           <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent)', whiteSpace: 'nowrap', marginRight: 4 }}>
@@ -247,7 +247,7 @@ function DesktopTriage({ photos, projects, onAssign, onClose }) {
           {projects.slice(0, 8).map(p => (
             <button key={p.id} onClick={() => bulkAssign(p.id)} style={{
               padding: '6px 12px', borderRadius: 99,
-              border: '1px solid var(--accent)', background: 'var(--surface)',
+              border: '1px solid var(--accent)', background: 'var(--c-bg-surface)',
               fontSize: 12, fontWeight: 600, color: 'var(--accent)',
               cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
             }}>{p.name}</button>
@@ -309,10 +309,10 @@ function DesktopTriage({ photos, projects, onAssign, onClose }) {
         {/* Right — project folders */}
         <div style={{
           width: 260, flexShrink: 0, overflowY: 'auto',
-          borderLeft: '1px solid var(--border)', padding: 12,
-          background: 'var(--fill)',
+          borderLeft: '1px solid var(--c-border)', padding: 12,
+          background: 'var(--c-bg-subtle)',
         }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-4)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 10 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--c-text-faint)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 10 }}>
             Drop onto project
           </div>
           {projects.map(p => {
@@ -328,7 +328,7 @@ function DesktopTriage({ photos, projects, onAssign, onClose }) {
                   padding: '12px 14px', marginBottom: 4,
                   borderRadius: 10,
                   border: isOver ? '2px solid var(--accent)' : '2px solid transparent',
-                  background: isOver ? 'var(--accent-dim)' : 'var(--surface)',
+                  background: isOver ? 'var(--accent-dim)' : 'var(--c-bg-surface)',
                   transition: 'all 150ms',
                   cursor: 'default',
                 }}
@@ -336,13 +336,13 @@ function DesktopTriage({ photos, projects, onAssign, onClose }) {
                 {p._thumb ? (
                   <img src={p._thumb} alt="" style={{ width: 32, height: 32, borderRadius: 6, objectFit: 'cover' }} />
                 ) : (
-                  <div style={{ width: 32, height: 32, borderRadius: 6, background: 'var(--fill)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <IFolder size={16} color="var(--text-3)" sw={1.5} />
+                  <div style={{ width: 32, height: 32, borderRadius: 6, background: 'var(--c-bg-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <IFolder size={16} color="var(--c-text-muted)" sw={1.5} />
                   </div>
                 )}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-4)' }}>{p.status}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--c-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                  <div style={{ fontSize: 11, color: 'var(--c-text-faint)' }}>{p.status}</div>
                 </div>
                 {isOver && (
                   <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)' }}>DROP</div>

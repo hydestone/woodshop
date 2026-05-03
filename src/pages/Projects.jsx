@@ -207,7 +207,7 @@ export default function Projects() {
               ))}
               {!filtered.length && (
                 <div className="empty">
-                  <div className="empty-icon"><IList size={32} color="var(--text-3)" sw={1.5} /></div>
+                  <div className="empty-icon"><IList size={32} color="var(--c-text-muted)" sw={1.5} /></div>
                   <div className="empty-title">{filter === 'all' ? 'No projects yet' : `No ${filter} projects`}</div>
                   <p className="empty-sub">{filter === 'all' ? 'Click + to start your first build' : 'Try a different category filter'}</p>
                 </div>
@@ -294,7 +294,7 @@ function ProjectTable({ projects, categories, statusFilter, setStatusFilter }) {
                         onClick={() => setProjId(p.id)}
                       />
                     ) : (
-                      <div style={{ width: 40, height: 40, borderRadius: 6, background: 'var(--fill)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>🪵</div>
+                      <div style={{ width: 40, height: 40, borderRadius: 6, background: 'var(--c-bg-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>🪵</div>
                     )}
                   </td>
                   <td><input className="proj-table-input" defaultValue={p.name} onBlur={e => { if (e.target.value !== p.name) update(p.id, 'name', e.target.value) }} /></td>
@@ -322,7 +322,7 @@ function ProjectTable({ projects, categories, statusFilter, setStatusFilter }) {
         </table>
         {!projects.length && (
           <div className="empty">
-            <div className="empty-icon"><IList size={32} color="var(--text-3)" sw={1.5} /></div>
+            <div className="empty-icon"><IList size={32} color="var(--c-text-muted)" sw={1.5} /></div>
             <div className="empty-title">No {statusFilter === 'all' ? '' : statusFilter + ' '}projects</div>
             <p className="empty-sub">{statusFilter !== 'all' ? 'Try a different status filter' : 'Click + to add your first project'}</p>
           </div>
@@ -367,7 +367,7 @@ const ProjectCard = memo(function ProjectCard({ project, onOpen, data, stepCount
         onClose={() => setShowDelete(false)}
       />
     )}
-    <button className="proj-card" onClick={onOpen} {...longPress}>
+    <button className={`proj-card proj-card--${project.status || 'planning'}`} onClick={onOpen} {...longPress}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: total ? 10 : 0 }}>
         <div style={{ flex: 1, paddingRight: 12, minWidth: 0 }}>
           <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 2 }}>
@@ -375,12 +375,12 @@ const ProjectCard = memo(function ProjectCard({ project, onOpen, data, stepCount
             {isSample && <span className="sample-badge">SAMPLE</span>}
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 2 }}>
-            {project.wood_type && <span style={{ fontSize: 13, color: 'var(--text-3)' }}>{project.wood_type}</span>}
+            {project.wood_type && <span style={{ fontSize: 13, color: 'var(--c-text-muted)' }}>{project.wood_type}</span>}
             {project.category  && <span style={{ fontSize: 12, background: 'var(--blue-dim)', color: 'var(--blue)', borderRadius: 99, padding: '1px 8px', fontWeight: 500 }}>{project.category}</span>}
-            {project.year_completed && <span style={{ fontSize: 12, color: 'var(--text-4)' }}>{project.year_completed}</span>}
-            {project.gift_recipient && <span style={{ fontSize: 12, color: 'var(--text-3)' }}>🎁 {project.gift_recipient}</span>}
+            {project.year_completed && <span style={{ fontSize: 12, color: 'var(--c-text-faint)' }}>{project.year_completed}</span>}
+            {project.gift_recipient && <span style={{ fontSize: 12, color: 'var(--c-text-muted)' }}>🎁 {project.gift_recipient}</span>}
           </div>
-          {project.description && <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>{project.description}</div>}
+          {project.description && <div style={{ fontSize: 13, color: 'var(--c-text-muted)', marginTop: 4 }}>{project.description}</div>}
         </div>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, flexShrink: 0 }}>
           {/* Thumbnail */}
@@ -389,7 +389,7 @@ const ProjectCard = memo(function ProjectCard({ project, onOpen, data, stepCount
               src={thumb}
               alt=""
               loading="lazy"
-              style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8, flexShrink: 0, border: '1px solid var(--border-2)' }}
+              style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8, flexShrink: 0, border: '1px solid var(--c-border-light)' }}
             />
           )}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
@@ -403,7 +403,7 @@ const ProjectCard = memo(function ProjectCard({ project, onOpen, data, stepCount
                 >
                   <IStar size={18}
                     fill={project.is_favorite ? '#F59E0B' : 'none'}
-                    color={project.is_favorite ? '#F59E0B' : 'var(--text-4)'}
+                    color={project.is_favorite ? '#F59E0B' : 'var(--c-text-faint)'}
                     style={{ transition: 'transform 200ms', transform: project.is_favorite ? 'scale(1.2)' : 'scale(1)' }}
                   />
                 </button>
@@ -418,8 +418,8 @@ const ProjectCard = memo(function ProjectCard({ project, onOpen, data, stepCount
       {total > 0 && (
         <>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-            <span style={{ fontSize: 12, color: 'var(--text-3)' }}>Build progress</span>
-            <span style={{ fontSize: 12, color: 'var(--text-3)' }}>{done}/{total}</span>
+            <span style={{ fontSize: 12, color: 'var(--c-text-muted)' }}>Build progress</span>
+            <span style={{ fontSize: 12, color: 'var(--c-text-muted)' }}>{done}/{total}</span>
           </div>
           <div className="progress-bar">
             <div className="progress-fill" style={{ width: `${(done / total) * 100}%`, background: project.status === 'complete' ? 'var(--forest)' : 'var(--accent)' }} />
@@ -581,10 +581,10 @@ export function ProjectDetail() {
   }
 
   return (
-    <div style={{ height: '100%', overflowY: 'auto', background: 'var(--bg)' }} className="slide-in">
+    <div style={{ height: '100%', overflowY: 'auto', background: 'var(--c-bg-raised)' }} className="slide-in">
 
       {/* ── Header ── */}
-      <div style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)', padding: '12px 20px 16px' }}>
+      <div style={{ background: 'var(--c-bg-surface)', borderBottom: '1px solid var(--c-border)', padding: '12px 20px 16px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <button className="back-btn" onClick={() => setProjId(null)}>
             <IChevL size={16} color="currentColor" sw={2.2} />
@@ -597,10 +597,10 @@ export function ProjectDetail() {
               return (
                 <>
                   <button className="icon-btn" disabled={idx <= 0} onClick={() => setProjId(sorted[idx-1].id)} aria-label="Previous project" style={{ opacity: idx <= 0 ? .3 : 1 }}>
-                    <IChevL size={16} color="var(--text-3)" sw={2} />
+                    <IChevL size={16} color="var(--c-text-muted)" sw={2} />
                   </button>
                   <button className="icon-btn" disabled={idx >= sorted.length - 1} onClick={() => setProjId(sorted[idx+1].id)} aria-label="Next project" style={{ opacity: idx >= sorted.length - 1 ? .3 : 1 }}>
-                    <IChevR size={16} color="var(--text-3)" sw={2} />
+                    <IChevR size={16} color="var(--c-text-muted)" sw={2} />
                   </button>
                 </>
               )
@@ -618,7 +618,7 @@ export function ProjectDetail() {
               aria-label={project.is_favorite ? 'Remove from favorites' : 'Add to favorites'}
               title={project.is_favorite ? 'Remove from favorites' : 'Add to favorites'}
             >
-              <IStar size={17} fill={project.is_favorite ? 'var(--yellow,#F59E0B)' : 'none'} color={project.is_favorite ? 'var(--yellow,#F59E0B)' : 'var(--text-3)'} />
+              <IStar size={17} fill={project.is_favorite ? 'var(--yellow,#F59E0B)' : 'none'} color={project.is_favorite ? 'var(--yellow,#F59E0B)' : 'var(--c-text-muted)'} />
             </button>
             <button className="icon-btn proj-detail-secondary" onClick={() => setShowReminder(true)} aria-label="Add reminder" title="Add to calendar / reminders">
               <IBell size={17} color="var(--accent)" />
@@ -647,15 +647,15 @@ export function ProjectDetail() {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
           {project.category && <span style={{ fontSize: 12, background: 'var(--blue-dim)', color: 'var(--blue)', borderRadius: 99, padding: '2px 10px', fontWeight: 600 }}>{project.category}</span>}
-          {project.wood_type && <span style={{ fontSize: 13, color: 'var(--text-3)' }}>{project.wood_type}</span>}
-          {project.year_completed && <span style={{ fontSize: 13, color: 'var(--text-4)' }}>{project.year_completed}</span>}
+          {project.wood_type && <span style={{ fontSize: 13, color: 'var(--c-text-muted)' }}>{project.wood_type}</span>}
+          {project.year_completed && <span style={{ fontSize: 13, color: 'var(--c-text-faint)' }}>{project.year_completed}</span>}
           <button className="badge-pill" style={{ background: ss.bg, color: ss.color, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }} onClick={cycleStatus} title="Tap to change status">
             {project.status} ▾
           </button>
         </div>
 
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          {project.built_with    && <span style={{ fontSize: 12, color: 'var(--text-3)' }}>👤 {project.built_with}</span>}
+          {project.built_with    && <span style={{ fontSize: 12, color: 'var(--c-text-muted)' }}>👤 {project.built_with}</span>}
           {project.finish_used   && (
             <button
               className="btn-text"
@@ -666,13 +666,13 @@ export function ProjectDetail() {
               {project.finish_used} ↗
             </button>
           )}
-          {project.gift_recipient&& <span style={{ fontSize: 12, color: 'var(--text-3)' }}>🎁 {project.gift_recipient}</span>}
-          {project.description   && <span style={{ fontSize: 12, color: 'var(--text-3)' }}>{project.description}</span>}
+          {project.gift_recipient&& <span style={{ fontSize: 12, color: 'var(--c-text-muted)' }}>🎁 {project.gift_recipient}</span>}
+          {project.description   && <span style={{ fontSize: 12, color: 'var(--c-text-muted)' }}>{project.description}</span>}
         </div>
       </div>
 
       {/* ── Sub-tab bar ── */}
-      <div className="detail-tabs" style={{ display: 'flex', gap: 0, borderBottom: '2px solid var(--border-2)', margin: '0', background: 'var(--surface)' }}>
+      <div className="detail-tabs" style={{ display: 'flex', gap: 0, borderBottom: '2px solid var(--c-border-light)', margin: '0', background: 'var(--c-bg-surface)' }}>
         {[
           { id: 'overview', label: 'Overview' },
           { id: 'steps',    label: `Steps${steps.length ? ` (${stepsDone}/${steps.length})` : ''}` },
@@ -684,7 +684,7 @@ export function ProjectDetail() {
             fontSize: 11, fontWeight: 700,
             fontFamily: 'var(--font-heading)',
             textTransform: 'uppercase', letterSpacing: '.05em',
-            color: dtab === t.id ? 'var(--accent)' : 'var(--text-3)',
+            color: dtab === t.id ? 'var(--accent)' : 'var(--c-text-muted)',
             background: 'transparent',
             borderBottom: dtab === t.id ? '2px solid var(--accent)' : '2px solid transparent',
             marginBottom: -2,
@@ -701,31 +701,31 @@ export function ProjectDetail() {
           {steps.length === 0 && coats.length === 0 && photos.length === 0 && totalMins === 0 && !project.notes && (
             <div style={{ padding: '32px 20px 24px' }}>
               <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                <div style={{ fontSize: 13, color: 'var(--text-4)', fontWeight: 500, letterSpacing: '.3px' }}>Nothing tracked yet</div>
+                <div style={{ fontSize: 13, color: 'var(--c-text-faint)', fontWeight: 500, letterSpacing: '.3px' }}>Nothing tracked yet</div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 340, margin: '0 auto' }}>
                 <button className="btn-secondary" onClick={() => setSub('steps-add')}
                   style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', textAlign: 'left', width: '100%' }}>
                   <ICheck size={20} color="var(--accent)" sw={2} />
                   <div>
-                    <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>Add build steps</div>
-                    <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 1 }}>Break your build into milestones</div>
+                    <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--c-text-primary)' }}>Add build steps</div>
+                    <div style={{ fontSize: 12, color: 'var(--c-text-muted)', marginTop: 1 }}>Break your build into milestones</div>
                   </div>
                 </button>
                 <button className="btn-secondary" onClick={() => setDtab('photos')}
                   style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', textAlign: 'left', width: '100%' }}>
                   <ICamera size={20} color="var(--accent)" sw={2} />
                   <div>
-                    <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>Add a photo</div>
-                    <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 1 }}>Document your progress</div>
+                    <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--c-text-primary)' }}>Add a photo</div>
+                    <div style={{ fontSize: 12, color: 'var(--c-text-muted)', marginTop: 1 }}>Document your progress</div>
                   </div>
                 </button>
                 <button className="btn-secondary" onClick={() => setDtab('finishing')}
                   style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', textAlign: 'left', width: '100%' }}>
                   <IGrid size={20} color="var(--accent)" sw={2} />
                   <div>
-                    <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>Track finishing</div>
-                    <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 1 }}>Log coats and dry times</div>
+                    <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--c-text-primary)' }}>Track finishing</div>
+                    <div style={{ fontSize: 12, color: 'var(--c-text-muted)', marginTop: 1 }}>Log coats and dry times</div>
                   </div>
                 </button>
               </div>
@@ -737,25 +737,25 @@ export function ProjectDetail() {
             {steps.length > 0 && (
               <div className="card" style={{ textAlign: 'center', cursor: 'pointer' }} onClick={() => setDtab('steps')}>
                 <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--accent)' }}>{stepsDone}/{steps.length}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>Steps done</div>
+                <div style={{ fontSize: 12, color: 'var(--c-text-muted)', marginTop: 2 }}>Steps done</div>
               </div>
             )}
             {coats.length > 0 && (
               <div className="card" style={{ textAlign: 'center', cursor: 'pointer' }} onClick={() => setDtab('finishing')}>
                 <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--green)' }}>{coats.filter(c => c.applied_at).length}/{coats.length}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>Coats applied</div>
+                <div style={{ fontSize: 12, color: 'var(--c-text-muted)', marginTop: 2 }}>Coats applied</div>
               </div>
             )}
             {photos.length > 0 && (
               <div className="card" style={{ textAlign: 'center', cursor: 'pointer' }} onClick={() => setDtab('photos')}>
                 <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--purple)' }}>{photos.length}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>Photos</div>
+                <div style={{ fontSize: 12, color: 'var(--c-text-muted)', marginTop: 2 }}>Photos</div>
               </div>
             )}
             {totalMins > 0 && (
               <div className="card" style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--orange)' }}>{totalMins >= 60 ? Math.floor(totalMins/60) + 'h' : totalMins + 'm'}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>Time logged</div>
+                <div style={{ fontSize: 12, color: 'var(--c-text-muted)', marginTop: 2 }}>Time logged</div>
               </div>
             )}
           </div>
@@ -772,7 +772,7 @@ export function ProjectDetail() {
           {project.notes && (
             <div style={{ padding: '0 16px 16px' }}>
               <div className="label-caps" style={{ marginBottom: 8 }}>Notes</div>
-              <div style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{project.notes}</div>
+              <div style={{ fontSize: 14, color: 'var(--c-text-body)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{project.notes}</div>
             </div>
           )}
 
@@ -791,11 +791,11 @@ export function ProjectDetail() {
 
       {/* ── STEPS TAB ── */}
       {dtab === 'steps' && (
-        <div style={{ background: 'var(--surface)', padding: '20px', animation: 'contentFadeIn 200ms ease both' }}>
+        <div style={{ background: 'var(--c-bg-surface)', padding: '20px', animation: 'contentFadeIn 200ms ease both' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <div>
               <div className="label-caps">Build Steps</div>
-              {steps.length > 0 && <div style={{ fontSize: 12, color: 'var(--text-4)', marginTop: 2 }}>{stepsDone} of {steps.length} complete</div>}
+              {steps.length > 0 && <div style={{ fontSize: 12, color: 'var(--c-text-faint)', marginTop: 2 }}>{stepsDone} of {steps.length} complete</div>}
             </div>
             <button className="icon-btn" onClick={() => setSub('steps-add')} aria-label="Add step"><IPlus size={18} color="var(--accent)" /></button>
           </div>
@@ -806,7 +806,7 @@ export function ProjectDetail() {
       {/* ── FINISHING TAB ── */}
       {dtab === 'finishing' && (
         <div style={{ animation: 'contentFadeIn 200ms ease both' }}>
-          <div style={{ background: 'var(--surface)', padding: '20px' }}>
+          <div style={{ background: 'var(--c-bg-surface)', padding: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
               <div className="label-caps">Finishing</div>
               <button className="icon-btn" onClick={() => setSub('finish-add')} aria-label="Add coat"><IPlus size={18} color="var(--accent)" /></button>
@@ -814,7 +814,7 @@ export function ProjectDetail() {
             <FinishingList projId={projId} sub={sub} setSub={setSub} />
           </div>
           {/* Time & Cost */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'var(--border-2)', marginTop: 1 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'var(--c-border-light)', marginTop: 1 }}>
             <TimeTracker project={project} onSave={handleUpdate} />
             <CostTracker project={project} onSave={handleUpdate} projId={projId} shopping={data.shopping} />
           </div>
@@ -824,11 +824,11 @@ export function ProjectDetail() {
       {/* ── PHOTOS TAB ── */}
       {dtab === 'photos' && (
         <div style={{ animation: 'contentFadeIn 200ms ease both' }}>
-          <div style={{ background: 'var(--surface)', padding: '20px' }}>
+          <div style={{ background: 'var(--c-bg-surface)', padding: '20px' }}>
             <PhotoTimeline projId={projId} />
           </div>
           {data.photos.filter(p => p.project_id === projId && p.photo_type === 'inspiration').length > 0 && (
-            <div style={{ background: 'var(--surface)', marginTop: 1, padding: '20px' }}>
+            <div style={{ background: 'var(--c-bg-surface)', marginTop: 1, padding: '20px' }}>
               <div className="label-caps" style={{ marginBottom: 12 }}>Inspiration</div>
               <PhotoPane projId={projId} type="inspiration" inline />
             </div>
@@ -844,18 +844,18 @@ export function ProjectDetail() {
       {showActions && (
         <Sheet title="More" onClose={() => setShowActions(false)} onSave={null}>
           <div className="form-group">
-            <div className="more-item" style={{ padding: '14px 16px', borderBottom: '1px solid var(--border-2)' }}
+            <div className="more-item" style={{ padding: '14px 16px', borderBottom: '1px solid var(--c-border-light)' }}
               onClick={() => { setShowActions(false); setShowReminder(true) }} role="button" tabIndex={0}>
               <IBell size={20} color="var(--accent)" sw={1.8} />
-              <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>Add reminder</span>
+              <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>Add reminder</span>
             </div>
-            <div className="more-item" style={{ padding: '14px 16px', borderBottom: '1px solid var(--border-2)' }}
+            <div className="more-item" style={{ padding: '14px 16px', borderBottom: '1px solid var(--c-border-light)' }}
               onClick={() => { setShowActions(false); handleShare() }} role="button" tabIndex={0}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
                 <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
               </svg>
-              <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>Share project</span>
+              <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>Share project</span>
             </div>
             <div className="more-item" style={{ padding: '14px 16px', borderBottom: 'none' }}
               onClick={() => { setShowActions(false); handlePrint() }} role="button" tabIndex={0}>
@@ -863,7 +863,7 @@ export function ProjectDetail() {
                 <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
                 <rect x="6" y="14" width="12" height="8"/>
               </svg>
-              <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>Print / PDF</span>
+              <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>Print / PDF</span>
             </div>
           </div>
         </Sheet>
@@ -930,15 +930,15 @@ function StepsList({ projId }) {
   }
 
   if (!steps.length) return (
-    <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-4)', fontSize: 13 }}>No steps yet — click + to add</div>
+    <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--c-text-faint)', fontSize: 13 }}>No steps yet — click + to add</div>
   )
 
   return (
     <div>
       {steps.map(s => (
-        <div key={s.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--border-2)' }}>
+        <div key={s.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--c-border-light)' }}>
           <button className="check-btn" onClick={() => toggle(s)} style={{ flexShrink: 0, marginTop: 1 }}>
-            {s.completed ? <ICheck size={20} color="var(--forest)" sw={2} /> : <ICircle size={20} color="var(--text-4)" sw={1.5} />}
+            {s.completed ? <ICheck size={20} color="var(--forest)" sw={2} /> : <ICircle size={20} color="var(--c-text-faint)" sw={1.5} />}
           </button>
           <div style={{ flex: 1, minWidth: 0 }}>
             {editId === s.id ? (
@@ -948,12 +948,12 @@ function StepsList({ projId }) {
                 <button className="btn-text" onClick={() => saveEdit(s.id)}>Save</button>
               </div>
             ) : (
-              <div style={{ fontSize: 14, textDecoration: s.completed ? 'line-through' : 'none', color: s.completed ? 'var(--text-4)' : 'var(--text)', cursor: 'text' }}
+              <div style={{ fontSize: 14, textDecoration: s.completed ? 'line-through' : 'none', color: s.completed ? 'var(--c-text-faint)' : 'var(--c-text-primary)', cursor: 'text' }}
                 onClick={() => { setEditId(s.id); setEditVal(s.title) }}>
                 {s.title}
               </div>
             )}
-            {s.note && <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>{s.note}</div>}
+            {s.note && <div style={{ fontSize: 12, color: 'var(--c-text-muted)', marginTop: 2 }}>{s.note}</div>}
           </div>
           <button className="icon-btn" onClick={() => del(s.id)} style={{ flexShrink: 0 }}><ITrash size={14} /></button>
         </div>
@@ -994,7 +994,7 @@ function FinishingList({ projId, sub, setSub }) {
   }
 
   if (!coats.length) return (
-    <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-4)', fontSize: 13 }}>No coats yet — click + to add</div>
+    <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--c-text-faint)', fontSize: 13 }}>No coats yet — click + to add</div>
   )
 
   return (
@@ -1006,7 +1006,7 @@ function FinishingList({ projId, sub, setSub }) {
         const applied= !!coat.applied_at
         const circleClass = applied ? 'coat-circle applied' : st.urgent ? 'coat-circle urgent' : 'coat-circle'
         return (
-          <div key={coat.id} style={{ borderBottom: idx < coats.length - 1 ? '1px solid var(--border-2)' : 'none', padding: '12px 0' }}>
+          <div key={coat.id} style={{ borderBottom: idx < coats.length - 1 ? '1px solid var(--c-border-light)' : 'none', padding: '12px 0' }}>
             <div style={{ display: 'flex', gap: 12 }}>
               <div className={circleClass} style={{ flexShrink: 0 }}>{coat.coat_number}</div>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -1018,8 +1018,8 @@ function FinishingList({ projId, sub, setSub }) {
                     <button className="icon-btn" onClick={() => del(coat.id)} style={{ color: 'var(--red)' }}><ITrash size={13} /></button>
                   </div>
                 </div>
-                {coat.notes && <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>{coat.notes}</div>}
-                <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 3 }}>
+                {coat.notes && <div style={{ fontSize: 12, color: 'var(--c-text-muted)', marginTop: 2 }}>{coat.notes}</div>}
+                <div style={{ fontSize: 12, color: 'var(--c-text-muted)', marginTop: 3 }}>
                   {coat.applied_at ? `Applied ${fmtShort(coat.applied_at)} · ` : ''}Wait {coat.interval_value}{coat.interval_unit === 'hours' ? 'h' : 'd'}
                 </div>
                 {!locked && (
@@ -1037,7 +1037,7 @@ function FinishingList({ projId, sub, setSub }) {
                     </>}
                   </div>
                 )}
-                {locked && <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 4 }}>Waiting for coat {coat.coat_number - 1}</div>}
+                {locked && <div style={{ fontSize: 12, color: 'var(--c-text-muted)', marginTop: 4 }}>Waiting for coat {coat.coat_number - 1}</div>}
               </div>
             </div>
           </div>
@@ -1093,11 +1093,11 @@ function TimeTracker({ project, onSave }) {
   const fmtMins = m => m >= 60 ? `${Math.floor(m/60)}h ${m%60 > 0 ? m%60+'m' : ''}`.trim() : `${m}m`
 
   return (
-    <div style={{ background: 'var(--surface)', padding: '16px 20px' }}>
+    <div style={{ background: 'var(--c-bg-surface)', padding: '16px 20px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
         <div>
           <div className="label-caps">Time</div>
-          {totalMins > 0 && <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', marginTop: 2 }}>{fmtMins(totalMins)}</div>}
+          {totalMins > 0 && <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--c-text-primary)', marginTop: 2 }}>{fmtMins(totalMins)}</div>}
         </div>
         <button className="icon-btn" onClick={() => setShow(s => !s)} aria-label="Log time"><IPlus size={18} color="var(--accent)" /></button>
       </div>
@@ -1107,9 +1107,9 @@ function TimeTracker({ project, onSave }) {
           <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
             <input className="cell-input" type="date" value={date} onChange={e => setDate(e.target.value)} />
             <input className="form-input" type="number" min="0" placeholder="0h" value={hrs} onChange={e => setHrs(e.target.value)}
-              style={{ width: 52, background: 'var(--fill)', borderRadius: 8, padding: '7px 8px', border: '1px solid var(--border-2)', fontSize: 13, textAlign: 'center' }} />
+              style={{ width: 52, background: 'var(--c-bg-subtle)', borderRadius: 8, padding: '7px 8px', border: '1px solid var(--c-border-light)', fontSize: 13, textAlign: 'center' }} />
             <input className="form-input" type="number" min="0" max="59" placeholder="00m" value={mins} onChange={e => setMins(e.target.value)}
-              style={{ width: 52, background: 'var(--fill)', borderRadius: 8, padding: '7px 8px', border: '1px solid var(--border-2)', fontSize: 13, textAlign: 'center' }} />
+              style={{ width: 52, background: 'var(--c-bg-subtle)', borderRadius: 8, padding: '7px 8px', border: '1px solid var(--c-border-light)', fontSize: 13, textAlign: 'center' }} />
           </div>
           <div style={{ display: 'flex', gap: 6 }}>
             <input className="cell-input" placeholder="Note (optional)" value={note} onChange={e => setNote(e.target.value)} />
@@ -1123,16 +1123,16 @@ function TimeTracker({ project, onSave }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           {entries.slice().sort((a,b) => b.date?.localeCompare(a.date)).map(e => (
             <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12 }}>
-              <div style={{ color: 'var(--text-3)' }}>{e.date} {e.note && <span style={{ color: 'var(--text-4)' }}>· {e.note}</span>}</div>
+              <div style={{ color: 'var(--c-text-muted)' }}>{e.date} {e.note && <span style={{ color: 'var(--c-text-faint)' }}>· {e.note}</span>}</div>
               <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                <span style={{ fontWeight: 700, color: 'var(--text)' }}>{fmtMins(e.minutes)}</span>
+                <span style={{ fontWeight: 700, color: 'var(--c-text-primary)' }}>{fmtMins(e.minutes)}</span>
                 <button className="icon-btn" onClick={() => remove(e.id)} style={{ color: 'var(--red)', padding: 0 }}><ITrash size={12} /></button>
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div style={{ fontSize: 12, color: 'var(--text-4)', fontStyle: 'italic' }}>No time logged yet</div>
+        <div style={{ fontSize: 12, color: 'var(--c-text-faint)', fontStyle: 'italic' }}>No time logged yet</div>
       )}
     </div>
   )
@@ -1166,11 +1166,11 @@ function CostTracker({ project, onSave, projId, shopping = [] }) {
   }
 
   return (
-    <div style={{ background: 'var(--surface)', padding: '16px 20px' }}>
+    <div style={{ background: 'var(--c-bg-surface)', padding: '16px 20px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
         <div>
           <div className="label-caps">Cost</div>
-          {grandTotal > 0 && <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', marginTop: 2 }}>${grandTotal.toFixed(2)}</div>}
+          {grandTotal > 0 && <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--c-text-primary)', marginTop: 2 }}>${grandTotal.toFixed(2)}</div>}
         </div>
         <button className="icon-btn" onClick={() => setShow(s => !s)} aria-label="Add cost"><IPlus size={18} color="var(--accent)" /></button>
       </div>
@@ -1179,8 +1179,8 @@ function CostTracker({ project, onSave, projId, shopping = [] }) {
         <div style={{ marginBottom: 12 }}>
           <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
             <input className="cell-input" placeholder="Item (e.g. Lumber)" value={label} onChange={e => setLabel(e.target.value)} />
-            <div style={{ display: 'flex', alignItems: 'center', background: 'var(--fill)', borderRadius: 8, border: '1px solid var(--border-2)', paddingLeft: 8 }}>
-              <span style={{ fontSize: 13, color: 'var(--text-3)' }}>$</span>
+            <div style={{ display: 'flex', alignItems: 'center', background: 'var(--c-bg-subtle)', borderRadius: 8, border: '1px solid var(--c-border-light)', paddingLeft: 8 }}>
+              <span style={{ fontSize: 13, color: 'var(--c-text-muted)' }}>$</span>
               <input className="form-input" type="number" min="0" step="0.01" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)}
                 style={{ width: 72, padding: '7px 8px', fontSize: 13, textAlign: 'right' }} />
             </div>
@@ -1196,27 +1196,27 @@ function CostTracker({ project, onSave, projId, shopping = [] }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           {entries.map(e => (
             <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12 }}>
-              <span style={{ color: 'var(--text-3)' }}>{e.label}</span>
+              <span style={{ color: 'var(--c-text-muted)' }}>{e.label}</span>
               <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                <span style={{ fontWeight: 700, color: 'var(--text)' }}>${parseFloat(e.amount||0).toFixed(2)}</span>
+                <span style={{ fontWeight: 700, color: 'var(--c-text-primary)' }}>${parseFloat(e.amount||0).toFixed(2)}</span>
                 <button className="icon-btn" onClick={() => remove(e.id)} style={{ color: 'var(--red)', padding: 0 }}><ITrash size={12} /></button>
               </div>
             </div>
           ))}
           {shopItems.map(i => (
             <div key={i.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12 }}>
-              <span style={{ color: 'var(--text-3)' }}>🛒 {i.name}{i.store ? <span style={{ color: 'var(--text-4)' }}> · {i.store}</span> : ''}</span>
-              <span style={{ fontWeight: 700, color: 'var(--text)' }}>${parseFloat(i.cost||0).toFixed(2)}</span>
+              <span style={{ color: 'var(--c-text-muted)' }}>🛒 {i.name}{i.store ? <span style={{ color: 'var(--c-text-faint)' }}> · {i.store}</span> : ''}</span>
+              <span style={{ fontWeight: 700, color: 'var(--c-text-primary)' }}>${parseFloat(i.cost||0).toFixed(2)}</span>
             </div>
           ))}
           {(entries.length + shopItems.length) > 1 && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700, paddingTop: 4, borderTop: '1px solid var(--border-2)', marginTop: 2 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700, paddingTop: 4, borderTop: '1px solid var(--c-border-light)', marginTop: 2 }}>
               <span>Total</span><span>${grandTotal.toFixed(2)}</span>
             </div>
           )}
         </div>
       ) : (
-        <div style={{ fontSize: 12, color: 'var(--text-4)', fontStyle: 'italic' }}>No costs logged yet</div>
+        <div style={{ fontSize: 12, color: 'var(--c-text-faint)', fontStyle: 'italic' }}>No costs logged yet</div>
       )}
     </div>
   )
@@ -1278,14 +1278,14 @@ function PhotoTimeline({ projId }) {
             <button onClick={() => setViewMode('grid')} style={{
               padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
               fontSize: 12, fontWeight: 600,
-              background: viewMode === 'grid' ? 'var(--accent)' : 'var(--fill)',
-              color: viewMode === 'grid' ? '#fff' : 'var(--text-3)',
+              background: viewMode === 'grid' ? 'var(--accent)' : 'var(--c-bg-subtle)',
+              color: viewMode === 'grid' ? '#fff' : 'var(--c-text-muted)',
             }}>Grid</button>
             <button onClick={() => setViewMode('timeline')} style={{
               padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
               fontSize: 12, fontWeight: 600,
-              background: viewMode === 'timeline' ? 'var(--accent)' : 'var(--fill)',
-              color: viewMode === 'timeline' ? '#fff' : 'var(--text-3)',
+              background: viewMode === 'timeline' ? 'var(--accent)' : 'var(--c-bg-subtle)',
+              color: viewMode === 'timeline' ? '#fff' : 'var(--c-text-muted)',
             }}>Timeline</button>
           </div>
         )}
@@ -1297,10 +1297,10 @@ function PhotoTimeline({ projId }) {
         <div>
           {Object.entries(byDate).map(([date, datePhs]) => (
             <div key={date} style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-4)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ height: 1, flex: 1, background: 'var(--border-2)' }} />
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-text-faint)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ height: 1, flex: 1, background: 'var(--c-border-light)' }} />
                 {date}
-                <div style={{ height: 1, flex: 1, background: 'var(--border-2)' }} />
+                <div style={{ height: 1, flex: 1, background: 'var(--c-border-light)' }} />
               </div>
               <PhotoGrid photos={datePhs} onEdit={edit} />
             </div>
@@ -1365,7 +1365,7 @@ function PhotoPane({ projId, type, showAll, inline }) {
       <DropZone onFiles={handleFiles} uploading={uploading} />
       <PhotoGrid photos={photos} onEdit={edit} />
       {photos.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '8px 0 24px', color: 'var(--text-4)', fontSize: 13 }}>
+        <div style={{ textAlign: 'center', padding: '8px 0 24px', color: 'var(--c-text-faint)', fontSize: 13 }}>
           No photos yet — drag here or tap + to add
         </div>
       )}
@@ -1419,7 +1419,7 @@ function PhotoPane({ projId, type, showAll, inline }) {
         <DropZone onFiles={handleFiles} uploading={uploading} />
         {photos.length > 0
           ? <PhotoGrid photos={photos} onEdit={edit} />
-          : <div className="empty"><div className="empty-icon"><ICamera size={32} color="var(--text-3)" sw={1.5} /></div><div className="empty-title">No photos yet</div></div>
+          : <div className="empty"><div className="empty-icon"><ICamera size={32} color="var(--c-text-muted)" sw={1.5} /></div><div className="empty-title">No photos yet</div></div>
         }
       </div>
       <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => handleFiles(e.target.files)} />
@@ -1445,7 +1445,7 @@ function PhotoTagSheetBody({ count, onSave }) {
           <input className="form-input" placeholder="Optional" value={caption} onChange={e => setCaption(e.target.value)} autoFocus />
         </FormCell>
       </div>
-      <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 8 }}>Tags</p>
+      <p style={{ fontSize: 13, color: 'var(--c-text-muted)', marginBottom: 8 }}>Tags</p>
       <TagInput tags={tags} onChange={setTags} />
       <button className="btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: 16 }} onClick={() => onSave(caption, tags.join(','))}>
         Upload {count > 1 ? `${count} photos` : 'photo'}
@@ -1653,14 +1653,14 @@ function QRLabelSheet({ project, onClose }) {
   }
   return createPortal(
     <div className="overlay" onClick={onClose} style={{ alignItems:'center', justifyContent:'center' }}>
-      <div style={{ background:'var(--surface)', borderRadius:16, padding:'28px 24px', maxWidth:320, width:'90%', textAlign:'center' }}
+      <div style={{ background:'var(--c-bg-surface)', borderRadius:16, padding:'28px 24px', maxWidth:320, width:'90%', textAlign:'center' }}
         onClick={e => e.stopPropagation()}>
         <div style={{ fontSize:32, marginBottom:8 }}>🏷️</div>
         <div style={{ fontWeight:700, fontSize:16, marginBottom:4 }}>{project.name}</div>
-        <div style={{ fontSize:13, color:'var(--text-3)', marginBottom:20 }}>
+        <div style={{ fontSize:13, color:'var(--c-text-muted)', marginBottom:20 }}>
           {[project.wood_type, project.category].filter(Boolean).join(' · ')}
         </div>
-        <p style={{ fontSize:13, color:'var(--text-2)', marginBottom:20, lineHeight:1.5 }}>
+        <p style={{ fontSize:13, color:'var(--c-text-body)', marginBottom:20, lineHeight:1.5 }}>
           Prints a compact label with a QR code linking back to your workshop.
         </p>
         <div style={{ display:'flex', gap:10 }}>
@@ -1803,7 +1803,7 @@ function ReminderSheet({ project, onClose }) {
   }
   return createPortal(
     <div className="overlay" onClick={onClose} style={{ alignItems:'center', justifyContent:'center' }}>
-      <div style={{ background:'var(--surface)', borderRadius:16, padding:'28px 24px', maxWidth:340, width:'90%' }}
+      <div style={{ background:'var(--c-bg-surface)', borderRadius:16, padding:'28px 24px', maxWidth:340, width:'90%' }}
         onClick={e => e.stopPropagation()}>
         <div style={{ fontWeight:700, fontSize:16, marginBottom:16 }}>Add Reminder</div>
         <div style={{ marginBottom:12 }}>

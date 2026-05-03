@@ -147,8 +147,8 @@ const TESTS = [
 ]
 
 const STATUS = { untested: '○', pass: '✓', fail: '✗', skip: '–' }
-const STATUS_COLOR = { untested: 'var(--text-4)', pass: 'var(--forest)', fail: 'var(--red)', skip: 'var(--text-4)' }
-const STATUS_BG = { untested: 'transparent', pass: 'var(--green-dim)', fail: 'var(--red-dim)', skip: 'var(--fill)' }
+const STATUS_COLOR = { untested: 'var(--c-text-faint)', pass: 'var(--forest)', fail: 'var(--red)', skip: 'var(--c-text-faint)' }
+const STATUS_BG = { untested: 'transparent', pass: 'var(--green-dim)', fail: 'var(--red-dim)', skip: 'var(--c-bg-subtle)' }
 
 export default function SmokeTest() {
   const toast = useToast()
@@ -210,11 +210,11 @@ export default function SmokeTest() {
       <div className="scroll-page" style={{ paddingBottom: 40 }}>
 
         {/* Summary bar */}
-        <div style={{ margin: '8px 20px 16px', padding: '16px 20px', background: 'var(--surface)', borderRadius: 12, border: '1px solid var(--border-2)' }}>
+        <div style={{ margin: '8px 20px 16px', padding: '16px 20px', background: 'var(--c-bg-surface)', borderRadius: 12, border: '1px solid var(--c-border-light)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <div>
-              <span style={{ fontSize: 28, fontWeight: 900, color: criticalFailed > 0 ? 'var(--red)' : passed === total ? 'var(--forest)' : 'var(--text)' }}>{pct}%</span>
-              <span style={{ fontSize: 13, color: 'var(--text-3)', marginLeft: 8 }}>{passed}/{total} passed · {failed} failed</span>
+              <span style={{ fontSize: 28, fontWeight: 900, color: criticalFailed > 0 ? 'var(--red)' : passed === total ? 'var(--forest)' : 'var(--c-text-primary)' }}>{pct}%</span>
+              <span style={{ fontSize: 13, color: 'var(--c-text-muted)', marginLeft: 8 }}>{passed}/{total} passed · {failed} failed</span>
             </div>
             {criticalFailed > 0 && (
               <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--red)', background: 'var(--red-dim)', padding: '3px 10px', borderRadius: 99 }}>
@@ -224,7 +224,7 @@ export default function SmokeTest() {
           </div>
 
           {/* Progress bar */}
-          <div style={{ height: 8, background: 'var(--fill)', borderRadius: 99, overflow: 'hidden', marginBottom: 16 }}>
+          <div style={{ height: 8, background: 'var(--c-bg-subtle)', borderRadius: 99, overflow: 'hidden', marginBottom: 16 }}>
             <div style={{ height: '100%', width: `${pct}%`, background: criticalFailed > 0 ? 'var(--red)' : 'var(--forest)', borderRadius: 99, transition: 'width 300ms' }} />
           </div>
 
@@ -240,14 +240,14 @@ export default function SmokeTest() {
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button
               onClick={() => setShowOnlyFails(f => !f)}
-              style={{ padding: '6px 14px', fontSize: 12, fontWeight: 600, borderRadius: 8, border: 'none', cursor: 'pointer', fontFamily: 'inherit', background: showOnlyFails ? 'var(--red-dim)' : 'var(--fill)', color: showOnlyFails ? 'var(--red)' : 'var(--text-3)' }}
+              style={{ padding: '6px 14px', fontSize: 12, fontWeight: 600, borderRadius: 8, border: 'none', cursor: 'pointer', fontFamily: 'inherit', background: showOnlyFails ? 'var(--red-dim)' : 'var(--c-bg-subtle)', color: showOnlyFails ? 'var(--red)' : 'var(--c-text-muted)' }}
             >
               {showOnlyFails ? 'Show all' : 'Show fails only'}
             </button>
             <button onClick={exportResults} style={{ padding: '6px 14px', fontSize: 12, fontWeight: 600, borderRadius: 8, border: 'none', cursor: 'pointer', fontFamily: 'inherit', background: 'var(--blue-dim)', color: 'var(--blue)' }}>
               Copy results
             </button>
-            <button onClick={reset} style={{ padding: '6px 14px', fontSize: 12, fontWeight: 600, borderRadius: 8, border: 'none', cursor: 'pointer', fontFamily: 'inherit', background: 'var(--fill)', color: 'var(--text-3)' }}>
+            <button onClick={reset} style={{ padding: '6px 14px', fontSize: 12, fontWeight: 600, borderRadius: 8, border: 'none', cursor: 'pointer', fontFamily: 'inherit', background: 'var(--c-bg-subtle)', color: 'var(--c-text-muted)' }}>
               Reset all
             </button>
           </div>
@@ -264,11 +264,11 @@ export default function SmokeTest() {
           const sFail = section.tests.filter(t => results[t.id] === 'fail').length
 
           return (
-            <div key={section.section} style={{ margin: '0 20px 16px', border: '1px solid var(--border-2)', borderRadius: 12, overflow: 'hidden', background: 'var(--surface)' }}>
+            <div key={section.section} style={{ margin: '0 20px 16px', border: '1px solid var(--c-border-light)', borderRadius: 12, overflow: 'hidden', background: 'var(--c-bg-surface)' }}>
               {/* Section header */}
-              <div style={{ padding: '12px 16px', background: 'var(--fill)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.8px', color: 'var(--text-3)' }}>{section.section}</span>
-                <span style={{ fontSize: 12, color: sFail > 0 ? 'var(--red)' : 'var(--text-4)' }}>
+              <div style={{ padding: '12px 16px', background: 'var(--c-bg-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.8px', color: 'var(--c-text-muted)' }}>{section.section}</span>
+                <span style={{ fontSize: 12, color: sFail > 0 ? 'var(--red)' : 'var(--c-text-faint)' }}>
                   {sPass}/{section.tests.length}
                   {sFail > 0 && ` · ${sFail} fail`}
                 </span>
@@ -278,7 +278,7 @@ export default function SmokeTest() {
               {sectionTests.map((test, i) => {
                 const status = results[test.id] || 'untested'
                 return (
-                  <div key={test.id} style={{ borderBottom: i < sectionTests.length - 1 ? '1px solid var(--border-2)' : 'none', padding: '10px 16px' }}>
+                  <div key={test.id} style={{ borderBottom: i < sectionTests.length - 1 ? '1px solid var(--c-border-light)' : 'none', padding: '10px 16px' }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                       {/* Status buttons */}
                       <div style={{ display: 'flex', gap: 4, flexShrink: 0, marginTop: 1 }}>
@@ -286,8 +286,8 @@ export default function SmokeTest() {
                           <button key={s} onClick={() => setResult(test.id, status === s ? 'untested' : s)} style={{
                             width: 28, height: 28, borderRadius: 6, border: 'none', cursor: 'pointer',
                             fontWeight: 700, fontSize: 13, fontFamily: 'inherit',
-                            background: status === s ? STATUS_BG[s] : 'var(--fill)',
-                            color: status === s ? STATUS_COLOR[s] : 'var(--text-4)',
+                            background: status === s ? STATUS_BG[s] : 'var(--c-bg-subtle)',
+                            color: status === s ? STATUS_COLOR[s] : 'var(--c-text-faint)',
                           }}>
                             {STATUS[s]}
                           </button>
@@ -296,7 +296,7 @@ export default function SmokeTest() {
 
                       {/* Label */}
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 14, color: status === 'fail' ? 'var(--red)' : status === 'pass' ? 'var(--text-3)' : 'var(--text)', textDecoration: status === 'pass' ? 'line-through' : 'none' }}>
+                        <div style={{ fontSize: 14, color: status === 'fail' ? 'var(--red)' : status === 'pass' ? 'var(--c-text-muted)' : 'var(--c-text-primary)', textDecoration: status === 'pass' ? 'line-through' : 'none' }}>
                           {test.critical && <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--orange)', marginRight: 5 }}>*</span>}
                           {test.label}
                         </div>
@@ -324,7 +324,7 @@ export default function SmokeTest() {
         })}
 
         {/* Legend */}
-        <div style={{ margin: '0 20px', padding: '12px 16px', background: 'var(--fill)', borderRadius: 10, fontSize: 12, color: 'var(--text-3)', lineHeight: 1.8 }}>
+        <div style={{ margin: '0 20px', padding: '12px 16px', background: 'var(--c-bg-subtle)', borderRadius: 10, fontSize: 12, color: 'var(--c-text-muted)', lineHeight: 1.8 }}>
           <strong>Legend:</strong> ✓ Pass &nbsp;·&nbsp; ✗ Fail &nbsp;·&nbsp; – Skip &nbsp;·&nbsp; * Critical path — a failure here means do not ship
         </div>
       </div>

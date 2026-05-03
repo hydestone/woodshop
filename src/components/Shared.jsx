@@ -88,14 +88,14 @@ export const localDt = () => {
 
 // ─── Status computers ─────────────────────────────────────────────────────────
 export function coatStatus(coat) {
-  if (!coat.applied_at) return { label: 'Not applied', color: 'var(--text-3)', urgent: false }
+  if (!coat.applied_at) return { label: 'Not applied', color: 'var(--c-text-muted)', urgent: false }
   const ms = coat.interval_unit === 'hours'
     ? coat.interval_value * 3_600_000
     : coat.interval_value * 86_400_000
   const diff = new Date(coat.applied_at).getTime() + ms - Date.now()
   if (diff <= 0)           return { label: 'Ready now',                         color: 'var(--orange)', urgent: true  }
   if (diff < 3_600_000)   return { label: `${Math.ceil(diff / 60_000)}m`,       color: '#D97706',       urgent: false }
-  if (diff < 86_400_000)  return { label: `In ${Math.ceil(diff / 3_600_000)}h`, color: 'var(--text-3)', urgent: false }
+  if (diff < 86_400_000)  return { label: `In ${Math.ceil(diff / 3_600_000)}h`, color: 'var(--c-text-muted)', urgent: false }
   return                          { label: `In ${Math.ceil(diff / 86_400_000)}d`,color: 'var(--green)',  urgent: false }
 }
 
@@ -672,7 +672,7 @@ function PhotoEditSheet({ photo, onSave, onDelete, onClose }) {
           />
         </FormCell>
       </div>
-      <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 8 }}>Tags</p>
+      <p style={{ fontSize: 13, color: 'var(--c-text-muted)', marginBottom: 8 }}>Tags</p>
       <TagInput tags={tags} onChange={setTags} />
       {onDelete && (
         <button className="btn-danger" onClick={() => setConfirm(true)} style={{ marginTop: 20 }}>

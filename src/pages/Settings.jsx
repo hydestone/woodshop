@@ -30,27 +30,27 @@ function ManagedList({ title, items, onAdd, onRename, onDelete }) {
 
   return (
     <div style={{ marginBottom: 24 }}>
-      <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.5px', padding: '0 20px', marginBottom: 6 }}>{title}</div>
+      <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--c-text-muted)', textTransform: 'uppercase', letterSpacing: '.5px', padding: '0 20px', marginBottom: 6 }}>{title}</div>
       <div className="group">
         {items.map((item, i) => (
-          <div key={item.id} style={{ display: 'flex', alignItems: 'center', padding: '10px 16px', borderBottom: i < items.length - 1 ? '1px solid var(--border-2)' : 'none', background: 'var(--surface)' }}>
+          <div key={item.id} style={{ display: 'flex', alignItems: 'center', padding: '10px 16px', borderBottom: i < items.length - 1 ? '1px solid var(--c-border-light)' : 'none', background: 'var(--c-bg-surface)' }}>
             {editItem?.id === item.id ? (
               <>
                 <input className="form-input" style={{ flex: 1 }} value={editVal} onChange={e => setEditVal(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') handleRename(); if (e.key === 'Escape') setEditItem(null) }} autoFocus />
                 <button className="btn-text" style={{ marginLeft: 8 }} onClick={handleRename}>Save</button>
-                <button className="btn-text" style={{ marginLeft: 4, color: 'var(--text-3)' }} onClick={() => setEditItem(null)}>Cancel</button>
+                <button className="btn-text" style={{ marginLeft: 4, color: 'var(--c-text-muted)' }} onClick={() => setEditItem(null)}>Cancel</button>
               </>
             ) : (
               <>
-                <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>{item.name}</span>
+                <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>{item.name}</span>
                 <button className="icon-btn" onClick={() => { setEditItem(item); setEditVal(item.name) }} aria-label="Rename"><IEdit size={14} /></button>
                 <button className="icon-btn" onClick={() => setDelItem(item)} style={{ color: 'var(--red)' }} aria-label="Delete"><ITrash size={14} /></button>
               </>
             )}
           </div>
         ))}
-        {items.length === 0 && <div style={{ padding: '12px 16px', fontSize: 13, color: 'var(--text-3)', background: 'var(--surface)' }}>None yet</div>}
+        {items.length === 0 && <div style={{ padding: '12px 16px', fontSize: 13, color: 'var(--c-text-muted)', background: 'var(--c-bg-surface)' }}>None yet</div>}
       </div>
       <div style={{ display: 'flex', gap: 8, padding: '10px 20px 0' }}>
         <input

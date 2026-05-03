@@ -91,7 +91,7 @@ export default function YearReview() {
           <button className="back-btn" onClick={clearDrill}>← Back</button>
           <h1 className="page-title" style={{ margin: 0, fontSize: 20 }}>
             {drillValue || (drillType === 'projects' ? 'All Projects' : drillType === 'gifts' ? 'Gifts' : drillType)}
-            <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-3)', marginLeft: 8 }}>
+            <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--c-text-muted)', marginLeft: 8 }}>
               {drilledProjects.length} project{drilledProjects.length !== 1 ? 's' : ''}
             </span>
           </h1>
@@ -100,22 +100,22 @@ export default function YearReview() {
       <div className="scroll-page" style={{ paddingBottom: 40 }}>
         <div style={{ padding: '12px 0' }}>
           {drilledProjects.length === 0 ? (
-            <div className="empty"><div className="empty-icon"><ITree size={32} color="var(--text-3)" sw={1.5} /></div><div className="empty-title">No projects</div></div>
+            <div className="empty"><div className="empty-icon"><ITree size={32} color="var(--c-text-muted)" sw={1.5} /></div><div className="empty-title">No projects</div></div>
           ) : (
             <div className="group">
               {drilledProjects.map((p, i) => (
                 <div key={p.id}
                   onClick={() => setProjId(p.id)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', borderBottom: i < drilledProjects.length - 1 ? '1px solid var(--border-2)' : 'none', cursor: 'pointer' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', borderBottom: i < drilledProjects.length - 1 ? '1px solid var(--c-border-light)' : 'none', cursor: 'pointer' }}
                 >
-                  <div style={{ width: 9, height: 9, borderRadius: 2, background: STATUS_COLORS[p.status] || 'var(--text-4)', flexShrink: 0 }} />
+                  <div style={{ width: 9, height: 9, borderRadius: 2, background: STATUS_COLORS[p.status] || 'var(--c-text-faint)', flexShrink: 0 }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 600, fontSize: 15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
-                    <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>
+                    <div style={{ fontSize: 12, color: 'var(--c-text-muted)', marginTop: 2 }}>
                       {[p.wood_type, p.category, p.finish_used, p.gift_recipient && '🎁 ' + p.gift_recipient].filter(Boolean).join(' · ')}
                     </div>
                   </div>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--c-text-faint)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
                 </div>
               ))}
             </div>
@@ -140,7 +140,7 @@ export default function YearReview() {
       <div style={{ padding: '0 20px 40px' }}>
         {stats.projs.length === 0 ? (
           <div className="empty" style={{ paddingTop: 40 }}>
-            <div className="empty-icon"><ICal size={32} color="var(--text-3)" sw={1.5} /></div>
+            <div className="empty-icon"><ICal size={32} color="var(--c-text-muted)" sw={1.5} /></div>
             <div className="empty-title">No projects in {year}</div>
             <p className="empty-sub">Add a year_completed to your projects to see your review</p>
           </div>
@@ -170,7 +170,7 @@ export default function YearReview() {
                   key={s.label}
                   onClick={s.type && (s.val !== undefined || s.type === 'gifts' || s.type === 'projects') ? () => drill(s.type, s.val) : undefined}
                   style={{
-                    background: 'var(--surface)', borderRadius: 'var(--r-md)', border: '1px solid var(--border-2)',
+                    background: 'var(--c-bg-surface)', borderRadius: 'var(--r-md)', border: '1px solid var(--c-border-light)',
                     padding: '14px 16px', textAlign: 'left', fontFamily: 'inherit',
                     cursor: s.type && (s.val !== undefined || s.type === 'gifts' || s.type === 'projects') ? 'pointer' : 'default',
                     transition: 'box-shadow 150ms',
@@ -178,8 +178,8 @@ export default function YearReview() {
                   onMouseEnter={e => { if (s.type) e.currentTarget.style.boxShadow = 'var(--shadow-md)' }}
                   onMouseLeave={e => e.currentTarget.style.boxShadow = ''}
                 >
-                  <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 4 }}>{s.label}</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.value}</div>
+                  <div style={{ fontSize: 11, color: 'var(--c-text-muted)', marginBottom: 4 }}>{s.label}</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--c-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.value}</div>
                   {s.type && s.value !== '—' && s.value !== 0 && <div style={{ fontSize: 10, color: 'var(--accent)', marginTop: 4 }}>Tap to drill in →</div>}
                 </button>
               ))}
@@ -187,15 +187,15 @@ export default function YearReview() {
 
             {/* Species breakdown — each bar clickable */}
             {stats.topSpecies.length > 0 && (
-              <div style={{ background: 'var(--surface)', borderRadius: 'var(--r-md)', border: '1px solid var(--border-2)', padding: '16px', marginBottom: 12 }}>
+              <div style={{ background: 'var(--c-bg-surface)', borderRadius: 'var(--r-md)', border: '1px solid var(--c-border-light)', padding: '16px', marginBottom: 12 }}>
                 <div className="label-caps-sm">Species Breakdown</div>
                 {stats.topSpecies.map(([name, count]) => (
                   <button key={name} onClick={() => drill('species', name)} style={{ display: 'block', width: '100%', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', padding: '4px 0 4px', marginBottom: 4 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-                      <span style={{ fontSize: 13, color: 'var(--text-2)', fontWeight: 500 }}>{name}</span>
-                      <span style={{ fontSize: 13, color: 'var(--text-3)' }}>{count} →</span>
+                      <span style={{ fontSize: 13, color: 'var(--c-text-body)', fontWeight: 500 }}>{name}</span>
+                      <span style={{ fontSize: 13, color: 'var(--c-text-muted)' }}>{count} →</span>
                     </div>
-                    <div style={{ height: 6, borderRadius: 3, background: 'var(--fill)' }}>
+                    <div style={{ height: 6, borderRadius: 3, background: 'var(--c-bg-subtle)' }}>
                       <div style={{ height: 6, borderRadius: 3, background: 'var(--green)', width: (count / stats.projs.length * 100) + '%', transition: 'width 400ms ease' }} />
                     </div>
                   </button>
@@ -205,15 +205,15 @@ export default function YearReview() {
 
             {/* Category breakdown — each bar clickable */}
             {stats.topCats.length > 0 && (
-              <div style={{ background: 'var(--surface)', borderRadius: 'var(--r-md)', border: '1px solid var(--border-2)', padding: '16px', marginBottom: 12 }}>
+              <div style={{ background: 'var(--c-bg-surface)', borderRadius: 'var(--r-md)', border: '1px solid var(--c-border-light)', padding: '16px', marginBottom: 12 }}>
                 <div className="label-caps-sm">By Category</div>
                 {stats.topCats.map(([name, count], ci) => (
                   <button key={name} onClick={() => drill('category', name)} style={{ display: 'block', width: '100%', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', padding: '4px 0', marginBottom: 4 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-                      <span style={{ fontSize: 13, color: 'var(--text-2)', fontWeight: 500 }}>{name}</span>
-                      <span style={{ fontSize: 13, color: 'var(--text-3)' }}>{count} →</span>
+                      <span style={{ fontSize: 13, color: 'var(--c-text-body)', fontWeight: 500 }}>{name}</span>
+                      <span style={{ fontSize: 13, color: 'var(--c-text-muted)' }}>{count} →</span>
                     </div>
-                    <div style={{ height: 6, borderRadius: 3, background: 'var(--fill)' }}>
+                    <div style={{ height: 6, borderRadius: 3, background: 'var(--c-bg-subtle)' }}>
                       <div style={{ height: 6, borderRadius: 3, background: CAT_COLORS[ci % CAT_COLORS.length], width: (count / stats.projs.length * 100) + '%', transition: 'width 400ms ease' }} />
                     </div>
                   </button>
@@ -223,12 +223,12 @@ export default function YearReview() {
 
             {/* Gifts */}
             {stats.recipients.length > 0 && (
-              <div style={{ background: 'var(--surface)', borderRadius: 'var(--r-md)', border: '1px solid var(--border-2)', padding: '16px', marginBottom: 12 }}>
+              <div style={{ background: 'var(--c-bg-surface)', borderRadius: 'var(--r-md)', border: '1px solid var(--c-border-light)', padding: '16px', marginBottom: 12 }}>
                 <div className="label-caps-sm">Gifts & Recipients</div>
                 {stats.recipients.map((r, i) => (
-                  <div key={i} onClick={() => setProjId(r.id)} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: i < stats.recipients.length - 1 ? '1px solid var(--border-2)' : 'none', cursor: 'pointer' }}>
-                    <span style={{ fontSize: 13, color: 'var(--text-2)', fontWeight: 500 }}>{r.project}</span>
-                    <span style={{ fontSize: 13, color: 'var(--text-3)' }}>🎁 {r.name}</span>
+                  <div key={i} onClick={() => setProjId(r.id)} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: i < stats.recipients.length - 1 ? '1px solid var(--c-border-light)' : 'none', cursor: 'pointer' }}>
+                    <span style={{ fontSize: 13, color: 'var(--c-text-body)', fontWeight: 500 }}>{r.project}</span>
+                    <span style={{ fontSize: 13, color: 'var(--c-text-muted)' }}>🎁 {r.name}</span>
                   </div>
                 ))}
               </div>

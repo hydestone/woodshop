@@ -75,38 +75,38 @@ function SpeciesManager() {
   }
 
   return (
-    <div style={{ margin: '8px 20px 16px', background: 'var(--surface)', borderRadius: 12, border: '1px solid var(--border-2)', overflow: 'hidden' }}>
+    <div style={{ margin: '8px 20px 16px', background: 'var(--c-bg-surface)', borderRadius: 12, border: '1px solid var(--c-border-light)', overflow: 'hidden' }}>
       <button
         onClick={() => setExpanded(e => !e)}
-        style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: 'var(--fill)', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
+        style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: 'var(--c-bg-subtle)', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
       >
-        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.8px' }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--c-text-muted)', textTransform: 'uppercase', letterSpacing: '.8px' }}>
           Wood Species ({species.length})
         </span>
-        <span style={{ fontSize: 11, color: 'var(--text-4)' }}>{expanded ? '▲' : '▼'} manage</span>
+        <span style={{ fontSize: 11, color: 'var(--c-text-faint)' }}>{expanded ? '▲' : '▼'} manage</span>
       </button>
       {expanded && (
         <div style={{ padding: '0 0 12px' }}>
-          <p style={{ fontSize: 12, color: 'var(--text-3)', padding: '8px 16px 4px' }}>Species names used in project dropdowns.</p>
+          <p style={{ fontSize: 12, color: 'var(--c-text-muted)', padding: '8px 16px 4px' }}>Species names used in project dropdowns.</p>
           {species.map((s, i) => (
-            <div key={s.id} style={{ display: 'flex', alignItems: 'center', padding: '8px 16px', borderBottom: i < species.length-1 ? '1px solid var(--border-2)' : 'none' }}>
+            <div key={s.id} style={{ display: 'flex', alignItems: 'center', padding: '8px 16px', borderBottom: i < species.length-1 ? '1px solid var(--c-border-light)' : 'none' }}>
               {editItem?.id === s.id ? (
                 <>
                   <input className="form-input" style={{ flex: 1, fontSize: 13 }} value={editVal} onChange={e => setEditVal(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') rename(); if (e.key === 'Escape') setEditItem(null) }} autoFocus />
                   <button className="btn-text" style={{ marginLeft: 8, fontSize: 12 }} onClick={rename}>Save</button>
-                  <button className="btn-text" style={{ marginLeft: 4, fontSize: 12, color: 'var(--text-3)' }} onClick={() => setEditItem(null)}>Cancel</button>
+                  <button className="btn-text" style={{ marginLeft: 4, fontSize: 12, color: 'var(--c-text-muted)' }} onClick={() => setEditItem(null)}>Cancel</button>
                 </>
               ) : (
                 <>
-                  <span style={{ flex: 1, fontSize: 14, color: 'var(--text)' }}>{s.name}</span>
+                  <span style={{ flex: 1, fontSize: 14, color: 'var(--c-text-primary)' }}>{s.name}</span>
                   <button className="icon-btn" onClick={() => { setEditItem(s); setEditVal(s.name) }}><IEdit size={13} /></button>
                   <button className="icon-btn" onClick={() => remove(s.id)} style={{ color: 'var(--red)' }}><ITrash size={13} /></button>
                 </>
               )}
             </div>
           ))}
-          {species.length === 0 && <div style={{ padding: '10px 16px', fontSize: 13, color: 'var(--text-4)' }}>No species yet</div>}
+          {species.length === 0 && <div style={{ padding: '10px 16px', fontSize: 13, color: 'var(--c-text-faint)' }}>No species yet</div>}
           <div style={{ display: 'flex', gap: 8, padding: '10px 16px 0' }}>
             <input className="form-input" style={{ flex: 1, fontSize: 13 }} placeholder="Add species…"
               value={newName} onChange={e => setNewName(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} />
@@ -126,26 +126,26 @@ function ToolsPanel() {
   const bf=(()=>{ const t=parseFloat(bfT),w=parseFloat(bfW),l=parseFloat(bfL),q=parseInt(bfQ)||1; return (t&&w&&l)?Math.round(t*w*l/144*q*100)/100:null })()
   return (
     <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(260px,1fr))',gap:12,margin:'0 20px 16px'}}>
-      <div style={{background:'var(--surface)',borderRadius:'var(--r-md)',border:'1px solid var(--border-2)',padding:16}}>
-        <div style={{fontSize:12,fontWeight:600,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'.5px',marginBottom:10}}>EMC Calculator</div>
-        {saved&&<div style={{fontSize:12,color:'var(--text-3)',marginBottom:8,padding:'5px 8px',background:'var(--fill-2)',borderRadius:6}}>Saved shop: {saved.temp}°F / {saved.rh}% → <strong style={{color:'var(--forest)'}}>{savedEmc}%</strong></div>}
+      <div style={{background:'var(--c-bg-surface)',borderRadius:'var(--r-md)',border:'1px solid var(--c-border-light)',padding:16}}>
+        <div style={{fontSize:12,fontWeight:600,color:'var(--c-text-muted)',textTransform:'uppercase',letterSpacing:'.5px',marginBottom:10}}>EMC Calculator</div>
+        {saved&&<div style={{fontSize:12,color:'var(--c-text-muted)',marginBottom:8,padding:'5px 8px',background:'var(--c-bg-subtle-2)',borderRadius:6}}>Saved shop: {saved.temp}°F / {saved.rh}% → <strong style={{color:'var(--forest)'}}>{savedEmc}%</strong></div>}
         <div style={{display:'flex',gap:8,marginBottom:8}}>
-          <div style={{flex:1}}><div style={{fontSize:11,color:'var(--text-3)',marginBottom:4}}>Temp (°F)</div><input className="form-input" type="number" value={shopTemp} onChange={e=>setShopTemp(Number(e.target.value))}/></div>
-          <div style={{flex:1}}><div style={{fontSize:11,color:'var(--text-3)',marginBottom:4}}>RH (%)</div><input className="form-input" type="number" value={shopRH} onChange={e=>setShopRH(Number(e.target.value))}/></div>
+          <div style={{flex:1}}><div style={{fontSize:11,color:'var(--c-text-muted)',marginBottom:4}}>Temp (°F)</div><input className="form-input" type="number" value={shopTemp} onChange={e=>setShopTemp(Number(e.target.value))}/></div>
+          <div style={{flex:1}}><div style={{fontSize:11,color:'var(--c-text-muted)',marginBottom:4}}>RH (%)</div><input className="form-input" type="number" value={shopRH} onChange={e=>setShopRH(Number(e.target.value))}/></div>
         </div>
         <div style={{fontSize:20,fontWeight:700,color:'var(--accent)',marginBottom:8}}>EMC: {emc}%</div>
-        <div style={{fontSize:12,color:'var(--text-3)',marginBottom:8}}>{emc<=8?'✓ Good for furniture/indoor':'⚠ Too wet for indoor use'}</div>
+        <div style={{fontSize:12,color:'var(--c-text-muted)',marginBottom:8}}>{emc<=8?'✓ Good for furniture/indoor':'⚠ Too wet for indoor use'}</div>
         <button className="btn-secondary" style={{width:'100%',justifyContent:'center'}} onClick={()=>{const v={temp:shopTemp,rh:shopRH};localStorage.setItem('shopCond',JSON.stringify(v));setSaved(v)}}>Save as my shop</button>
       </div>
-      <div style={{background:'var(--surface)',borderRadius:'var(--r-md)',border:'1px solid var(--border-2)',padding:16}}>
-        <div style={{fontSize:12,fontWeight:600,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'.5px',marginBottom:10}}>Board Foot Calculator</div>
+      <div style={{background:'var(--c-bg-surface)',borderRadius:'var(--r-md)',border:'1px solid var(--c-border-light)',padding:16}}>
+        <div style={{fontSize:12,fontWeight:600,color:'var(--c-text-muted)',textTransform:'uppercase',letterSpacing:'.5px',marginBottom:10}}>Board Foot Calculator</div>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
-          <div><div style={{fontSize:11,color:'var(--text-3)',marginBottom:4}}>Thickness (in)</div><input className="form-input" type="number" step="0.25" placeholder="1" value={bfT} onChange={e=>setBfT(e.target.value)}/></div>
-          <div><div style={{fontSize:11,color:'var(--text-3)',marginBottom:4}}>Width (in)</div><input className="form-input" type="number" step="0.5" placeholder="6" value={bfW} onChange={e=>setBfW(e.target.value)}/></div>
-          <div><div style={{fontSize:11,color:'var(--text-3)',marginBottom:4}}>Length (in)</div><input className="form-input" type="number" step="1" placeholder="96" value={bfL} onChange={e=>setBfL(e.target.value)}/></div>
-          <div><div style={{fontSize:11,color:'var(--text-3)',marginBottom:4}}>Qty</div><input className="form-input" type="number" step="1" placeholder="1" value={bfQ} onChange={e=>setBfQ(e.target.value)}/></div>
+          <div><div style={{fontSize:11,color:'var(--c-text-muted)',marginBottom:4}}>Thickness (in)</div><input className="form-input" type="number" step="0.25" placeholder="1" value={bfT} onChange={e=>setBfT(e.target.value)}/></div>
+          <div><div style={{fontSize:11,color:'var(--c-text-muted)',marginBottom:4}}>Width (in)</div><input className="form-input" type="number" step="0.5" placeholder="6" value={bfW} onChange={e=>setBfW(e.target.value)}/></div>
+          <div><div style={{fontSize:11,color:'var(--c-text-muted)',marginBottom:4}}>Length (in)</div><input className="form-input" type="number" step="1" placeholder="96" value={bfL} onChange={e=>setBfL(e.target.value)}/></div>
+          <div><div style={{fontSize:11,color:'var(--c-text-muted)',marginBottom:4}}>Qty</div><input className="form-input" type="number" step="1" placeholder="1" value={bfQ} onChange={e=>setBfQ(e.target.value)}/></div>
         </div>
-        {bf!==null?<div style={{fontSize:20,fontWeight:700,color:'var(--accent)'}}>{bf} BF</div>:<div style={{fontSize:13,color:'var(--text-4)'}}>Enter dimensions above</div>}
+        {bf!==null?<div style={{fontSize:20,fontWeight:700,color:'var(--accent)'}}>{bf} BF</div>:<div style={{fontSize:13,color:'var(--c-text-faint)'}}>Enter dimensions above</div>}
       </div>
     </div>
   )
@@ -185,23 +185,23 @@ function LocationsSection({ locations, woodStock, mutate }) {
   return (
     <div style={{marginBottom:8}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'0 20px',marginBottom:6}}>
-        <span style={{fontSize:11,fontWeight:600,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'.6px'}}>Locations</span>
+        <span style={{fontSize:11,fontWeight:600,color:'var(--c-text-muted)',textTransform:'uppercase',letterSpacing:'.6px'}}>Locations</span>
         <button className="btn-text" onClick={() => setShowAdd(true)}>+ Add location</button>
       </div>
       {locations.length === 0 ? (
-        <div style={{padding:'12px 20px',fontSize:13,color:'var(--text-3)'}}>No locations yet — add your first wood source</div>
+        <div style={{padding:'12px 20px',fontSize:13,color:'var(--c-text-muted)'}}>No locations yet — add your first wood source</div>
       ) : (
         <div className="group">
           {locations.map((loc, i) => {
             const stock = stockForLoc(loc.id)
             return (
-              <div key={loc.id} style={{padding:'12px 16px',borderBottom: i<locations.length-1?'1px solid var(--border-2)':'none',background:'var(--surface)'}}>
+              <div key={loc.id} style={{padding:'12px 16px',borderBottom: i<locations.length-1?'1px solid var(--c-border-light)':'none',background:'var(--c-bg-surface)'}}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
                   <div style={{flex:1}}>
                     <div style={{fontWeight:600,fontSize:15}}>{loc.name}</div>
-                    {loc.address && <div style={{fontSize:13,color:'var(--text-3)',marginTop:2}}>📍 {loc.address}</div>}
-                    {loc.notes && <div style={{fontSize:13,color:'var(--text-3)',marginTop:2,fontStyle:'italic'}}>{loc.notes}</div>}
-                    <div style={{fontSize:12,color:'var(--text-3)',marginTop:3}}>{stock.length} stock entr{stock.length===1?'y':'ies'}{stock.length>0?' · '+[...new Set(stock.map(s=>s.species).filter(Boolean))].slice(0,3).join(', '):''}</div>
+                    {loc.address && <div style={{fontSize:13,color:'var(--c-text-muted)',marginTop:2}}>📍 {loc.address}</div>}
+                    {loc.notes && <div style={{fontSize:13,color:'var(--c-text-muted)',marginTop:2,fontStyle:'italic'}}>{loc.notes}</div>}
+                    <div style={{fontSize:12,color:'var(--c-text-muted)',marginTop:3}}>{stock.length} stock entr{stock.length===1?'y':'ies'}{stock.length>0?' · '+[...new Set(stock.map(s=>s.species).filter(Boolean))].slice(0,3).join(', '):''}</div>
                   </div>
                   <div style={{display:'flex',gap:4}}>
                     <button className="icon-btn" onClick={()=>setEditLoc(loc)}><IEdit size={14}/></button>
@@ -348,19 +348,19 @@ function LocationSheet({ loc, onSave, onClose }) {
           </button>
         </div>
         {results.length>0&&(
-          <div style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:8,marginBottom:6,maxHeight:120,overflowY:'auto'}}>
+          <div style={{background:'var(--c-bg-surface)',border:'1px solid var(--c-border)',borderRadius:8,marginBottom:6,maxHeight:120,overflowY:'auto'}}>
             {results.map((r,i)=>(
-              <div key={i} onClick={()=>pickResult(r)} style={{padding:'8px 12px',fontSize:13,cursor:'pointer',borderBottom:i<results.length-1?'1px solid var(--border-2)':'none',color:'var(--text-2)'}}>
+              <div key={i} onClick={()=>pickResult(r)} style={{padding:'8px 12px',fontSize:13,cursor:'pointer',borderBottom:i<results.length-1?'1px solid var(--c-border-light)':'none',color:'var(--c-text-body)'}}>
                 {r.display_name.split(',').slice(0,3).join(', ')}
               </div>
             ))}
           </div>
         )}
-        <div style={{fontSize:12,color:'var(--text-3)',marginBottom:6}}>Then click anywhere on the map to place your pin</div>
+        <div style={{fontSize:12,color:'var(--c-text-muted)',marginBottom:6}}>Then click anywhere on the map to place your pin</div>
       </div>
 
       {/* Map */}
-      <div ref={mapRef} style={{height:260,margin:'0 16px 12px',borderRadius:8,overflow:'hidden',border:'1px solid var(--border-2)'}}/>
+      <div ref={mapRef} style={{height:260,margin:'0 16px 12px',borderRadius:8,overflow:'hidden',border:'1px solid var(--c-border-light)'}}/>
 
       {/* Pin confirmation */}
       {pinLat&&pinLng&&(
@@ -450,7 +450,7 @@ export default function Stock() {
 
         {/* Stock section */}
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'12px 20px 6px',marginTop:8}}>
-          <span style={{fontSize:11,fontWeight:600,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'.6px'}}>Stock</span>
+          <span style={{fontSize:11,fontWeight:600,color:'var(--c-text-muted)',textTransform:'uppercase',letterSpacing:'.6px'}}>Stock</span>
         </div>
 
         <div style={{paddingBottom:24}}>
@@ -468,22 +468,22 @@ export default function Stock() {
                     const isReady=readyDate&&new Date()>=readyDate
                     const loc=locations.find(l=>l.id===item.location_id)
                     return (
-                      <div key={item.id} style={{borderBottom:i<arr.length-1?'1px solid var(--border-2)':'none',padding:'12px 16px',background:'var(--surface)'}}>
+                      <div key={item.id} style={{borderBottom:i<arr.length-1?'1px solid var(--c-border-light)':'none',padding:'12px 16px',background:'var(--c-bg-surface)'}}>
                         <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
                           <div style={{flex:1,paddingRight:12}}>
                             <div style={{fontWeight:600}}>{item.species}</div>
                             {loc&&<div style={{fontSize:13,color:'var(--accent)',marginTop:2}}>📍 {loc.name}</div>}
-                            {!loc&&item.location&&<div style={{fontSize:13,color:'var(--text-3)',marginTop:2}}>📍 {item.location}</div>}
-                            {item.harvested_at&&<div style={{fontSize:13,color:'var(--text-3)',marginTop:2}}>Harvested: {fmt(item.harvested_at)}</div>}
-                            {item.intended_use&&<div style={{fontSize:13,color:'var(--text-3)',marginTop:2}}>Use: {item.intended_use}</div>}
+                            {!loc&&item.location&&<div style={{fontSize:13,color:'var(--c-text-muted)',marginTop:2}}>📍 {item.location}</div>}
+                            {item.harvested_at&&<div style={{fontSize:13,color:'var(--c-text-muted)',marginTop:2}}>Harvested: {fmt(item.harvested_at)}</div>}
+                            {item.intended_use&&<div style={{fontSize:13,color:'var(--c-text-muted)',marginTop:2}}>Use: {item.intended_use}</div>}
                             {ms&&<div style={{display:'inline-flex',alignItems:'center',gap:6,marginTop:6,padding:'3px 10px',borderRadius:99,background:ms.bg}}>
                               <div style={{width:7,height:7,borderRadius:'50%',background:ms.color}}/><span style={{fontSize:12,fontWeight:600,color:ms.color}}>{ms.label}</span>
                               {latest&&<span style={{fontSize:12,color:ms.color,opacity:.8}}>· {latest}%</span>}
                             </div>}
                             {readyDate&&status!=='Ready to use'&&status!=='Used up'&&(
-                              <div style={{fontSize:12,color:isReady?'var(--forest)':'var(--text-3)',marginTop:4}}>{isReady?'✓ Est. ready since':'Est. ready:'} {readyDate.toLocaleDateString('en-US',{month:'short',year:'numeric'})}</div>
+                              <div style={{fontSize:12,color:isReady?'var(--forest)':'var(--c-text-muted)',marginTop:4}}>{isReady?'✓ Est. ready since':'Est. ready:'} {readyDate.toLocaleDateString('en-US',{month:'short',year:'numeric'})}</div>
                             )}
-                            {item.notes&&<div style={{fontSize:13,color:'var(--text-3)',marginTop:4}}>{item.notes}</div>}
+                            {item.notes&&<div style={{fontSize:13,color:'var(--c-text-muted)',marginTop:4}}>{item.notes}</div>}
                             <div style={{display:'flex',gap:8,marginTop:10,flexWrap:'wrap'}}>
                               <button className="btn-secondary" onClick={()=>setDetail(item)}>Moisture log</button>
                               <button className="btn-secondary" onClick={()=>setStockPhotoItem(item)} style={{display:'flex',alignItems:'center',gap:5}}>
@@ -511,7 +511,7 @@ export default function Stock() {
             )
           })}
           {!data.woodStock.length&&(
-            <div className="empty"><div className="empty-icon"><ITree size={32} color="var(--text-3)" sw={1.5} /></div><div className="empty-title">No stock entries</div><p className="empty-sub">Add a location above, then add stock entries</p></div>
+            <div className="empty"><div className="empty-icon"><ITree size={32} color="var(--c-text-muted)" sw={1.5} /></div><div className="empty-title">No stock entries</div><p className="empty-sub">Add a location above, then add stock entries</p></div>
           )}
         </div>
       </div>
@@ -550,7 +550,7 @@ export function WoodStockGallery() {
 
   if (stockPhotos.length === 0) return (
     <div className="empty" style={{ paddingTop: 40 }}>
-      <div className="empty-icon"><ITree size={32} color="var(--text-3)" sw={1.5} /></div>
+      <div className="empty-icon"><ITree size={32} color="var(--c-text-muted)" sw={1.5} /></div>
       <div className="empty-title">No stock photos yet</div>
       <p className="empty-sub">Add photos to your wood stock entries to build a gallery of raw lumber and blanks</p>
     </div>
@@ -621,10 +621,10 @@ function StockPhotoSheet({ item, onClose }) {
           {uploading ? 'Uploading…' : '+ Add Photo'}
         </button>
         {photos.length === 0
-          ? <div style={{textAlign:'center',color:'var(--text-4)',fontSize:13,padding:'32px 0'}}>No photos yet — add some to document this stock</div>
+          ? <div style={{textAlign:'center',color:'var(--c-text-faint)',fontSize:13,padding:'32px 0'}}>No photos yet — add some to document this stock</div>
           : <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
               {photos.map(p => (
-                <div key={p.id} style={{position:'relative',borderRadius:8,overflow:'hidden',aspectRatio:'1',background:'var(--fill)'}}>
+                <div key={p.id} style={{position:'relative',borderRadius:8,overflow:'hidden',aspectRatio:'1',background:'var(--c-bg-subtle)'}}>
                   <img src={p.url} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
                   <button onClick={()=>deletePhoto(p)} style={{
                     position:'absolute',top:4,right:4,background:'rgba(0,0,0,.6)',border:'none',
@@ -707,11 +707,11 @@ function MoistureLog({ item, onClose, onAdded }) {
         <div style={{padding:'10px 16px'}}><button className="btn-primary" style={{width:'100%',justifyContent:'center'}} onClick={addReading}>Save</button></div>
       </div>}
       {loading?<div style={{textAlign:'center',padding:32}}><div className="spinner" style={{margin:'0 auto'}}/></div>
-        :log.length===0?<div className="empty" style={{padding:'32px 0'}}><div className="empty-icon"><IDrop size={32} color="var(--text-3)" sw={1.5} /></div><div className="empty-title">No readings yet</div></div>
+        :log.length===0?<div className="empty" style={{padding:'32px 0'}}><div className="empty-icon"><IDrop size={32} color="var(--c-text-muted)" sw={1.5} /></div><div className="empty-title">No readings yet</div></div>
         :<div className="group">{log.sort((a,b)=>new Date(b.logged_at)-new Date(a.logged_at)).map((r,i)=>(
-          <div key={r.id} className="cell" style={{borderBottom:i<log.length-1?'1px solid var(--border-2)':'none'}}>
-            <div style={{flex:1}}><div style={{fontWeight:600,fontSize:16}}>{r.reading}%</div>{r.notes&&<div style={{fontSize:13,color:'var(--text-3)',marginTop:2}}>{r.notes}</div>}</div>
-            <div style={{fontSize:13,color:'var(--text-3)'}}>{fmt(r.logged_at)}</div>
+          <div key={r.id} className="cell" style={{borderBottom:i<log.length-1?'1px solid var(--c-border-light)':'none'}}>
+            <div style={{flex:1}}><div style={{fontWeight:600,fontSize:16}}>{r.reading}%</div>{r.notes&&<div style={{fontSize:13,color:'var(--c-text-muted)',marginTop:2}}>{r.notes}</div>}</div>
+            <div style={{fontSize:13,color:'var(--c-text-muted)'}}>{fmt(r.logged_at)}</div>
           </div>
         ))}</div>}
     </Sheet>

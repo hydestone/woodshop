@@ -61,9 +61,9 @@ function RatingInput({ value, onChange }) {
       {[1,2,3,4,5,6,7,8,9,10].map(n => (
         <button key={n} onClick={() => onChange(n)} style={{
           width: 36, height: 36, borderRadius: 8,
-          border: value === n ? '2px solid var(--accent)' : '1px solid var(--border)',
-          background: value === n ? 'var(--accent-dim)' : 'var(--surface)',
-          color: value === n ? 'var(--accent)' : 'var(--text)',
+          border: value === n ? '2px solid var(--accent)' : '1px solid var(--c-border)',
+          background: value === n ? 'var(--accent-dim)' : 'var(--c-bg-surface)',
+          color: value === n ? 'var(--accent)' : 'var(--c-text-primary)',
           fontWeight: value === n ? 700 : 400,
           fontSize: 14, cursor: 'pointer', fontFamily: 'inherit',
           transition: 'all 120ms',
@@ -83,9 +83,9 @@ function MultiSelect({ options, value = [], onChange }) {
       {options.map(opt => (
         <button key={opt} onClick={() => toggle(opt)} style={{
           padding: '7px 14px', borderRadius: 99,
-          border: value.includes(opt) ? '2px solid var(--accent)' : '1px solid var(--border)',
-          background: value.includes(opt) ? 'var(--accent-dim)' : 'var(--surface)',
-          color: value.includes(opt) ? 'var(--accent)' : 'var(--text)',
+          border: value.includes(opt) ? '2px solid var(--accent)' : '1px solid var(--c-border)',
+          background: value.includes(opt) ? 'var(--accent-dim)' : 'var(--c-bg-surface)',
+          color: value.includes(opt) ? 'var(--accent)' : 'var(--c-text-primary)',
           fontWeight: value.includes(opt) ? 600 : 400,
           fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
           transition: 'all 120ms',
@@ -101,9 +101,9 @@ function SingleSelect({ options, value, onChange }) {
       {options.map(opt => (
         <button key={opt} onClick={() => onChange(opt)} style={{
           padding: '10px 14px', borderRadius: 10, textAlign: 'left',
-          border: value === opt ? '2px solid var(--accent)' : '1px solid var(--border)',
-          background: value === opt ? 'var(--accent-dim)' : 'var(--surface)',
-          color: value === opt ? 'var(--accent)' : 'var(--text)',
+          border: value === opt ? '2px solid var(--accent)' : '1px solid var(--c-border)',
+          background: value === opt ? 'var(--accent-dim)' : 'var(--c-bg-surface)',
+          color: value === opt ? 'var(--accent)' : 'var(--c-text-primary)',
           fontWeight: value === opt ? 600 : 400,
           fontSize: 14, cursor: 'pointer', fontFamily: 'inherit',
           transition: 'all 120ms',
@@ -157,8 +157,8 @@ export default function BetaQuestionnaire() {
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><path d="M22 4 12 14.01l-3-3" />
             </svg>
           </div>
-          <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8, color: 'var(--text)' }}>Thank you!</h2>
-          <p style={{ color: 'var(--text-3)', fontSize: 15, maxWidth: 320, lineHeight: 1.6 }}>
+          <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8, color: 'var(--c-text-primary)' }}>Thank you!</h2>
+          <p style={{ color: 'var(--c-text-muted)', fontSize: 15, maxWidth: 320, lineHeight: 1.6 }}>
             Your feedback directly shapes what we build next. We read every response.
           </p>
         </div>
@@ -181,27 +181,27 @@ export default function BetaQuestionnaire() {
 
       {/* Progress */}
       <div style={{ padding: '0 16px 16px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-3)', marginBottom: 4 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--c-text-muted)', marginBottom: 4 }}>
           <span>{answered} of {total} answered</span>
           <span>{progress}%</span>
         </div>
-        <div style={{ height: 4, borderRadius: 2, background: 'var(--fill)', overflow: 'hidden' }}>
+        <div style={{ height: 4, borderRadius: 2, background: 'var(--c-bg-subtle)', overflow: 'hidden' }}>
           <div style={{ height: '100%', borderRadius: 2, background: 'var(--accent)', width: `${progress}%`, transition: 'width 300ms ease' }} />
         </div>
       </div>
 
       <div style={{ padding: '0 16px 100px' }}>
         {QUESTIONS.map((q, i) => (
-          <div key={q.id} className="form-group" style={{ marginBottom: 20, padding: 16, background: 'var(--surface)', borderRadius: 12, border: '1px solid var(--border)' }}>
+          <div key={q.id} className="form-group" style={{ marginBottom: 20, padding: 16, background: 'var(--c-bg-surface)', borderRadius: 12, border: '1px solid var(--c-border)' }}>
             <div style={{ display: 'flex', gap: 10, marginBottom: 4 }}>
               <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--accent)', minWidth: 20 }}>{i + 1}.</span>
-              <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', lineHeight: 1.4 }}>{q.label}</span>
+              <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--c-text-primary)', lineHeight: 1.4 }}>{q.label}</span>
             </div>
 
             {q.type === 'rating' && (
               <div style={{ paddingLeft: 30 }}>
                 <RatingInput value={answers[q.id]} onChange={v => set(q.id, v)} />
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-4)', marginTop: 2 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--c-text-faint)', marginTop: 2 }}>
                   <span>Not great</span><span>Amazing</span>
                 </div>
               </div>

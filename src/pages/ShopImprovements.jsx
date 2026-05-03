@@ -87,13 +87,13 @@ export default function ShopImprovements() {
               <span className="section-label">{cat}</span>
               <div className="group">
                 {catItems.map((item, i, arr) => (
-                  <div key={item.id} className="cell" style={{ borderBottom: i < arr.length - 1 ? '1px solid var(--border-2)' : 'none', alignItems: 'flex-start', paddingTop: 12, paddingBottom: 12 }}>
+                  <div key={item.id} className="cell" style={{ borderBottom: i < arr.length - 1 ? '1px solid var(--c-border-light)' : 'none', alignItems: 'flex-start', paddingTop: 12, paddingBottom: 12 }}>
                     <button className="check-btn" style={{ marginTop: 2 }} onClick={() => toggle(item)} aria-label={item.completed ? 'Mark incomplete' : 'Mark complete'}>
-                      {item.completed ? <ICheck size={22} color="var(--green)" sw={2} /> : <ICircle size={22} color="var(--text-4)" sw={1.5} />}
+                      {item.completed ? <ICheck size={22} color="var(--green)" sw={2} /> : <ICircle size={22} color="var(--c-text-faint)" sw={1.5} />}
                     </button>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 500, textDecoration: item.completed ? 'line-through' : 'none', color: item.completed ? 'var(--text-3)' : 'var(--text)' }}>{item.title}</div>
-                      {item.notes && <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4, lineHeight: 1.5 }}>{item.notes}</div>}
+                      <div style={{ fontWeight: 500, textDecoration: item.completed ? 'line-through' : 'none', color: item.completed ? 'var(--c-text-muted)' : 'var(--c-text-primary)' }}>{item.title}</div>
+                      {item.notes && <div style={{ fontSize: 13, color: 'var(--c-text-muted)', marginTop: 4, lineHeight: 1.5 }}>{item.notes}</div>}
                     </div>
                     <div style={{ display: 'flex', gap: 4, marginLeft: 8 }}>
                       <button className="icon-btn" onClick={() => setEditItem(item)} aria-label={`Edit ${item.title}`}><IEdit size={15} /></button>
@@ -106,7 +106,7 @@ export default function ShopImprovements() {
           ))}
           {!items.length && (
             <div className="empty">
-              <div className="empty-icon"><IHouse size={32} color="var(--text-3)" sw={1.5} /></div>
+              <div className="empty-icon"><IHouse size={32} color="var(--c-text-muted)" sw={1.5} /></div>
               <div className="empty-title">{filter === 'active' ? 'Nothing planned yet' : 'Nothing completed yet'}</div>
               <p className="empty-sub">Track planned upgrades, wish list items, and layout ideas</p>
             </div>
@@ -145,7 +145,7 @@ function ImprovementSheet({ item, onSave, onClose }) {
           </select>
         </FormCell>
       </div>
-      <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 8 }}>Notes</p>
+      <p style={{ fontSize: 13, color: 'var(--c-text-muted)', marginBottom: 8 }}>Notes</p>
       <textarea ref={notesRef} className="form-textarea" style={{ width: '100%', marginBottom: 4 }} placeholder="Details, cost estimate…" defaultValue={item?.notes || ''} onChange={autoExpand} />
     </Sheet>
   )

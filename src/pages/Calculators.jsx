@@ -81,7 +81,7 @@ function inToFtInStr(inches) {
 // ─── Shared UI ─────────────────────────────────────────────────────────────────
 function SectionCard({ title, children }) {
   return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--border-2)', borderRadius: 'var(--r-md)', padding: '16px', marginBottom: 12 }}>
+    <div style={{ background: 'var(--c-bg-surface)', border: '1px solid var(--c-border-light)', borderRadius: 'var(--r-md)', padding: '16px', marginBottom: 12 }}>
       {title && <div className="label-caps" style={{ marginBottom: 12 }}>{title}</div>}
       {children}
     </div>
@@ -90,9 +90,9 @@ function SectionCard({ title, children }) {
 
 function ResultRow({ label, value, accent }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '6px 0', borderBottom: '1px solid var(--border-2)' }}>
-      <span style={{ fontSize: 13, color: 'var(--text-3)' }}>{label}</span>
-      <span style={{ fontWeight: 700, color: accent ? 'var(--forest)' : 'var(--text)', fontSize: 15 }}>{value}</span>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '6px 0', borderBottom: '1px solid var(--c-border-light)' }}>
+      <span style={{ fontSize: 13, color: 'var(--c-text-muted)' }}>{label}</span>
+      <span style={{ fontWeight: 700, color: accent ? 'var(--forest)' : 'var(--c-text-primary)', fontSize: 15 }}>{value}</span>
     </div>
   )
 }
@@ -133,7 +133,7 @@ function BoardFoot() {
 
   return (
     <div style={{ padding: '0 20px 40px', maxWidth: 640, margin: '0 auto' }}>
-      <p style={{ fontSize: 12, color: 'var(--text-4)', margin: '12px 0' }}>BF = T × W × L ÷ 144 · Accepts fractions: 3/4, 1 3/8</p>
+      <p style={{ fontSize: 12, color: 'var(--c-text-faint)', margin: '12px 0' }}>BF = T × W × L ÷ 144 · Accepts fractions: 3/4, 1 3/8</p>
       <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
         <LenInput label="Thickness (in)" value={t} onChange={setT} placeholder="3/4" />
         <LenInput label="Width (in)" value={w} onChange={setW} placeholder="6" />
@@ -166,7 +166,7 @@ function BoardFoot() {
           <div className="tally-table">
             {tally.map((r, i) => (
               <div key={i} className="tally-row">
-                <span style={{ color: 'var(--text-3)' }}>{r.desc}</span>
+                <span style={{ color: 'var(--c-text-muted)' }}>{r.desc}</span>
                 <span style={{ fontWeight: 700 }}>{r.bf} BF{r.cost > 0 ? ` · $${r.cost.toFixed(2)}` : ''}</span>
               </div>
             ))}
@@ -247,17 +247,17 @@ function ConverterColumn({ title, cfg, catKey }) {
       {/* Swap */}
       <button
         onClick={() => { setFrom(to); setTo(from) }}
-        style={{ background: 'var(--fill)', border: 'none', borderRadius: 99, padding: '4px', cursor: 'pointer', alignSelf: 'center', fontSize: 16, lineHeight: 1, color: 'var(--text-3)' }}
+        style={{ background: 'var(--c-bg-subtle)', border: 'none', borderRadius: 99, padding: '4px', cursor: 'pointer', alignSelf: 'center', fontSize: 16, lineHeight: 1, color: 'var(--c-text-muted)' }}
         aria-label="Swap units"
       >⇅</button>
 
       {/* Result */}
-      <div style={{ background: 'var(--surface)', border: '1px solid var(--border-2)', borderRadius: 8, padding: '10px 12px' }}>
-        <div style={{ fontSize: 10, color: 'var(--text-4)', marginBottom: 4 }}>Result</div>
+      <div style={{ background: 'var(--c-bg-surface)', border: '1px solid var(--c-border-light)', borderRadius: 8, padding: '10px 12px' }}>
+        <div style={{ fontSize: 10, color: 'var(--c-text-faint)', marginBottom: 4 }}>Result</div>
         <select
           value={to}
           onChange={e => setTo(e.target.value)}
-          style={{ background: 'transparent', border: 'none', fontFamily: 'inherit', fontSize: 13, fontWeight: 700, outline: 'none', marginBottom: 6, width: '100%', color: 'var(--text)' }}
+          style={{ background: 'transparent', border: 'none', fontFamily: 'inherit', fontSize: 13, fontWeight: 700, outline: 'none', marginBottom: 6, width: '100%', color: 'var(--c-text-primary)' }}
         >
           {cfg.units.map(u => <option key={u}>{u}</option>)}
         </select>
@@ -331,7 +331,7 @@ function TrimCuts() {
 
   return (
     <div style={{ padding: '0 20px 40px', maxWidth: 640, margin: '0 auto' }}>
-      <p style={{ fontSize: 12, color: 'var(--text-4)', margin: '12px 0' }}>
+      <p style={{ fontSize: 12, color: 'var(--c-text-faint)', margin: '12px 0' }}>
         Enter lengths in inches (48), feet (4'), or ft/in (4'6"). Fractions OK: 3 7/8
       </p>
 
@@ -398,11 +398,11 @@ function TrimCuts() {
                 <div style={{ fontSize: 12, color: 'var(--sb-text)' }}>× {inToFtInStr(+len)}</div>
               </div>
             ))}
-            <div style={{ flex:1, minWidth:70, background:'var(--surface)', borderRadius:10, padding:'10px 16px', border:'1px solid var(--border-2)', textAlign:'center' }}>
+            <div style={{ flex:1, minWidth:70, background:'var(--c-bg-surface)', borderRadius:10, padding:'10px 16px', border:'1px solid var(--c-border-light)', textAlign:'center' }}>
               <div style={{ fontSize:22, fontWeight:700, color:'var(--orange)' }}>
                 {Math.round((1-result.boards.reduce((s,b)=>s+b.used,0)/result.boards.reduce((s,b)=>s+b.sl,0))*100)}%
               </div>
-              <div style={{ fontSize:11, color:'var(--text-3)' }}>waste</div>
+              <div style={{ fontSize:11, color:'var(--c-text-muted)' }}>waste</div>
             </div>
           </div>
 
@@ -410,9 +410,9 @@ function TrimCuts() {
             <div key={bi} className="card" style={{ marginBottom: 8 }}>
               <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6, fontSize:13 }}>
                 <span style={{ fontWeight:700 }}>Board {bi+1} · <span style={{ color:'var(--accent)' }}>{inToFtInStr(b.sl)}</span></span>
-                <span style={{ color:'var(--text-4)' }}>waste {inToFtInStr(Math.max(0,b.sl-b.used))}</span>
+                <span style={{ color:'var(--c-text-faint)' }}>waste {inToFtInStr(Math.max(0,b.sl-b.used))}</span>
               </div>
-              <div style={{ display:'flex', height:24, borderRadius:6, overflow:'hidden', border:'1px solid var(--border-2)' }}>
+              <div style={{ display:'flex', height:24, borderRadius:6, overflow:'hidden', border:'1px solid var(--c-border-light)' }}>
                 {b.cuts.map((cut,ci) => (
                   <div key={ci} title={inToFtInStr(cut)} style={{
                     width:`${(cut/b.sl)*100}%`,
@@ -425,7 +425,7 @@ function TrimCuts() {
                   </div>
                 ))}
                 {b.sl-b.used>0.05&&(
-                  <div style={{ flex:1, background:'repeating-linear-gradient(45deg,var(--fill),var(--fill) 4px,var(--border-2) 4px,var(--border-2) 8px)' }} />
+                  <div style={{ flex:1, background:'repeating-linear-gradient(45deg,var(--c-bg-subtle),var(--c-bg-subtle) 4px,var(--c-border-light) 4px,var(--c-border-light) 8px)' }} />
                 )}
               </div>
               <div style={{ display:'flex', flexWrap:'wrap', gap:5, marginTop:8 }}>
@@ -526,7 +526,7 @@ function SheetGoods() {
     return (
       <div className="card" style={{ marginBottom:8 }}>
         <div style={{ fontSize:13,fontWeight:700,marginBottom:8 }}>Sheet {idx+1}</div>
-        <svg width={vw} height={vh} style={{ border:'1px solid var(--border-2)',borderRadius:6,background:'var(--fill-2)',display:'block' }}>
+        <svg width={vw} height={vh} style={{ border:'1px solid var(--c-border-light)',borderRadius:6,background:'var(--c-bg-subtle-2)',display:'block' }}>
           {sheet.pieces.map((p,i) => {
             if (!labelColors[p.label]) { labelColors[p.label]=SHEET_COLS[ci++%SHEET_COLS.length] }
             const color=labelColors[p.label]
@@ -552,7 +552,7 @@ function SheetGoods() {
 
   return (
     <div style={{ padding: '0 20px 40px', maxWidth: 640, margin: '0 auto' }}>
-      <p style={{ fontSize: 12, color: 'var(--text-4)', margin: '12px 0' }}>
+      <p style={{ fontSize: 12, color: 'var(--c-text-faint)', margin: '12px 0' }}>
         Optimize cuts from full sheets. Default: 4×8 plywood (48"×96").
       </p>
 
@@ -593,13 +593,13 @@ function SheetGoods() {
               <div style={{ fontSize:28,fontWeight:900,color:'var(--white)' }}>{result.sheets.length}</div>
               <div style={{ fontSize:12,color:'var(--sb-text)' }}>sheet{result.sheets.length!==1?'s':''}</div>
             </div>
-            <div style={{ flex:1,background:'var(--surface)',borderRadius:10,padding:'10px 16px',border:'1px solid var(--border-2)',textAlign:'center' }}>
+            <div style={{ flex:1,background:'var(--c-bg-surface)',borderRadius:10,padding:'10px 16px',border:'1px solid var(--c-border-light)',textAlign:'center' }}>
               <div style={{ fontSize:22,fontWeight:700,color:'var(--orange)' }}>{result.wastePct}%</div>
-              <div style={{ fontSize:11,color:'var(--text-3)' }}>waste</div>
+              <div style={{ fontSize:11,color:'var(--c-text-muted)' }}>waste</div>
             </div>
-            <div style={{ flex:1,background:'var(--surface)',borderRadius:10,padding:'10px 16px',border:'1px solid var(--border-2)',textAlign:'center' }}>
+            <div style={{ flex:1,background:'var(--c-bg-surface)',borderRadius:10,padding:'10px 16px',border:'1px solid var(--c-border-light)',textAlign:'center' }}>
               <div style={{ fontSize:18,fontWeight:700 }}>{result.usedSqFt} ft²</div>
-              <div style={{ fontSize:11,color:'var(--text-3)' }}>used</div>
+              <div style={{ fontSize:11,color:'var(--c-text-muted)' }}>used</div>
             </div>
           </div>
           {result.sheets.map((sheet,i) => <SheetDiagram key={i} sheet={sheet} sw={result.sw} sh={result.sh} idx={i}/>)}
@@ -621,7 +621,7 @@ function CalcNotes() {
   const save = v => { setNotes(v); try { localStorage.setItem('calc-notes', v) } catch {} }
   return (
     <div style={{ padding: '4px 20px 40px', maxWidth: 640, margin: '0 auto' }}>
-      <p style={{ fontSize: 12, color: 'var(--text-4)', marginBottom: 12 }}>Scratch pad — saves locally.</p>
+      <p style={{ fontSize: 12, color: 'var(--c-text-faint)', marginBottom: 12 }}>Scratch pad — saves locally.</p>
       <textarea
         className="form-textarea"
         value={notes}

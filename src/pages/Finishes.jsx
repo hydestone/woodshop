@@ -84,7 +84,7 @@ export default function Finishes() {
           {sorted.length > 0 ? (
             <div className="group">
               {sorted.map((p, i) => (
-                <div key={p.id} style={{ borderBottom: i < sorted.length - 1 ? '1px solid var(--border-2)' : 'none' }}>
+                <div key={p.id} style={{ borderBottom: i < sorted.length - 1 ? '1px solid var(--c-border-light)' : 'none' }}>
                   {/* Row */}
                   <div
                     style={{ padding: '13px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
@@ -93,12 +93,12 @@ export default function Finishes() {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 600, fontSize: 15 }}>{p.name}</div>
                       {p.manufacturer && (
-                        <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 1 }}>{p.manufacturer}</div>
+                        <div style={{ fontSize: 13, color: 'var(--c-text-muted)', marginTop: 1 }}>{p.manufacturer}</div>
                       )}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, marginLeft: 10 }}>
                       {p.category && (
-                        <span style={{ fontSize: 11, color: 'var(--text-4)', background: 'var(--fill)', borderRadius: 99, padding: '2px 8px' }}>
+                        <span style={{ fontSize: 11, color: 'var(--c-text-faint)', background: 'var(--c-bg-subtle)', borderRadius: 99, padding: '2px 8px' }}>
                           {p.category}
                         </span>
                       )}
@@ -113,17 +113,17 @@ export default function Finishes() {
 
                   {/* Expanded detail */}
                   {expanded === p.id && (p.notes || p.feedback) && (
-                    <div style={{ padding: '0 16px 14px', borderTop: '1px solid var(--border-2)', background: 'var(--fill-2)' }}>
+                    <div style={{ padding: '0 16px 14px', borderTop: '1px solid var(--c-border-light)', background: 'var(--c-bg-subtle-2)' }}>
                       {p.notes && (
                         <div style={{ paddingTop: 10 }}>
-                          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-4)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 4 }}>Notes</div>
-                          <div style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.6 }}>{p.notes}</div>
+                          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--c-text-faint)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 4 }}>Notes</div>
+                          <div style={{ fontSize: 14, color: 'var(--c-text-body)', lineHeight: 1.6 }}>{p.notes}</div>
                         </div>
                       )}
                       {p.feedback && (
                         <div style={{ marginTop: p.notes ? 10 : 10, background: 'var(--accent-dim)', borderRadius: 8, padding: '10px 12px' }}>
                           <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 4 }}>Feedback</div>
-                          <div style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.6 }}>{p.feedback}</div>
+                          <div style={{ fontSize: 14, color: 'var(--c-text-body)', lineHeight: 1.6 }}>{p.feedback}</div>
                         </div>
                       )}
                     </div>
@@ -133,7 +133,7 @@ export default function Finishes() {
             </div>
           ) : (
             <div className="empty">
-              <div className="empty-icon"><IPalette size={32} color="var(--text-3)" sw={1.5} /></div>
+              <div className="empty-icon"><IPalette size={32} color="var(--c-text-muted)" sw={1.5} /></div>
               <div className="empty-title">{search ? 'No results' : 'No finishes yet'}</div>
               <p className="empty-sub">
                 {search ? `No finishes matching "${search}"` : 'Build your finish library with notes and feedback on each product'}
@@ -188,9 +188,9 @@ function FinishSheet({ item, onSave, onClose }) {
           </select>
         </FormCell>
       </div>
-      <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 8 }}>Application notes</p>
+      <p style={{ fontSize: 13, color: 'var(--c-text-muted)', marginBottom: 8 }}>Application notes</p>
       <textarea ref={notesRef} className="form-textarea" style={{ width: '100%' }} placeholder="Dilution, method, drying tips…" defaultValue={item?.notes || ''} onChange={autoExpand} />
-      <p style={{ fontSize: 13, color: 'var(--text-3)', margin: '12px 0 8px' }}>Your feedback</p>
+      <p style={{ fontSize: 13, color: 'var(--c-text-muted)', margin: '12px 0 8px' }}>Your feedback</p>
       <textarea ref={feedbackRef} className="form-textarea" style={{ width: '100%', marginBottom: 4 }} placeholder="What worked, what didn't, would you use again?" defaultValue={item?.feedback || ''} onChange={autoExpand} />
     </Sheet>
   )

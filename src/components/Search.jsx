@@ -150,7 +150,7 @@ export default function GlobalSearch() {
   return (
     <div ref={containerRef} className="search-wrap">
       <div data-tutorial-target="search" className={`search-input-wrap ${focused ? 'focused' : ''}`}>
-        <ISearch size={15} color="var(--text-4)" sw={2} />
+        <ISearch size={15} color="var(--c-text-faint)" sw={2} />
         <input
           ref={inputRef}
           className="search-input"
@@ -199,7 +199,7 @@ export default function GlobalSearch() {
                 onClick={() => select(hit)}
                 onMouseEnter={() => setCursor(i)}
               >
-                <span className="search-result-type" style={{ color: TYPE_COLOR[hit.type] || 'var(--text-4)' }}>
+                <span className="search-result-type" style={{ color: TYPE_COLOR[hit.type] || 'var(--c-text-faint)' }}>
                   {hit.type}
                 </span>
                 <span className="search-result-title">{hit.title}</span>

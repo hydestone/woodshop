@@ -25,10 +25,10 @@ export default class ErrorBoundary extends Component {
           alignItems: 'center', justifyContent: 'center', padding: 32, textAlign: 'center'
         }}>
           <div style={{ marginBottom: 16 }}><IAlert size={40} color="var(--orange)" sw={1.5} /></div>
-          <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8, color: 'var(--text)' }}>
+          <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8, color: 'var(--c-text-primary)' }}>
             Something went wrong
           </div>
-          <div style={{ fontSize: 14, color: 'var(--text-3)', marginBottom: 24, maxWidth: 280 }}>
+          <div style={{ fontSize: 14, color: 'var(--c-text-muted)', marginBottom: 24, maxWidth: 280 }}>
             {this.state.error.message || 'An unexpected error occurred'}
           </div>
           <button

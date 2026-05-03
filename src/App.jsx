@@ -152,7 +152,7 @@ function FeedbackModal({ session, onClose }) {
 
   return (
     <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.6)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:3000, padding:24 }}>
-      <div onClick={e=>e.stopPropagation()} style={{ background:'var(--surface)', borderRadius:20, padding:'28px 24px', width:'100%', maxWidth:380, display:'flex', flexDirection:'column', gap:16, boxShadow:'var(--shadow-xl)' }}>
+      <div onClick={e=>e.stopPropagation()} style={{ background:'var(--c-bg-surface)', borderRadius:20, padding:'28px 24px', width:'100%', maxWidth:380, display:'flex', flexDirection:'column', gap:16, boxShadow:'var(--shadow-xl)' }}>
         {sent ? (
           <>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 4 }}>
@@ -750,7 +750,7 @@ export default function App() {
                   {tab === 'inspiration' && <Inspiration />}
                   {tab === 'stockgallery' && <div className="scroll-page" style={{paddingBottom:40}}><div className="page-header"><h1 className="page-title">Wood Stock Gallery</h1><p className="page-subtitle">Photos of raw lumber, blanks, and prep work</p></div><WoodStockGallery /></div>}
                   {tab === 'ideas'       && <ProjectIdeas />}
-                  <Suspense fallback={<div style={{ padding: 40, textAlign: 'center', color: 'var(--text-3)' }}>Loading...</div>}>
+                  <Suspense fallback={<div style={{ padding: 40, textAlign: 'center', color: 'var(--c-text-muted)' }}>Loading...</div>}>
                     {tab === 'yearreview'  && <YearReview />}
                     {tab === 'settings'    && <Settings />}
                     {tab === 'import'      && <BulkImport />}
@@ -780,7 +780,7 @@ export default function App() {
                       aria-label={t.label}
                       aria-current={active && !isMore ? 'page' : undefined}
                     >
-                      <t.Icon size={22} color={active ? 'var(--accent)' : 'var(--text-3)'} sw={active ? 2.2 : 1.6} />
+                      <t.Icon size={22} color={active ? 'var(--accent)' : 'var(--c-text-muted)'} sw={active ? 2.2 : 1.6} />
                       <span>{t.label}</span>
                       {badge > 0 && <div className="tab-badge" aria-hidden="true">{badge}</div>}
                     </button>
@@ -831,24 +831,24 @@ export default function App() {
                 <span />
                 <span className="sheet-title">More</span>
                 <button className="sheet-cancel" onClick={() => setShowMore(false)} aria-label="Close">
-                  <IClose size={18} color="var(--text-3)" sw={2} />
+                  <IClose size={18} color="var(--c-text-muted)" sw={2} />
                 </button>
               </div>
               <div className="sheet-body">
                 {/* Portfolio links */}
                 <div className="form-group" style={{ marginBottom: 8 }}>
-                  <div className="more-item" style={{ borderBottom: '1px solid var(--border-2)', padding: '13px 16px' }}
+                  <div className="more-item" style={{ borderBottom: '1px solid var(--c-border-light)', padding: '13px 16px' }}
                     onClick={() => { setShowMore(false); setShowFeedback(true) }} role="button" tabIndex={0}>
                     <IBrain size={20} color="var(--accent)" sw={1.8} />
-                    <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>Send Feedback</span>
+                    <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>Send Feedback</span>
                   </div>
-                  <div className="more-item" style={{ borderBottom: '1px solid var(--border-2)', padding: '13px 16px' }}
+                  <div className="more-item" style={{ borderBottom: '1px solid var(--c-border-light)', padding: '13px 16px' }}
                     onClick={() => { setShowMore(false); setShowQR(true) }} role="button" tabIndex={0}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
                       <rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/>
                     </svg>
-                    <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>Share Portfolio</span>
+                    <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>Share Portfolio</span>
                   </div>
                   <a href="/portfolio" target="_blank" rel="noopener noreferrer"
                     className="more-item"
@@ -858,7 +858,7 @@ export default function App() {
                       <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
                       <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
                     </svg>
-                    <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>View Portfolio</span>
+                    <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>View Portfolio</span>
                   </a>
                 </div>
 
@@ -872,7 +872,7 @@ export default function App() {
                   const label = section.label || 'Build'
                   return (
                     <div key={label} style={{ marginBottom: 8 }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-4)', textTransform: 'uppercase', letterSpacing: '.8px', padding: '4px 16px 6px' }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--c-text-faint)', textTransform: 'uppercase', letterSpacing: '.8px', padding: '4px 16px 6px' }}>
                         {label}
                       </div>
                       <div className="form-group">
@@ -880,12 +880,12 @@ export default function App() {
                           const badge = badgeFor(t.id)
                           return (
                             <div key={t.id} className="more-item"
-                              style={{ borderBottom: i < items.length - 1 ? '1px solid var(--border-2)' : 'none', padding: '13px 16px' }}
+                              style={{ borderBottom: i < items.length - 1 ? '1px solid var(--c-border-light)' : 'none', padding: '13px 16px' }}
                               onClick={() => { setTab(t.id); setShowMore(false) }}
                               role="button" tabIndex={0}
                               onKeyDown={e => e.key === 'Enter' && (setTab(t.id), setShowMore(false))}>
                               <t.Icon size={20} color="var(--accent)" sw={1.8} />
-                              <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>{t.label}</span>
+                              <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>{t.label}</span>
                               {badge > 0 && <span className="sidebar-badge">{badge}</span>}
                             </div>
                           )

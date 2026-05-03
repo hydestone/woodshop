@@ -77,7 +77,7 @@ export default function Shopping() {
             <h1 className="page-title">Shopping List</h1>
             {done.length > 0 && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                {totalSpent > 0 && <span style={{ fontSize: 13, color: 'var(--text-3)' }}>${totalSpent.toFixed(2)} spent</span>}
+                {totalSpent > 0 && <span style={{ fontSize: 13, color: 'var(--c-text-muted)' }}>${totalSpent.toFixed(2)} spent</span>}
                 <button className="btn-text" onClick={clearDone}>Clear done</button>
               </div>
             )}
@@ -102,7 +102,7 @@ export default function Shopping() {
           ))}
           {!active.length && !done.length && (
             <div className="empty">
-              <div className="empty-icon"><ICart size={32} color="var(--text-3)" sw={1.5} /></div>
+              <div className="empty-icon"><ICart size={32} color="var(--c-text-muted)" sw={1.5} /></div>
               <div className="empty-title">List is empty</div>
               <p className="empty-sub">Click + to add items</p>
             </div>
@@ -135,20 +135,20 @@ export default function Shopping() {
 
 function ShopRow({ item, onToggle, onEdit, onDelete, last, isSample }) {
   return (
-    <div className="cell" style={{ borderBottom: last ? 'none' : '1px solid var(--border-2)' }}>
+    <div className="cell" style={{ borderBottom: last ? 'none' : '1px solid var(--c-border-light)' }}>
       <button className="check-btn" onClick={onToggle} aria-label={item.completed ? 'Mark not purchased' : 'Mark purchased'}>
         {item.completed
           ? <ICheck size={22} color="var(--green)" sw={2} />
-          : <ICircle size={22} color="var(--text-4)" sw={1.5} />}
+          : <ICircle size={22} color="var(--c-text-faint)" sw={1.5} />}
       </button>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ textDecoration: item.completed ? 'line-through' : 'none', color: item.completed ? 'var(--text-3)' : 'var(--text)' }}>
+        <div style={{ textDecoration: item.completed ? 'line-through' : 'none', color: item.completed ? 'var(--c-text-muted)' : 'var(--c-text-primary)' }}>
           {item.name}
           {isSample && <span className="sample-badge">SAMPLE</span>}
-          {item.qty && <span style={{ color: 'var(--text-3)' }}> · {item.qty}{item.unit ? ` ${item.unit}` : ''}</span>}
+          {item.qty && <span style={{ color: 'var(--c-text-muted)' }}> · {item.qty}{item.unit ? ` ${item.unit}` : ''}</span>}
           {item.cost > 0 && <span style={{ color: 'var(--green)', fontWeight: 500 }}> · ${Number(item.cost).toFixed(2)}</span>}
         </div>
-        {item.notes && <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 1 }}>{item.notes}</div>}
+        {item.notes && <div style={{ fontSize: 12, color: 'var(--c-text-muted)', marginTop: 1 }}>{item.notes}</div>}
       </div>
       <button className="icon-btn" onClick={onEdit} aria-label={`Edit ${item.name}`}><IEdit size={15} /></button>
       <button className="icon-btn" onClick={onDelete} aria-label={`Delete ${item.name}`}><ITrash size={15} /></button>

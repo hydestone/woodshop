@@ -34,10 +34,10 @@ function CleanupTable({ newProjects, onDone }) {
     } catch(e) { toast(e.message, 'error') }
   }
 
-  const inp = { background: 'transparent', border: 'none', outline: 'none', fontFamily: 'inherit', fontSize: 13, color: 'var(--text)', width: '100%' }
+  const inp = { background: 'transparent', border: 'none', outline: 'none', fontFamily: 'inherit', fontSize: 13, color: 'var(--c-text-primary)', width: '100%' }
   const sel = { ...inp, cursor: 'pointer' }
   const th = { padding: '9px 10px', color: '#CBD5E1', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '.4px', textAlign: 'left', whiteSpace: 'nowrap', background: '#0F1E38' }
-  const td = (i) => ({ padding: '7px 8px', borderBottom: '1px solid var(--border-2)', background: i % 2 === 0 ? 'var(--surface)' : 'var(--fill-2)' })
+  const td = (i) => ({ padding: '7px 8px', borderBottom: '1px solid var(--c-border-light)', background: i % 2 === 0 ? 'var(--c-bg-surface)' : 'var(--c-bg-subtle-2)' })
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -45,7 +45,7 @@ function CleanupTable({ newProjects, onDone }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h1 className="page-title">Clean Up</h1>
-            <p style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 2 }}>{newProjects.length} projects imported — fill in details, click Done when finished.</p>
+            <p style={{ fontSize: 13, color: 'var(--c-text-muted)', marginTop: 2 }}>{newProjects.length} projects imported — fill in details, click Done when finished.</p>
           </div>
           <button className="btn-primary" style={{ padding: '10px 28px', justifyContent: 'center' }} onClick={onDone}>Done</button>
         </div>
@@ -104,8 +104,8 @@ function CleanupTable({ newProjects, onDone }) {
                     <input style={inp} defaultValue={live.gift_recipient || ''}
                       onBlur={e => { if (e.target.value !== (live.gift_recipient||'')) save(proj.id, 'gift_recipient', e.target.value) }} />
                   </td>
-                  <td style={{ ...td(i), minWidth: 130, fontSize: 12, color: 'var(--text-4)', padding: '7px 8px' }}>
-                    <span style={{ fontSize: 11, color: 'var(--text-4)' }}>Edit in Projects</span>
+                  <td style={{ ...td(i), minWidth: 130, fontSize: 12, color: 'var(--c-text-faint)', padding: '7px 8px' }}>
+                    <span style={{ fontSize: 11, color: 'var(--c-text-faint)' }}>Edit in Projects</span>
                   </td>
                 </tr>
               )
@@ -253,7 +253,7 @@ export default function BulkImport() {
   if (phase === 2) return <CleanupTable newProjects={newProjects} onDone={() => { setPhase(1); setRows([]); setNewProjects([]) }} />
 
   const { newCount, existingCount, stockCount } = rows.length ? getProjectCount() : { newCount:0, existingCount:0, stockCount:0 }
-  const sel = { fontSize: 13, background: 'transparent', border: 'none', outline: 'none', fontFamily: 'inherit', color: 'var(--text)', cursor: 'pointer', width: '100%' }
+  const sel = { fontSize: 13, background: 'transparent', border: 'none', outline: 'none', fontFamily: 'inherit', color: 'var(--c-text-primary)', cursor: 'pointer', width: '100%' }
   const inp = { ...sel, cursor: 'text' }
   const th = { padding: '9px 10px', color: '#CBD5E1', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '.4px', textAlign: 'left', whiteSpace: 'nowrap', background: '#0F1E38' }
 
@@ -262,7 +262,7 @@ export default function BulkImport() {
       <div className="scroll-page" style={{ paddingBottom: 100 }}>
         <div className="page-header">
           <h1 className="page-title">Bulk Import</h1>
-          <p style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>Drop photos, set destination, import. Fill in details in Phase 2.</p>
+          <p style={{ fontSize: 13, color: 'var(--c-text-muted)', marginTop: 4 }}>Drop photos, set destination, import. Fill in details in Phase 2.</p>
         </div>
 
         {!rows.length ? (
@@ -270,15 +270,15 @@ export default function BulkImport() {
             onDragOver={e => { e.preventDefault(); dropRef.current?.classList.add('drag-over') }}
             onDragLeave={() => dropRef.current?.classList.remove('drag-over')}
             onClick={() => fileRef.current?.click()}
-            style={{ margin: '16px 20px', border: '2px dashed var(--border)', borderRadius: 12, padding: '56px 24px', textAlign: 'center', cursor: 'pointer', background: 'var(--fill-2)' }}>
-            <div style={{ marginBottom: 12 }}><ICamera size={48} color="var(--text-3)" sw={1.2} /></div>
-            <div style={{ fontWeight: 600, fontSize: 16, color: 'var(--text-2)', marginBottom: 6 }}>Drop photos here</div>
-            <p style={{ fontSize: 13, color: 'var(--text-3)' }}>Or click to select. Multiple files supported.</p>
+            style={{ margin: '16px 20px', border: '2px dashed var(--c-border)', borderRadius: 12, padding: '56px 24px', textAlign: 'center', cursor: 'pointer', background: 'var(--c-bg-subtle-2)' }}>
+            <div style={{ marginBottom: 12 }}><ICamera size={48} color="var(--c-text-muted)" sw={1.2} /></div>
+            <div style={{ fontWeight: 600, fontSize: 16, color: 'var(--c-text-body)', marginBottom: 6 }}>Drop photos here</div>
+            <p style={{ fontSize: 13, color: 'var(--c-text-muted)' }}>Or click to select. Multiple files supported.</p>
           </div>
         ) : (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 20px 12px' }}>
-              <span style={{ fontSize: 13, color: 'var(--text-3)' }}>{rows.length} photo{rows.length!==1?'s':''}</span>
+              <span style={{ fontSize: 13, color: 'var(--c-text-muted)' }}>{rows.length} photo{rows.length!==1?'s':''}</span>
               <button className="btn-secondary" style={{ fontSize: 13 }} onClick={() => fileRef.current?.click()}>+ Add more</button>
             </div>
             <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: 'calc(100vh - 280px)', padding: '0 20px' }}>
@@ -295,8 +295,8 @@ export default function BulkImport() {
                 </thead>
                 <tbody>
                   {rows.map((row, rowIdx) => {
-                    const bg = rowIdx%2===0?'var(--surface)':'var(--fill-2)'
-                    const cell = { padding: '8px 8px', borderBottom: '1px solid var(--border-2)', background: bg }
+                    const bg = rowIdx%2===0?'var(--c-bg-surface)':'var(--c-bg-subtle-2)'
+                    const cell = { padding: '8px 8px', borderBottom: '1px solid var(--c-border-light)', background: bg }
                     const isNew = row.dest===DEST.NEW
                     const isExisting = row.dest===DEST.EXISTING
                     const isStock = row.dest===DEST.STOCK
@@ -338,11 +338,11 @@ export default function BulkImport() {
                             row.groupId ? (
                               <div style={{ display:'flex', alignItems:'center', gap:5 }}>
                                 <div style={{ width:10, height:10, borderRadius:3, background:groupColorMap[row.groupId]||'#888', flexShrink:0 }}/>
-                                <span style={{ fontSize:11, color:'var(--text-3)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:50 }}>{row.groupId}</span>
-                                <button onClick={()=>update(row.id,'groupId','')} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-4)', fontSize:14, padding:0, lineHeight:1 }}>×</button>
+                                <span style={{ fontSize:11, color:'var(--c-text-muted)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:50 }}>{row.groupId}</span>
+                                <button onClick={()=>update(row.id,'groupId','')} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--c-text-faint)', fontSize:14, padding:0, lineHeight:1 }}>×</button>
                               </div>
-                            ) : <span style={{ fontSize:12, color:'var(--text-4)' }}>—</span>
-                          ) : <span style={{ fontSize:12, color:'var(--text-4)' }}>—</span>}
+                            ) : <span style={{ fontSize:12, color:'var(--c-text-faint)' }}>—</span>
+                          ) : <span style={{ fontSize:12, color:'var(--c-text-faint)' }}>—</span>}
                         </td>
                         <td style={cell}>
                           <button onClick={()=>removeRow(row.id)} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--red)', fontSize:18, padding:'4px', lineHeight:1 }}>×</button>
@@ -352,19 +352,19 @@ export default function BulkImport() {
                   })}
                 </tbody>
               </table>
-              <p style={{ fontSize:12, color:'var(--text-4)', marginTop:8 }}>Click a thumbnail to preview. Select 2+ rows and click Group to link them to one project.</p>
+              <p style={{ fontSize:12, color:'var(--c-text-faint)', marginTop:8 }}>Click a thumbnail to preview. Select 2+ rows and click Group to link them to one project.</p>
             </div>
           </>
         )}
       </div>
 
       {rows.length>0 && !importing && (
-        <div style={{ position:'sticky', bottom:0, background:'var(--surface)', borderTop:'1px solid var(--border-2)', padding:'12px 20px' }}>
+        <div style={{ position:'sticky', bottom:0, background:'var(--c-bg-surface)', borderTop:'1px solid var(--c-border-light)', padding:'12px 20px' }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
             <div style={{ display:'flex', gap:8, alignItems:'center' }}>
               {selected.size>=2 && <button className="btn-primary" style={{ padding:'8px 16px', fontSize:13, justifyContent:'center' }} onClick={groupSelected}>Group {selected.size} selected</button>}
-              {selected.size>0 && selected.size<2 && <span style={{ fontSize:12, color:'var(--text-3)' }}>Select 2+ to group</span>}
-              {selected.size===0 && <span style={{ fontSize:13, color:'var(--text-3)' }}>
+              {selected.size>0 && selected.size<2 && <span style={{ fontSize:12, color:'var(--c-text-muted)' }}>Select 2+ to group</span>}
+              {selected.size===0 && <span style={{ fontSize:13, color:'var(--c-text-muted)' }}>
                 {newCount>0&&`${newCount} new`}{newCount>0&&(existingCount>0||stockCount>0)&&' · '}
                 {existingCount>0&&`${existingCount} existing`}{existingCount>0&&stockCount>0&&' · '}
                 {stockCount>0&&`${stockCount} stock`}
@@ -379,12 +379,12 @@ export default function BulkImport() {
       )}
 
       {importing && (
-        <div style={{ position:'sticky', bottom:0, background:'var(--surface)', borderTop:'1px solid var(--border-2)', padding:'16px 20px' }}>
+        <div style={{ position:'sticky', bottom:0, background:'var(--c-bg-surface)', borderTop:'1px solid var(--c-border-light)', padding:'16px 20px' }}>
           <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
             <span style={{ fontSize:13, fontWeight:500 }}>Uploading…</span>
-            <span style={{ fontSize:13, color:'var(--text-3)' }}>{progress}%</span>
+            <span style={{ fontSize:13, color:'var(--c-text-muted)' }}>{progress}%</span>
           </div>
-          <div style={{ height:6, borderRadius:3, background:'var(--fill)' }}>
+          <div style={{ height:6, borderRadius:3, background:'var(--c-bg-subtle)' }}>
             <div style={{ height:6, borderRadius:3, background:'var(--accent)', width:progress+'%', transition:'width 200ms' }}/>
           </div>
         </div>

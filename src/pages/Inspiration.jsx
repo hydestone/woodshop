@@ -74,7 +74,7 @@ export default function Inspiration() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
               <h1 className="page-title" style={{ margin: 0 }}>Inspiration</h1>
-              <span style={{ fontSize: 13, color: 'var(--text-3)' }}>{photos.length}</span>
+              <span style={{ fontSize: 13, color: 'var(--c-text-muted)' }}>{photos.length}</span>
             </div>
           </div>
         </div>
@@ -92,7 +92,7 @@ export default function Inspiration() {
         >
           {dragging && (
             <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, pointerEvents: 'none' }}>
-              <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--accent)', background: 'var(--surface)', padding: '8px 20px', borderRadius: 8, boxShadow: 'var(--shadow-lg)' }}>Drop to upload</span>
+              <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--accent)', background: 'var(--c-bg-surface)', padding: '8px 20px', borderRadius: 8, boxShadow: 'var(--shadow-lg)' }}>Drop to upload</span>
             </div>
           )}
 
@@ -107,7 +107,7 @@ export default function Inspiration() {
           />
         ) : (
           <div className="empty" style={{ paddingTop: 60 }}>
-            <ICamera size={32} color="var(--text-3)" sw={1.5} />
+            <ICamera size={32} color="var(--c-text-muted)" sw={1.5} />
             <div className="empty-title" style={{ marginTop: 12 }}>No inspiration photos yet</div>
             <p className="empty-sub">Drag photos here or tap + to add</p>
           </div>

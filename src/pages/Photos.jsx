@@ -150,7 +150,7 @@ export default function AllPhotos() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
               <h1 className="page-title" style={{ margin: 0 }}>All Photos</h1>
-              <span style={{ fontSize: 13, color: 'var(--text-3)' }}>{data.photos.length}</span>
+              <span style={{ fontSize: 13, color: 'var(--c-text-muted)' }}>{data.photos.length}</span>
             </div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               <FilterSelect
@@ -201,7 +201,7 @@ export default function AllPhotos() {
               cursor: 'pointer', border: '1px solid var(--orange)',
             }}
           >
-            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--c-text-primary)' }}>
               {unsortedCount} unsorted
             </span>
             <button className="btn-primary" style={{ padding: '6px 14px', fontSize: 12, flexShrink: 0 }} onClick={e => { e.stopPropagation(); setShowTriage(true) }}>
@@ -228,7 +228,7 @@ export default function AllPhotos() {
               position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
               zIndex: 10, pointerEvents: 'none',
             }}>
-              <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--accent)', background: 'var(--surface)', padding: '8px 20px', borderRadius: 8, boxShadow: 'var(--shadow-lg)' }}>
+              <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--accent)', background: 'var(--c-bg-surface)', padding: '8px 20px', borderRadius: 8, boxShadow: 'var(--shadow-lg)' }}>
                 Drop to upload
               </span>
             </div>
@@ -251,7 +251,7 @@ export default function AllPhotos() {
           }
           return (
             <div className="empty" style={{ paddingTop: 60 }}>
-              <ICamera size={32} color="var(--text-3)" sw={1.5} />
+              <ICamera size={32} color="var(--c-text-muted)" sw={1.5} />
               <div className="empty-title" style={{ marginTop: 12 }}>{filter === 'unsorted' ? 'Inbox is empty' : filter === 'all' ? 'No photos yet' : 'No photos in this filter'}</div>
               <p className="empty-sub">{filter === 'unsorted' ? 'Use Quick Upload to add photos for sorting later' : filter === 'all' ? 'Drop photos above or tap the camera button' : 'Try a different filter above'}</p>
             </div>
@@ -313,7 +313,7 @@ function PhotoTagSheet({ count, onSave, onClose }) {
           />
         </FormCell>
       </div>
-      <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 8 }}>Tags</p>
+      <p style={{ fontSize: 13, color: 'var(--c-text-muted)', marginBottom: 8 }}>Tags</p>
       <TagInput tags={tags} onChange={setTags} />
     </Sheet>
   )

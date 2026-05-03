@@ -62,7 +62,7 @@ export default function FinishedWork() {
           <div className="page-header-row">
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <h1 className="page-title">Finished Work</h1>
-              <span style={{ fontSize: 13, color: 'var(--text-3)' }}>{photos.length}</span>
+              <span style={{ fontSize: 13, color: 'var(--c-text-muted)' }}>{photos.length}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               {projectCategories.length > 0 && (
@@ -88,7 +88,7 @@ export default function FinishedWork() {
         </div>
         {photos.length === 0 ? (
           <div className="empty" style={{ paddingTop: 60 }}>
-            <div className="empty-icon"><ITrophy size={32} color="var(--text-3)" sw={1.5} /></div>
+            <div className="empty-icon"><ITrophy size={32} color="var(--c-text-muted)" sw={1.5} /></div>
             <div className="empty-title">No finished pieces yet</div>
             <p className="empty-sub">Tag any photo with "finished" to show it here</p>
             <button
