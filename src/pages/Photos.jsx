@@ -183,7 +183,7 @@ export default function AllPhotos() {
               <h1 className="page-title" style={{ margin: 0 }}>All Photos</h1>
               <span style={{ fontSize: 13, color: 'var(--c-text-muted)' }}>{data.photos.length}</span>
             </div>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'nowrap', overflowX: 'auto', scrollbarWidth: 'none' }}>
               <FilterSelect
                 value={filter.startsWith('cat:') ? 'all' : filter}
                 onChange={v => { setFilter(v); if (v !== 'unsorted') { setUnsortedStatus('all'); setIncludeComplete(false) } }}

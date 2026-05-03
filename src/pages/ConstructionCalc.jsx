@@ -291,6 +291,8 @@ export default function ConstructionCalc() {
     setResult(null); setJustEvaled(false)
     setDisplay(prev => {
       if (!prev) return `1/${den}`
+      // ft/in context: ends with whole number after ' or "  e.g. "6'4 \"1" or "6' 1"
+      if (prev.match(/['"\s](\d+)$/)) return prev.replace(/(\d+)$/, `$1/${den}`)
       if (prev.match(/^(-?\d+)\s+(\d+)\/(\d+)$/)) return prev.replace(/\/\d+$/, `/${den}`)
       if (prev.match(/^(\d+)\/(\d+)$/)) return `${prev.split('/')[0]}/${den}`
       if (prev.match(/^(-?\d+)$/)) return `${prev}/${den}`
@@ -536,7 +538,7 @@ export default function ConstructionCalc() {
                   cursor: 'pointer',
                   padding: '2px 2px',
                   minHeight: 0,
-                  color: (id !== 'help' && conMode === id) ? 'var(--forest)' : id === 'help' && showHelp ? 'var(--accent)' : '#94A3B8',
+                  color: (id !== 'help' && conMode === id) ? 'var(--forest)' : id === 'help' && showHelp ? 'var(--accent)' : '#ffffff',
                 }}
               >
                 <span style={{ fontSize: 13, lineHeight: 1 }}>{icon}</span>

@@ -153,10 +153,10 @@ export default function Projects() {
               )}
             </div>
           </div>
-          {/* Filter + sort + favorites + table — single row */}
-          <div style={{ display:'flex', gap:6, alignItems:'center', marginTop:10, flexWrap:'wrap' }}>
-            {/* Status pills */}
-            <div style={{ display: 'flex', gap: 4 }}>
+          {/* Filter bar — two rows: row1=status+fav, row2=category+sort */}
+          <div style={{ display:'flex', flexDirection:'column', gap:6, marginTop:10 }}>
+            {/* Row 1: Status pills + Favorites */}
+            <div style={{ display:'flex', gap:4, alignItems:'center', overflowX:'auto', scrollbarWidth:'none' }}>
               {[
                 { id: 'all',      label: 'All' },
                 { id: 'active',   label: 'Active' },
@@ -165,16 +165,33 @@ export default function Projects() {
                 { id: 'complete', label: 'Complete' },
               ].map(s => (
                 <button key={s.id} onClick={() => setStatusFilter(s.id)} style={{
-                  padding: '7px 11px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                  fontFamily: 'inherit', borderRadius: 0,
+                  padding: '7px 10px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                  fontFamily: 'inherit', borderRadius: 0, flexShrink: 0,
                   background: statusFilter === s.id ? 'var(--navy)' : 'var(--c-bg-subtle)',
                   color: statusFilter === s.id ? 'var(--white)' : 'var(--c-text-muted)',
                   border: '1.5px solid var(--c-border)',
                   transition: 'background 120ms, color 120ms',
                 }}>{s.label}</button>
               ))}
+              <button
+                onClick={() => setShowFavOnly(f => !f)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0,
+                  padding: '7px 10px', fontSize: 13, fontWeight: 600,
+                  fontFamily: 'inherit', cursor: 'pointer',
+                  background: showFavOnly ? 'var(--navy)' : 'var(--c-bg-subtle)',
+                  color: showFavOnly ? 'var(--white)' : 'var(--c-text-muted)',
+                  border: '1.5px solid var(--c-border)', borderRadius: 0,
+                  transition: 'background 150ms, color 150ms',
+                }}
+                title={showFavOnly ? 'Show all' : 'Favorites only'}
+              >
+                <IStar size={13} fill={showFavOnly ? '#fff' : 'none'} color={showFavOnly ? '#fff' : '#F59E0B'} />
+                Fav
+              </button>
             </div>
-            {/* Category */}
+            {/* Row 2: Category + Sort */}
+            <div style={{ display:'flex', gap:6, alignItems:'center' }}>
             {categories.length > 0 && (
               <FilterSelect
                 value={filter}
@@ -197,23 +214,7 @@ export default function Projects() {
               </select>
               <span className="filter-select-chevron" aria-hidden="true">▾</span>
             </div>
-            {/* Favorites toggle */}
-            <button
-              onClick={() => setShowFavOnly(f => !f)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 5,
-                padding: '7px 12px', fontSize: 14, fontWeight: 500,
-                fontFamily: 'inherit', cursor: 'pointer',
-                background: showFavOnly ? 'var(--navy)' : 'var(--c-bg-subtle)',
-                color: showFavOnly ? 'var(--white)' : 'var(--c-text-primary)',
-                border: '1.5px solid var(--c-border)', borderRadius: 0,
-                transition: 'background 150ms, color 150ms',
-              }}
-              title={showFavOnly ? 'Show all' : 'Favorites only'}
-            >
-              <IStar size={14} fill={showFavOnly ? '#fff' : 'none'} color={showFavOnly ? '#fff' : '#F59E0B'} />
-              Favorites
-            </button>
+            </div>{/* end row 2 */}
             {/* Table view — desktop only */}
             <button
               style={{
