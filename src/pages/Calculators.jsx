@@ -200,86 +200,102 @@ function BoardFoot() {
   )
 }
 
-// FractionCalc removed — merged into ConstructionCalc
-
-// ─── Tab: Converter (4 columns, all on one tab) ────────────────────────────────
-const CONV = {
-  Length: {
-    units: ['in', 'ft', 'yd', 'mm', 'cm', 'm'],
-    toBase: { in:1, ft:12, yd:36, mm:1/25.4, cm:1/2.54, m:39.3701 },
-  },
-  Temperature: { units: ['°F', '°C', 'K'], special: true },
-  Weight: {
-    units: ['lb', 'oz', 'kg', 'g'],
-    toBase: { lb:1, oz:1/16, kg:2.20462, g:0.00220462 },
-  },
-  Area: {
-    units: ['in²', 'ft²', 'mm²', 'cm²', 'm²'],
-    toBase: { 'in²':1, 'ft²':144, 'mm²':1/645.16, 'cm²':1/6.4516, 'm²':1550.003 },
-  },
+// ─── Tab: Converter ──────────────────────────────────────────────────────────
+const CONV_CATS = {
+  Length:      { units: ['in','ft','yd','mi','mm','cm','m','km'], toBase: { in:1, ft:12, yd:36, mi:63360, mm:1/25.4, cm:1/2.54, m:39.3701, km:39370.1 } },
+  Area:        { units: ['in²','ft²','yd²','ac','mm²','cm²','m²'], toBase: { 'in²':1,'ft²':144,'yd²':1296,'ac':6272640,'mm²':1/645.16,'cm²':1/6.4516,'m²':1550.003 } },
+  Volume:      { units: ['fl oz','cup','pt','qt','gal','ml','L'], toBase: { 'fl oz':1, cup:8, pt:16, qt:32, gal:128, ml:1/29.5735, L:33.814 } },
+  Weight:      { units: ['oz','lb','ton','g','kg','t'], toBase: { oz:1, lb:16, ton:32000, g:1/28.3495, kg:1/0.028349, t:1/0.0000283495 } },
+  Temperature: { units: ['°F','°C','K'], special: true },
+  Speed:       { units: ['mph','fps','km/h','m/s','knot'], toBase: { mph:1, fps:0.681818, 'km/h':0.621371, 'm/s':2.23694, knot:1.15078 } },
+  Pressure:    { units: ['PSI','bar','kPa','MPa','atm'], toBase: { PSI:1, bar:14.5038, kPa:0.145038, MPa:145.038, atm:14.696 } },
+  Torque:      { units: ['ft·lb','in·lb','N·m','kgf·m'], toBase: { 'ft·lb':1,'in·lb':0.0833333,'N·m':0.737562,'kgf·m':7.23301 } },
+  'Board Foot':{ units: ['BF','in³','ft³'], toBase: { BF:1, 'in³':1/144, 'ft³':12 } },
 }
 
 function convertTemp(v, from, to) {
-  let c = from === '°F' ? (v-32)*5/9 : from === 'K' ? v-273.15 : v
-  return to === '°F' ? c*9/5+32 : to === 'K' ? c+273.15 : c
+  let c = from==='°F'?(v-32)*5/9 : from==='K'?v-273.15 : v
+  return to==='°F'?c*9/5+32 : to==='K'?c+273.15 : c
 }
 
 function convertVal(v, from, to, cfg) {
   if (!cfg || isNaN(v)) return ''
-  if (cfg.special) return convertTemp(v, from, to).toFixed(4)
+  if (cfg.special) { const r = convertTemp(v, from, to); return Number.isFinite(r) ? +r.toFixed(4) + '' : '' }
   const base = v * (cfg.toBase[from] || 1)
-  return (base / (cfg.toBase[to] || 1)).toFixed(6).replace(/\.?0+$/, '')
+  const res = base / (cfg.toBase[to] || 1)
+  return +res.toFixed(8) + ''
 }
 
-function ConverterColumn({ title, cfg, catKey }) {
+function ConverterRow({ title, cfg }) {
   const [from, setFrom] = useState(cfg.units[0])
-  const [to, setTo]     = useState(cfg.units[1] || cfg.units[0])
-  const [val, setVal]   = useState('')
-
+  const [to,   setTo]   = useState(cfg.units[1] || cfg.units[0])
+  const [val,  setVal]  = useState('')
   const result = val !== '' ? convertVal(parseFloat(val), from, to, cfg) : ''
 
+  const selStyle = {
+    background: 'transparent', border: 'none', fontFamily: 'inherit',
+    fontSize: 12, fontWeight: 700, outline: 'none', color: 'var(--c-text-primary)',
+    cursor: 'pointer', padding: '2px 2px', maxWidth: 72,
+  }
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <div className="label-caps">{title}</div>
-
-      {/* Input */}
-      <div style={{ background: 'var(--navy)', borderRadius: 0, borderLeft: '3px solid var(--accent)', padding: '10px 12px' }}>
-        <div style={{ fontSize: 10, color: 'var(--sb-text)', marginBottom: 4 }}>From</div>
-        <select
-          value={from}
-          onChange={e => setFrom(e.target.value)}
-          style={{ background: 'transparent', color: 'var(--white)', border: 'none', fontFamily: 'inherit', fontSize: 13, fontWeight: 700, outline: 'none', marginBottom: 6, width: '100%' }}
-        >
-          {cfg.units.map(u => <option key={u} value={u} style={{ background: 'var(--navy)' }}>{u}</option>)}
-        </select>
-        <input
-          className="calc-input"
-          value={val}
-          onChange={e => setVal(e.target.value)}
-          placeholder="0"
-          inputMode="decimal"
-          style={{ background: 'rgba(255,255,255,.1)', color: 'var(--white)', border: '1px solid rgba(255,255,255,.2)', textAlign: 'right', fontSize: 18, fontWeight: 700, width: '100%' }}
-        />
+    <div style={{ display:'grid', gridTemplateColumns:'80px 1fr 72px 20px 1fr 72px 32px', gap:4, alignItems:'center', padding:'6px 0', borderBottom:'1px solid var(--c-border-light)' }}>
+      <span style={{ fontSize:11, fontWeight:700, color:'var(--c-text-muted)', textTransform:'uppercase', letterSpacing:'.4px' }}>{title}</span>
+      <input className="calc-input" value={val} onChange={e=>setVal(e.target.value)}
+        placeholder="0" inputMode="decimal"
+        style={{ fontSize:14, padding:'6px 8px', textAlign:'right' }} />
+      <select value={from} onChange={e=>setFrom(e.target.value)} style={selStyle}>
+        {cfg.units.map(u=><option key={u}>{u}</option>)}
+      </select>
+      <span style={{ textAlign:'center', color:'var(--c-text-faint)', fontSize:13 }}>→</span>
+      <div style={{ background:'var(--c-bg-subtle)', border:'1px solid var(--c-border-light)', padding:'6px 8px', fontSize:14, fontWeight:700, color:'var(--forest)', textAlign:'right', minHeight:36, display:'flex', alignItems:'center', justifyContent:'flex-end' }}>
+        {result || <span style={{color:'var(--c-text-faint)'}}>—</span>}
       </div>
+      <select value={to} onChange={e=>setTo(e.target.value)} style={selStyle}>
+        {cfg.units.map(u=><option key={u}>{u}</option>)}
+      </select>
+      <button onClick={()=>{setFrom(to);setTo(from)}} title="Swap"
+        style={{ background:'none', border:'1px solid var(--c-border)', borderRadius:0, cursor:'pointer', fontSize:13, color:'var(--c-text-muted)', padding:'4px 6px' }}>⇄</button>
+    </div>
+  )
+}
 
-      {/* Swap */}
-      <button
-        onClick={() => { setFrom(to); setTo(from) }}
-        style={{ background: 'var(--c-bg-subtle)', border: '1.5px solid var(--c-border)', borderRadius: 0, padding: '6px 12px', cursor: 'pointer', alignSelf: 'center', fontSize: 16, lineHeight: 1, color: 'var(--c-text-muted)', width: '100%' }}
-        aria-label="Swap units"
-      >⇅ Swap</button>
+function WildcardConverter() {
+  const [cat, setCat] = useState('Length')
+  const cfg = CONV_CATS[cat]
+  const [from, setFrom] = useState(cfg.units[0])
+  const [to,   setTo]   = useState(cfg.units[1] || cfg.units[0])
+  const [val,  setVal]  = useState('')
 
-      {/* Result */}
-      <div style={{ background: 'var(--c-bg-surface)', border: '1px solid var(--c-border-light)', borderLeft: '3px solid var(--forest)', borderRadius: 0, padding: '10px 12px' }}>
-        <div style={{ fontSize: 10, color: 'var(--c-text-faint)', marginBottom: 4 }}>Result</div>
-        <select
-          value={to}
-          onChange={e => setTo(e.target.value)}
-          style={{ background: 'transparent', border: 'none', fontFamily: 'inherit', fontSize: 13, fontWeight: 700, outline: 'none', marginBottom: 6, width: '100%', color: 'var(--c-text-primary)' }}
-        >
-          {cfg.units.map(u => <option key={u}>{u}</option>)}
+  const handleCat = c => { setCat(c); const u = CONV_CATS[c].units; setFrom(u[0]); setTo(u[1]||u[0]); setVal('') }
+  const curCfg = CONV_CATS[cat]
+  const result = val !== '' ? convertVal(parseFloat(val), from, to, curCfg) : ''
+
+  return (
+    <div style={{ background:'var(--navy)', padding:'12px 14px', marginBottom:16, borderLeft:'3px solid var(--accent)' }}>
+      <div style={{ fontSize:10, fontWeight:700, color:'rgba(255,255,255,.4)', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:8 }}>QUICK CONVERT</div>
+      <div style={{ display:'flex', gap:8, flexWrap:'wrap', alignItems:'center' }}>
+        <select value={cat} onChange={e=>handleCat(e.target.value)}
+          style={{ background:'rgba(255,255,255,.1)', color:'var(--white)', border:'1px solid rgba(255,255,255,.2)', borderRadius:0, fontFamily:'inherit', fontSize:13, fontWeight:700, padding:'6px 10px', cursor:'pointer', outline:'none' }}>
+          {Object.keys(CONV_CATS).map(c=><option key={c} style={{background:'var(--navy)'}}>{c}</option>)}
         </select>
-        <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--forest)', textAlign: 'right' }}>{result || '—'}</div>
+        <input className="calc-input" value={val} onChange={e=>setVal(e.target.value)}
+          placeholder="value" inputMode="decimal"
+          style={{ flex:1, minWidth:80, background:'rgba(255,255,255,.1)', color:'var(--white)', border:'1px solid rgba(255,255,255,.2)', fontSize:16, fontWeight:700, textAlign:'right', padding:'6px 10px' }} />
+        <select value={from} onChange={e=>setFrom(e.target.value)}
+          style={{ background:'rgba(255,255,255,.1)', color:'var(--white)', border:'1px solid rgba(255,255,255,.2)', borderRadius:0, fontFamily:'inherit', fontSize:13, fontWeight:700, padding:'6px 10px', cursor:'pointer', outline:'none' }}>
+          {curCfg.units.map(u=><option key={u} style={{background:'var(--navy)'}}>{u}</option>)}
+        </select>
+        <span style={{ color:'rgba(255,255,255,.5)', fontSize:18 }}>→</span>
+        <div style={{ flex:1, minWidth:80, background:'rgba(0,0,0,.3)', border:'1px solid rgba(255,255,255,.1)', padding:'6px 10px', fontSize:16, fontWeight:700, color:'#4ADE80', textAlign:'right', minHeight:36, display:'flex', alignItems:'center', justifyContent:'flex-end' }}>
+          {result || <span style={{color:'rgba(255,255,255,.2)'}}>—</span>}
+        </div>
+        <select value={to} onChange={e=>setTo(e.target.value)}
+          style={{ background:'rgba(255,255,255,.1)', color:'var(--white)', border:'1px solid rgba(255,255,255,.2)', borderRadius:0, fontFamily:'inherit', fontSize:13, fontWeight:700, padding:'6px 10px', cursor:'pointer', outline:'none' }}>
+          {curCfg.units.map(u=><option key={u} style={{background:'var(--navy)'}}>{u}</option>)}
+        </select>
+        <button onClick={()=>{setFrom(to);setTo(from)}}
+          style={{ background:'rgba(255,255,255,.08)', border:'1px solid rgba(255,255,255,.15)', borderRadius:0, color:'var(--white)', fontSize:14, padding:'6px 12px', cursor:'pointer' }}>⇄</button>
       </div>
     </div>
   )
@@ -287,10 +303,11 @@ function ConverterColumn({ title, cfg, catKey }) {
 
 function UnitConverter() {
   return (
-    <div style={{ padding: '12px 20px 40px', maxWidth: 640, margin: '0 auto' }}>
-      <div className="conv-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
-        {Object.entries(CONV).map(([title, cfg]) => (
-          <ConverterColumn key={title} title={title} cfg={cfg} catKey={title} />
+    <div style={{ padding:'12px 20px 40px', maxWidth:900, margin:'0 auto' }}>
+      <WildcardConverter />
+      <div style={{ display:'flex', flexDirection:'column' }}>
+        {Object.entries(CONV_CATS).map(([title, cfg]) => (
+          <ConverterRow key={title} title={title} cfg={cfg} />
         ))}
       </div>
     </div>
