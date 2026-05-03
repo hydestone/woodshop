@@ -12,6 +12,7 @@ export default function AllPhotos() {
   const [filter, setFilter]             = useState('all')
   const [sortBy, setSortBy]             = useState('date')
   const [includeComplete, setIncludeComplete] = useState(false)
+  const [unsortedStatus, setUnsortedStatus]   = useState('all') // 'all'|'active'|'planning'|'paused'
   const [pendingFiles, setPendingFiles] = useState([])
   const [showTag, setShowTag]           = useState(false)
   const [showTriage, setShowTriage]     = useState(false)
@@ -105,16 +106,18 @@ export default function AllPhotos() {
   )].sort()
 
   const getFiltered = () => {
-    let photos = filter === 'all' ? data.photos.filter(p => p.photo_type !== 'unsorted')
-      : filter === 'unsorted' ? data.photos.filter(p => p.photo_type === 'unsorted')
-      : filter.startsWith('cat:')
-        ? data.photos.filter(p => projMap[p.project_id]?.category === filter.slice(4))
-        : data.photos.filter(p => p.tags?.split(',').map(t => t.trim()).includes(filter))
-
-    // Unless includeComplete is on, hide photos from completed projects
-    if (!includeComplete && filter !== 'unsorted') {
-      photos = photos.filter(p => !p.project_id || projMap[p.project_id]?.status !== 'complete')
-    }
+    let photos = filter === 'all'
+      ? data.photos.filter(p => p.photo_type !== 'unsorted')  // all types except inbox
+      : filter === 'unsorted'
+        ? (() => {
+            let u = data.photos.filter(p => p.photo_type === 'unsorted')
+            if (!includeComplete) u = u.filter(p => !p.project_id || projMap[p.project_id]?.status !== 'complete')
+            if (unsortedStatus !== 'all') u = u.filter(p => projMap[p.project_id]?.status === unsortedStatus)
+            return u
+          })()
+        : filter.startsWith('cat:')
+          ? data.photos.filter(p => projMap[p.project_id]?.category === filter.slice(4))
+          : data.photos.filter(p => p.tags?.split(',').map(t => t.trim()).includes(filter))
 
     photos = photos.slice().sort((a, b) => {
       if (sortBy === 'date') return new Date(b.created_at || 0) - new Date(a.created_at || 0)
@@ -161,7 +164,7 @@ export default function AllPhotos() {
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               <FilterSelect
                 value={filter.startsWith('cat:') ? 'all' : filter}
-                onChange={v => setFilter(v)}
+                onChange={v => { setFilter(v); if (v !== 'unsorted') { setUnsortedStatus('all'); setIncludeComplete(false) } }}
                 options={[
                   ...(unsortedCount > 0 ? [{ value: 'unsorted', label: `Inbox (${unsortedCount})` }] : []),
                   { value: 'finished', label: 'Finished' },
@@ -192,19 +195,6 @@ export default function AllPhotos() {
                 </select>
                 <span className="filter-select-chevron" aria-hidden="true">▾</span>
               </div>
-              <button
-                onClick={() => setIncludeComplete(v => !v)}
-                style={{
-                  padding: '5px 10px', fontSize: 12, fontWeight: 600,
-                  background: includeComplete ? 'var(--forest-dim)' : 'var(--c-bg-subtle)',
-                  color: includeComplete ? 'var(--forest)' : 'var(--c-text-muted)',
-                  border: `1.5px solid ${includeComplete ? 'var(--forest)' : 'var(--c-border)'}`,
-                  borderRadius: 6, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
-                }}
-                title="Include photos from completed projects"
-              >
-                + Complete
-              </button>
             </div>
           </div>
         </div>
@@ -258,10 +248,36 @@ export default function AllPhotos() {
             return (
               <>
                 {filter === 'unsorted' && (
-                  <div style={{ padding: '0 16px 12px', display: 'flex', justifyContent: 'flex-end' }}>
-                    <button className="btn-primary" style={{ padding: '8px 20px', fontSize: 13 }} onClick={() => setShowTriage(true)}>
-                      Sort {filtered.length} photo{filtered.length !== 1 ? 's' : ''} →
-                    </button>
+                  <div style={{ padding: '0 16px 12px' }}>
+                    {/* Status filters */}
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+                      {[
+                        { id: 'all',      label: 'All' },
+                        { id: 'active',   label: 'Active' },
+                        { id: 'planning', label: 'Planning' },
+                        { id: 'paused',   label: 'Paused' },
+                      ].map(s => (
+                        <button key={s.id} onClick={() => setUnsortedStatus(s.id)} style={{
+                          padding: '5px 12px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                          fontFamily: 'inherit', borderRadius: 0,
+                          background: unsortedStatus === s.id ? 'var(--navy)' : 'var(--c-bg-subtle)',
+                          color: unsortedStatus === s.id ? 'var(--white)' : 'var(--c-text-muted)',
+                          border: '1.5px solid var(--c-border)',
+                        }}>{s.label}</button>
+                      ))}
+                      <button onClick={() => setIncludeComplete(v => !v)} style={{
+                        padding: '5px 12px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                        fontFamily: 'inherit', borderRadius: 0,
+                        background: includeComplete ? 'var(--forest-dim)' : 'var(--c-bg-subtle)',
+                        color: includeComplete ? 'var(--forest)' : 'var(--c-text-muted)',
+                        border: `1.5px solid ${includeComplete ? 'var(--forest)' : 'var(--c-border)'}`,
+                      }}>+ Complete</button>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                      <button className="btn-primary" style={{ padding: '8px 20px', fontSize: 13 }} onClick={() => setShowTriage(true)}>
+                        Sort {filtered.length} photo{filtered.length !== 1 ? 's' : ''} →
+                      </button>
+                    </div>
                   </div>
                 )}
                 <PhotoGrid photos={filtered} onEdit={edit} showProject projects={data.projects} onNavigateProject={id => navigate('projects', id)} />
