@@ -347,7 +347,7 @@ function UnitConverter() {
 }
 
 // ─── Tab: Trim / Linear cuts (FFD) ────────────────────────────────────────────
-const CUT_COLS = ['var(--navy)','var(--forest)','#1D4ED8','#92400E','#6B21A8','#065F46','#7C2D12','#BE185D']
+const CUT_COLS = ['#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6','#06B6D4','#F97316','#EC4899']
 
 function ffd(cuts, stockLengths, kerf) {
   const pieces = []; cuts.forEach(c => { for (let i=0;i<c.qty;i++) pieces.push(c.length) })
@@ -432,9 +432,9 @@ function TrimCuts() {
       <div style={{ display:'flex', flex:1, overflow:'hidden', minHeight:0 }}>
 
         {/* Cut list */}
-        <div style={{ flex:'0 0 auto', width:380, padding:'10px 14px', overflowY:'auto', borderRight:'2px solid var(--c-border)' }}>
-          <p style={{ fontSize:11, color:'var(--c-text-faint)', margin:'0 0 10px' }}>
-            Lengths in inches (48), feet (4'), or ft/in (4'6"). Fractions OK: 3 7/8
+        <div style={{ flex:'0 0 auto', width:380, padding:'10px 14px', overflowY:'auto', overflowX:'hidden', borderRight:'2px solid var(--c-border)' }}>
+          <p style={{ fontSize:11, color:'var(--c-text-faint)', margin:'0 0 10px', lineHeight:1.4, wordBreak:'break-word' }}>
+            Lengths: inches (48), feet (4'), or ft/in (4'6"). Fractions OK: 3 7/8
           </p>
 
           {/* Column headers */}
@@ -473,7 +473,7 @@ function TrimCuts() {
         <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', minWidth:0 }}>
           <div className="cm-tape-header">
             <span>CUT SUMMARY</span>
-            {result && <span style={{ fontFamily:'var(--tape-font)', fontSize:11, color:'#b0d8a0' }}>
+            {result && <span style={{ fontFamily:'var(--tape-font)', fontSize:11, color:'var(--calc-tape-dim)' }}>
               {waste}% WASTE
             </span>}
           </div>
@@ -544,7 +544,7 @@ function TrimCuts() {
                 {b.cuts.map((cut,ci) => {
                   const m = result.pc?.find(p=>Math.abs(p.length-cut)<0.01)
                   return (
-                    <span key={ci} style={{ fontSize:10, padding:'1px 7px', borderRadius:99, fontWeight:600, background:CUT_COLS[ci%CUT_COLS.length]+'22', color:CUT_COLS[ci%CUT_COLS.length], border:`1px solid ${CUT_COLS[ci%CUT_COLS.length]}44` }}>
+                    <span key={ci} style={{ fontSize:10, padding:'1px 7px', borderRadius:99, fontWeight:600, background:CUT_COLS[ci%CUT_COLS.length]+'33', color:CUT_COLS[ci%CUT_COLS.length], border:`1px solid ${CUT_COLS[ci%CUT_COLS.length]}88` }}>
                       {m?.label||inToFtInStr(cut)}
                     </span>
                   )
