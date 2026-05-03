@@ -579,7 +579,7 @@ export const PhotoCard = memo(function PhotoCard({ photo, onEdit, onOpen, showPr
       className="photo-card"
       onMouseMove={onMove}
       onMouseLeave={onLeave}
-      style={{ animationDelay: `${Math.min(tileIndex * 35, 400)}ms`, animation: 'photoEnter 380ms cubic-bezier(.34,1.1,.64,1) both', transition: 'transform 200ms cubic-bezier(.25,.46,.45,.94), box-shadow 200ms ease' }}
+      style={{ transition: 'transform 200ms cubic-bezier(.25,.46,.45,.94), box-shadow 200ms ease' }}
     >
       {!err ? (
         <img
@@ -801,7 +801,7 @@ export function KineticTitle({ text, className, style, tag: Tag = 'h1', delay = 
       {text.split('').map((ch, i) => (
         <span key={i} style={{
           display: 'inline-block',
-          animation: `letterIn 400ms cubic-bezier(.34,1.56,.64,1) both`,
+          
           animationDelay: `${delay + i * 35}ms`,
           whiteSpace: ch === ' ' ? 'pre' : undefined,
         }}>{ch}</span>

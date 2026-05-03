@@ -695,7 +695,7 @@ export function ProjectDetail() {
 
       {/* ── OVERVIEW TAB ── */}
       {dtab === 'overview' && (
-        <div style={{ animation: 'contentFadeIn 200ms ease both' }}>
+        <div style={{  }}>
 
           {/* Empty state — nothing tracked yet */}
           {steps.length === 0 && coats.length === 0 && photos.length === 0 && totalMins === 0 && !project.notes && (
@@ -791,7 +791,7 @@ export function ProjectDetail() {
 
       {/* ── STEPS TAB ── */}
       {dtab === 'steps' && (
-        <div style={{ background: 'var(--c-bg-surface)', padding: '20px', animation: 'contentFadeIn 200ms ease both' }}>
+        <div style={{ background: 'var(--c-bg-surface)', padding: '20px',  }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <div>
               <div className="label-caps">Build Steps</div>
@@ -805,7 +805,7 @@ export function ProjectDetail() {
 
       {/* ── FINISHING TAB ── */}
       {dtab === 'finishing' && (
-        <div style={{ animation: 'contentFadeIn 200ms ease both' }}>
+        <div style={{  }}>
           <div style={{ background: 'var(--c-bg-surface)', padding: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
               <div className="label-caps">Finishing</div>
@@ -823,7 +823,7 @@ export function ProjectDetail() {
 
       {/* ── PHOTOS TAB ── */}
       {dtab === 'photos' && (
-        <div style={{ animation: 'contentFadeIn 200ms ease both' }}>
+        <div style={{  }}>
           <div style={{ background: 'var(--c-bg-surface)', padding: '20px' }}>
             <PhotoTimeline projId={projId} />
           </div>

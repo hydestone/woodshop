@@ -17,21 +17,12 @@
 }
 [data-theme='dark'] .app-wrapper::before { opacity: 0.055; }
 
-/* Gradient mesh — subtle radial colour pops */
-@keyframes meshDrift {
-  0%   { transform: translate(0, 0)   scale(1);   }
-  33%  { transform: translate(2%, 1%) scale(1.02); }
-  66%  { transform: translate(-1%, 2%) scale(0.98); }
-  100% { transform: translate(0, 0)   scale(1);   }
-}
-
 .app-wrapper::after {
   content: '';
   position: fixed;
   inset: -10%;
   z-index: 0;
   pointer-events: none;
-  animation: meshDrift 28s ease-in-out infinite;
   background:
     radial-gradient(ellipse 60% 40% at 20% 30%,  rgba(29,78,216,.06)   0%, transparent 70%),
     radial-gradient(ellipse 50% 50% at 80% 20%,  rgba(22,101,52,.05)   0%, transparent 70%),
@@ -93,7 +84,7 @@
 }
 /* Icon pop on hover */
 .sidebar-item:hover svg {
-  animation: iconPop 280ms cubic-bezier(.34,1.56,.64,1);
+  color: #FFFFFF;
 }
 /* Section label glow */
 .sidebar-section-label {
@@ -110,13 +101,7 @@
    PHOTO TILES — stagger entrance, 3D tilt, parallax depth
    ═══════════════════════════════════════════════════════════════════════════ */
 
-@keyframes photoEnter {
-  from { opacity: 0; transform: translateY(12px) scale(0.96); }
-  to   { opacity: 1; transform: translateY(0)   scale(1); }
-}
-
 .photo-tile-wrap {
-  animation: photoEnter 400ms cubic-bezier(.34,1.1,.64,1) both;
   transform-style: preserve-3d;
   perspective: 600px;
   border-radius: var(--r-md);
@@ -180,32 +165,9 @@
   50%      { border-color: rgba(37,99,235,.25); box-shadow: 0 0 24px 6px rgba(37,99,235,.08); }
 }
 @keyframes contentFadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
-@keyframes rowSlideIn {
-  from { opacity: 0; transform: translateX(-8px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-
-/* Page content entrance */
-.scroll-page { animation: contentFadeIn 300ms ease both; }
-
-/* List row stagger — first 12 items only (no jank on long lists) */
-.group > div, .form-group > div { animation: rowSlideIn 220ms ease both; }
-.group > div:nth-child(1), .form-group > div:nth-child(1) { animation-delay: 20ms; }
-.group > div:nth-child(2), .form-group > div:nth-child(2) { animation-delay: 45ms; }
-.group > div:nth-child(3), .form-group > div:nth-child(3) { animation-delay: 70ms; }
-.group > div:nth-child(4), .form-group > div:nth-child(4) { animation-delay: 95ms; }
-.group > div:nth-child(5), .form-group > div:nth-child(5) { animation-delay: 120ms; }
-.group > div:nth-child(6), .form-group > div:nth-child(6) { animation-delay: 145ms; }
-.group > div:nth-child(7), .form-group > div:nth-child(7) { animation-delay: 170ms; }
-.group > div:nth-child(8), .form-group > div:nth-child(8) { animation-delay: 195ms; }
-.group > div:nth-child(9), .form-group > div:nth-child(9) { animation-delay: 220ms; }
-.group > div:nth-child(10), .form-group > div:nth-child(10) { animation-delay: 245ms; }
-.group > div:nth-child(11), .form-group > div:nth-child(11) { animation-delay: 270ms; }
-.group > div:nth-child(12), .form-group > div:nth-child(12) { animation-delay: 295ms; }
-.group > div:nth-child(n+13), .form-group > div:nth-child(n+13) { animation-delay: 300ms; }
 
 /* Card hover lift — all interactive cards (desktop only) */
 @media (hover: hover) {
@@ -228,22 +190,6 @@
 .btn-primary:active, .btn-secondary:active, .fab:active { transform: scale(0.97); }
 .icon-btn:active { transform: scale(0.9); }
 .form-cell:active, .more-item:active { opacity: 0.7; }
-
-/* Smooth badge appearance */
-.badge-pill { animation: contentFadeIn 200ms ease both; }
-
-/* Filter result fade */
-.proj-cards-grid { animation: contentFadeIn 200ms ease both; }
-
-/* Photo grid cards — stagger entrance */
-.photo-grid > div { animation: contentFadeIn 200ms ease both; }
-.photo-grid > div:nth-child(1) { animation-delay: 30ms; }
-.photo-grid > div:nth-child(2) { animation-delay: 60ms; }
-.photo-grid > div:nth-child(3) { animation-delay: 90ms; }
-.photo-grid > div:nth-child(4) { animation-delay: 120ms; }
-.photo-grid > div:nth-child(5) { animation-delay: 150ms; }
-.photo-grid > div:nth-child(6) { animation-delay: 180ms; }
-.photo-grid > div:nth-child(n+7) { animation-delay: 200ms; }
 
 
 /* ─── Projects page header controls — one line on mobile ─────────────────── */
@@ -1800,13 +1746,6 @@ body {
 .sidebar-item:active, .tab-btn:active, .more-item:active {
   opacity: 0.7;
 }
-/* Smooth fade-in for page content */
-@keyframes pageFade {
-  from { opacity: 0; transform: translateY(4px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.page-header { animation: pageFade 180ms ease forwards; }
-
 /* Slide-in for project detail */
 @keyframes slideInRight {
   from { opacity: 0; transform: translateX(16px); }
@@ -2976,13 +2915,6 @@ body {
     animation: sliceFade 350ms ease both;
   }
 
-  /* Live pulse dot */
-
-  @keyframes livePulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50%       { opacity: 0.4; transform: scale(0.7); }
-  }
-
   .live-dot {
     display: inline-block;
     width: 7px; height: 7px;
@@ -2990,7 +2922,6 @@ body {
     background: var(--green);
     margin-right: 6px;
     vertical-align: middle;
-    animation: livePulse 2.2s ease-in-out infinite;
   }
 
   /* Calculator result pop */
