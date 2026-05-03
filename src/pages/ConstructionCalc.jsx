@@ -611,10 +611,11 @@ export default function ConstructionCalc() {
           {showHelp && (
             <ConPanel title="Help">
               <div className="cm-help-grid">
-                <HelpItem title="Keyboard shortcuts" desc="0–9: digits  +−*/: operators  Enter/=: equals  Esc: clear  ': feet  &quot;: inches  /: fraction  R: √  P: π" />
-                <HelpItem title="Fractions" desc="Type 3/4, or 1 3/8. Use /2 /4 /8 /16 buttons to set denominator." />
-                <HelpItem title="Feet-Inch" desc="4'6&quot; or 4' 6 1/2&quot;" />
-                <HelpItem title="Memory" desc="M+ add  M− subtract  MR recall  MC clear" />
+                <HelpItem title="Feet-Inch-Fraction" desc="Example: 6'4 1/8&quot; → tap 6, ft', 4, in&quot;, 1, /8. The /2 /4 /8 /16 buttons set the denominator of the last digit." />
+                <HelpItem title="Fractions" desc="Type 3/4 directly, or tap a digit then a /den button. Mixed numbers: type 3 then /4 for 3/4, or 1 then /8 for 1/8." />
+                <HelpItem title="Keyboard" desc="0–9 digits · + − * / operators · Enter or = · Esc clear · ' feet · &quot; inches · R √ · P π · Backspace delete" />
+                <HelpItem title="Memory" desc="M+ add to memory · M− subtract · MR recall · MC clear" />
+                <HelpItem title="Tape" desc="Tap any tape row to recall that result. Clear wipes the tape history." />
               </div>
             </ConPanel>
           )}

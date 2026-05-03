@@ -98,9 +98,9 @@ const SECTIONS = [
     title: 'Creative',
     icon: '✏️',
     items: [
-      'Brainstorm: quick-capture ideas, observations, and notes.',
-      'Calculators: board feet, cut list optimizer, drying time estimator.',
-      'Year in Review: annual summary of your builds, species, categories, and productivity.',
+      'Brainstorm: quick-capture ideas, observations, and notes. Tap the trash icon to delete; undo is available.',
+      'Year in Review: annual summary of your builds, species, categories, and photos by year.',
+      'Calculators: Construction Calc, Board Foot, Unit Converter, Trim Cuts, Sheet Goods, Notes.',
     ],
   },
   {
@@ -133,13 +133,26 @@ const SECTIONS = [
     ],
   },
   {
+    title: 'Calculators',
+    icon: '🔧',
+    items: [
+      'Construction Calc: full feet-inch-fraction calculator with tape history. Enter 6\' 4 1/8 using ft, in, and /8 buttons. Pitch, Diagonal, Stairs, Circle, and Miter panels on the right column.',
+      'Board Foot: enter thickness, width, length, quantity, and cost per BF. Tally on the right.',
+      'Trim Cuts: enter cuts with length, qty, and label. Check available stock lengths. Board cut diagrams shown at bottom.',
+      'Unit Converter: Quick Convert at top (any category). Rows below always live-convert. Includes solid and fluid volume.',
+      'Notes: rich text editor — Bold, Italic, Underline, bullet/numbered lists, hyperlinks. Auto-saves locally.',
+      'Sheet Goods: optimize plywood and panel layouts.',
+    ],
+  },
+  {
     title: 'Mobile',
     icon: '📱',
     items: [
       'Install as a PWA: in Safari tap Share → Add to Home Screen for a full-screen app experience.',
-      'Works on iPhone and Android.',
-      'Bottom tab bar: Home, Projects, Shop, Photos, More.',
-      'More menu gives access to all sections.',
+      'Bottom tab bar: Home, Projects, Calc, Photos, More.',
+      'More menu gives access to all secondary sections.',
+      'Calculator tape appears below the keypad on iPhone. Landscape mode goes side-by-side.',
+      'Search results scroll without accidentally navigating.',
     ],
   },
 ]
