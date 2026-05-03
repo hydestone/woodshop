@@ -112,509 +112,18 @@ function parseLenIn(s) {
 // ─── Construction Calculator ─────────────────────────────────────────────────
 
 const HISTORY_KEY = 'calc-cm-history'
-const MEMORY_KEY = 'calc-cm-memory'
+const MEMORY_KEY  = 'calc-cm-memory'
 
-function loadHistory() {
-  try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || [] } catch { return [] }
-}
-function saveHistory(h) {
-  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(h.slice(0, 20))) } catch {}
-}
-function loadMemory() {
-  try { const m = localStorage.getItem(MEMORY_KEY); return m ? JSON.parse(m) : null } catch { return null }
-}
-function saveMemory(m) {
-  try { if (m) localStorage.setItem(MEMORY_KEY, JSON.stringify(m)); else localStorage.removeItem(MEMORY_KEY) } catch {}
-}
-
-export default function ConstructionCalc() {
-  // ── Calculator state ────────────────────────────────────────────────────
-  const [display, setDisplay]     = useState('')
-  const [left, setLeft]           = useState(null)
-  const [op, setOp]               = useState(null)
-  const [result, setResult]       = useState(null)
-  const [justEvaled, setJustEvaled] = useState(false)
-
-  // Memory
-  const [memory, setMemoryState]  = useState(() => loadMemory())
-  const setMemory = v => { setMemoryState(v); saveMemory(v) }
-
-  // History
-  const [history, setHistoryState] = useState(() => loadHistory())
-  const [showHistory, setShowHistory] = useState(false)
-  const setHistory = h => { setHistoryState(h); saveHistory(h) }
-
-  // Mode
-  const [mode, setMode] = useState('basic') // 'basic' | 'enhanced'
-
-  // Construction function state
-  const [conState, setConState] = useState({})
-  const [conMode, setConMode]   = useState(null) // 'pitch'|'diag'|'stairs'|'circle'|'miter'|null
-  const [showHelp, setShowHelp] = useState(false)
-
-  // ── Parsing ─────────────────────────────────────────────────────────────
-  const parsedDisplay = useMemo(() => display ? parseFracObj(display) : null, [display])
-  const activeVal = result || parsedDisplay
-
-  // ── Keypad handlers ─────────────────────────────────────────────────────
-  const appendDigit = d => {
-    setResult(null)
-    if (justEvaled) { setDisplay(d); setJustEvaled(false); return }
-    setDisplay(prev => {
-      if (d === '.' && prev.includes('.') && !prev.includes("'")) return prev
-      return prev + d
-    })
-  }
-
-  const appendChar = c => {
-    setResult(null)
-    setJustEvaled(false)
-    setDisplay(prev => prev + c)
-  }
-
-  const setDenominator = den => {
-    setResult(null)
-    setJustEvaled(false)
-    setDisplay(prev => {
-      if (!prev) return `1/${den}`
-      const mixedMatch = prev.match(/^(-?\d+)\s+(\d+)\/(\d+)$/)
-      if (mixedMatch) return `${mixedMatch[1]} ${mixedMatch[2]}/${den}`
-      const fracMatch = prev.match(/^(\d+)\/(\d+)$/)
-      if (fracMatch) return `${fracMatch[1]}/${den}`
-      const wholeMatch = prev.match(/^(-?\d+)$/)
-      if (wholeMatch) return `${prev}/${den}`
-      return prev
-    })
-  }
-
-  const pressOp = newOp => {
-    setResult(null)
-    setJustEvaled(false)
-    const val = result || parsedDisplay
-    if (val) {
-      setLeft(val)
-      setOp(newOp)
-      setDisplay('')
-    } else if (left) {
-      setOp(newOp)
-    }
-  }
-
-  const pressEquals = () => {
-    const rhs = parsedDisplay
-    const lhs = left
-    if (!rhs || !lhs || !op) return
-    let res
-    if (op === '+') res = fracAdd(lhs, rhs)
-    else if (op === '−') res = fracSub(lhs, rhs)
-    else if (op === '×') res = fracMul(lhs, rhs)
-    else if (op === '÷') res = fracDiv(lhs, rhs)
-    if (res) {
-      // Add to history
-      const entry = { left: lhs, op, right: rhs, result: res, ts: Date.now() }
-      setHistory([entry, ...history].slice(0, 20))
-      setResult(res)
-      setLeft(res)
-      setOp(null)
-      setDisplay('')
-      setJustEvaled(true)
-    }
-  }
-
-  const pressAC = () => {
-    setDisplay(''); setLeft(null); setOp(null); setResult(null); setJustEvaled(false)
-  }
-
-  const pressBackspace = () => {
-    setResult(null); setJustEvaled(false)
-    setDisplay(prev => prev.slice(0, -1))
-  }
-
-  // ── Memory handlers ─────────────────────────────────────────────────────
-  const memAdd = () => {
-    const v = activeVal; if (!v) return
-    if (memory) setMemory(fracAdd(memory, v))
-    else setMemory(v)
-  }
-  const memSub = () => {
-    const v = activeVal; if (!v) return
-    if (memory) setMemory(fracSub(memory, v))
-    else setMemory({ n: -v.n, d: v.d })
-  }
-  const memRecall = () => {
-    if (!memory) return
-    setResult(memory)
-    setJustEvaled(true)
-  }
-  const memClear = () => setMemory(null)
-
-  // ── Recall from history ─────────────────────────────────────────────────
-  const recallHistory = entry => {
-    setResult(entry.result)
-    setLeft(entry.result)
-    setOp(null)
-    setDisplay('')
-    setJustEvaled(true)
-    setShowHistory(false)
-  }
-
-  // ── Construction function handlers ──────────────────────────────────────
-  const setConVal = (mode, key) => {
-    const v = activeVal
-    if (!v) return
-    const dec = fracToDecimal(v)
-    setConState(prev => ({ ...prev, [`${mode}_${key}`]: dec }))
-    pressAC()
-  }
-
-  // Construction computed results
-  const conResults = useMemo(() => {
-    const s = conState
-    const r = {}
-
-    // Pitch/Rise/Run
-    const pitch = s.pitch_pitch, rise = s.pitch_rise, run = s.pitch_run
-    if (rise && run) {
-      r.pitch_pitch = +(rise / run * 12).toFixed(3)
-      r.pitch_rafter = Math.sqrt(rise * rise + run * run)
-      r.pitch_angle = (Math.atan(rise / run) * 180 / Math.PI).toFixed(1) + '°'
-    }
-    if (pitch && run && !rise) r.pitch_rise = pitch * run / 12
-    if (pitch && rise && !run) r.pitch_run = rise * 12 / pitch
-    if (pitch && run) r.pitch_rafter = Math.sqrt(Math.pow(pitch * run / 12, 2) + run * run)
-    if (pitch) r.pitch_angle = (Math.atan(pitch / 12) * 180 / Math.PI).toFixed(1) + '°'
-
-    // Diagonal
-    const dw = s.diag_width, dh = s.diag_height
-    if (dw && dh) {
-      r.diag_diagonal = Math.sqrt(dw * dw + dh * dh)
-      r.diag_angle = (Math.atan(dh / dw) * 180 / Math.PI).toFixed(1) + '°'
-    }
-
-    // Stairs
-    const totalRise = s.stairs_rise, numRisers = s.stairs_risers, treadW = s.stairs_tread || 10
-    if (totalRise && numRisers) {
-      const riserH = totalRise / numRisers
-      r.stairs_riserH = riserH
-      r.stairs_run = (numRisers - 1) * treadW
-      r.stairs_angle = (Math.atan(riserH / treadW) * 180 / Math.PI).toFixed(1) + '°'
-      r.stairs_ok = riserH >= 4 && riserH <= 7.75
-    }
-
-    // Circle
-    const circR = s.circle_radius, circD = s.circle_diameter, circC = s.circle_circ
-    let cr = null
-    if (circR) cr = circR
-    else if (circD) cr = circD / 2
-    else if (circC) cr = circC / (2 * Math.PI)
-    if (cr) {
-      r.circle_radius = cr
-      r.circle_diameter = cr * 2
-      r.circle_circ = cr * 2 * Math.PI
-      r.circle_area = (cr * cr * Math.PI).toFixed(2) + ' in²'
-    }
-
-    // Compound miter
-    const corner = s.miter_corner, tilt = s.miter_tilt
-    if (corner) {
-      const half = corner / 2
-      r.miter_flat = (90 - half).toFixed(2) + '°'
-      if (tilt !== undefined && tilt !== null) {
-        r.miter_comp = (Math.atan(Math.cos(tilt * Math.PI / 180) * Math.tan(half * Math.PI / 180)) * 180 / Math.PI).toFixed(2) + '°'
-        r.miter_bevel = (Math.atan(Math.sin(half * Math.PI / 180) * Math.sin(tilt * Math.PI / 180)) * 180 / Math.PI).toFixed(2) + '°'
-      }
-    }
-
-    return r
-  }, [conState])
-
-  // ── Display string ──────────────────────────────────────────────────────
-  const eqLine = [
-    left ? fracToHTML(left, { fontSize: 16, color: 'rgba(255,255,255,.5)' }) : null,
-    op ? <span key="op" style={{ fontSize: 18, color: 'var(--orange)', fontWeight: 700, margin: '0 4px' }}>{op}</span> : null,
-    !result && parsedDisplay && op
-      ? fracToHTML(parsedDisplay, { fontSize: 16, color: 'rgba(255,255,255,.5)' })
-      : null,
-  ].filter(Boolean)
-
-  // ── Render ──────────────────────────────────────────────────────────────
-  const Btn = ({ children, onClick, className = '', style = {}, ...rest }) => (
-    <button className={`cm-key ${className}`} onClick={onClick} style={style} {...rest}>{children}</button>
-  )
-
-  return (
-    <div style={{ padding: '0 12px', maxWidth: 480, margin: '0 auto', height: '100%', display: 'flex', flexDirection: 'column' }}>
-
-      {/* ── Mode toggle ── */}
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
-        <div className="cm-mode-toggle">
-          <button className={mode === 'basic' ? 'active' : ''} onClick={() => setMode('basic')}>Basic</button>
-          <button className={mode === 'enhanced' ? 'active' : ''} onClick={() => setMode('enhanced')}>Enhanced</button>
-        </div>
-      </div>
-
-      {/* ── Display ── */}
-      <div className="cm-display" data-tutorial-target="calculator">
-        {/* Status bar */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4, minHeight: 18 }}>
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            {memory && <span className="cm-indicator">M</span>}
-            {mode === 'enhanced' && <span className="cm-indicator" style={{ background: 'var(--green-dim)', color: 'var(--green)' }}>ENH</span>}
-          </div>
-          {conMode && <span style={{ fontSize: 11, color: 'var(--c-text-muted)', textTransform: 'uppercase' }}>{conMode}</span>}
-        </div>
-
-        {/* Equation line — always rendered, hidden when empty */}
-        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', marginBottom: 4, minHeight: 22, visibility: eqLine.length > 0 ? 'visible' : 'hidden' }}>
-          {eqLine.length > 0 ? eqLine : <span>&nbsp;</span>}
-        </div>
-
-        {/* Main value */}
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap', minHeight: 44 }}>
-          {result
-            ? <span key={`${result.n}/${result.d}`} className="result-pop">
-                {ftInToHTML(fracToDecimal(result), { fontSize: 36, color: 'var(--green)', fontWeight: 800 })}
-              </span>
-            : display
-              ? <span style={{ fontSize: 28, color: '#fff', fontWeight: 700, wordBreak: 'break-all' }}>{display}</span>
-              : <span style={{ fontSize: 28, color: 'rgba(255,255,255,.2)' }}>0</span>
-          }
-        </div>
-
-        {/* Secondary: decimal inches + mm — always rendered, hidden when empty */}
-        <div style={{ marginTop: 6, fontSize: 12, color: 'var(--c-text-muted)', display: 'flex', gap: 12, flexWrap: 'wrap', minHeight: 18, visibility: activeVal ? 'visible' : 'hidden' }}>
-          {activeVal ? (
-            <>
-              <span>{fracToDecimal(activeVal).toFixed(4)}"</span>
-              <span>{(fracToDecimal(activeVal) * 25.4).toFixed(2)} mm</span>
-            </>
-          ) : <span>&nbsp;</span>}
-        </div>
-      </div>
-
-      {/* ── History tape (collapsible) ── */}
-      {showHistory && history.length > 0 && (
-        <div className="cm-history">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--c-text-muted)', textTransform: 'uppercase', letterSpacing: '.5px' }}>History</span>
-            <button onClick={() => { setHistory([]); setShowHistory(false) }} style={{ background: 'none', border: 'none', fontSize: 11, color: 'var(--red)', cursor: 'pointer', fontFamily: 'inherit' }}>Clear</button>
-          </div>
-          {history.map((h, i) => (
-            <button key={h.ts} onClick={() => recallHistory(h)} className="cm-history-item">
-              <span style={{ color: 'var(--c-text-muted)', fontSize: 12 }}>
-                {fracToHTML(h.left, { fontSize: 12 })} {h.op} {fracToHTML(h.right, { fontSize: 12 })}
-              </span>
-              <span style={{ fontWeight: 700, color: 'var(--c-text-primary)' }}>= {fracToHTML(h.result, { fontSize: 13 })}</span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* ── Memory bar ── */}
-      <div className="cm-memory-bar">
-        <button onClick={memAdd} className="cm-mem-btn">M+</button>
-        <button onClick={memSub} className="cm-mem-btn">M−</button>
-        <button onClick={memRecall} className="cm-mem-btn" disabled={!memory}>MR</button>
-        <button onClick={memClear} className="cm-mem-btn" disabled={!memory}>MC</button>
-        <button onClick={() => setShowHistory(h => !h)} className={`cm-mem-btn${showHistory ? ' active' : ''}`}>
-          {showHistory ? '▲' : '▼'} {history.length || ''}
-        </button>
-      </div>
-
-      {/* ── Main keypad (5×5) ── */}
-      <div className="cm-keypad">
-        {/* Row 1 */}
-        {[7,8,9].map(n => <Btn key={n} onClick={() => appendDigit(String(n))}>{n}</Btn>)}
-        <Btn className="amber" onClick={() => pressOp('÷')}>÷</Btn>
-        <Btn className="red" onClick={pressAC}>AC</Btn>
-
-        {/* Row 2 */}
-        {[4,5,6].map(n => <Btn key={n} onClick={() => appendDigit(String(n))}>{n}</Btn>)}
-        <Btn className="amber" onClick={() => pressOp('×')}>×</Btn>
-        <Btn className="gray" onClick={pressBackspace}>⌫</Btn>
-
-        {/* Row 3 */}
-        {[1,2,3].map(n => <Btn key={n} onClick={() => appendDigit(String(n))}>{n}</Btn>)}
-        <Btn className="amber" onClick={() => pressOp('−')}>−</Btn>
-        <Btn className="gray" onClick={() => appendChar('/')}>/</Btn>
-
-        {/* Row 4 */}
-        <Btn onClick={() => appendDigit('0')}>0</Btn>
-        <Btn onClick={() => appendDigit('.')}>.</Btn>
-        <Btn className="unit" onClick={() => appendChar("'")}>ft '</Btn>
-        <Btn className="amber" onClick={() => pressOp('+')}>+</Btn>
-        <Btn className="unit" onClick={() => appendChar('"')}>in "</Btn>
-
-        {/* Row 5 — denominators + equals */}
-        <Btn className="den" onClick={() => setDenominator(2)}>/2</Btn>
-        <Btn className="den" onClick={() => setDenominator(4)}>/4</Btn>
-        <Btn className="den" onClick={() => setDenominator(8)}>/8</Btn>
-        <Btn className="den" onClick={() => setDenominator(16)}>/16</Btn>
-        <Btn className="forest" onClick={pressEquals}>=</Btn>
-      </div>
-
-      {/* ── Enhanced: Construction functions ── */}
-      {mode === 'enhanced' && (
-        <div style={{ marginTop: 8 }}>
-          <div className="cm-con-grid">
-            <button className={`cm-con-btn${conMode === 'pitch' ? ' active' : ''}`} onClick={() => setConMode(conMode === 'pitch' ? null : 'pitch')}>
-              <span className="cm-con-icon">△</span>Pitch
-            </button>
-            <button className={`cm-con-btn${conMode === 'diag' ? ' active' : ''}`} onClick={() => setConMode(conMode === 'diag' ? null : 'diag')}>
-              <span className="cm-con-icon">⬜</span>Diagonal
-            </button>
-            <button className={`cm-con-btn${conMode === 'stairs' ? ' active' : ''}`} onClick={() => setConMode(conMode === 'stairs' ? null : 'stairs')}>
-              <span className="cm-con-icon">▤</span>Stairs
-            </button>
-            <button className={`cm-con-btn${conMode === 'circle' ? ' active' : ''}`} onClick={() => setConMode(conMode === 'circle' ? null : 'circle')}>
-              <span className="cm-con-icon">○</span>Circle
-            </button>
-            <button className={`cm-con-btn${conMode === 'miter' ? ' active' : ''}`} onClick={() => setConMode(conMode === 'miter' ? null : 'miter')}>
-              <span className="cm-con-icon">∠</span>Miter
-            </button>
-            <button className={`cm-con-btn help`} onClick={() => setShowHelp(h => !h)}>
-              <span className="cm-con-icon">?</span>Help
-            </button>
-          </div>
-
-          {/* ── Construction input panel ── */}
-          {conMode === 'pitch' && (
-            <ConPanel title="Pitch · Rise · Run" hint="Enter a value, then press the dimension button. Enter any two to solve.">
-              <div className="cm-con-inputs">
-                <ConInput label="Pitch (in 12)" value={conState.pitch_pitch} onSet={() => setConVal('pitch', 'pitch')} computed={!conState.pitch_pitch && conResults.pitch_pitch} />
-                <ConInput label="Rise" value={conState.pitch_rise} onSet={() => setConVal('pitch', 'rise')} computed={!conState.pitch_rise && conResults.pitch_rise} isLen />
-                <ConInput label="Run" value={conState.pitch_run} onSet={() => setConVal('pitch', 'run')} computed={!conState.pitch_run && conResults.pitch_run} isLen />
-              </div>
-              {(conResults.pitch_rafter || conResults.pitch_angle) && (
-                <div className="cm-con-results">
-                  {conResults.pitch_rafter && <ConResult label="Rafter" value={inToFtInStr(conResults.pitch_rafter)} />}
-                  {conResults.pitch_angle && <ConResult label="Angle" value={conResults.pitch_angle} />}
-                </div>
-              )}
-              {conState.pitch_rise && conState.pitch_run && <PitchViz rise={conState.pitch_rise} run={conState.pitch_run} />}
-              <button className="cm-con-clear" onClick={() => setConState(s => { const n = {...s}; delete n.pitch_pitch; delete n.pitch_rise; delete n.pitch_run; return n })}>Clear pitch values</button>
-            </ConPanel>
-          )}
-
-          {conMode === 'diag' && (
-            <ConPanel title="Diagonal · Squaring" hint="Enter width and height. Measure both diagonals — if equal, it's square.">
-              <div className="cm-con-inputs">
-                <ConInput label="Width" value={conState.diag_width} onSet={() => setConVal('diag', 'width')} />
-                <ConInput label="Height" value={conState.diag_height} onSet={() => setConVal('diag', 'height')} />
-              </div>
-              {(conResults.diag_diagonal || conResults.diag_angle) && (
-                <div className="cm-con-results">
-                  {conResults.diag_diagonal && <ConResult label="Diagonal" value={inToFtInStr(conResults.diag_diagonal)} />}
-                  {conResults.diag_angle && <ConResult label="Angle" value={conResults.diag_angle} />}
-                </div>
-              )}
-              {conState.diag_width && conState.diag_height && <DiagViz w={conState.diag_width} h={conState.diag_height} />}
-              <button className="cm-con-clear" onClick={() => setConState(s => { const n = {...s}; delete n.diag_width; delete n.diag_height; return n })}>Clear diagonal values</button>
-            </ConPanel>
-          )}
-
-          {conMode === 'stairs' && (
-            <ConPanel title="Stairs" hint="Code: 4&quot;–7¾&quot; riser, 10–11&quot; tread. Enter total rise, # risers, and tread width.">
-              <div className="cm-con-inputs">
-                <ConInput label="Total rise" value={conState.stairs_rise} onSet={() => setConVal('stairs', 'rise')} isLen />
-                <ConInput label="# Risers" value={conState.stairs_risers} onSet={() => setConVal('stairs', 'risers')} />
-                <ConInput label="Tread (in)" value={conState.stairs_tread} onSet={() => setConVal('stairs', 'tread')} />
-              </div>
-              {conResults.stairs_riserH && (
-                <div className="cm-con-results">
-                  <ConResult label="Riser height" value={inToFtInStr(conResults.stairs_riserH)} />
-                  {conResults.stairs_run && <ConResult label="Total run" value={inToFtInStr(conResults.stairs_run)} />}
-                  {conResults.stairs_angle && <ConResult label="Angle" value={conResults.stairs_angle} />}
-                </div>
-              )}
-              {conResults.stairs_ok !== undefined && (
-                <div style={{ marginTop: 8, background: conResults.stairs_ok ? 'var(--green-dim)' : 'var(--orange-dim)', borderRadius: 0, borderLeft: "3px solid currentColor", padding: "8px 12px", fontSize: 13, color: conResults.stairs_ok ? 'var(--green)' : 'var(--orange)' }}>
-                  {conResults.stairs_ok ? '✓ Riser within code (4"–7¾")' : '⚠ Riser outside typical code range (4"–7¾")'}
-                </div>
-              )}
-              {conResults.stairs_riserH && conState.stairs_risers && <StairsViz riserH={conResults.stairs_riserH} tread={conState.stairs_tread || 10} numRisers={Math.min(conState.stairs_risers, 8)} />}
-              <button className="cm-con-clear" onClick={() => setConState(s => { const n = {...s}; delete n.stairs_rise; delete n.stairs_risers; delete n.stairs_tread; return n })}>Clear stair values</button>
-            </ConPanel>
-          )}
-
-          {conMode === 'circle' && (
-            <ConPanel title="Circle · Arc" hint="Enter radius, diameter, or circumference.">
-              <div className="cm-con-inputs">
-                <ConInput label="Radius" value={conState.circle_radius} onSet={() => setConVal('circle', 'radius')} computed={!conState.circle_radius && conResults.circle_radius} isLen />
-                <ConInput label="Diameter" value={conState.circle_diameter} onSet={() => setConVal('circle', 'diameter')} computed={!conState.circle_diameter && conResults.circle_diameter} isLen />
-                <ConInput label="Circumference" value={conState.circle_circ} onSet={() => setConVal('circle', 'circ')} computed={!conState.circle_circ && conResults.circle_circ} isLen />
-              </div>
-              {conResults.circle_area && (
-                <div className="cm-con-results">
-                  <ConResult label="Area" value={conResults.circle_area} />
-                </div>
-              )}
-              <button className="cm-con-clear" onClick={() => setConState(s => { const n = {...s}; delete n.circle_radius; delete n.circle_diameter; delete n.circle_circ; return n })}>Clear circle values</button>
-            </ConPanel>
-          )}
-
-          {conMode === 'miter' && (
-            <ConPanel title="Compound Miter" hint="Corner angle: total joint angle (90° for a box). Blade tilt: degrees from vertical.">
-              <div className="cm-con-inputs">
-                <ConInput label="Corner (°)" value={conState.miter_corner} onSet={() => setConVal('miter', 'corner')} />
-                <ConInput label="Tilt (°)" value={conState.miter_tilt} onSet={() => setConVal('miter', 'tilt')} />
-              </div>
-              {(conResults.miter_flat || conResults.miter_comp) && (
-                <div className="cm-con-results">
-                  {conResults.miter_flat && <ConResult label="Flat miter" value={conResults.miter_flat} />}
-                  {conResults.miter_comp && <ConResult label="Comp. miter" value={conResults.miter_comp} />}
-                  {conResults.miter_bevel && <ConResult label="Blade bevel" value={conResults.miter_bevel} />}
-                </div>
-              )}
-              <button className="cm-con-clear" onClick={() => setConState(s => { const n = {...s}; delete n.miter_corner; delete n.miter_tilt; return n })}>Clear miter values</button>
-            </ConPanel>
-          )}
-
-          {/* ── Help panel ── */}
-          {showHelp && (
-            <ConPanel title="Construction Functions — Help">
-              <div className="cm-help-grid">
-                <HelpItem title="Pitch · Rise · Run" desc="Enter any two values to solve a right triangle. Pitch is rise per 12 inches of run (e.g., 6/12 pitch). Calculates rafter length and angle." />
-                <HelpItem title="Diagonal · Squaring" desc="Enter width and height to find the diagonal. Use this to check if a frame is square — both diagonals should be equal." />
-                <HelpItem title="Stairs" desc="Enter total rise and number of risers to calculate individual riser height. Building code requires 4&quot;–7¾&quot; risers with 10–11&quot; treads." />
-                <HelpItem title="Circle · Arc" desc="Enter any one dimension (radius, diameter, or circumference) to calculate all others plus area." />
-                <HelpItem title="Compound Miter" desc="For angled joints: enter the corner angle (90° for a box) and blade tilt. Calculates the miter and bevel angles for your saw." />
-                <HelpItem title="Fractions &amp; Feet-Inch" desc="Type fractions with /: 3/4, 1 3/8. Use ' for feet and &quot; for inches: 4'6&quot;. Denominator buttons (/2, /4, /8, /16) set the fraction denominator." />
-                <HelpItem title="Memory" desc="M+ adds current value to memory. M− subtracts. MR recalls. MC clears. Memory persists between sessions." />
-              </div>
-            </ConPanel>
-          )}
-        </div>
-      )}
-
-      {/* ── Quick conversions (always visible when there's a value) ── */}
-      {activeVal && (
-        <div className="cm-conversions">
-          <div className="label-caps" style={{ marginBottom: 6 }}>Nearest fractions</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 4 }}>
-            {[2, 4, 8, 16].map(den => {
-              const dec = fracToDecimal(activeVal)
-              const { w, n, d } = inchToFrac(dec, den)
-              return (
-                <div key={den} className="cm-conv-cell">
-                  <div style={{ fontSize: 9, color: 'var(--c-text-faint)' }}>1/{den}"</div>
-                  <strong style={{ fontSize: 12 }}>{n === 0 ? `${w}"` : `${w > 0 ? w + ' ' : ''}${n}/${d}"`}</strong>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
+function loadHistory() { try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || [] } catch { return [] } }
+function saveHistory(h) { try { localStorage.setItem(HISTORY_KEY, JSON.stringify(h.slice(0, 40))) } catch {} }
+function loadMemory() { try { const m = localStorage.getItem(MEMORY_KEY); return m ? JSON.parse(m) : null } catch { return null } }
+function saveMemory(m) { try { if (m) localStorage.setItem(MEMORY_KEY, JSON.stringify(m)); else localStorage.removeItem(MEMORY_KEY) } catch {} }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
-
 function ConPanel({ title, hint, children }) {
   return (
     <div className="cm-con-panel">
-      <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--c-text-primary)', marginBottom: 4 }}>{title}</div>
+      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--c-text-primary)', marginBottom: 4 }}>{title}</div>
       {hint && <p style={{ fontSize: 11, color: 'var(--c-text-faint)', marginBottom: 10, lineHeight: 1.5 }}>{hint}</p>}
       {children}
     </div>
@@ -624,11 +133,8 @@ function ConPanel({ title, hint, children }) {
 function ConInput({ label, value, onSet, computed, isLen }) {
   const displayVal = computed
     ? (isLen ? inToFtInStr(computed) : String(computed))
-    : value != null
-      ? (isLen ? inToFtInStr(value) : String(value))
-      : null
+    : value != null ? (isLen ? inToFtInStr(value) : String(value)) : null
   const isComputed = computed && !value
-
   return (
     <div className="cm-con-input-wrap">
       <div style={{ fontSize: 11, color: 'var(--c-text-faint)', marginBottom: 3 }}>{label}</div>
@@ -660,23 +166,38 @@ function HelpItem({ title, desc }) {
   )
 }
 
-// ─── Visualizations (SVG) ─────────────────────────────────────────────────────
+// ─── Tape row ─────────────────────────────────────────────────────────────────
+function TapeRow({ entry, onClick }) {
+  const lhsStr = inToFtInStr(fracToDecimal(entry.left))
+  const rhsStr = inToFtInStr(fracToDecimal(entry.right))
+  const resStr = inToFtInStr(fracToDecimal(entry.result))
+  return (
+    <button onClick={onClick} style={{ display: 'contents', cursor: 'pointer', background: 'none', border: 'none', width: '100%' }}>
+      <div className="cm-tape-row">
+        <span className="cm-tape-dim">{lhsStr} {entry.op} {rhsStr}</span>
+        <span style={{ whiteSpace: 'nowrap', fontSize: 10, color: 'var(--calc-tape-dim)' }}>tap to recall</span>
+      </div>
+      <div className="cm-tape-row tape-result">
+        <span className="cm-tape-dim">= </span>
+        <span className="tape-val">{resStr}</span>
+      </div>
+    </button>
+  )
+}
 
+// ─── SVG visualizations ───────────────────────────────────────────────────────
 function PitchViz({ rise, run }) {
   const scale = 120 / Math.max(rise, run)
   const rW = Math.round(run * scale), rH = Math.round(rise * scale)
   const pad = 30
   return (
     <svg viewBox={`0 0 ${rW + pad * 2} ${rH + pad * 2}`} style={{ width: '100%', maxHeight: 120, margin: '10px 0' }}>
-      {/* Triangle */}
       <polygon points={`${pad},${rH + pad} ${rW + pad},${rH + pad} ${pad},${pad}`} fill="rgba(74,222,128,.08)" stroke="rgba(74,222,128,.6)" strokeWidth="1.5" />
-      {/* Labels */}
       <text x={pad + rW / 2} y={rH + pad + 16} textAnchor="middle" fill="var(--c-text-muted)" fontSize="10" fontFamily="system-ui">Run: {inToFtInStr(run)}</text>
       <text x={pad - 14} y={pad + rH / 2} textAnchor="middle" fill="var(--c-text-muted)" fontSize="10" fontFamily="system-ui" transform={`rotate(-90,${pad - 14},${pad + rH / 2})`}>Rise: {inToFtInStr(rise)}</text>
       <text x={pad + rW / 2 + 8} y={pad + rH / 2 - 4} textAnchor="middle" fill="#4ADE80" fontSize="10" fontWeight="700" fontFamily="system-ui" transform={`rotate(${-Math.atan(rise / run) * 180 / Math.PI},${pad + rW / 2 + 8},${pad + rH / 2 - 4})`}>
         Rafter: {inToFtInStr(Math.sqrt(rise * rise + run * run))}
       </text>
-      {/* Right angle marker */}
       <polyline points={`${pad + 12},${rH + pad} ${pad + 12},${rH + pad - 12} ${pad},${rH + pad - 12}`} fill="none" stroke="var(--c-text-faint)" strokeWidth="1" />
     </svg>
   )
@@ -691,9 +212,7 @@ function DiagViz({ w, h }) {
       <rect x={pad} y={pad} width={rW} height={rH} fill="none" stroke="var(--c-text-faint)" strokeWidth="1" strokeDasharray="4,3" />
       <line x1={pad} y1={rH + pad} x2={rW + pad} y2={pad} stroke="#4ADE80" strokeWidth="1.5" />
       <text x={pad + rW / 2} y={rH + pad + 14} textAnchor="middle" fill="var(--c-text-muted)" fontSize="10" fontFamily="system-ui">{inToFtInStr(w)}</text>
-      <text x={pad + rW / 2 + 6} y={pad + rH / 2 - 4} textAnchor="middle" fill="#4ADE80" fontSize="10" fontWeight="700" fontFamily="system-ui">
-        {inToFtInStr(Math.sqrt(w * w + h * h))}
-      </text>
+      <text x={pad + rW / 2 + 6} y={pad + rH / 2 - 4} textAnchor="middle" fill="#4ADE80" fontSize="10" fontWeight="700" fontFamily="system-ui">{inToFtInStr(Math.sqrt(w * w + h * h))}</text>
     </svg>
   )
 }
@@ -710,14 +229,388 @@ function StairsViz({ riserH, tread, numRisers }) {
             fill="rgba(74,222,128,.08)" stroke="rgba(74,222,128,.5)" strokeWidth="1" />
         </g>
       ))}
-      {/* Riser label */}
-      <text x={12} y={h - 20 - stepH / 2} textAnchor="middle" fill="var(--c-text-faint)" fontSize="8" fontFamily="system-ui" transform={`rotate(-90,12,${h - 20 - stepH / 2})`}>
-        {decToFracStr(riserH)}
-      </text>
-      {/* Tread label */}
-      <text x={20 + stepW / 2} y={h - 10} textAnchor="middle" fill="var(--c-text-faint)" fontSize="8" fontFamily="system-ui">
-        {tread}"
-      </text>
+      <text x={12} y={h - 20 - stepH / 2} textAnchor="middle" fill="var(--c-text-faint)" fontSize="8" fontFamily="system-ui" transform={`rotate(-90,12,${h - 20 - stepH / 2})`}>{decToFracStr(riserH)}</text>
+      <text x={20 + stepW / 2} y={h - 10} textAnchor="middle" fill="var(--c-text-faint)" fontSize="8" fontFamily="system-ui">{tread}"</text>
     </svg>
+  )
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
+export default function ConstructionCalc() {
+  const [display, setDisplay]       = useState('')
+  const [left, setLeft]             = useState(null)
+  const [op, setOp]                 = useState(null)
+  const [result, setResult]         = useState(null)
+  const [justEvaled, setJustEvaled] = useState(false)
+  const [memory, setMemoryState]    = useState(() => loadMemory())
+  const [history, setHistoryState]  = useState(() => loadHistory())
+  const [conState, setConState]     = useState({})
+  const [conMode, setConMode]       = useState(null)
+  const [showHelp, setShowHelp]     = useState(false)
+  const containerRef = useRef(null)
+
+  const setMemory = v => { setMemoryState(v); saveMemory(v) }
+  const setHistory = h => { setHistoryState(h); saveHistory(h) }
+
+  const parsedDisplay = useMemo(() => display ? parseFracObj(display) : null, [display])
+  const activeVal = result || parsedDisplay
+
+  // ── Core operations ──────────────────────────────────────────────────────
+  const appendDigit = useCallback(d => {
+    setResult(null)
+    if (justEvaled) { setDisplay(d); setJustEvaled(false); return }
+    setDisplay(prev => {
+      if (d === '.' && prev.includes('.') && !prev.includes("'")) return prev
+      return prev + d
+    })
+  }, [justEvaled])
+
+  const appendChar = useCallback(c => {
+    setResult(null); setJustEvaled(false)
+    setDisplay(prev => prev + c)
+  }, [])
+
+  const setDenominator = useCallback(den => {
+    setResult(null); setJustEvaled(false)
+    setDisplay(prev => {
+      if (!prev) return `1/${den}`
+      if (prev.match(/^(-?\d+)\s+(\d+)\/(\d+)$/)) return prev.replace(/\/\d+$/, `/${den}`)
+      if (prev.match(/^(\d+)\/(\d+)$/)) return `${prev.split('/')[0]}/${den}`
+      if (prev.match(/^(-?\d+)$/)) return `${prev}/${den}`
+      return prev
+    })
+  }, [])
+
+  const pressOp = useCallback(newOp => {
+    setResult(null); setJustEvaled(false)
+    const val = result || parsedDisplay
+    if (val) { setLeft(val); setOp(newOp); setDisplay('') }
+    else if (left) { setOp(newOp) }
+  }, [result, parsedDisplay, left])
+
+  const pressEquals = useCallback(() => {
+    const rhs = parsedDisplay, lhs = left
+    if (!rhs || !lhs || !op) return
+    let res
+    if (op === '+') res = fracAdd(lhs, rhs)
+    else if (op === '−') res = fracSub(lhs, rhs)
+    else if (op === '×') res = fracMul(lhs, rhs)
+    else if (op === '÷') res = fracDiv(lhs, rhs)
+    if (res) {
+      const entry = { left: lhs, op, right: rhs, result: res, ts: Date.now() }
+      setHistory(h => { const next = [entry, ...h].slice(0, 40); saveHistory(next); return next })
+      setResult(res); setLeft(res); setOp(null); setDisplay(''); setJustEvaled(true)
+    }
+  }, [parsedDisplay, left, op])
+
+  const pressAC = useCallback(() => {
+    setDisplay(''); setLeft(null); setOp(null); setResult(null); setJustEvaled(false)
+  }, [])
+
+  const pressBackspace = useCallback(() => {
+    setResult(null); setJustEvaled(false)
+    setDisplay(prev => prev.slice(0, -1))
+  }, [])
+
+  const pressSqrt = useCallback(() => {
+    const v = activeVal; if (!v) return
+    const dec = fracToDecimal(v)
+    if (dec < 0) return
+    const r = fracReduce(Math.round(Math.sqrt(dec) * 64), 64)
+    const entry = { left: v, op: '√', right: { n: 1, d: 1 }, result: r, ts: Date.now() }
+    setHistory(h => { const next = [entry, ...h].slice(0, 40); saveHistory(next); return next })
+    setResult(r); setLeft(r); setOp(null); setDisplay(''); setJustEvaled(true)
+  }, [activeVal])
+
+  const pressSq = useCallback(() => {
+    const v = activeVal; if (!v) return
+    const r = fracMul(v, v)
+    const entry = { left: v, op: 'x²', right: v, result: r, ts: Date.now() }
+    setHistory(h => { const next = [entry, ...h].slice(0, 40); saveHistory(next); return next })
+    setResult(r); setLeft(r); setOp(null); setDisplay(''); setJustEvaled(true)
+  }, [activeVal])
+
+  const pressPi = useCallback(() => {
+    const pi = fracReduce(Math.round(Math.PI * 64), 64)
+    setResult(pi); setLeft(pi); setOp(null); setDisplay(''); setJustEvaled(true)
+  }, [])
+
+  // ── Memory ───────────────────────────────────────────────────────────────
+  const memAdd = () => { const v = activeVal; if (!v) return; setMemory(memory ? fracAdd(memory, v) : v) }
+  const memSub = () => { const v = activeVal; if (!v) return; setMemory(memory ? fracSub(memory, v) : { n: -v.n, d: v.d }) }
+  const memRecall = () => { if (!memory) return; setResult(memory); setJustEvaled(true) }
+  const memClear = () => setMemory(null)
+
+  // ── Keyboard handler ─────────────────────────────────────────────────────
+  useEffect(() => {
+    const handler = e => {
+      // Don't capture if user is typing in an input elsewhere
+      const tag = document.activeElement?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+      const k = e.key
+      if (k >= '0' && k <= '9') { e.preventDefault(); appendDigit(k) }
+      else if (k === '.') { e.preventDefault(); appendDigit('.') }
+      else if (k === '+') { e.preventDefault(); pressOp('+') }
+      else if (k === '-' || k === '−') { e.preventDefault(); pressOp('−') }
+      else if (k === '*') { e.preventDefault(); pressOp('×') }
+      else if (k === '/') { e.preventDefault(); appendChar('/') }
+      else if (k === 'Enter' || k === '=') { e.preventDefault(); pressEquals() }
+      else if (k === 'Backspace') { e.preventDefault(); pressBackspace() }
+      else if (k === 'Escape') { e.preventDefault(); pressAC() }
+      else if (k === "'") { e.preventDefault(); appendChar("'") }
+      else if (k === '"') { e.preventDefault(); appendChar('"') }
+      else if (k === 'p' || k === 'P') { e.preventDefault(); pressPi() }
+      else if (k === 'r' || k === 'R') { e.preventDefault(); pressSqrt() }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [appendDigit, appendChar, pressOp, pressEquals, pressBackspace, pressAC, pressPi, pressSqrt])
+
+  // ── Construction functions ────────────────────────────────────────────────
+  const setConVal = (mode, key) => {
+    const v = activeVal; if (!v) return
+    setConState(prev => ({ ...prev, [`${mode}_${key}`]: fracToDecimal(v) }))
+    pressAC()
+  }
+
+  const conResults = useMemo(() => {
+    const s = conState, r = {}
+    const pitch = s.pitch_pitch, rise = s.pitch_rise, run = s.pitch_run
+    if (rise && run) { r.pitch_pitch = +(rise / run * 12).toFixed(3); r.pitch_rafter = Math.sqrt(rise*rise+run*run); r.pitch_angle = (Math.atan(rise/run)*180/Math.PI).toFixed(1)+'°' }
+    if (pitch && run && !rise) r.pitch_rise = pitch * run / 12
+    if (pitch && rise && !run) r.pitch_run = rise * 12 / pitch
+    if (pitch && run) r.pitch_rafter = Math.sqrt(Math.pow(pitch*run/12,2)+run*run)
+    if (pitch) r.pitch_angle = (Math.atan(pitch/12)*180/Math.PI).toFixed(1)+'°'
+    const dw = s.diag_width, dh = s.diag_height
+    if (dw && dh) { r.diag_diagonal = Math.sqrt(dw*dw+dh*dh); r.diag_angle = (Math.atan(dh/dw)*180/Math.PI).toFixed(1)+'°' }
+    const totalRise = s.stairs_rise, numRisers = s.stairs_risers, treadW = s.stairs_tread || 10
+    if (totalRise && numRisers) { const rH = totalRise/numRisers; r.stairs_riserH = rH; r.stairs_run = (numRisers-1)*treadW; r.stairs_angle = (Math.atan(rH/treadW)*180/Math.PI).toFixed(1)+'°'; r.stairs_ok = rH>=4 && rH<=7.75 }
+    const circR = s.circle_radius, circD = s.circle_diameter, circC = s.circle_circ
+    let cr = circR || (circD&&circD/2) || (circC&&circC/(2*Math.PI))
+    if (cr) { r.circle_radius=cr; r.circle_diameter=cr*2; r.circle_circ=cr*2*Math.PI; r.circle_area=(cr*cr*Math.PI).toFixed(2)+' in²' }
+    const corner = s.miter_corner, tilt = s.miter_tilt
+    if (corner) { const half=corner/2; r.miter_flat=(90-half).toFixed(2)+'°'; if (tilt!=null) { r.miter_comp=(Math.atan(Math.cos(tilt*Math.PI/180)*Math.tan(half*Math.PI/180))*180/Math.PI).toFixed(2)+'°'; r.miter_bevel=(Math.atan(Math.sin(half*Math.PI/180)*Math.sin(tilt*Math.PI/180))*180/Math.PI).toFixed(2)+'°' } }
+    return r
+  }, [conState])
+
+  // ── Display ──────────────────────────────────────────────────────────────
+  const displayStr = result
+    ? inToFtInStr(fracToDecimal(result))
+    : display || '0'
+
+  const eqStr = [
+    left ? inToFtInStr(fracToDecimal(left)) : '',
+    op || '',
+    (!result && parsedDisplay && op) ? inToFtInStr(fracToDecimal(parsedDisplay)) : '',
+  ].filter(Boolean).join(' ')
+
+  const Btn = ({ children, cls = '', style = {}, onClick, ...rest }) => (
+    <button className={`cm-key ${cls}`} onClick={onClick} style={style} {...rest}>{children}</button>
+  )
+
+  return (
+    <div style={{ display: 'flex', gap: 0, height: '100%', overflow: 'hidden' }}>
+
+      {/* ── Left: Calculator ── */}
+      <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', padding: '8px 12px', minWidth: 0, flex: '0 0 auto', width: 340, background: 'var(--calc-bg)', overflow: 'hidden', height: '100%' }}>
+
+        {/* Display */}
+        <div className="cm-display">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2, minHeight: 16 }}>
+            <div style={{ display: 'flex', gap: 4 }}>
+              {memory && <span className="cm-indicator">M</span>}
+              {conMode && <span className="cm-indicator" style={{ background: 'rgba(74,222,128,.15)', color: '#4ADE80' }}>{conMode.toUpperCase()}</span>}
+            </div>
+            <div className="cm-display-eq">{eqStr || '\u00a0'}</div>
+          </div>
+          <div className="cm-display-main">{displayStr}</div>
+          <div className="cm-display-sub">
+            {activeVal ? `${fracToDecimal(activeVal).toFixed(4)}"  ${(fracToDecimal(activeVal)*25.4).toFixed(2)}mm` : '\u00a0'}
+          </div>
+        </div>
+
+        {/* Memory bar */}
+        <div className="cm-memory-bar">
+          <button className="cm-mem-btn" onClick={memAdd}>M+</button>
+          <button className="cm-mem-btn" onClick={memSub}>M−</button>
+          <button className="cm-mem-btn" onClick={memRecall} disabled={!memory}>MR</button>
+          <button className="cm-mem-btn" onClick={memClear} disabled={!memory}>MC</button>
+        </div>
+
+        {/* Keypad: [digits 3col] [fractions col] [operators 2col] */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr) 1px repeat(2,1fr)', gap: 3, flex: '0 0 auto' }}>
+
+          {/* Digit rows + fraction col + op col — row by row */}
+          {/* Row 1 */}
+          <Btn onClick={() => appendDigit('7')}>7</Btn>
+          <Btn onClick={() => appendDigit('8')}>8</Btn>
+          <Btn onClick={() => appendDigit('9')}>9</Btn>
+          <div style={{ background: 'rgba(255,255,255,.06)' }} />
+          <Btn cls="op" onClick={() => pressOp('÷')}>÷</Btn>
+          <Btn cls="ac" onClick={pressAC}>AC</Btn>
+
+          {/* Row 2 */}
+          <Btn onClick={() => appendDigit('4')}>4</Btn>
+          <Btn onClick={() => appendDigit('5')}>5</Btn>
+          <Btn onClick={() => appendDigit('6')}>6</Btn>
+          <div style={{ background: 'rgba(255,255,255,.06)' }} />
+          <Btn cls="op" onClick={() => pressOp('×')}>×</Btn>
+          <Btn cls="del" onClick={pressBackspace}>⌫</Btn>
+
+          {/* Row 3 */}
+          <Btn onClick={() => appendDigit('1')}>1</Btn>
+          <Btn onClick={() => appendDigit('2')}>2</Btn>
+          <Btn onClick={() => appendDigit('3')}>3</Btn>
+          <div style={{ background: 'rgba(255,255,255,.06)' }} />
+          <Btn cls="op" onClick={() => pressOp('−')}>−</Btn>
+          <Btn cls="unit" onClick={() => appendChar("'")} title="feet">ft '</Btn>
+
+          {/* Row 4 */}
+          <Btn onClick={() => appendDigit('0')}>0</Btn>
+          <Btn onClick={() => appendDigit('.')}>.</Btn>
+          <Btn cls="unit" onClick={() => appendChar('/')} title="fraction slash">/</Btn>
+          <div style={{ background: 'rgba(255,255,255,.06)' }} />
+          <Btn cls="op" onClick={() => pressOp('+')}>+</Btn>
+          <Btn cls="unit" onClick={() => appendChar('"')} title="inches">in "</Btn>
+
+          {/* Row 5: blank x3 | divider | = spans 2 */}
+          <Btn cls="fn" onClick={pressSqrt} title="Square root (R)">√</Btn>
+          <Btn cls="fn" onClick={pressSq} title="Square">x²</Btn>
+          <Btn cls="fn" onClick={pressPi} title="Pi (P)">π</Btn>
+          <div style={{ background: 'rgba(255,255,255,.06)' }} />
+          <Btn cls="eq span2" onClick={pressEquals} style={{ gridColumn: 'span 2' }}>=</Btn>
+
+        </div>
+
+        {/* Fraction denominators row */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 3, marginTop: 3 }}>
+          {[2,4,8,16].map(d => (
+            <Btn key={d} cls="frac" onClick={() => setDenominator(d)}>/{ d}</Btn>
+          ))}
+        </div>
+
+        {/* Construction functions */}
+        <div style={{ marginTop: 8, overflowY: 'auto', flex: 1 }}>
+          <div className="cm-con-grid">
+            {[['pitch','△','Pitch'],['diag','⬜','Diagonal'],['stairs','▤','Stairs'],['circle','○','Circle'],['miter','∠','Miter'],['help','?','Help']].map(([id, icon, label]) => (
+              <button key={id} className={`cm-con-btn${id !== 'help' && conMode === id ? ' active' : ''}${id === 'help' ? ' help' : ''}`}
+                onClick={() => id === 'help' ? setShowHelp(h => !h) : setConMode(conMode === id ? null : id)}>
+                <span className="cm-con-icon">{icon}</span>{label}
+              </button>
+            ))}
+          </div>
+
+          {conMode === 'pitch' && (
+            <ConPanel title="Pitch · Rise · Run" hint="Enter any two values to solve.">
+              <div className="cm-con-inputs">
+                <ConInput label="Pitch (in 12)" value={conState.pitch_pitch} onSet={() => setConVal('pitch','pitch')} computed={!conState.pitch_pitch && conResults.pitch_pitch} />
+                <ConInput label="Rise" value={conState.pitch_rise} onSet={() => setConVal('pitch','rise')} computed={!conState.pitch_rise && conResults.pitch_rise} isLen />
+                <ConInput label="Run" value={conState.pitch_run} onSet={() => setConVal('pitch','run')} computed={!conState.pitch_run && conResults.pitch_run} isLen />
+              </div>
+              {(conResults.pitch_rafter||conResults.pitch_angle) && <div className="cm-con-results">{conResults.pitch_rafter && <ConResult label="Rafter" value={inToFtInStr(conResults.pitch_rafter)} />}{conResults.pitch_angle && <ConResult label="Angle" value={conResults.pitch_angle} />}</div>}
+              {conState.pitch_rise && conState.pitch_run && <PitchViz rise={conState.pitch_rise} run={conState.pitch_run} />}
+              <button className="cm-con-clear" onClick={() => setConState(s => { const n={...s}; delete n.pitch_pitch; delete n.pitch_rise; delete n.pitch_run; return n })}>Clear pitch</button>
+            </ConPanel>
+          )}
+          {conMode === 'diag' && (
+            <ConPanel title="Diagonal · Squaring" hint="Enter width and height.">
+              <div className="cm-con-inputs">
+                <ConInput label="Width" value={conState.diag_width} onSet={() => setConVal('diag','width')} />
+                <ConInput label="Height" value={conState.diag_height} onSet={() => setConVal('diag','height')} />
+              </div>
+              {(conResults.diag_diagonal||conResults.diag_angle) && <div className="cm-con-results">{conResults.diag_diagonal && <ConResult label="Diagonal" value={inToFtInStr(conResults.diag_diagonal)} />}{conResults.diag_angle && <ConResult label="Angle" value={conResults.diag_angle} />}</div>}
+              {conState.diag_width && conState.diag_height && <DiagViz w={conState.diag_width} h={conState.diag_height} />}
+              <button className="cm-con-clear" onClick={() => setConState(s => { const n={...s}; delete n.diag_width; delete n.diag_height; return n })}>Clear diagonal</button>
+            </ConPanel>
+          )}
+          {conMode === 'stairs' && (
+            <ConPanel title="Stairs" hint='Code: 4"–7¾" riser, 10–11" tread.'>
+              <div className="cm-con-inputs">
+                <ConInput label="Total rise" value={conState.stairs_rise} onSet={() => setConVal('stairs','rise')} isLen />
+                <ConInput label="# Risers" value={conState.stairs_risers} onSet={() => setConVal('stairs','risers')} />
+                <ConInput label="Tread (in)" value={conState.stairs_tread} onSet={() => setConVal('stairs','tread')} />
+              </div>
+              {conResults.stairs_riserH && <div className="cm-con-results"><ConResult label="Riser height" value={inToFtInStr(conResults.stairs_riserH)} />{conResults.stairs_run && <ConResult label="Total run" value={inToFtInStr(conResults.stairs_run)} />}{conResults.stairs_angle && <ConResult label="Angle" value={conResults.stairs_angle} />}</div>}
+              {conResults.stairs_ok !== undefined && <div style={{ marginTop: 8, background: conResults.stairs_ok ? 'var(--green-dim)' : 'var(--orange-dim)', borderRadius: 0, borderLeft: '3px solid currentColor', padding: '8px 12px', fontSize: 13, color: conResults.stairs_ok ? 'var(--green)' : 'var(--orange)' }}>{conResults.stairs_ok ? '✓ Within code (4"–7¾")' : '⚠ Outside code range'}</div>}
+              {conResults.stairs_riserH && conState.stairs_risers && <StairsViz riserH={conResults.stairs_riserH} tread={conState.stairs_tread||10} numRisers={Math.min(conState.stairs_risers,8)} />}
+              <button className="cm-con-clear" onClick={() => setConState(s => { const n={...s}; delete n.stairs_rise; delete n.stairs_risers; delete n.stairs_tread; return n })}>Clear stairs</button>
+            </ConPanel>
+          )}
+          {conMode === 'circle' && (
+            <ConPanel title="Circle · Arc" hint="Enter radius, diameter, or circumference.">
+              <div className="cm-con-inputs">
+                <ConInput label="Radius" value={conState.circle_radius} onSet={() => setConVal('circle','radius')} computed={!conState.circle_radius && conResults.circle_radius} isLen />
+                <ConInput label="Diameter" value={conState.circle_diameter} onSet={() => setConVal('circle','diameter')} computed={!conState.circle_diameter && conResults.circle_diameter} isLen />
+                <ConInput label="Circumference" value={conState.circle_circ} onSet={() => setConVal('circle','circ')} computed={!conState.circle_circ && conResults.circle_circ} isLen />
+              </div>
+              {conResults.circle_area && <div className="cm-con-results"><ConResult label="Area" value={conResults.circle_area} /></div>}
+              <button className="cm-con-clear" onClick={() => setConState(s => { const n={...s}; delete n.circle_radius; delete n.circle_diameter; delete n.circle_circ; return n })}>Clear circle</button>
+            </ConPanel>
+          )}
+          {conMode === 'miter' && (
+            <ConPanel title="Compound Miter" hint="Corner angle: total joint angle. Blade tilt: degrees from vertical.">
+              <div className="cm-con-inputs">
+                <ConInput label="Corner (°)" value={conState.miter_corner} onSet={() => setConVal('miter','corner')} />
+                <ConInput label="Tilt (°)" value={conState.miter_tilt} onSet={() => setConVal('miter','tilt')} />
+              </div>
+              {(conResults.miter_flat||conResults.miter_comp) && <div className="cm-con-results">{conResults.miter_flat && <ConResult label="Flat miter" value={conResults.miter_flat} />}{conResults.miter_comp && <ConResult label="Comp. miter" value={conResults.miter_comp} />}{conResults.miter_bevel && <ConResult label="Blade bevel" value={conResults.miter_bevel} />}</div>}
+              <button className="cm-con-clear" onClick={() => setConState(s => { const n={...s}; delete n.miter_corner; delete n.miter_tilt; return n })}>Clear miter</button>
+            </ConPanel>
+          )}
+          {showHelp && (
+            <ConPanel title="Help">
+              <div className="cm-help-grid">
+                <HelpItem title="Keyboard shortcuts" desc="0–9: digits  +−*/: operators  Enter/=: equals  Esc: clear  ': feet  &quot;: inches  /: fraction  R: √  P: π" />
+                <HelpItem title="Fractions" desc="Type 3/4, or 1 3/8. Use /2 /4 /8 /16 buttons to set denominator." />
+                <HelpItem title="Feet-Inch" desc="4'6&quot; or 4' 6 1/2&quot;" />
+                <HelpItem title="Memory" desc="M+ add  M− subtract  MR recall  MC clear" />
+              </div>
+            </ConPanel>
+          )}
+        </div>
+      </div>
+
+      {/* ── Right: Greenbar tape ── */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden', borderLeft: '3px solid #1a3a1a' }}>
+        <div className="cm-tape-header">
+          <span>CALCULATION TAPE</span>
+          <button onClick={() => setHistory([])} style={{ background: 'none', border: 'none', color: '#E0F7D0', cursor: 'pointer', fontSize: 11, fontFamily: 'var(--tape-font)' }}>
+            [CLEAR]
+          </button>
+        </div>
+        <div className="cm-tape" style={{ flex: 1, maxWidth: '100%' }}>
+          {history.length === 0 && (
+            <div style={{ padding: '20px 10px', color: 'var(--calc-tape-dim)', fontFamily: 'var(--tape-font)', fontSize: 12, textAlign: 'center', opacity: 0.6 }}>
+              — no calculations yet —<br />
+              <span style={{ fontSize: 10 }}>tap any tape row to recall</span>
+            </div>
+          )}
+          {history.map((h, i) => (
+            <TapeRow key={h.ts} entry={h} onClick={() => {
+              setResult(h.result); setLeft(h.result); setOp(null); setDisplay(''); setJustEvaled(true)
+            }} />
+          ))}
+        </div>
+
+        {/* Nearest fractions — bottom of tape panel */}
+        {activeVal && (
+          <div className="cm-conversions">
+            <div className="label-caps" style={{ marginBottom: 6 }}>Nearest fractions</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 4 }}>
+              {[2,4,8,16].map(den => {
+                const dec = fracToDecimal(activeVal)
+                const { w, n, d } = inchToFrac(dec, den)
+                return (
+                  <div key={den} className="cm-conv-cell">
+                    <div style={{ fontSize: 9, color: 'var(--c-text-faint)' }}>1/{den}"</div>
+                    <strong style={{ fontSize: 12, fontFamily: 'var(--tape-font)' }}>{n === 0 ? `${w}"` : `${w > 0 ? w + ' ' : ''}${n}/${d}"`}</strong>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   )
 }

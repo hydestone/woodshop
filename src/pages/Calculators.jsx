@@ -202,60 +202,74 @@ function BoardFoot() {
 
 // ─── Tab: Converter ──────────────────────────────────────────────────────────
 const CONV_CATS = {
-  Length:      { units: ['in','ft','yd','mi','mm','cm','m','km'], toBase: { in:1, ft:12, yd:36, mi:63360, mm:1/25.4, cm:1/2.54, m:39.3701, km:39370.1 } },
-  Area:        { units: ['in²','ft²','yd²','ac','mm²','cm²','m²'], toBase: { 'in²':1,'ft²':144,'yd²':1296,'ac':6272640,'mm²':1/645.16,'cm²':1/6.4516,'m²':1550.003 } },
-  Volume:      { units: ['fl oz','cup','pt','qt','gal','ml','L'], toBase: { 'fl oz':1, cup:8, pt:16, qt:32, gal:128, ml:1/29.5735, L:33.814 } },
-  Weight:      { units: ['oz','lb','ton','g','kg','t'], toBase: { oz:1, lb:16, ton:32000, g:1/28.3495, kg:1/0.028349, t:1/0.0000283495 } },
-  Temperature: { units: ['°F','°C','K'], special: true },
-  Speed:       { units: ['mph','fps','km/h','m/s','knot'], toBase: { mph:1, fps:0.681818, 'km/h':0.621371, 'm/s':2.23694, knot:1.15078 } },
-  Pressure:    { units: ['PSI','bar','kPa','MPa','atm'], toBase: { PSI:1, bar:14.5038, kPa:0.145038, MPa:145.038, atm:14.696 } },
-  Torque:      { units: ['ft·lb','in·lb','N·m','kgf·m'], toBase: { 'ft·lb':1,'in·lb':0.0833333,'N·m':0.737562,'kgf·m':7.23301 } },
-  'Board Foot':{ units: ['BF','in³','ft³'], toBase: { BF:1, 'in³':1/144, 'ft³':12 } },
+  Length:         { units: ['in','ft','yd','mi','mm','cm','m','km'], toBase: { in:1, ft:12, yd:36, mi:63360, mm:1/25.4, cm:1/2.54, m:39.3701, km:39370.1 } },
+  Area:           { units: ['in²','ft²','yd²','ac','mm²','cm²','m²'], toBase: { 'in²':1,'ft²':144,'yd²':1296,'ac':6272640,'mm²':1/645.16,'cm²':1/6.4516,'m²':1550.003 } },
+  'Volume (fluid)': { units: ['fl oz','cup','pt','qt','gal','ml','L'], toBase: { 'fl oz':1,cup:8,pt:16,qt:32,gal:128,ml:1/29.5735,L:33.814 } },
+  'Volume (solid)': { units: ['in³','ft³','yd³','cm³','m³','L'], toBase: { 'in³':1,'ft³':1728,'yd³':46656,'cm³':1/16.387,'m³':61023.7,'L':61.0237 } },
+  Weight:         { units: ['oz','lb','ton','g','kg','t'], toBase: { oz:1,lb:16,ton:32000,g:1/28.3495,kg:1/0.028349,t:1/0.0000283495 } },
+  Temperature:    { units: ['°F','°C','K'], special: true },
+  Speed:          { units: ['mph','fps','km/h','m/s','knot'], toBase: { mph:1,fps:0.681818,'km/h':0.621371,'m/s':2.23694,knot:1.15078 } },
+  Pressure:       { units: ['PSI','bar','kPa','MPa','atm'], toBase: { PSI:1,bar:14.5038,kPa:0.145038,MPa:145.038,atm:14.696 } },
+  Torque:         { units: ['ft·lb','in·lb','N·m','kgf·m'], toBase: { 'ft·lb':1,'in·lb':0.0833333,'N·m':0.737562,'kgf·m':7.23301 } },
+  'Board Foot':   { units: ['BF','in³','ft³'], toBase: { BF:1,'in³':1/144,'ft³':12 } },
 }
+
+// Shared grid: label | value-input | from-select | arrow | result | to-select | swap
+// Columns:     120px   1fr           80px          18px    1fr      80px        32px
+const CONV_GRID = '120px 1fr 80px 18px 1fr 80px 32px'
 
 function convertTemp(v, from, to) {
   let c = from==='°F'?(v-32)*5/9 : from==='K'?v-273.15 : v
   return to==='°F'?c*9/5+32 : to==='K'?c+273.15 : c
 }
-
-function convertVal(v, from, to, cfg) {
+function doConvert(v, from, to, cfg) {
   if (!cfg || isNaN(v)) return ''
-  if (cfg.special) { const r = convertTemp(v, from, to); return Number.isFinite(r) ? +r.toFixed(4) + '' : '' }
+  if (cfg.special) { const r = convertTemp(v, from, to); return Number.isFinite(r) ? +r.toFixed(6)+'' : '' }
   const base = v * (cfg.toBase[from] || 1)
   const res = base / (cfg.toBase[to] || 1)
-  return +res.toFixed(8) + ''
+  return +res.toFixed(8)+''
 }
+
+const selStyle = (light) => ({
+  background: 'transparent', border: 'none', fontFamily: 'inherit',
+  fontSize: 13, fontWeight: 700, outline: 'none', cursor: 'pointer', padding: '2px 2px', width: '100%',
+  color: light ? 'var(--white)' : 'var(--c-text-primary)',
+})
 
 function ConverterRow({ title, cfg }) {
   const [from, setFrom] = useState(cfg.units[0])
   const [to,   setTo]   = useState(cfg.units[1] || cfg.units[0])
   const [val,  setVal]  = useState('')
-  const result = val !== '' ? convertVal(parseFloat(val), from, to, cfg) : ''
-
-  const selStyle = {
-    background: 'transparent', border: 'none', fontFamily: 'inherit',
-    fontSize: 12, fontWeight: 700, outline: 'none', color: 'var(--c-text-primary)',
-    cursor: 'pointer', padding: '2px 2px', maxWidth: 72,
-  }
+  const result = val !== '' ? doConvert(parseFloat(val), from, to, cfg) : ''
 
   return (
-    <div style={{ display:'grid', gridTemplateColumns:'80px 1fr 72px 20px 1fr 72px 32px', gap:4, alignItems:'center', padding:'6px 0', borderBottom:'1px solid var(--c-border-light)' }}>
-      <span style={{ fontSize:11, fontWeight:700, color:'var(--c-text-muted)', textTransform:'uppercase', letterSpacing:'.4px' }}>{title}</span>
-      <input className="calc-input" value={val} onChange={e=>setVal(e.target.value)}
-        placeholder="0" inputMode="decimal"
-        style={{ fontSize:14, padding:'6px 8px', textAlign:'right' }} />
-      <select value={from} onChange={e=>setFrom(e.target.value)} style={selStyle}>
+    <div style={{ display:'grid', gridTemplateColumns: CONV_GRID, gap:4, alignItems:'center', padding:'5px 0', borderBottom:'1px solid var(--c-border-light)' }}>
+      {/* Label with green left accent */}
+      <div style={{ display:'flex', alignItems:'center', gap:0 }}>
+        <div style={{ width:3, alignSelf:'stretch', background:'var(--forest)', marginRight:8, flexShrink:0 }} />
+        <span style={{ fontSize:11, fontWeight:700, color:'var(--c-text-muted)', textTransform:'uppercase', letterSpacing:'.4px' }}>{title}</span>
+      </div>
+      {/* Input with left accent */}
+      <div style={{ borderLeft:'2px solid var(--accent)', paddingLeft:1 }}>
+        <input className="calc-input" value={val} onChange={e=>setVal(e.target.value)}
+          placeholder="0" inputMode="decimal"
+          style={{ fontSize:14, padding:'6px 8px', textAlign:'right', width:'100%' }} />
+      </div>
+      <select value={from} onChange={e=>setFrom(e.target.value)} style={selStyle(false)}>
         {cfg.units.map(u=><option key={u}>{u}</option>)}
       </select>
-      <span style={{ textAlign:'center', color:'var(--c-text-faint)', fontSize:13 }}>→</span>
-      <div style={{ background:'var(--c-bg-subtle)', border:'1px solid var(--c-border-light)', padding:'6px 8px', fontSize:14, fontWeight:700, color:'var(--forest)', textAlign:'right', minHeight:36, display:'flex', alignItems:'center', justifyContent:'flex-end' }}>
-        {result || <span style={{color:'var(--c-text-faint)'}}>—</span>}
+      <span style={{ textAlign:'center', color:'var(--c-text-faint)', fontSize:13, userSelect:'none' }}>→</span>
+      {/* Result with left accent */}
+      <div style={{ borderLeft:'2px solid var(--forest)', paddingLeft:1 }}>
+        <div style={{ background:'var(--c-bg-subtle)', border:'1px solid var(--c-border-light)', padding:'6px 8px', fontSize:14, fontWeight:700, color:'var(--forest)', textAlign:'right', minHeight:38, display:'flex', alignItems:'center', justifyContent:'flex-end' }}>
+          {result || <span style={{color:'var(--c-text-faint)'}}>—</span>}
+        </div>
       </div>
-      <select value={to} onChange={e=>setTo(e.target.value)} style={selStyle}>
+      <select value={to} onChange={e=>setTo(e.target.value)} style={selStyle(false)}>
         {cfg.units.map(u=><option key={u}>{u}</option>)}
       </select>
       <button onClick={()=>{setFrom(to);setTo(from)}} title="Swap"
-        style={{ background:'none', border:'1px solid var(--c-border)', borderRadius:0, cursor:'pointer', fontSize:13, color:'var(--c-text-muted)', padding:'4px 6px' }}>⇄</button>
+        style={{ background:'none', border:'1px solid var(--c-border)', borderRadius:0, cursor:'pointer', fontSize:13, color:'var(--c-text-muted)', padding:'4px 6px', width:32 }}>⇄</button>
     </div>
   )
 }
@@ -267,35 +281,53 @@ function WildcardConverter() {
   const [to,   setTo]   = useState(cfg.units[1] || cfg.units[0])
   const [val,  setVal]  = useState('')
 
-  const handleCat = c => { setCat(c); const u = CONV_CATS[c].units; setFrom(u[0]); setTo(u[1]||u[0]); setVal('') }
+  const handleCat = c => {
+    setCat(c)
+    const u = CONV_CATS[c].units
+    setFrom(u[0]); setTo(u[1]||u[0]); setVal('')
+  }
   const curCfg = CONV_CATS[cat]
-  const result = val !== '' ? convertVal(parseFloat(val), from, to, curCfg) : ''
+  const result = val !== '' ? doConvert(parseFloat(val), from, to, curCfg) : ''
+
+  const darkSel = {
+    background:'rgba(255,255,255,.1)', color:'var(--white)',
+    border:'1px solid rgba(255,255,255,.2)', borderRadius:0,
+    fontFamily:'inherit', fontSize:13, fontWeight:700,
+    padding:'6px 8px', cursor:'pointer', outline:'none', width:'100%',
+  }
 
   return (
-    <div style={{ background:'var(--navy)', padding:'12px 14px', marginBottom:16, borderLeft:'3px solid var(--accent)' }}>
-      <div style={{ fontSize:10, fontWeight:700, color:'rgba(255,255,255,.4)', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:8 }}>QUICK CONVERT</div>
-      <div style={{ display:'flex', gap:8, flexWrap:'wrap', alignItems:'center' }}>
-        <select value={cat} onChange={e=>handleCat(e.target.value)}
-          style={{ background:'rgba(255,255,255,.1)', color:'var(--white)', border:'1px solid rgba(255,255,255,.2)', borderRadius:0, fontFamily:'inherit', fontSize:13, fontWeight:700, padding:'6px 10px', cursor:'pointer', outline:'none' }}>
-          {Object.keys(CONV_CATS).map(c=><option key={c} style={{background:'var(--navy)'}}>{c}</option>)}
-        </select>
-        <input className="calc-input" value={val} onChange={e=>setVal(e.target.value)}
-          placeholder="value" inputMode="decimal"
-          style={{ flex:1, minWidth:80, background:'rgba(255,255,255,.1)', color:'var(--white)', border:'1px solid rgba(255,255,255,.2)', fontSize:16, fontWeight:700, textAlign:'right', padding:'6px 10px' }} />
-        <select value={from} onChange={e=>setFrom(e.target.value)}
-          style={{ background:'rgba(255,255,255,.1)', color:'var(--white)', border:'1px solid rgba(255,255,255,.2)', borderRadius:0, fontFamily:'inherit', fontSize:13, fontWeight:700, padding:'6px 10px', cursor:'pointer', outline:'none' }}>
+    <div style={{ background:'var(--navy)', marginBottom:12, borderLeft:'3px solid var(--accent)' }}>
+      <div style={{ padding:'6px 12px 4px', fontSize:10, fontWeight:700, color:'rgba(255,255,255,.4)', textTransform:'uppercase', letterSpacing:'.5px' }}>QUICK CONVERT</div>
+      {/* Same grid as rows for alignment */}
+      <div style={{ display:'grid', gridTemplateColumns: CONV_GRID, gap:4, alignItems:'center', padding:'0 0 10px 0' }}>
+        {/* Category label col — dropdown */}
+        <div style={{ paddingLeft:12 }}>
+          <select value={cat} onChange={e=>handleCat(e.target.value)} style={{ ...darkSel, fontSize:11, fontWeight:700 }}>
+            {Object.keys(CONV_CATS).map(c=><option key={c} style={{background:'var(--navy)'}}>{c}</option>)}
+          </select>
+        </div>
+        {/* Value input with left accent */}
+        <div style={{ borderLeft:'2px solid var(--accent-light)', paddingLeft:1 }}>
+          <input className="calc-input" value={val} onChange={e=>setVal(e.target.value)}
+            placeholder="value" inputMode="decimal"
+            style={{ background:'rgba(255,255,255,.1)', color:'var(--white)', border:'1px solid rgba(255,255,255,.2)', fontSize:15, fontWeight:700, textAlign:'right', padding:'6px 8px', width:'100%' }} />
+        </div>
+        <select value={from} onChange={e=>setFrom(e.target.value)} style={darkSel}>
           {curCfg.units.map(u=><option key={u} style={{background:'var(--navy)'}}>{u}</option>)}
         </select>
-        <span style={{ color:'rgba(255,255,255,.5)', fontSize:18 }}>→</span>
-        <div style={{ flex:1, minWidth:80, background:'rgba(0,0,0,.3)', border:'1px solid rgba(255,255,255,.1)', padding:'6px 10px', fontSize:16, fontWeight:700, color:'#4ADE80', textAlign:'right', minHeight:36, display:'flex', alignItems:'center', justifyContent:'flex-end' }}>
-          {result || <span style={{color:'rgba(255,255,255,.2)'}}>—</span>}
+        <span style={{ textAlign:'center', color:'rgba(255,255,255,.4)', fontSize:13, userSelect:'none' }}>→</span>
+        {/* Result with left accent */}
+        <div style={{ borderLeft:'2px solid rgba(74,222,128,.5)', paddingLeft:1 }}>
+          <div style={{ background:'rgba(0,0,0,.3)', border:'1px solid rgba(255,255,255,.1)', padding:'6px 8px', fontSize:15, fontWeight:700, color:'#4ADE80', textAlign:'right', minHeight:38, display:'flex', alignItems:'center', justifyContent:'flex-end' }}>
+            {result || <span style={{color:'rgba(255,255,255,.2)'}}>—</span>}
+          </div>
         </div>
-        <select value={to} onChange={e=>setTo(e.target.value)}
-          style={{ background:'rgba(255,255,255,.1)', color:'var(--white)', border:'1px solid rgba(255,255,255,.2)', borderRadius:0, fontFamily:'inherit', fontSize:13, fontWeight:700, padding:'6px 10px', cursor:'pointer', outline:'none' }}>
+        <select value={to} onChange={e=>setTo(e.target.value)} style={darkSel}>
           {curCfg.units.map(u=><option key={u} style={{background:'var(--navy)'}}>{u}</option>)}
         </select>
         <button onClick={()=>{setFrom(to);setTo(from)}}
-          style={{ background:'rgba(255,255,255,.08)', border:'1px solid rgba(255,255,255,.15)', borderRadius:0, color:'var(--white)', fontSize:14, padding:'6px 12px', cursor:'pointer' }}>⇄</button>
+          style={{ background:'rgba(255,255,255,.08)', border:'1px solid rgba(255,255,255,.15)', borderRadius:0, color:'var(--white)', fontSize:13, padding:'6px 0', cursor:'pointer', width:32 }}>⇄</button>
       </div>
     </div>
   )
@@ -303,9 +335,9 @@ function WildcardConverter() {
 
 function UnitConverter() {
   return (
-    <div style={{ padding:'12px 20px 40px', maxWidth:900, margin:'0 auto' }}>
+    <div style={{ padding:'12px 20px 40px', maxWidth:860, margin:'0 auto' }}>
       <WildcardConverter />
-      <div style={{ display:'flex', flexDirection:'column' }}>
+      <div>
         {Object.entries(CONV_CATS).map(([title, cfg]) => (
           <ConverterRow key={title} title={title} cfg={cfg} />
         ))}
