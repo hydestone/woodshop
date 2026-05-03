@@ -31,9 +31,12 @@ export default function YearReview() {
 
   const availableYears = useMemo(() => {
     const ys = new Set(data.projects.map(p => p.year_completed).filter(Boolean))
+    data.photos.forEach(ph => {
+      if (ph.created_at) ys.add(new Date(ph.created_at).getFullYear())
+    })
     ys.add(currentYear)
     return [...ys].sort((a, b) => b - a)
-  }, [data.projects, currentYear])
+  }, [data.projects, data.photos, currentYear])
 
   const [year, setYear] = useState(() => {
     const withProjects = data.projects.map(p => p.year_completed).filter(Boolean)
@@ -57,9 +60,9 @@ export default function YearReview() {
     const topSpecies  = Object.entries(species).sort((a, b) => b[1] - a[1])
     const topFinishes = Object.entries(finishes).sort((a, b) => b[1] - a[1])
     const topCats     = Object.entries(categories).sort((a, b) => b[1] - a[1])
-    const photos      = data.photos.filter(ph => {
-      const proj = data.projects.find(p => p.id === ph.project_id)
-      return proj?.year_completed === year && ph.photo_type === 'finished'
+    const photos = data.photos.filter(ph => {
+      const photoYear = ph.created_at ? new Date(ph.created_at).getFullYear() : null
+      return photoYear === year && ph.photo_type !== 'unsorted'
     })
     return { projs, species, finishes, categories, statuses, topSpecies, topFinishes, topCats, recipients, photos }
   }, [data, year])
@@ -138,11 +141,11 @@ export default function YearReview() {
       </div>
 
       <div style={{ padding: '0 20px 40px' }}>
-        {stats.projs.length === 0 ? (
+        {stats.projs.length === 0 && stats.photos.length === 0 ? (
           <div className="empty" style={{ paddingTop: 40 }}>
             <div className="empty-icon"><ICal size={32} color="var(--c-text-muted)" sw={1.5} /></div>
-            <div className="empty-title">No projects in {year}</div>
-            <p className="empty-sub">Add a year_completed to your projects to see your review</p>
+            <div className="empty-title">No activity in {year}</div>
+            <p className="empty-sub">No completed projects or photos found for {year}</p>
           </div>
         ) : (
           <>
