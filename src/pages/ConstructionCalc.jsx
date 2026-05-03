@@ -15,15 +15,16 @@ function fracToDecimal({ n, d }) { return d === 0 ? 0 : n / d }
 
 function parseFracObj(s) {
   s = (s || '').trim()
-  // feet-inch-fraction: 6'4" 1/8 or 6' 4 1/8"
-  const ftInFrac = s.match(/^(-?\d+(?:\.\d+)?)[''\u2019]\s*(\d+)\s*"?\s+(\d+)\/(\d+)\s*"?$/)
+  // feet-inch-fraction: 9'2"3/8 or 9'2 "3/8 or 6'4 1/8"
+  // Requires either " or whitespace between inch number and fraction (no ambiguity)
+  const ftInFrac = s.match(/^(-?\d+(?:\.\d+)?)[\u2018\u2019'\'']\s*(\d+)(?:\s*"\s*|\s+)(\d+)\/(\d+)\s*"?$/)
   if (ftInFrac) {
     const ft = parseFloat(ftInFrac[1]), ins = parseInt(ftInFrac[2])
     const num = parseInt(ftInFrac[3]), den = parseInt(ftInFrac[4])
     return fracReduce(Math.round((ft * 12 + ins + num / den) * 64), 64)
   }
-  // feet-inch: 4'6" or 4' 6 1/2" or 4' 6
-  const ftIn = s.match(/^(-?\d+(?:\.\d+)?)[''\u2019]\s*(\d+(?:\s+\d+\/\d+)?)\s*"?\s*$/)
+  // feet-inch: 4'6" or 4' 6 1/2" or 4' 6 or 9'2 "
+  const ftIn = s.match(/^(-?\d+(?:\.\d+)?)[\u2018\u2019'\'']\s*(\d+(?:\s+\d+\/\d+)?)\s*"?\s*$/)
   if (ftIn) {
     const ft = parseFloat(ftIn[1])
     const inPart = parseFracObj(ftIn[2].trim())
@@ -31,7 +32,7 @@ function parseFracObj(s) {
     return fracReduce(Math.round(ft * 12 * 64), 64)
   }
   // feet only: 4'
-  const ftOnly = s.match(/^(-?\d+(?:\.\d+)?)[''\u2019]\s*$/)
+  const ftOnly = s.match(/^(-?\d+(?:\.\d+)?)[\u2018\u2019'\'']\s*$/)
   if (ftOnly) return fracReduce(Math.round(parseFloat(ftOnly[1]) * 12 * 64), 64)
   // mixed: 3 1/2
   const m = s.match(/^(-?\d+)\s+(\d+)\/(\d+)$/)
