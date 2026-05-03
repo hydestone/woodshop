@@ -434,7 +434,10 @@ export default function Stock() {
       <div className="scroll-page" style={{paddingBottom:80}}>
         <div className="page-header" data-tutorial-target="stock-page">
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-            <h1 className="page-title">Wood Stock</h1>
+            <div>
+              <h1 className="page-title">Wood Stock</h1>
+              <p style={{fontSize:12,color:'var(--c-text-muted)',fontStyle:'italic',marginTop:2}}>Add a location, then add species and select location.</p>
+            </div>
             <button className={showTools?'btn-primary':'btn-secondary'} style={{padding:'5px 12px',fontSize:13}} onClick={()=>setShowTools(s=>!s)}>
               {showTools?'Hide tools':'Tools'}
             </button>

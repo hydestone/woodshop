@@ -646,6 +646,21 @@ export default function Dashboard() {
           {today}
         </p>
         <KineticTitle text="Today" className="page-title" delay={80} />
+        {/* Quick actions — directly under title */}
+        <div data-tutorial-target="quick-actions" style={{ display: 'flex', gap: 8, paddingTop: 10, overflowX: 'auto', scrollbarWidth: 'none', marginLeft: -2 }}>
+          <button className="dash-action-btn" onClick={() => setTab('projects')}>
+            <IFolder size={16} color="var(--accent)" sw={1.8} /> New Project
+          </button>
+          <button className="dash-action-btn" onClick={() => setTab('photos')}>
+            <ICamera size={16} color="var(--accent)" sw={1.8} /> Add Photo
+          </button>
+          <button className="dash-action-btn" onClick={() => setTab('shopping')}>
+            <ICart size={16} color="var(--accent)" sw={1.8} /> Shopping
+          </button>
+          <button className="dash-action-btn" onClick={() => setTab('calculators')}>
+            <ISaw size={16} color="var(--accent)" sw={1.8} /> Calculator
+          </button>
+        </div>
       </div>
       <div style={{ paddingBottom: 32 }}>
 
@@ -687,22 +702,6 @@ export default function Dashboard() {
         </>}
 
         {!hasUrgent && <div className="empty" style={{ paddingTop: 32, paddingBottom: 0 }}><div className="empty-icon"><ITree size={32} color="var(--c-text-muted)" sw={1.5} /></div><div className="empty-title">All clear</div><p className="empty-sub">Nothing urgent today.</p></div>}
-
-        {/* Quick actions */}
-        <div data-tutorial-target="quick-actions" style={{ display: 'flex', gap: 8, padding: '16px 20px 8px', overflowX: 'auto', scrollbarWidth: 'none' }}>
-          <button className="dash-action-btn" onClick={() => setTab('projects')}>
-            <IFolder size={16} color="var(--accent)" sw={1.8} /> New Project
-          </button>
-          <button className="dash-action-btn" onClick={() => setTab('photos')}>
-            <ICamera size={16} color="var(--accent)" sw={1.8} /> Add Photo
-          </button>
-          <button className="dash-action-btn" onClick={() => setTab('shopping')}>
-            <ICart size={16} color="var(--accent)" sw={1.8} /> Shopping
-          </button>
-          <button className="dash-action-btn" onClick={() => setTab('calculators')}>
-            <ISaw size={16} color="var(--accent)" sw={1.8} /> Calculator
-          </button>
-        </div>
 
         {(() => {
           const recent = [...data.projects]

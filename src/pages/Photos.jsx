@@ -11,6 +11,7 @@ export default function AllPhotos() {
   const [uploading, setUploading]       = useState(false)
   const [filter, setFilter]             = useState('all')
   const [sortBy, setSortBy]             = useState('date')
+  const [includeComplete, setIncludeComplete] = useState(false)
   const [pendingFiles, setPendingFiles] = useState([])
   const [showTag, setShowTag]           = useState(false)
   const [showTriage, setShowTriage]     = useState(false)
@@ -110,6 +111,11 @@ export default function AllPhotos() {
         ? data.photos.filter(p => projMap[p.project_id]?.category === filter.slice(4))
         : data.photos.filter(p => p.tags?.split(',').map(t => t.trim()).includes(filter))
 
+    // Unless includeComplete is on, hide photos from completed projects
+    if (!includeComplete && filter !== 'unsorted') {
+      photos = photos.filter(p => !p.project_id || projMap[p.project_id]?.status !== 'complete')
+    }
+
     photos = photos.slice().sort((a, b) => {
       if (sortBy === 'date') return new Date(b.created_at || 0) - new Date(a.created_at || 0)
       if (sortBy === 'project') {
@@ -186,6 +192,19 @@ export default function AllPhotos() {
                 </select>
                 <span className="filter-select-chevron" aria-hidden="true">▾</span>
               </div>
+              <button
+                onClick={() => setIncludeComplete(v => !v)}
+                style={{
+                  padding: '5px 10px', fontSize: 12, fontWeight: 600,
+                  background: includeComplete ? 'var(--forest-dim)' : 'var(--c-bg-subtle)',
+                  color: includeComplete ? 'var(--forest)' : 'var(--c-text-muted)',
+                  border: `1.5px solid ${includeComplete ? 'var(--forest)' : 'var(--c-border)'}`,
+                  borderRadius: 6, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+                }}
+                title="Include photos from completed projects"
+              >
+                + Complete
+              </button>
             </div>
           </div>
         </div>

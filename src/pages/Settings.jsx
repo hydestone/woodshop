@@ -1,8 +1,49 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import { ConfirmSheet, ITrash, IEdit } from '../components/Shared.jsx'
 import * as db from '../db.js'
+
+function TagsSection({ tags, onRename, onDelete }) {
+  const toast = useToast()
+  const [editTag, setEditTag]   = useState(null)
+  const [editVal, setEditVal]   = useState('')
+  const [delTag, setDelTag]     = useState(null)
+
+  return (
+    <div style={{ marginBottom: 24 }}>
+      <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--c-text-muted)', textTransform: 'uppercase', letterSpacing: '.5px', padding: '0 20px', marginBottom: 6 }}>Photo Tags</div>
+      <div className="group">
+        {tags.map((tag, i) => (
+          <div key={tag} style={{ display: 'flex', alignItems: 'center', padding: '10px 16px', borderBottom: i < tags.length - 1 ? '1px solid var(--c-border-light)' : 'none', background: 'var(--c-bg-surface)' }}>
+            {editTag === tag ? (
+              <>
+                <input className="form-input" style={{ flex: 1 }} value={editVal}
+                  onChange={e => setEditVal(e.target.value)}
+                  onKeyDown={async e => {
+                    if (e.key === 'Enter') { await onRename(tag, editVal); setEditTag(null); toast('Tag renamed', 'success') }
+                    if (e.key === 'Escape') setEditTag(null)
+                  }} autoFocus />
+                <button className="btn-secondary" style={{ marginLeft: 8, padding: '4px 12px', fontSize: 13 }}
+                  onClick={async () => { await onRename(tag, editVal); setEditTag(null); toast('Tag renamed', 'success') }}>Save</button>
+                <button className="btn-secondary" style={{ marginLeft: 6, padding: '4px 12px', fontSize: 13 }}
+                  onClick={() => setEditTag(null)}>Cancel</button>
+              </>
+            ) : (
+              <>
+                <span style={{ flex: 1, fontSize: 14, color: 'var(--c-text-primary)' }}>{tag}</span>
+                <button className="icon-btn" onClick={() => { setEditTag(tag); setEditVal(tag) }} aria-label="Rename tag"><IEdit size={15} /></button>
+                <button className="icon-btn" onClick={() => setDelTag(tag)} aria-label="Delete tag"><ITrash size={15} /></button>
+              </>
+            )}
+          </div>
+        ))}
+        {tags.length === 0 && <div style={{ padding: '12px 16px', fontSize: 13, color: 'var(--c-text-muted)', background: 'var(--c-bg-surface)' }}>No tags yet — add tags to photos to manage them here.</div>}
+      </div>
+      {delTag && <ConfirmSheet message={`Remove tag "${delTag}" from all photos? This cannot be undone.`} onConfirm={async () => { await onDelete(delTag); setDelTag(null); toast('Tag removed', 'success') }} onClose={() => setDelTag(null)} />}
+    </div>
+  )
+}
 
 function ManagedList({ title, items, onAdd, onRename, onDelete }) {
   const toast = useToast()
@@ -72,6 +113,51 @@ export default function Settings() {
   const { data, mutate } = useCtx()
   const categories = data.categories || []
 
+  // Derive all tags from photos
+  const allTags = useMemo(() => {
+    const tagSet = new Set()
+    ;(data.photos || []).forEach(p => {
+      p.tags?.split(',').map(t => t.trim()).filter(Boolean).forEach(t => tagSet.add(t))
+    })
+    return [...tagSet].sort()
+  }, [data.photos])
+
+  const handleRenameTag = async (oldTag, newTag) => {
+    newTag = newTag.trim()
+    if (!newTag || newTag === oldTag) return
+    const updates = (data.photos || [])
+      .filter(p => p.tags?.split(',').map(t => t.trim()).includes(oldTag))
+      .map(p => {
+        const tags = p.tags.split(',').map(t => t.trim()).map(t => t === oldTag ? newTag : t).join(', ')
+        return db.updatePhoto(p.id, { tags })
+      })
+    await Promise.all(updates)
+    mutate(d => ({
+      ...d,
+      photos: d.photos.map(p => {
+        if (!p.tags?.split(',').map(t => t.trim()).includes(oldTag)) return p
+        return { ...p, tags: p.tags.split(',').map(t => t.trim()).map(t => t === oldTag ? newTag : t).join(', ') }
+      })
+    }))
+  }
+
+  const handleDeleteTag = async tag => {
+    const updates = (data.photos || [])
+      .filter(p => p.tags?.split(',').map(t => t.trim()).includes(tag))
+      .map(p => {
+        const tags = p.tags.split(',').map(t => t.trim()).filter(t => t !== tag).join(', ')
+        return db.updatePhoto(p.id, { tags })
+      })
+    await Promise.all(updates)
+    mutate(d => ({
+      ...d,
+      photos: d.photos.map(p => ({
+        ...p,
+        tags: p.tags?.split(',').map(t => t.trim()).filter(t => t !== tag).join(', ')
+      }))
+    }))
+  }
+
   return (
     <div className="scroll-page">
       <div className="page-header">
@@ -102,6 +188,9 @@ export default function Settings() {
             mutate(d => ({ ...d, categories: d.categories.filter(c => c.id !== id) }))
           }}
         />
+
+        {/* Tags — derived from photos */}
+        <TagsSection tags={allTags} onRename={handleRenameTag} onDelete={handleDeleteTag} />
       </div>
     </div>
   )

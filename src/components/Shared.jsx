@@ -307,11 +307,12 @@ export function TagInput({ tags, onChange }) {
 }
 
 // ─── Lightbox ─────────────────────────────────────────────────────────────────
-export function Lightbox({ photos, index, onClose }) {
+export function Lightbox({ photos, index, onClose, onEdit }) {
   const [cur, setCur]           = useState(index)
   const [scale, setScale]       = useState(1)
   const [rotation, setRotation] = useState(0)
   const [pan, setPan]           = useState({ x: 0, y: 0 })
+  const [showEdit, setShowEdit] = useState(false)
   const containerRef   = useRef()
   const lastDist       = useRef(null)
   const lastMid        = useRef(null)
@@ -504,6 +505,12 @@ export function Lightbox({ photos, index, onClose }) {
             Reset
           </button>
         )}
+        {onEdit && scale === 1 && (
+          <button aria-label="Edit photo" onClick={e => { e.stopPropagation(); setShowEdit(true) }}
+            style={{ background: 'rgba(255,255,255,.12)', border: 'none', borderRadius: 99, width: 36, height: 36, cursor: 'pointer', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <IEdit size={16} color="#fff" sw={1.8} />
+          </button>
+        )}
         <button aria-label="Rotate left"  onClick={e => { e.stopPropagation(); setRotation(r => r - 90) }}
           style={{ background: 'rgba(255,255,255,.12)', border: 'none', borderRadius: 99, width: 36, height: 36, cursor: 'pointer', color: '#fff', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           ↺
@@ -517,6 +524,14 @@ export function Lightbox({ photos, index, onClose }) {
           <IClose size={18} color="#fff" sw={2.5} />
         </button>
       </div>
+      {showEdit && onEdit && (
+        <PhotoEditSheet
+          photo={photos[cur]}
+          onSave={async fields => { await onEdit(photos[cur].id, fields); setShowEdit(false) }}
+          onDelete={async () => { await onEdit(photos[cur].id, { _delete: true }); setShowEdit(false); onClose() }}
+          onClose={() => setShowEdit(false)}
+        />
+      )}
     </div>,
     document.body
   )
@@ -546,7 +561,7 @@ export function PhotoGrid({ photos, onEdit, showProject, projects, onNavigatePro
         ))}
       </div>
       {lightboxIdx !== null && (
-        <Lightbox photos={photos} index={lightboxIdx} onClose={() => setLightboxIdx(null)} />
+        <Lightbox photos={photos} index={lightboxIdx} onClose={() => setLightboxIdx(null)} onEdit={onEdit} />
       )}
     </>
   )
