@@ -2626,6 +2626,7 @@ body {
 .loading-screen {
   position: fixed;
   inset: 0;
+  /* Extend background color into safe areas on iPhone */
   background: #060D18;
   display: flex;
   flex-direction: column;
@@ -2633,6 +2634,9 @@ body {
   justify-content: center;
   gap: 20px;
   z-index: 9999;
+  /* Cover the safe area inset at bottom */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  margin-bottom: 0;
 }
 .loading-logo-img {
   width: 140px;
@@ -3135,7 +3139,7 @@ body {
     border-top-color: rgba(0,0,0,.08);
   }
   /* Default = dark (app default). Light mode gets the override. */
-  html, body { background: rgb(22, 27, 34); }
+  html, body { background: #060D18; }
   html[data-theme="light"],
   [data-theme="light"] body { background: #ffffff; }
 
@@ -3155,7 +3159,7 @@ body {
     -webkit-backdrop-filter: none !important;
   }
   [data-theme="light"] .tabbar { background: #ffffff !important; }
-  html, body { background: rgb(22, 27, 34) !important; }
+  html, body { background: #060D18 !important; }
   html[data-theme="light"],
   [data-theme="light"] body { background: #ffffff !important; }
   .scroll-page { padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px)) !important; }
@@ -3165,7 +3169,7 @@ body {
 /* iOS fallback — JS adds .pwa-standalone to <html> */
 @media (max-width: 767px) {
   html.pwa-standalone,
-  .pwa-standalone body { background: rgb(22, 27, 34) !important; }
+  .pwa-standalone body { background: #060D18 !important; }
   html.pwa-standalone[data-theme="light"],
   [data-theme="light"] .pwa-standalone body { background: #ffffff !important; }
   .pwa-standalone .tabbar {

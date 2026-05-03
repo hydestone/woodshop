@@ -230,14 +230,16 @@ function SpeciesDonut({ projects, onDrill , isDark = false }) {
       backgroundColor: cv('--chart-bg'),
       borderColor: cv('--chart-border'),
       textStyle: { color: EC.text(dark), fontSize: 12 },
+      confine: true,
     },
     legend: {
-      type: 'scroll', orient: 'horizontal', bottom: 0, left: 'center',
+      type: 'scroll', orient: 'horizontal', bottom: 4, left: 'center',
       textStyle: { color: EC.text2(dark), fontSize: 10 },
       icon: 'roundRect', itemWidth: 8, itemHeight: 8,
+      pageIconColor: EC.text(dark), pageTextStyle: { color: EC.text2(dark) },
     },
     series: [{
-      type: 'pie', radius: ['38%','62%'], center: ['50%','44%'],
+      type: 'pie', radius: ['40%','65%'], center: ['50%','46%'],
       avoidLabelOverlap: false,
       label: { show: false },
       emphasis: { label: { show: true, fontSize: 12, fontWeight: 700 }, scaleSize: 6 },
@@ -259,7 +261,7 @@ function SpeciesDonut({ projects, onDrill , isDark = false }) {
   }, [data, onDrill])
 
   if (!data.length) return <div style={{textAlign:'center',padding:'24px 0',color:'var(--c-text-muted)',fontSize:13}}>No species logged yet</div>
-  return <div ref={chartRef} style={{ width:'100%', height: 220 }} />
+  return <div ref={chartRef} style={{ width:'100%', height: 260 }} />
 }
 
 
