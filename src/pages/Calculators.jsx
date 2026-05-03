@@ -81,7 +81,7 @@ function inToFtInStr(inches) {
 // ─── Shared UI ─────────────────────────────────────────────────────────────────
 function SectionCard({ title, children }) {
   return (
-    <div style={{ background: 'var(--c-bg-surface)', border: '1px solid var(--c-border-light)', borderRadius: 'var(--r-md)', padding: '16px', marginBottom: 12 }}>
+    <div style={{ background: 'var(--c-bg-surface)', border: '1px solid var(--c-border-light)', borderRadius: 0, borderLeft: '3px solid var(--c-border)', padding: '16px', marginBottom: 12 }}>
       {title && <div className="label-caps" style={{ marginBottom: 12 }}>{title}</div>}
       {children}
     </div>
@@ -225,7 +225,7 @@ function ConverterColumn({ title, cfg, catKey }) {
       <div className="label-caps">{title}</div>
 
       {/* Input */}
-      <div style={{ background: 'var(--navy)', borderRadius: 8, padding: '10px 12px' }}>
+      <div style={{ background: 'var(--navy)', borderRadius: 0, borderLeft: '3px solid var(--accent)', padding: '10px 12px' }}>
         <div style={{ fontSize: 10, color: 'var(--sb-text)', marginBottom: 4 }}>From</div>
         <select
           value={from}
@@ -247,12 +247,12 @@ function ConverterColumn({ title, cfg, catKey }) {
       {/* Swap */}
       <button
         onClick={() => { setFrom(to); setTo(from) }}
-        style={{ background: 'var(--c-bg-subtle)', border: 'none', borderRadius: 99, padding: '4px', cursor: 'pointer', alignSelf: 'center', fontSize: 16, lineHeight: 1, color: 'var(--c-text-muted)' }}
+        style={{ background: 'var(--c-bg-subtle)', border: '1.5px solid var(--c-border)', borderRadius: 0, padding: '6px 12px', cursor: 'pointer', alignSelf: 'center', fontSize: 16, lineHeight: 1, color: 'var(--c-text-muted)', width: '100%' }}
         aria-label="Swap units"
-      >⇅</button>
+      >⇅ Swap</button>
 
       {/* Result */}
-      <div style={{ background: 'var(--c-bg-surface)', border: '1px solid var(--c-border-light)', borderRadius: 8, padding: '10px 12px' }}>
+      <div style={{ background: 'var(--c-bg-surface)', border: '1px solid var(--c-border-light)', borderLeft: '3px solid var(--forest)', borderRadius: 0, padding: '10px 12px' }}>
         <div style={{ fontSize: 10, color: 'var(--c-text-faint)', marginBottom: 4 }}>Result</div>
         <select
           value={to}
@@ -270,7 +270,7 @@ function ConverterColumn({ title, cfg, catKey }) {
 function UnitConverter() {
   return (
     <div style={{ padding: '12px 20px 40px', maxWidth: 640, margin: '0 auto' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
+      <div className="conv-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
         {Object.entries(CONV).map(([title, cfg]) => (
           <ConverterColumn key={title} title={title} cfg={cfg} catKey={title} />
         ))}
@@ -337,39 +337,44 @@ function TrimCuts() {
 
       {/* Cut list */}
       <SectionCard>
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) 44px minmax(0,2fr) 28px', gap: 5, marginBottom: 6 }}>
-          {['Length', 'Qty', 'Label', ''].map(h => (
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) 52px 32px', gap: 5, marginBottom: 6 }}>
+          {['Length', 'Qty', ''].map(h => (
             <div key={h} className="calc-label" style={{ marginBottom: 0, textAlign: 'center' }}>{h}</div>
           ))}
         </div>
         {cuts.map((c, i) => (
-          <div key={c.id} style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) 44px minmax(0,2fr) 28px', gap: 5, marginBottom: 6, alignItems: 'center' }}>
-            <input
-              id={'len-' + c.id}
-              className="calc-input"
-              value={c.len}
-              onChange={e => upd(c.id,'len',e.target.value)}
-              placeholder="48 or 4'6&quot;"
-              onKeyDown={e => e.key==='Enter' && addRow()}
-            />
-            <input
-              className="calc-input"
-              type="number" min="1" value={c.qty}
-              onChange={e => upd(c.id,'qty',e.target.value)}
-              style={{ textAlign: 'center' }}
-            />
-            <input
-              className="calc-input"
-              value={c.label}
-              onChange={e => upd(c.id,'label',e.target.value)}
-              placeholder="optional"
-            />
-            <button
-              onClick={() => setCuts(cc => cc.filter(x => x.id!==c.id))}
-              disabled={cuts.length===1}
-              className="icon-btn"
-              style={{ color: 'var(--red)', opacity: cuts.length===1 ? .3 : 1, justifySelf: 'center' }}
-            >×</button>
+          <div key={c.id} style={{ marginBottom: 8 }}>
+            <div className="trim-row" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) 52px 32px', gap: 5, marginBottom: 4, alignItems: 'center' }}>
+              <input
+                id={'len-' + c.id}
+                className="calc-input"
+                value={c.len}
+                onChange={e => upd(c.id,'len',e.target.value)}
+                placeholder="48 or 4'6&quot;"
+                onKeyDown={e => e.key==='Enter' && addRow()}
+              />
+              <input
+                className="calc-input"
+                type="number" min="1" value={c.qty}
+                onChange={e => upd(c.id,'qty',e.target.value)}
+                style={{ textAlign: 'center' }}
+              />
+              <button
+                onClick={() => setCuts(cc => cc.filter(x => x.id!==c.id))}
+                disabled={cuts.length===1}
+                className="icon-btn"
+                style={{ color: 'var(--red)', opacity: cuts.length===1 ? .3 : 1, justifySelf: 'center' }}
+              >×</button>
+            </div>
+            <div className="trim-label-row" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 4 }}>
+              <input
+                className="calc-input"
+                value={c.label}
+                onChange={e => upd(c.id,'label',e.target.value)}
+                placeholder="Label (optional)"
+                style={{ fontSize: 13 }}
+              />
+            </div>
           </div>
         ))}
         <button className="btn-text" onClick={addRow} style={{ fontSize: 13 }}>+ Add cut</button>
@@ -393,12 +398,12 @@ function TrimCuts() {
         <>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
             {Object.entries(result.summary).sort(([a],[b])=>+a-+b).map(([len,cnt]) => (
-              <div key={len} className="card-navy" style={{ padding: '10px 16px', textAlign: 'center', borderRadius: 10 }}>
+              <div key={len} className="card-navy" style={{ padding: '10px 16px', textAlign: 'center', borderRadius: 0 }}>
                 <div style={{ fontSize: 26, fontWeight: 900, color: 'var(--white)' }}>{cnt}</div>
                 <div style={{ fontSize: 12, color: 'var(--sb-text)' }}>× {inToFtInStr(+len)}</div>
               </div>
             ))}
-            <div style={{ flex:1, minWidth:70, background:'var(--c-bg-surface)', borderRadius:10, padding:'10px 16px', border:'1px solid var(--c-border-light)', textAlign:'center' }}>
+            <div style={{ flex:1, minWidth:70, background:'var(--c-bg-surface)', borderRadius:0, padding:'10px 16px', border:'1px solid var(--c-border-light)', textAlign:'center' }}>
               <div style={{ fontSize:22, fontWeight:700, color:'var(--orange)' }}>
                 {Math.round((1-result.boards.reduce((s,b)=>s+b.used,0)/result.boards.reduce((s,b)=>s+b.sl,0))*100)}%
               </div>
@@ -589,15 +594,15 @@ function SheetGoods() {
       {result && (
         <>
           <div style={{ display:'flex',gap:8,flexWrap:'wrap',marginBottom:12 }}>
-            <div className="card-navy" style={{ padding:'10px 16px',textAlign:'center',borderRadius:10 }}>
+            <div className="card-navy" style={{ padding:'10px 16px',textAlign:'center',borderRadius:0 }}>
               <div style={{ fontSize:28,fontWeight:900,color:'var(--white)' }}>{result.sheets.length}</div>
               <div style={{ fontSize:12,color:'var(--sb-text)' }}>sheet{result.sheets.length!==1?'s':''}</div>
             </div>
-            <div style={{ flex:1,background:'var(--c-bg-surface)',borderRadius:10,padding:'10px 16px',border:'1px solid var(--c-border-light)',textAlign:'center' }}>
+            <div style={{ flex:1,background:'var(--c-bg-surface)',borderRadius:0,padding:'10px 16px',border:'1px solid var(--c-border-light)',textAlign:'center' }}>
               <div style={{ fontSize:22,fontWeight:700,color:'var(--orange)' }}>{result.wastePct}%</div>
               <div style={{ fontSize:11,color:'var(--c-text-muted)' }}>waste</div>
             </div>
-            <div style={{ flex:1,background:'var(--c-bg-surface)',borderRadius:10,padding:'10px 16px',border:'1px solid var(--c-border-light)',textAlign:'center' }}>
+            <div style={{ flex:1,background:'var(--c-bg-surface)',borderRadius:0,padding:'10px 16px',border:'1px solid var(--c-border-light)',textAlign:'center' }}>
               <div style={{ fontSize:18,fontWeight:700 }}>{result.usedSqFt} ft²</div>
               <div style={{ fontSize:11,color:'var(--c-text-muted)' }}>used</div>
             </div>

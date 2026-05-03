@@ -528,7 +528,7 @@ export default function ConstructionCalc() {
                 </div>
               )}
               {conResults.stairs_ok !== undefined && (
-                <div style={{ marginTop: 8, background: conResults.stairs_ok ? 'var(--green-dim)' : 'var(--orange-dim)', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: conResults.stairs_ok ? 'var(--green)' : 'var(--orange)' }}>
+                <div style={{ marginTop: 8, background: conResults.stairs_ok ? 'var(--green-dim)' : 'var(--orange-dim)', borderRadius: 0, borderLeft: "3px solid currentColor", padding: "8px 12px", fontSize: 13, color: conResults.stairs_ok ? 'var(--green)' : 'var(--orange)' }}>
                   {conResults.stairs_ok ? '✓ Riser within code (4"–7¾")' : '⚠ Riser outside typical code range (4"–7¾")'}
                 </div>
               )}
