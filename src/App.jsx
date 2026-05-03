@@ -64,7 +64,7 @@ const NAV_SECTIONS = [
     items: [
       { id: 'photos',      label: 'All Photos',        Icon: ICamera },
       { id: 'finished',    label: 'Finished Work',     Icon: IImage  },
-      { id: 'inspiration', label: 'Inspiration',       Icon: IBulb   },
+      { id: 'inspiration', label: 'Inspiration Photos', Icon: IBulb   },
       { id: 'brainstorm',  label: 'Brainstorm',        Icon: IBrain  },
       { id: 'yearreview',  label: 'Year in Review',    Icon: IStar   },
     ],

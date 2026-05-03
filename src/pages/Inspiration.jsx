@@ -73,7 +73,7 @@ export default function Inspiration() {
         <div style={{ padding: '12px 16px 10px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-              <h1 className="page-title" style={{ margin: 0 }}>Inspiration</h1>
+              <h1 className="page-title" style={{ margin: 0 }}>Inspiration Photos</h1>
               <span style={{ fontSize: 13, color: 'var(--c-text-muted)' }}>{photos.length}</span>
             </div>
           </div>

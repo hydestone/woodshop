@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
-import { Sheet, FormCell, TagInput, ConfirmSheet, PhotoGrid, IPlus, ITrash, IBulb, ICamera } from '../components/Shared.jsx'
+import { Sheet, FormCell, ConfirmSheet, PhotoGrid, IPlus, ITrash, IBulb, ICamera } from '../components/Shared.jsx'
 import * as db from '../db.js'
 import { supabase, getCurrentUserId } from '../supabase.js'
 
@@ -262,13 +262,12 @@ function IdeaPhotoUpload({ ideaId, onUploaded }) {
 function IdeaSheet({ idea, onSave, onClose }) {
   const [title, setTitle] = useState(idea?.title || '')
   const [notes, setNotes] = useState(idea?.notes || '')
-  const [tags, setTags]   = useState(
-    idea?.tags ? idea.tags.split(',').map(t => t.trim()).filter(t => t && !t.startsWith('idea:')) : []
-  )
 
   const handleSave = async () => {
     if (!title.trim()) return
-    await onSave({ title: title.trim(), notes: notes.trim(), tags: tags.join(', ') })
+    // Preserve existing tags (including internal idea: tags) — just don't show or edit them
+    const existingTags = idea?.tags || ''
+    await onSave({ title: title.trim(), notes: notes.trim(), tags: existingTags })
   }
 
   return (
@@ -278,13 +277,10 @@ function IdeaSheet({ idea, onSave, onClose }) {
           <input className="form-input" placeholder="What do you want to build?" value={title}
             onChange={e => setTitle(e.target.value)} autoFocus />
         </FormCell>
-        <FormCell label="Notes">
+        <FormCell label="Notes" last>
           <textarea className="form-input" placeholder="Inspiration, dimensions, materials, techniques..."
             value={notes} onChange={e => setNotes(e.target.value)}
             rows={4} style={{ resize: 'vertical', minHeight: 80 }} />
-        </FormCell>
-        <FormCell label="Tags" last>
-          <TagInput tags={tags} onChange={setTags} />
         </FormCell>
       </div>
     </Sheet>
