@@ -373,6 +373,7 @@ function TrimCuts() {
   ])
   const [result, setResult] = useState(null)
   const [error, setError]   = useState(null)
+  const [view, setView]     = useState('summary') // 'summary' | 'plans'
 
   const toggleStock = ft => setStockSel(s => s.includes(ft) ? s.filter(x=>x!==ft) : [...s, ft].sort((a,b)=>a-b))
   const upd = (id, f, v) => setCuts(c => c.map(x => x.id===id ? {...x,[f]:v} : x))
@@ -380,6 +381,10 @@ function TrimCuts() {
     const newId = Date.now()
     setCuts(c => [...c, { id: newId, len: '', qty: 1, label: '' }])
     setTimeout(() => document.getElementById('len-' + newId)?.focus(), 50)
+  }
+  const clearAll = () => {
+    setCuts([{ id:1, len:'', qty:1, label:'' }, { id:2, len:'', qty:1, label:'' }])
+    setResult(null); setError(null); setView('summary')
   }
 
   const calc = () => {
@@ -395,17 +400,120 @@ function TrimCuts() {
     if (Math.max(...pc.map(c=>c.length))+k > Math.max(...sl)) { setError('A cut is longer than all stock lengths.'); return }
     const r = ffd(pc, sl, k)
     if (!r) { setError('Could not fit all cuts.'); return }
-    r.pc = pc; setResult(r)
+    r.pc = pc; setResult(r); setView('summary')
   }
 
   const waste = result
     ? Math.round((1 - result.boards.reduce((s,b)=>s+b.used,0) / result.boards.reduce((s,b)=>s+b.sl,0)) * 100)
     : null
 
+  const printPDF = () => {
+    if (!result) return
+    const colMap = {}
+    result.boards.forEach(b => b.cuts.forEach((cut, ci) => { colMap[ci] = CUT_COLS[ci % CUT_COLS.length] }))
+
+    const boardRows = result.boards.map((b, bi) => {
+      const pct = cut => `${(cut/b.sl*100).toFixed(1)}%`
+      const segments = b.cuts.map((cut, ci) => {
+        const label = result.pc?.find(p => Math.abs(p.length-cut)<0.01)?.label || inToFtInStr(cut)
+        return `<div style="width:${pct(cut)};background:${CUT_COLS[ci%CUT_COLS.length]};display:flex;align-items:center;justify-content:center;color:#fff;font-size:8px;font-weight:700;overflow:hidden;border-right:1px solid rgba(255,255,255,.3)">${(cut/b.sl)>0.08?label:''}</div>`
+      }).join('')
+      const wasteW = b.sl - b.used
+      const wasteBar = wasteW > 0.05 ? `<div style="flex:1;background:repeating-linear-gradient(45deg,#e5e7eb,#e5e7eb 3px,#f3f4f6 3px,#f3f4f6 6px)"></div>` : ''
+      const labels = b.cuts.map((cut, ci) => {
+        const lbl = result.pc?.find(p => Math.abs(p.length-cut)<0.01)?.label || inToFtInStr(cut)
+        return `<span style="font-size:9px;padding:1px 6px;border-radius:99px;background:${CUT_COLS[ci%CUT_COLS.length]}22;color:${CUT_COLS[ci%CUT_COLS.length]};border:1px solid ${CUT_COLS[ci%CUT_COLS.length]}66;margin-right:3px">${lbl}</span>`
+      }).join('')
+      return `
+        <div style="margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px">
+            <strong>Board ${bi+1} · <span style="color:#2563eb">${inToFtInStr(b.sl)}</span></strong>
+            <span style="color:#6b7280">waste ${inToFtInStr(Math.max(0,wasteW))}</span>
+          </div>
+          <div style="display:flex;height:20px;overflow:hidden;border:1px solid #d1d5db">${segments}${wasteBar}</div>
+          <div style="margin-top:4px">${labels}</div>
+        </div>`
+    }).join('')
+
+    const cutListRows = result.pc.map(p =>
+      `<tr><td style="padding:3px 8px;border-bottom:1px solid #e5e7eb">${inToFtInStr(p.length)}</td><td style="padding:3px 8px;border-bottom:1px solid #e5e7eb;text-align:center">${p.qty}</td><td style="padding:3px 8px;border-bottom:1px solid #e5e7eb">${p.label||'—'}</td></tr>`
+    ).join('')
+
+    const stockSummary = Object.entries(result.summary).sort(([a],[b])=>+a-+b)
+      .map(([len,cnt]) => `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #e5e7eb;font-size:11px"><span>${inToFtInStr(+len)}</span><span style="font-weight:700">× ${cnt}</span></div>`).join('')
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+<title>Trim Cut Plan</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, Arial, sans-serif; font-size: 11px; color: #111; background: #fff; padding: 24px; }
+  @page { size: 8.5in 11in; margin: 0.5in; }
+  @media print { body { padding: 0; } .no-print { display: none; } }
+  h1 { font-size: 18px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+  h2 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; color: #374151; border-bottom: 2px solid #111; padding-bottom: 3px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  table { width: 100%; border-collapse: collapse; font-size: 10px; }
+  th { background: #111; color: #fff; padding: 4px 8px; text-align: left; font-size: 10px; }
+</style>
+</head>
+<body>
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;border-bottom:3px solid #111;padding-bottom:12px">
+  <div>
+    <h1>JDH Woodworks</h1>
+    <div style="font-size:11px;color:#6b7280;margin-top:2px">Trim Cut Plan · ${new Date().toLocaleDateString('en-US',{weekday:'short',year:'numeric',month:'short',day:'numeric'})}</div>
+  </div>
+  <div style="text-align:right;font-size:11px">
+    <div><strong>Boards needed:</strong> ${result.boards.length} pcs</div>
+    <div><strong>Waste:</strong> ${waste}%</div>
+    <div><strong>Kerf:</strong> ${kerf}"</div>
+  </div>
+</div>
+
+<div class="grid">
+  <div>
+    <h2>Cut List</h2>
+    <table>
+      <thead><tr><th>Length</th><th style="text-align:center">Qty</th><th>Label</th></tr></thead>
+      <tbody>${cutListRows}</tbody>
+    </table>
+  </div>
+  <div>
+    <h2>Stock Needed</h2>
+    ${stockSummary}
+  </div>
+</div>
+
+<h2>Board Cut Plans</h2>
+${boardRows}
+
+<div class="no-print" style="margin-top:24px;text-align:center">
+  <button onclick="window.print()" style="padding:8px 24px;background:#2563eb;color:#fff;border:none;border-radius:4px;font-size:13px;cursor:pointer">Print / Save as PDF</button>
+</div>
+</body>
+</html>`
+
+    const w = window.open('', '_blank')
+    w.document.write(html)
+    w.document.close()
+  }
+
+  const ViewBtn = ({ id, label }) => (
+    <button onClick={() => setView(id)} style={{
+      padding:'5px 14px', fontSize:12, fontWeight:700, cursor:'pointer',
+      fontFamily:'inherit', borderRadius:0,
+      background: view===id ? 'var(--navy)' : 'var(--c-bg-subtle)',
+      color: view===id ? 'var(--white)' : 'var(--c-text-muted)',
+      border:'1.5px solid var(--c-border)',
+      transition:'background 120ms, color 120ms',
+    }}>{label}</button>
+  )
+
   return (
     <div style={{ display:'flex', flexDirection:'column', height:'100%', overflow:'hidden' }}>
 
-      {/* Top bar: stock checkboxes + kerf */}
+      {/* Top bar */}
       <div style={{ padding:'10px 16px 8px', borderBottom:'1px solid var(--c-border)', flexShrink:0, display:'flex', alignItems:'center', gap:16, flexWrap:'wrap' }}>
         <div style={{ display:'flex', alignItems:'center', gap:16, flexWrap:'wrap' }}>
           <span className="calc-label" style={{ marginBottom:0, whiteSpace:'nowrap' }}>AVAILABLE STOCK LENGTH</span>
@@ -423,128 +531,134 @@ function TrimCuts() {
             onChange={e => setKerf(e.target.value)}
             style={{ width:72, textAlign:'center', padding:'6px 8px', fontSize:13 }} />
         </div>
-        <button className="btn-primary" style={{ padding:'6px 18px', fontSize:13, marginLeft:'auto' }} onClick={calc}>
-          Calculate
-        </button>
-      </div>
-
-      {/* Middle: cut list left, greenbar results right */}
-      <div style={{ display:'flex', flex:1, overflow:'hidden', minHeight:0 }}>
-
-        {/* Cut list */}
-        <div style={{ flex:'0 0 auto', width:380, padding:'10px 14px', overflowY:'auto', overflowX:'hidden', borderRight:'2px solid var(--c-border)' }}>
-          <p style={{ fontSize:11, color:'var(--c-text-faint)', margin:'0 0 10px', lineHeight:1.4, wordBreak:'break-word' }}>
-            Lengths: inches (48), feet (4'), or ft/in (4'6"). Fractions OK: 3 7/8
-          </p>
-
-          {/* Column headers */}
-          <div style={{ display:'grid', gridTemplateColumns:'minmax(0,2.5fr) 48px minmax(0,2fr) 28px', gap:4, marginBottom:4 }}>
-            {['Length','Qty','Label',''].map(h => (
-              <div key={h} className="calc-label" style={{ marginBottom:0, textAlign:'center' }}>{h}</div>
-            ))}
-          </div>
-
-          {/* Cut rows — all 4 on one line */}
-          {cuts.map(c => (
-            <div key={c.id} style={{ display:'grid', gridTemplateColumns:'minmax(0,2.5fr) 48px minmax(0,2fr) 28px', gap:4, marginBottom:5, alignItems:'center' }}>
-              <input id={'len-'+c.id} className="calc-input" value={c.len}
-                onChange={e => upd(c.id,'len',e.target.value)}
-                placeholder="48 or 4'6&quot;"
-                style={{ fontSize:13, padding:'7px 8px' }}
-                onKeyDown={e => e.key==='Enter' && addRow()} />
-              <input className="calc-input" type="number" min="1" value={c.qty}
-                onChange={e => upd(c.id,'qty',e.target.value)}
-                style={{ textAlign:'center', fontSize:13, padding:'7px 4px' }} />
-              <input className="calc-input" value={c.label}
-                onChange={e => upd(c.id,'label',e.target.value)}
-                placeholder="label"
-                style={{ fontSize:12, padding:'7px 6px' }} />
-              <button onClick={() => setCuts(cc => cc.filter(x=>x.id!==c.id))}
-                disabled={cuts.length===1} className="icon-btn"
-                style={{ color:'var(--red)', opacity:cuts.length===1?.3:1, fontSize:16 }}>×</button>
-            </div>
-          ))}
-          <button className="btn-text" onClick={addRow} style={{ fontSize:12, marginTop:4 }}>+ Add cut</button>
-
-          {error && <div className="warn-box" style={{ marginTop:10 }}>{error}</div>}
-        </div>
-
-        {/* Greenbar results tape */}
-        <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', minWidth:0 }}>
-          <div className="cm-tape-header">
-            <span>CUT SUMMARY</span>
-            {result && <span style={{ fontFamily:'var(--tape-font)', fontSize:11, color:'var(--calc-tape-dim)' }}>
-              {waste}% WASTE
-            </span>}
-          </div>
-          <div className="cm-tape" style={{ flex:1, maxWidth:'100%' }}>
-            {!result ? (
-              <div style={{ padding:'20px 10px', color:'var(--calc-tape-dim)', fontFamily:'var(--tape-font)', fontSize:12, textAlign:'center', opacity:0.6 }}>
-                — enter cuts and press Calculate —
-              </div>
-            ) : (
-              <>
-                <div className="cm-tape-row tape-result" style={{ borderBottom:'2px solid var(--calc-tape-dim)', marginBottom:4 }}>
-                  <span style={{ fontFamily:'var(--tape-font)' }}>BOARDS NEEDED</span>
-                  <span className="tape-val">{result.boards.length} pcs</span>
-                </div>
-                {Object.entries(result.summary).sort(([a],[b])=>+a-+b).map(([len,cnt], i) => (
-                  <div key={len} className="cm-tape-row" style={{ background: i%2===0?'var(--calc-tape-bg1)':'var(--calc-tape-bg2)' }}>
-                    <span className="cm-tape-dim">{inToFtInStr(+len)}</span>
-                    <span style={{ fontFamily:'var(--tape-font)', fontWeight:700 }}>× {cnt}</span>
-                  </div>
-                ))}
-                <div className="cm-tape-row" style={{ borderTop:'1px solid var(--calc-tape-dim)', marginTop:8, paddingTop:6 }}>
-                  <span className="cm-tape-dim">WASTE</span>
-                  <span style={{ fontFamily:'var(--tape-font)', color: waste>30?'#e87070':'var(--calc-tape-txt)' }}>{waste}%</span>
-                </div>
-                {result.pc?.length > 0 && (
-                  <>
-                    <div className="cm-tape-row tape-result" style={{ borderTop:'2px solid var(--calc-tape-dim)', marginTop:8, borderBottom:'1px solid var(--calc-tape-dim)' }}>
-                      <span style={{ fontFamily:'var(--tape-font)' }}>CUT LIST</span>
-                    </div>
-                    {result.pc.map((p, i) => (
-                      <div key={i} className="cm-tape-row" style={{ background: i%2===0?'var(--calc-tape-bg1)':'var(--calc-tape-bg2)' }}>
-                        <span className="cm-tape-dim">{p.label || inToFtInStr(p.length)}</span>
-                        <span style={{ fontFamily:'var(--tape-font)' }}>{inToFtInStr(p.length)} × {p.qty}</span>
-                      </div>
-                    ))}
-                  </>
-                )}
-              </>
-            )}
-          </div>
+        <div style={{ display:'flex', gap:6, marginLeft:'auto' }}>
+          <button className="btn-secondary" style={{ padding:'6px 14px', fontSize:13 }} onClick={clearAll}>Clear</button>
+          {result && <button className="btn-secondary" style={{ padding:'6px 14px', fontSize:13 }} onClick={printPDF}>⎙ PDF</button>}
+          <button className="btn-primary" style={{ padding:'6px 18px', fontSize:13 }} onClick={calc}>Calculate</button>
         </div>
       </div>
 
-      {/* Bottom: board cut diagrams */}
+      {/* View toggle — only when results exist */}
       {result && (
-        <div style={{ borderTop:'2px solid var(--c-border)', padding:'10px 14px', overflowY:'auto', maxHeight:280, flexShrink:0 }}>
-          <div className="calc-label" style={{ marginBottom:8 }}>BOARD CUT PLANS</div>
-          {result.boards.map((b, bi) => (
-            <div key={bi} style={{ marginBottom:10 }}>
+        <div style={{ display:'flex', gap:0, padding:'8px 16px', borderBottom:'1px solid var(--c-border)', flexShrink:0, alignItems:'center', justifyContent:'space-between' }}>
+          <div style={{ display:'flex', gap:0 }}>
+            <ViewBtn id="summary" label="Summary + Tape" />
+            <ViewBtn id="plans" label="Board Cut Plans" />
+          </div>
+          <span style={{ fontSize:12, color:'var(--c-text-muted)', fontFamily:'var(--tape-font)' }}>
+            {result.boards.length} boards · {waste}% waste
+          </span>
+        </div>
+      )}
+
+      {/* Main content area */}
+      {view === 'summary' ? (
+        /* Summary view: cut list left + tape right */
+        <div style={{ display:'flex', flex:1, overflow:'hidden', minHeight:0 }}>
+          <div style={{ flex:'0 0 auto', width:380, padding:'10px 14px', overflowY:'auto', overflowX:'hidden', borderRight:'2px solid var(--c-border)' }}>
+            <p style={{ fontSize:11, color:'var(--c-text-faint)', margin:'0 0 10px', lineHeight:1.4, wordBreak:'break-word' }}>
+              Lengths: inches (48), feet (4'), or ft/in (4'6"). Fractions OK: 3 7/8
+            </p>
+            <div style={{ display:'grid', gridTemplateColumns:'minmax(0,2.5fr) 48px minmax(0,2fr) 28px', gap:4, marginBottom:4 }}>
+              {['Length','Qty','Label',''].map(h => (
+                <div key={h} className="calc-label" style={{ marginBottom:0, textAlign:'center' }}>{h}</div>
+              ))}
+            </div>
+            {cuts.map(c => (
+              <div key={c.id} style={{ display:'grid', gridTemplateColumns:'minmax(0,2.5fr) 48px minmax(0,2fr) 28px', gap:4, marginBottom:5, alignItems:'center' }}>
+                <input id={'len-'+c.id} className="calc-input" value={c.len}
+                  onChange={e => upd(c.id,'len',e.target.value)}
+                  placeholder="48 or 4'6&quot;"
+                  style={{ fontSize:13, padding:'7px 8px' }}
+                  onKeyDown={e => e.key==='Enter' && addRow()} />
+                <input className="calc-input" type="number" min="1" value={c.qty}
+                  onChange={e => upd(c.id,'qty',e.target.value)}
+                  style={{ textAlign:'center', fontSize:13, padding:'7px 4px' }} />
+                <input className="calc-input" value={c.label}
+                  onChange={e => upd(c.id,'label',e.target.value)}
+                  placeholder="label"
+                  style={{ fontSize:12, padding:'7px 6px' }} />
+                <button onClick={() => setCuts(cc => cc.filter(x=>x.id!==c.id))}
+                  disabled={cuts.length===1} className="icon-btn"
+                  style={{ color:'var(--red)', opacity:cuts.length===1?.3:1, fontSize:16 }}>×</button>
+              </div>
+            ))}
+            <button className="btn-text" onClick={addRow} style={{ fontSize:12, marginTop:4 }}>+ Add cut</button>
+            {error && <div className="warn-box" style={{ marginTop:10 }}>{error}</div>}
+          </div>
+
+          {/* Results tape */}
+          <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', minWidth:0 }}>
+            <div className="cm-tape-header">
+              <span>CUT SUMMARY</span>
+              {result && <span style={{ fontFamily:'var(--tape-font)', fontSize:11, color:'var(--calc-tape-dim)' }}>{waste}% WASTE</span>}
+            </div>
+            <div className="cm-tape" style={{ flex:1, maxWidth:'100%' }}>
+              {!result ? (
+                <div style={{ padding:'20px 10px', color:'var(--calc-tape-dim)', fontFamily:'var(--tape-font)', fontSize:12, textAlign:'center', opacity:0.6 }}>
+                  — enter cuts and press Calculate —
+                </div>
+              ) : (
+                <>
+                  <div className="cm-tape-row tape-result" style={{ borderBottom:'2px solid var(--calc-tape-dim)', marginBottom:4 }}>
+                    <span style={{ fontFamily:'var(--tape-font)' }}>BOARDS NEEDED</span>
+                    <span className="tape-val">{result.boards.length} pcs</span>
+                  </div>
+                  {Object.entries(result.summary).sort(([a],[b])=>+a-+b).map(([len,cnt], i) => (
+                    <div key={len} className="cm-tape-row" style={{ background: i%2===0?'var(--calc-tape-bg1)':'var(--calc-tape-bg2)' }}>
+                      <span className="cm-tape-dim">{inToFtInStr(+len)}</span>
+                      <span style={{ fontFamily:'var(--tape-font)', fontWeight:700 }}>× {cnt}</span>
+                    </div>
+                  ))}
+                  <div className="cm-tape-row" style={{ borderTop:'1px solid var(--calc-tape-dim)', marginTop:8, paddingTop:6 }}>
+                    <span className="cm-tape-dim">WASTE</span>
+                    <span style={{ fontFamily:'var(--tape-font)', color: waste>30?'#e87070':'var(--calc-tape-txt)' }}>{waste}%</span>
+                  </div>
+                  {result.pc?.length > 0 && (
+                    <>
+                      <div className="cm-tape-row tape-result" style={{ borderTop:'2px solid var(--calc-tape-dim)', marginTop:8, borderBottom:'1px solid var(--calc-tape-dim)' }}>
+                        <span style={{ fontFamily:'var(--tape-font)' }}>CUT LIST</span>
+                      </div>
+                      {result.pc.map((p, i) => (
+                        <div key={i} className="cm-tape-row" style={{ background: i%2===0?'var(--calc-tape-bg1)':'var(--calc-tape-bg2)' }}>
+                          <span className="cm-tape-dim">{p.label || inToFtInStr(p.length)}</span>
+                          <span style={{ fontFamily:'var(--tape-font)' }}>{inToFtInStr(p.length)} × {p.qty}</span>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Board cut plans view — full width, scrollable */
+        <div style={{ flex:1, overflowY:'auto', padding:'12px 20px' }}>
+          {result?.boards.map((b, bi) => (
+            <div key={bi} style={{ marginBottom:16 }}>
               <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4, fontSize:12 }}>
                 <span style={{ fontWeight:700 }}>Board {bi+1} · <span style={{ color:'var(--accent)' }}>{inToFtInStr(b.sl)}</span></span>
                 <span style={{ color:'var(--c-text-faint)' }}>waste {inToFtInStr(Math.max(0,b.sl-b.used))}</span>
               </div>
-              <div style={{ display:'flex', height:22, borderRadius:0, overflow:'hidden', border:'1px solid var(--c-border-light)' }}>
+              <div style={{ display:'flex', height:28, borderRadius:0, overflow:'hidden', border:'1px solid var(--c-border-light)' }}>
                 {b.cuts.map((cut,ci) => (
                   <div key={ci} title={inToFtInStr(cut)} style={{
                     width:`${(cut/b.sl)*100}%`, background:CUT_COLS[ci%CUT_COLS.length],
                     display:'flex', alignItems:'center', justifyContent:'center',
-                    fontSize:9, fontWeight:700, color:'#fff', overflow:'hidden',
+                    fontSize:10, fontWeight:700, color:'#fff', overflow:'hidden',
                     borderRight:ci<b.cuts.length-1?'1px solid rgba(255,255,255,.3)':'none',
-                  }}>{(cut/b.sl)>0.1?inToFtInStr(cut):''}</div>
+                  }}>{(cut/b.sl)>0.08?inToFtInStr(cut):''}</div>
                 ))}
                 {b.sl-b.used>0.05 && (
                   <div style={{ flex:1, background:'repeating-linear-gradient(45deg,var(--c-bg-subtle),var(--c-bg-subtle) 4px,var(--c-border-light) 4px,var(--c-border-light) 8px)' }} />
                 )}
               </div>
-              <div style={{ display:'flex', flexWrap:'wrap', gap:4, marginTop:5 }}>
+              <div style={{ display:'flex', flexWrap:'wrap', gap:4, marginTop:6 }}>
                 {b.cuts.map((cut,ci) => {
                   const m = result.pc?.find(p=>Math.abs(p.length-cut)<0.01)
                   return (
-                    <span key={ci} style={{ fontSize:10, padding:'1px 7px', borderRadius:99, fontWeight:600, background:CUT_COLS[ci%CUT_COLS.length]+'33', color:CUT_COLS[ci%CUT_COLS.length], border:`1px solid ${CUT_COLS[ci%CUT_COLS.length]}88` }}>
+                    <span key={ci} style={{ fontSize:11, padding:'2px 8px', borderRadius:99, fontWeight:600, background:CUT_COLS[ci%CUT_COLS.length]+'33', color:CUT_COLS[ci%CUT_COLS.length], border:`1px solid ${CUT_COLS[ci%CUT_COLS.length]}88` }}>
                       {m?.label||inToFtInStr(cut)}
                     </span>
                   )
@@ -557,6 +671,7 @@ function TrimCuts() {
     </div>
   )
 }
+
 
 // ─── Tab: Sheet Goods ──────────────────────────────────────────────────────────
 const SHEET_COLS = ['var(--navy)','var(--forest)','#1D4ED8','#92400E','#6B21A8','#065F46','#7C2D12','#BE185D','#0E7490','#7C3AED']
