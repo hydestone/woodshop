@@ -681,8 +681,9 @@ export function ProjectDetail() {
         ].map(t => (
           <button key={t.id} onClick={() => setDtab(t.id)} style={{
             flex: 1, padding: '12px 8px', border: 'none', cursor: 'pointer',
-            fontSize: 13, fontWeight: dtab === t.id ? 700 : 500,
-            fontFamily: 'inherit',
+            fontSize: 11, fontWeight: 700,
+            fontFamily: 'var(--font-heading)',
+            textTransform: 'uppercase', letterSpacing: '.05em',
             color: dtab === t.id ? 'var(--accent)' : 'var(--text-3)',
             background: 'transparent',
             borderBottom: dtab === t.id ? '2px solid var(--accent)' : '2px solid transparent',

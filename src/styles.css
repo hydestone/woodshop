@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&family=Roboto+Condensed:wght@600;700&display=swap');
 
 /* ═══════════════════════════════════════════════════════════════════════════
    ATMOSPHERIC DEPTH — gradient mesh + film grain
@@ -303,7 +304,8 @@
   --border-2:    rgba(15,23,42,.06);
 
   /* Typography */
-  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  --font: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-heading: 'Roboto Condensed', -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
 
   /* Layout */
   --topbar-h:    84px;
@@ -760,10 +762,12 @@ body {
 .top-bar-title {
   font-size: 50px;
   line-height: 1;
-  font-weight: 800;
-  letter-spacing: -.5px;
+  font-weight: 700;
+  letter-spacing: .5px;
   color: var(--text);
   white-space: nowrap;
+  font-family: var(--font-heading);
+  text-transform: uppercase;
 }
 .top-bar-accent { color: #2D5A3D; }
 
@@ -794,9 +798,11 @@ body {
   border: none;
   border-radius: var(--r-sm);
   background: transparent;
-  font-family: var(--font);
-  font-size: 14px;
-  font-weight: 500;
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
   color: #CBD5E1;
   text-align: left;
   cursor: pointer;
@@ -893,7 +899,7 @@ body {
   position: relative;
   color: var(--text-3);
 }
-.tab-btn span { font-size: 10px; font-weight: 500; color: var(--text-3); }
+.tab-btn span { font-size: 10px; font-weight: 600; color: var(--text-3); font-family: var(--font-heading); text-transform: uppercase; letter-spacing: .04em; }
 .tab-btn.active span { color: var(--accent); }
 .tab-btn.active svg { color: var(--accent); }
 .tab-badge {
@@ -927,8 +933,10 @@ body {
 .page-title {
   font-size: 22px;
   font-weight: 700;
-  letter-spacing: -.3px;
+  letter-spacing: .04em;
   color: var(--text);
+  font-family: var(--font-heading);
+  text-transform: uppercase;
 }
 .page-subtitle {
   font-size: 13px;
@@ -1577,7 +1585,7 @@ body {
   align-items: center;
 }
 .empty-icon { font-size: 40px; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; }
-.empty-title { font-size: 17px; font-weight: 600; margin-bottom: 5px; }
+.empty-title { font-size: 17px; font-weight: 700; margin-bottom: 5px; font-family: var(--font-heading); text-transform: uppercase; letter-spacing: .04em; }
 .empty-sub { font-size: 14px; color: var(--text-3); max-width: 280px; line-height: 1.5; }
 
 /* ─── More sheet items ───────────────────────────────────────────────────── */
