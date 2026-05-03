@@ -15,8 +15,15 @@ function fracToDecimal({ n, d }) { return d === 0 ? 0 : n / d }
 
 function parseFracObj(s) {
   s = (s || '').trim()
-  // feet-inch: 4'6" or 4' 6 1/2"
-  const ftIn = s.match(/^(-?\d+(?:\.\d+)?)['']\s*(\d+(?:\s+\d+\/\d+|\s*\d*\/?\d*)?)\s*"?\s*$/)
+  // feet-inch-fraction: 6'4" 1/8 or 6' 4 1/8"
+  const ftInFrac = s.match(/^(-?\d+(?:\.\d+)?)[''\u2019]\s*(\d+)\s*"?\s+(\d+)\/(\d+)\s*"?$/)
+  if (ftInFrac) {
+    const ft = parseFloat(ftInFrac[1]), ins = parseInt(ftInFrac[2])
+    const num = parseInt(ftInFrac[3]), den = parseInt(ftInFrac[4])
+    return fracReduce(Math.round((ft * 12 + ins + num / den) * 64), 64)
+  }
+  // feet-inch: 4'6" or 4' 6 1/2" or 4' 6
+  const ftIn = s.match(/^(-?\d+(?:\.\d+)?)[''\u2019]\s*(\d+(?:\s+\d+\/\d+)?)\s*"?\s*$/)
   if (ftIn) {
     const ft = parseFloat(ftIn[1])
     const inPart = parseFracObj(ftIn[2].trim())
@@ -24,7 +31,7 @@ function parseFracObj(s) {
     return fracReduce(Math.round(ft * 12 * 64), 64)
   }
   // feet only: 4'
-  const ftOnly = s.match(/^(-?\d+(?:\.\d+)?)['']\s*$/)
+  const ftOnly = s.match(/^(-?\d+(?:\.\d+)?)[''\u2019]\s*$/)
   if (ftOnly) return fracReduce(Math.round(parseFloat(ftOnly[1]) * 12 * 64), 64)
   // mixed: 3 1/2
   const m = s.match(/^(-?\d+)\s+(\d+)\/(\d+)$/)
@@ -267,7 +274,17 @@ export default function ConstructionCalc() {
 
   const appendChar = useCallback(c => {
     setResult(null); setJustEvaled(false)
-    setDisplay(prev => prev + c)
+    setDisplay(prev => {
+      // Auto-space before " if display has ' but no space yet (e.g. "6'4" → "6'4 ")
+      if (c === '"' && prev.includes("'") && !prev.endsWith(' ') && !prev.endsWith('"')) {
+        return prev + ' ' + c
+      }
+      // Auto-space before fraction if display has " (e.g. 6'4" → "6'4" 1")
+      if (c === '/' && prev.includes('"') && !prev.endsWith(' ')) {
+        return prev.replace('"', '') + ' ' + c
+      }
+      return prev + c
+    })
   }, [])
 
   const setDenominator = useCallback(den => {
@@ -409,10 +426,10 @@ export default function ConstructionCalc() {
   )
 
   return (
-    <div style={{ display: 'flex', gap: 0, height: '100%', overflow: 'hidden' }}>
+    <div className="cm-outer">
 
       {/* ── Left: Calculator ── */}
-      <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', padding: '8px 12px', minWidth: 0, flex: '0 0 auto', width: 340, background: 'var(--calc-bg)', overflow: 'hidden', height: '100%' }}>
+      <div ref={containerRef} className="cm-left">
 
         {/* Display */}
         <div className="cm-display">
@@ -602,8 +619,8 @@ export default function ConstructionCalc() {
         </div>
       </div>
 
-      {/* ── Right: Greenbar tape ── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden', borderLeft: '1px solid var(--c-border)' }}>
+      {/* ── Right/Bottom: Tape ── */}
+      <div className="cm-right">
         <div className="cm-tape-header">
           <span>CALCULATION TAPE</span>
           <button onClick={() => setHistory([])} style={{ background: 'none', border: 'none', color: 'var(--c-text-muted)', cursor: 'pointer', fontSize: 11, fontFamily: 'var(--tape-font)' }}>

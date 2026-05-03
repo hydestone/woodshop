@@ -664,9 +664,7 @@ export default function Dashboard() {
           <button className="dash-action-btn" onClick={() => setTab('shopping')}>
             <ICart size={16} color="var(--accent)" sw={1.8} /> Shopping
           </button>
-          <button className="dash-action-btn" onClick={() => setTab('calculators')}>
-            <ISaw size={16} color="var(--accent)" sw={1.8} /> Calculator
-          </button>
+
         </div>
       </div>
       <div style={{ paddingBottom: 32 }}>

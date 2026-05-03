@@ -195,7 +195,11 @@ export default function GlobalSearch() {
                 role="option"
                 aria-selected={i === cursor}
                 onMouseDown={e => { e.preventDefault(); select(hit) }}
-                onTouchEnd={e => { e.preventDefault(); select(hit) }}
+                onTouchStart={e => { e.currentTarget._touchY = e.touches[0].clientY }}
+                onTouchEnd={e => {
+                  const delta = Math.abs(e.changedTouches[0].clientY - (e.currentTarget._touchY || 0))
+                  if (delta < 8) { e.preventDefault(); select(hit) }
+                }}
                 onClick={() => select(hit)}
                 onMouseEnter={() => setCursor(i)}
               >
