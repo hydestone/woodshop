@@ -645,13 +645,30 @@ export function ProjectDetail() {
 
         <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 6 }}>{project.name}</h2>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
-          {project.category && <span style={{ fontSize: 12, background: 'var(--blue-dim)', color: 'var(--blue)', borderRadius: 99, padding: '2px 10px', fontWeight: 600 }}>{project.category}</span>}
-          {project.wood_type && <span style={{ fontSize: 13, color: 'var(--c-text-muted)' }}>{project.wood_type}</span>}
-          {project.year_completed && <span style={{ fontSize: 13, color: 'var(--c-text-faint)' }}>{project.year_completed}</span>}
-          <button className="badge-pill" style={{ background: ss.bg, color: ss.color, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }} onClick={cycleStatus} title="Tap to change status">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'nowrap', overflowX: 'auto', scrollbarWidth: 'none', marginBottom: 6 }}>
+          {project.category && <span style={{ fontSize: 12, background: 'var(--blue-dim)', color: 'var(--blue)', borderRadius: 99, padding: '2px 10px', fontWeight: 600, flexShrink: 0 }}>{project.category}</span>}
+          {project.wood_type && <span style={{ fontSize: 13, color: 'var(--c-text-muted)', flexShrink: 0 }}>{project.wood_type}</span>}
+          {project.year_completed && <span style={{ fontSize: 13, color: 'var(--c-text-faint)', flexShrink: 0 }}>{project.year_completed}</span>}
+          <button className="badge-pill" style={{ background: ss.bg, color: ss.color, border: 'none', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }} onClick={cycleStatus} title="Tap to change status">
             {project.status} ▾
           </button>
+          <span style={{ width: 1, height: 16, background: 'var(--c-border)', flexShrink: 0, margin: '0 2px' }} />
+          {[
+            { id: 'overview',  label: 'Overview' },
+            { id: 'steps',     label: `Steps${steps.length ? ` ${stepsDone}/${steps.length}` : ''}` },
+            { id: 'finishing', label: `Finishing${coats.length ? ` ${coats.length}` : ''}` },
+            { id: 'photos',    label: `Photos${photos.length ? ` ${photos.length}` : ''}` },
+          ].map(t => (
+            <button key={t.id} onClick={() => setDtab(t.id)} style={{
+              flexShrink: 0, padding: '3px 8px', border: 'none', cursor: 'pointer',
+              fontSize: 11, fontWeight: 700, fontFamily: 'var(--font-heading)',
+              textTransform: 'uppercase', letterSpacing: '.05em',
+              color: dtab === t.id ? 'var(--accent)' : 'var(--c-text-muted)',
+              background: dtab === t.id ? 'var(--accent-dim)' : 'transparent',
+              borderRadius: 4,
+              transition: 'color 120ms, background 120ms',
+            }}>{t.label}</button>
+          ))}
         </div>
 
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
@@ -669,28 +686,6 @@ export function ProjectDetail() {
           {project.gift_recipient&& <span style={{ fontSize: 12, color: 'var(--c-text-muted)' }}>🎁 {project.gift_recipient}</span>}
           {project.description   && <span style={{ fontSize: 12, color: 'var(--c-text-muted)' }}>{project.description}</span>}
         </div>
-      </div>
-
-      {/* ── Sub-tab bar ── */}
-      <div className="detail-tabs" style={{ display: 'flex', gap: 0, borderBottom: '2px solid var(--c-border-light)', margin: '0', background: 'var(--c-bg-surface)' }}>
-        {[
-          { id: 'overview', label: 'Overview' },
-          { id: 'steps',    label: `Steps${steps.length ? ` (${stepsDone}/${steps.length})` : ''}` },
-          { id: 'finishing', label: `Finishing${coats.length ? ` (${coats.length})` : ''}` },
-          { id: 'photos',   label: `Photos${photos.length ? ` (${photos.length})` : ''}` },
-        ].map(t => (
-          <button key={t.id} onClick={() => setDtab(t.id)} style={{
-            flex: 1, padding: '12px 8px', border: 'none', cursor: 'pointer',
-            fontSize: 11, fontWeight: 700,
-            fontFamily: 'var(--font-heading)',
-            textTransform: 'uppercase', letterSpacing: '.05em',
-            color: dtab === t.id ? 'var(--accent)' : 'var(--c-text-muted)',
-            background: 'transparent',
-            borderBottom: dtab === t.id ? '2px solid var(--accent)' : '2px solid transparent',
-            marginBottom: -2,
-            transition: 'color 150ms, border-color 150ms',
-          }}>{t.label}</button>
-        ))}
       </div>
 
       {/* ── OVERVIEW TAB ── */}
