@@ -37,7 +37,7 @@ const Audit       = lazy(() => import('./pages/Audit.jsx'))
 const Help        = lazy(() => import('./pages/Help.jsx'))
 const SmokeTest   = lazy(() => import('./pages/SmokeTest.jsx'))
 const BetaQuestionnaire = lazy(() => import('./pages/BetaQuestionnaire.jsx'))
-const Calculators = lazy(() => import('./pages/Calculators.jsx'))
+import Calculators from './pages/Calculators.jsx'
 const Trash       = lazy(() => import('./pages/Trash.jsx'))
 import Tutorial, { useTutorialCheck } from './components/Tutorial.jsx'
 import ErrorBoundary  from './components/ErrorBoundary.jsx'

@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import ConstructionCalc from './ConstructionCalc.jsx'
 
 // ─── Math utilities ────────────────────────────────────────────────────────────
@@ -139,7 +139,7 @@ function BoardFoot() {
 
   return (
     <div style={{ display: 'flex', gap: 0, height: '100%', overflow: 'hidden' }}>
-      <div style={{ flex: '0 0 auto', width: 320, padding: '12px 16px', overflowY: 'auto', borderRight: '2px solid var(--c-border)' }}>
+      <div style={{ flex: '0 0 auto', width: 320, padding: '12px 20px 12px 16px', overflowY: 'auto', borderRight: '2px solid var(--c-border)' }}>
         <p style={{ fontSize: 12, color: 'var(--c-text-faint)', margin: '0 0 12px' }}>BF = T × W × L ÷ 144 · Fractions OK: 3/4, 1 3/8</p>
         <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
           <LenInput label="Thickness (in)" value={t} onChange={setT} placeholder="3/4" />
@@ -407,13 +407,13 @@ function TrimCuts() {
 
       {/* Top bar: stock checkboxes + kerf */}
       <div style={{ padding:'10px 16px 8px', borderBottom:'1px solid var(--c-border)', flexShrink:0, display:'flex', alignItems:'center', gap:16, flexWrap:'wrap' }}>
-        <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-          <span className="calc-label" style={{ marginBottom:0, whiteSpace:'nowrap' }}>STOCK LENGTH</span>
+        <div style={{ display:'flex', alignItems:'center', gap:16, flexWrap:'wrap' }}>
+          <span className="calc-label" style={{ marginBottom:0, whiteSpace:'nowrap' }}>AVAILABLE STOCK LENGTH</span>
           {STOCK_OPTS.map(ft => (
-            <label key={ft} style={{ display:'flex', alignItems:'center', gap:4, cursor:'pointer', userSelect:'none' }}>
+            <label key={ft} style={{ display:'flex', alignItems:'center', gap:6, cursor:'pointer', userSelect:'none' }}>
               <input type="checkbox" checked={stockSel.includes(ft)} onChange={() => toggleStock(ft)}
-                style={{ width:15, height:15, cursor:'pointer', accentColor:'var(--accent)' }} />
-              <span style={{ fontSize:13, fontWeight:600, color: stockSel.includes(ft) ? 'var(--c-text-primary)' : 'var(--c-text-muted)' }}>{ft}'</span>
+                style={{ width:16, height:16, cursor:'pointer', accentColor:'var(--accent)' }} />
+              <span style={{ fontSize:14, fontWeight:600, color: stockSel.includes(ft) ? 'var(--c-text-primary)' : 'var(--c-text-muted)' }}>{ft}'</span>
             </label>
           ))}
         </div>
@@ -727,25 +727,151 @@ function SheetGoods() {
 
 // ─── Tab: Notes ───────────────────────────────────────────────────────────────
 function CalcNotes() {
-  const [notes, setNotes] = useState(() => {
-    try { return localStorage.getItem('calc-notes') || '' } catch { return '' }
-  })
-  const save = v => { setNotes(v); try { localStorage.setItem('calc-notes', v) } catch {} }
+  const editorRef = useRef(null)
+  const [isEmpty, setIsEmpty] = useState(true)
+  const [showLinkInput, setShowLinkInput] = useState(false)
+  const [linkUrl, setLinkUrl] = useState('')
+  const savedRange = useRef(null)
+
+  // Load saved HTML on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('calc-notes-html') || ''
+      if (editorRef.current) {
+        editorRef.current.innerHTML = saved
+        setIsEmpty(!saved || editorRef.current.innerText.trim() === '')
+      }
+    } catch {}
+  }, [])
+
+  const save = () => {
+    if (!editorRef.current) return
+    const html = editorRef.current.innerHTML
+    try { localStorage.setItem('calc-notes-html', html) } catch {}
+    setIsEmpty(!editorRef.current.innerText.trim())
+  }
+
+  const exec = (cmd, value = null) => {
+    editorRef.current?.focus()
+    document.execCommand(cmd, false, value)
+    save()
+  }
+
+  const insertLink = () => {
+    if (!linkUrl.trim()) { setShowLinkInput(false); return }
+    editorRef.current?.focus()
+    if (savedRange.current) {
+      const sel = window.getSelection()
+      sel.removeAllRanges()
+      sel.addRange(savedRange.current)
+    }
+    const url = linkUrl.startsWith('http') ? linkUrl : 'https://' + linkUrl
+    document.execCommand('createLink', false, url)
+    // Make links open in new tab
+    editorRef.current?.querySelectorAll('a').forEach(a => { a.target = '_blank'; a.rel = 'noopener' })
+    setShowLinkInput(false)
+    setLinkUrl('')
+    save()
+  }
+
+  const saveSelection = () => {
+    const sel = window.getSelection()
+    if (sel.rangeCount) savedRange.current = sel.getRangeAt(0).cloneRange()
+  }
+
+  const ToolBtn = ({ title, cmd, value, children, active }) => (
+    <button
+      onMouseDown={e => { e.preventDefault(); exec(cmd, value) }}
+      title={title}
+      style={{
+        background: active ? 'var(--accent-dim)' : 'none',
+        border: 'none', borderRadius: 0, cursor: 'pointer',
+        padding: '5px 9px', fontSize: 14, fontWeight: 700,
+        color: active ? 'var(--accent)' : 'var(--c-text-muted)',
+        fontFamily: 'inherit',
+        transition: 'background 120ms',
+      }}
+    >{children}</button>
+  )
+
   return (
-    <div style={{ padding: '4px 20px 40px', maxWidth: 640, margin: '0 auto' }}>
-      <p style={{ fontSize: 12, color: 'var(--c-text-faint)', marginBottom: 12 }}>Scratch pad — saves locally.</p>
-      <textarea
-        className="form-textarea"
-        value={notes}
-        onChange={e => save(e.target.value)}
-        placeholder={"Measurements, cut lists, reminders…\n\nActual sizes:\n  2×4 = 1.5\" × 3.5\"\n  2×6 = 1.5\" × 5.5\"\n  1×4 = 0.75\" × 3.5\""}
-        style={{ width: '100%', minHeight: 320, fontSize: 14, lineHeight: 1.7 }}
-      />
-      {notes && (
-        <button className="btn-text" style={{ marginTop: 8, color: 'var(--red)' }} onClick={() => save('')}>
-          Clear notes
-        </button>
+    <div style={{ padding: '8px 20px 40px', maxWidth: 760, margin: '0 auto' }}>
+      {/* Toolbar */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '4px 4px', borderBottom: '1px solid var(--c-border)', marginBottom: 8, flexWrap: 'wrap' }}>
+        <ToolBtn title="Bold (Ctrl+B)" cmd="bold"><b>B</b></ToolBtn>
+        <ToolBtn title="Italic (Ctrl+I)" cmd="italic"><i>I</i></ToolBtn>
+        <ToolBtn title="Underline (Ctrl+U)" cmd="underline"><u>U</u></ToolBtn>
+        <div style={{ width: 1, height: 20, background: 'var(--c-border)', margin: '0 4px' }} />
+        <ToolBtn title="Bullet list" cmd="insertUnorderedList">• List</ToolBtn>
+        <ToolBtn title="Numbered list" cmd="insertOrderedList">1. List</ToolBtn>
+        <div style={{ width: 1, height: 20, background: 'var(--c-border)', margin: '0 4px' }} />
+        <button
+          onMouseDown={e => { e.preventDefault(); saveSelection(); setShowLinkInput(v => !v); setLinkUrl('') }}
+          title="Insert link"
+          style={{ background: showLinkInput ? 'var(--accent-dim)' : 'none', border: 'none', borderRadius: 0, cursor: 'pointer', padding: '5px 9px', fontSize: 13, color: showLinkInput ? 'var(--accent)' : 'var(--c-text-muted)', fontFamily: 'inherit' }}
+        >🔗 Link</button>
+        <ToolBtn title="Remove formatting" cmd="removeFormat">✕ Format</ToolBtn>
+        <div style={{ marginLeft: 'auto' }}>
+          {!isEmpty && (
+            <button className="btn-text" style={{ color: 'var(--red)', fontSize: 12 }}
+              onClick={() => { if (editorRef.current) editorRef.current.innerHTML = ''; save() }}>
+              Clear
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Link input */}
+      {showLinkInput && (
+        <div style={{ display: 'flex', gap: 6, marginBottom: 8, alignItems: 'center' }}>
+          <input
+            className="calc-input"
+            value={linkUrl}
+            onChange={e => setLinkUrl(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && insertLink()}
+            placeholder="https://example.com"
+            autoFocus
+            style={{ flex: 1, fontSize: 13, padding: '6px 10px' }}
+          />
+          <button className="btn-primary" style={{ padding: '6px 14px', fontSize: 13 }} onClick={insertLink}>Insert</button>
+          <button className="btn-secondary" style={{ padding: '6px 10px', fontSize: 13 }} onClick={() => setShowLinkInput(false)}>Cancel</button>
+        </div>
       )}
+
+      {/* Editable area */}
+      <div
+        ref={editorRef}
+        contentEditable
+        suppressContentEditableWarning
+        onInput={save}
+        onBlur={save}
+        data-placeholder="Measurements, cut lists, reminders… Use the toolbar above for formatting."
+        style={{
+          minHeight: 360,
+          padding: '12px 14px',
+          border: '1.5px solid var(--c-border)',
+          outline: 'none',
+          fontSize: 14,
+          lineHeight: 1.8,
+          color: 'var(--c-text-primary)',
+          background: 'var(--c-bg-surface)',
+          fontFamily: 'inherit',
+          overflowY: 'auto',
+        }}
+        css={`
+          a { color: var(--accent); text-decoration: underline; }
+          ul, ol { padding-left: 20px; }
+          &:empty:before { content: attr(data-placeholder); color: var(--c-text-faint); pointer-events: none; }
+        `}
+      />
+      <style>{`
+        .calc-notes-editor a { color: var(--accent); text-decoration: underline; }
+        [contenteditable]:empty:before { content: attr(data-placeholder); color: var(--c-text-faint); pointer-events: none; display: block; }
+        [contenteditable] a { color: #3B82F6; text-decoration: underline; }
+        [contenteditable] ul { list-style: disc; padding-left: 20px; }
+        [contenteditable] ol { list-style: decimal; padding-left: 20px; }
+      `}</style>
+      <p style={{ fontSize: 11, color: 'var(--c-text-faint)', marginTop: 8 }}>Auto-saves locally. Ctrl+B bold, Ctrl+I italic, Ctrl+U underline.</p>
     </div>
   )
 }
