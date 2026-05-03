@@ -13,12 +13,37 @@ export default class ErrorBoundary extends Component {
 
   componentDidCatch(error, info) {
     console.error('Page error:', error, info.componentStack)
-    // Notify tutorial (or any listener) that a page crashed
     window.dispatchEvent(new CustomEvent('page-crash', { detail: { error } }))
+  }
+
+  handleTryAgain = async () => {
+    const isMimeError = this.state.error?.message?.includes('MIME') ||
+                        this.state.error?.message?.includes('module') ||
+                        this.state.error?.message?.includes('chunk')
+
+    if (isMimeError) {
+      // Stale chunk — unregister SW, clear caches, hard reload
+      try {
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations()
+          await Promise.all(regs.map(r => r.unregister()))
+        }
+        if ('caches' in window) {
+          const keys = await caches.keys()
+          await Promise.all(keys.map(k => caches.delete(k)))
+        }
+      } catch (e) { console.warn('Cache clear failed:', e) }
+      window.location.reload(true)
+    } else {
+      this.setState({ error: null })
+    }
   }
 
   render() {
     if (this.state.error) {
+      const isMimeError = this.state.error?.message?.includes('MIME') ||
+                          this.state.error?.message?.includes('module') ||
+                          this.state.error?.message?.includes('chunk')
       return (
         <div style={{
           height: '100%', display: 'flex', flexDirection: 'column',
@@ -29,13 +54,10 @@ export default class ErrorBoundary extends Component {
             Something went wrong
           </div>
           <div style={{ fontSize: 14, color: 'var(--c-text-muted)', marginBottom: 24, maxWidth: 280 }}>
-            {this.state.error.message || 'An unexpected error occurred'}
+            {isMimeError ? 'App updated — tap below to reload.' : (this.state.error.message || 'An unexpected error occurred')}
           </div>
-          <button
-            className="btn-primary"
-            onClick={() => this.setState({ error: null })}
-          >
-            Try again
+          <button className="btn-primary" onClick={this.handleTryAgain}>
+            {isMimeError ? 'Reload App' : 'Try again'}
           </button>
         </div>
       )

@@ -147,6 +147,13 @@ function ProjectsByYear({ projects, photos, onDrill , isDark = false }) {
       backgroundColor: cv('--chart-bg'),
       borderColor: cv('--chart-border'),
       textStyle: { color: EC.text(dark), fontSize: 12 },
+      confine: true,
+      position: function(point, params, dom, rect, size) {
+        // Always keep tooltip inside chart
+        const x = Math.min(point[0], size.viewSize[0] - size.contentSize[0] - 8)
+        const y = Math.max(8, point[1] - size.contentSize[1] - 8)
+        return [Math.max(0, x), y]
+      },
     },
     legend: {
       data: ['Complete','Active','Planning','Paused'],

@@ -14,7 +14,7 @@ import {
 } from './components/Shared.jsx'
 
 // Pages — eager (core tabs)
-const Dashboard = lazy(() => import('./pages/Dashboard.jsx'))
+import Dashboard       from './pages/Dashboard.jsx'
 import Projects, { ProjectDetail } from './pages/Projects.jsx'
 import Shopping         from './pages/Shopping.jsx'
 import Maintenance      from './pages/Maintenance.jsx'
@@ -27,18 +27,16 @@ import AllPhotos        from './pages/Photos.jsx'
 import FinishedProducts from './pages/FinishedProducts.jsx'
 import Inspiration      from './pages/Inspiration.jsx'
 import ProjectIdeas     from './pages/ProjectIdeas.jsx'
-
-// Pages — lazy (less frequent)
-import YearReview  from './pages/YearReview.jsx'
-import Costs       from './pages/Costs.jsx'
-const Settings    = lazy(() => import('./pages/Settings.jsx'))
-const BulkImport  = lazy(() => import('./pages/BulkImport.jsx'))
-const Audit       = lazy(() => import('./pages/Audit.jsx'))
-const Help        = lazy(() => import('./pages/Help.jsx'))
-const SmokeTest   = lazy(() => import('./pages/SmokeTest.jsx'))
-const BetaQuestionnaire = lazy(() => import('./pages/BetaQuestionnaire.jsx'))
-import Calculators from './pages/Calculators.jsx'
-const Trash       = lazy(() => import('./pages/Trash.jsx'))
+import YearReview       from './pages/YearReview.jsx'
+import Costs            from './pages/Costs.jsx'
+import Settings         from './pages/Settings.jsx'
+import BulkImport       from './pages/BulkImport.jsx'
+import Audit            from './pages/Audit.jsx'
+import Help             from './pages/Help.jsx'
+import SmokeTest        from './pages/SmokeTest.jsx'
+import BetaQuestionnaire from './pages/BetaQuestionnaire.jsx'
+import Calculators      from './pages/Calculators.jsx'
+import Trash            from './pages/Trash.jsx'
 import Tutorial, { useTutorialCheck } from './components/Tutorial.jsx'
 import ErrorBoundary  from './components/ErrorBoundary.jsx'
 
@@ -652,7 +650,7 @@ export default function App() {
                         <button className="sample-clear-btn" onClick={handleClearSamples}>Clear sample data</button>
                       </div>
                     )}
-                    <Suspense fallback={<div className="loading-skeleton-dashboard" />}><Dashboard /></Suspense>
+                    <Dashboard />
                   </>}
                   {tab === 'projects'    && <Projects />}
                   {tab === 'shopping'    && <Shopping />}
@@ -667,18 +665,16 @@ export default function App() {
                   {tab === 'inspiration' && <Inspiration />}
                   {tab === 'stockgallery' && <div className="scroll-page" style={{paddingBottom:40}}><div className="page-header"><h1 className="page-title">Wood Stock Gallery</h1><p className="page-subtitle">Photos of raw lumber, blanks, and prep work</p></div><WoodStockGallery /></div>}
                   {tab === 'ideas'       && <ProjectIdeas />}
-                  <Suspense fallback={<div style={{ padding: 40, textAlign: 'center', color: 'var(--c-text-muted)' }}>Loading...</div>}>
-                    {tab === 'yearreview'  && <YearReview />}
-                    {tab === 'settings'    && <Settings />}
-                    {tab === 'import'      && <BulkImport />}
-                    {tab === 'costs'       && <Costs />}
-                    {tab === 'audit'       && <Audit />}
-                    {tab === 'help'        && <Help />}
-                    {tab === 'beta'        && <BetaQuestionnaire />}
-                    {tab === 'smoketest'   && <SmokeTest />}
-                    {tab === 'calculators' && <Calculators />}
-                    {tab === 'trash'       && <Trash />}
-                  </Suspense>
+                  {tab === 'yearreview'  && <YearReview />}
+                  {tab === 'settings'    && <Settings />}
+                  {tab === 'import'      && <BulkImport />}
+                  {tab === 'costs'       && <Costs />}
+                  {tab === 'audit'       && <Audit />}
+                  {tab === 'help'        && <Help />}
+                  {tab === 'beta'        && <BetaQuestionnaire />}
+                  {tab === 'smoketest'   && <SmokeTest />}
+                  {tab === 'calculators' && <Calculators />}
+                  {tab === 'trash'       && <Trash />}
                 </div>
               )}
               </ErrorBoundary>
