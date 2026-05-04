@@ -590,7 +590,6 @@ html:not(.portfolio-page),
 html:not(.portfolio-page) body,
 html:not(.portfolio-page) #root {
   height: 100%;
-  height: 100dvh;
   overflow: hidden;
 }
 
@@ -3137,7 +3136,7 @@ body {
   :root { --tabbar-h: 48px; }
   .tabbar {
     padding-top: 4px;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-bottom: max(env(safe-area-inset-bottom, 34px), 34px);
     /* Fully opaque — eliminates iOS compositing bleed in home indicator zone */
     background: rgb(22, 27, 34);
     backdrop-filter: none;
@@ -3152,9 +3151,9 @@ body {
   html[data-theme="light"],
   [data-theme="light"] body { background: #ffffff; }
 
-  .scroll-page { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px)); }
-  .fab { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 10px); }
-  .fab.fab-secondary { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 62px); }
+  .scroll-page { padding-bottom: calc(var(--tabbar-h) + max(env(safe-area-inset-bottom, 34px), 34px)); }
+  .fab { bottom: calc(var(--tabbar-h) + max(env(safe-area-inset-bottom, 34px), 34px) + 10px); }
+  .fab.fab-secondary { bottom: calc(var(--tabbar-h) + max(env(safe-area-inset-bottom, 34px), 34px) + 62px); }
 }
 
 /* Standalone + mobile combined — ensures override on iPhone PWA */
@@ -3162,7 +3161,7 @@ body {
   :root { --tabbar-h: 48px; }
   .tabbar {
     padding-top: 4px;
-    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+    padding-bottom: max(env(safe-area-inset-bottom, 34px), 34px) !important;
     background: rgb(22, 27, 34) !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
@@ -3171,9 +3170,9 @@ body {
   html, body { background: #060D18 !important; }
   html[data-theme="light"],
   [data-theme="light"] body { background: #ffffff !important; }
-  .scroll-page { padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px)) !important; }
-  .fab { bottom: calc(48px + env(safe-area-inset-bottom, 0px) + 10px) !important; }
-  .fab.fab-secondary { bottom: calc(48px + env(safe-area-inset-bottom, 0px) + 62px) !important; }
+  .scroll-page { padding-bottom: calc(48px + max(env(safe-area-inset-bottom, 34px), 34px)) !important; }
+  .fab { bottom: calc(48px + max(env(safe-area-inset-bottom, 34px), 34px) + 10px) !important; }
+  .fab.fab-secondary { bottom: calc(48px + max(env(safe-area-inset-bottom, 34px), 34px) + 62px) !important; }
 }
 /* iOS fallback — JS adds .pwa-standalone to <html> */
 @media (max-width: 767px) {
@@ -3183,15 +3182,15 @@ body {
   [data-theme="light"] .pwa-standalone body { background: #ffffff !important; }
   .pwa-standalone .tabbar {
     padding-top: 4px;
-    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+    padding-bottom: max(env(safe-area-inset-bottom, 34px), 34px) !important;
     background: rgb(22, 27, 34) !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
   }
   [data-theme="light"] .pwa-standalone .tabbar { background: #ffffff !important; }
-  .pwa-standalone .scroll-page { padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px)) !important; }
-  .pwa-standalone .fab { bottom: calc(48px + env(safe-area-inset-bottom, 0px) + 10px) !important; }
-  .pwa-standalone .fab.fab-secondary { bottom: calc(48px + env(safe-area-inset-bottom, 0px) + 62px) !important; }
+  .pwa-standalone .scroll-page { padding-bottom: calc(48px + max(env(safe-area-inset-bottom, 34px), 34px)) !important; }
+  .pwa-standalone .fab { bottom: calc(48px + max(env(safe-area-inset-bottom, 34px), 34px) + 10px) !important; }
+  .pwa-standalone .fab.fab-secondary { bottom: calc(48px + max(env(safe-area-inset-bottom, 34px), 34px) + 62px) !important; }
 }
 
 /* ─── Dashboard lazy-load skeleton ──────────────────────────────────────────── */
