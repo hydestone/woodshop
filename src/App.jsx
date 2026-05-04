@@ -347,11 +347,16 @@ export default function App() {
   const [tabDir, setTabDir]     = useState('right')
   const [projId, setProjId]     = useState(null)
   const [tabAction, setTabAction] = useState(null)
-  const navStack = useRef([])  // in-app back navigation history
-  const [showMore, setShowMore] = useState(false)
-  const [theme, setTheme] = useState(() => {
+  const navStack  = useRef([])    // in-app back navigation history
+  const loadedRef = useRef(false) // prevents duplicate data loads
+  const [showMore, setShowMore]             = useState(false)
+  const [theme, setTheme]                   = useState(() => {
     try { return localStorage.getItem('jdh-theme') || 'dark' } catch { return 'dark' }
   })
+  const [showQR, setShowQR]                 = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  const [isOffline, setIsOffline]           = useState(!navigator.onLine)
+  const [needsPassword, setNeedsPassword]   = useState(false)
 
   // Apply theme to <html> element
   useEffect(() => {
@@ -367,9 +372,6 @@ export default function App() {
   }, [])
 
   const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark')
-  const [showQR, setShowQR] = useState(false)
-  const [showOnboarding, setShowOnboarding] = useState(false)
-  const [isOffline, setIsOffline] = useState(!navigator.onLine)
 
   // ── In-app back navigation ────────────────────────────────────────────────
   const goBack = useCallback(() => {
@@ -396,7 +398,6 @@ export default function App() {
   }, [goBack])
 
   const { showTutorial, dismissTutorial, launchTutorial } = useTutorialCheck()
-  const [needsPassword, setNeedsPassword] = useState(false)
 
   useEffect(() => {
     const goOffline = () => setIsOffline(true)
@@ -477,7 +478,6 @@ export default function App() {
   }, [])
 
   // Load data once authenticated (loadedRef prevents duplicate loads from auth listener firing multiple times)
-  const loadedRef = useRef(false)
   useEffect(() => {
     if (session && !loadedRef.current) {
       loadedRef.current = true
