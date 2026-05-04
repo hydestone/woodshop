@@ -34,7 +34,7 @@ function SwipeCard({ photo, onAssign, onSkip, projects }) {
   const onTouchEnd = () => {
     if (!startRef.current) return
     setSwiping(false)
-    if (Math.abs(offset.x) > 100) {
+    if (Math.abs(offset.x) > 70) {
       setExiting(offset.x > 0 ? 'right' : 'left')
       setTimeout(() => onSkip(), 300)
     } else {
@@ -80,20 +80,20 @@ function SwipeCard({ photo, onAssign, onSkip, projects }) {
         draggable={false}
       />
       {/* Swipe hint overlays */}
-      {offset.x > 40 && (
+      {offset.x > 25 && (
         <div style={{
           position: 'absolute', top: 20, left: 20,
           background: 'rgba(16,185,129,.8)', color: '#fff',
           padding: '8px 16px', borderRadius: 0, fontSize: 16, fontWeight: 700,
-          opacity: Math.min((offset.x - 40) / 60, 1),
+          opacity: Math.min((offset.x - 25) / 45, 1),
         }}>SKIP →</div>
       )}
-      {offset.x < -40 && (
+      {offset.x < -25 && (
         <div style={{
           position: 'absolute', top: 20, right: 20,
           background: 'rgba(239,68,68,.8)', color: '#fff',
           padding: '8px 16px', borderRadius: 0, fontSize: 16, fontWeight: 700,
-          opacity: Math.min((-offset.x - 40) / 60, 1),
+          opacity: Math.min((-offset.x - 25) / 45, 1),
         }}>← SKIP</div>
       )}
     </div>
@@ -401,6 +401,19 @@ export default function PhotoTriage({ onClose, onNewProject }) {
     }))
     try {
       await db.updatePhoto(photoId, { project_id: projectId, photo_type: 'progress' })
+      const projName = data.projects.find(p => p.id === projectId)?.name || 'project'
+      toast(`Assigned to ${projName}`, 'success', 4000, {
+        label: 'Undo',
+        onClick: async () => {
+          mutate(d => ({
+            ...d,
+            photos: d.photos.map(p =>
+              p.id === photoId ? { ...p, project_id: null, photo_type: 'unsorted' } : p
+            )
+          }))
+          await db.updatePhoto(photoId, { project_id: null, photo_type: 'unsorted' }).catch(() => {})
+        }
+      })
     } catch (e) {
       toast('Failed to assign: ' + e.message, 'error')
       // Rollback
@@ -411,7 +424,7 @@ export default function PhotoTriage({ onClose, onNewProject }) {
         )
       }))
     }
-  }, [mutate, toast])
+  }, [mutate, toast, data.projects])
 
   const skip = useCallback(() => {}, [])
 
