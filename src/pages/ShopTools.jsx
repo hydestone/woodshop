@@ -245,14 +245,43 @@ function ToolsInventory() {
                     <div style={{ flex:1, paddingRight:12 }}>
                       <div style={{ fontWeight:600, fontSize:15 }}>{tool.name}</div>
                       {tool.brand && <div style={{ fontSize:12, color:'var(--c-text-muted)', marginTop:1 }}>{tool.brand}{tool.model ? ` · ${tool.model}` : ''}</div>}
+                      {/* Purchase info */}
+                      {(tool.specs?.purchased_from || tool.specs?.purchase_date || tool.specs?.cost) && (
+                        <div style={{ fontSize:12, color:'var(--c-text-muted)', marginTop:3 }}>
+                          {tool.specs.purchased_from && <span>{tool.specs.purchased_from}</span>}
+                          {tool.specs.cost && <span>{tool.specs.purchased_from ? ' · ' : ''}${parseFloat(tool.specs.cost).toFixed(2)}</span>}
+                          {tool.specs.purchase_date && <span> · {new Date(tool.specs.purchase_date).toLocaleDateString('en-US', { month:'short', year:'numeric' })}</span>}
+                        </div>
+                      )}
+                      {tool.specs?.serial_number && (
+                        <div style={{ fontSize:11, color:'var(--c-text-faint)', marginTop:2 }}>S/N: {tool.specs.serial_number}</div>
+                      )}
                       {tool.notes && <div style={{ fontSize:13, color:'var(--c-text-muted)', marginTop:4, lineHeight:1.5 }}>{tool.notes}</div>}
-                      {/* Spec fields */}
-                      {tool.specs && Object.entries(tool.specs).filter(([,v]) => v).length > 0 && (
+                      {/* Technical spec fields — exclude internal keys */}
+                      {tool.specs && Object.entries(tool.specs).filter(([k,v]) => v && !['serial_number','purchased_from','cost','purchase_date','_parts'].includes(k)).length > 0 && (
                         <div style={{ display:'flex', flexWrap:'wrap', gap:'4px 12px', marginTop:8 }}>
-                          {Object.entries(tool.specs).filter(([,v]) => v).map(([k,v]) => (
+                          {Object.entries(tool.specs).filter(([k,v]) => v && !['serial_number','purchased_from','cost','purchase_date','_parts'].includes(k)).map(([k,v]) => (
                             <div key={k} style={{ fontSize:12 }}>
                               <span style={{ color:'var(--c-text-faint)', textTransform:'uppercase', letterSpacing:'.4px', fontSize:10 }}>{k} </span>
                               <span style={{ color:'var(--c-text-primary)', fontWeight:600 }}>{v}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {/* Replacement parts */}
+                      {(tool.specs?._parts || []).filter(p => p.name).length > 0 && (
+                        <div style={{ marginTop:8 }}>
+                          <div style={{ fontSize:10, fontWeight:700, color:'var(--c-text-faint)', textTransform:'uppercase', letterSpacing:'.4px', marginBottom:4 }}>Parts</div>
+                          {tool.specs._parts.filter(p => p.name).map((p, i) => (
+                            <div key={i} style={{ fontSize:12, color:'var(--c-text-muted)', display:'flex', alignItems:'center', gap:6, marginBottom:2 }}>
+                              <span>· {p.name}</span>
+                              {p.url && (
+                                <a href={p.url} target="_blank" rel="noopener noreferrer"
+                                  style={{ fontSize:11, color:'var(--accent)', textDecoration:'none' }}
+                                  onClick={e => e.stopPropagation()}>
+                                  Buy ↗
+                                </a>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -286,14 +315,24 @@ function ToolsInventory() {
 }
 
 function ToolSheet({ tool, onSave, onClose }) {
-  const nameRef  = useRef()
-  const brandRef = useRef()
-  const modelRef = useRef()
-  const notesRef = useRef()
-  const catRef   = useRef()
-  const [cat, setCat] = useState(tool?.category || TOOL_CATS[0])
-  const specFields = SPEC_FIELDS[cat] || []
-  const specRefs = useRef({})
+  const nameRef        = useRef()
+  const brandRef       = useRef()
+  const modelRef       = useRef()
+  const notesRef       = useRef()
+  const serialRef      = useRef()
+  const purchasedFromRef = useRef()
+  const costRef        = useRef()
+  const purchaseDateRef = useRef()
+  const [cat, setCat]  = useState(tool?.category || TOOL_CATS[0])
+  const specFields     = SPEC_FIELDS[cat] || []
+  const specRefs       = useRef({})
+  const [parts, setParts] = useState(
+    () => (tool?.specs?._parts || []).length > 0 ? tool.specs._parts : []
+  )
+
+  const addPart    = () => setParts(p => [...p, { name: '', url: '' }])
+  const removePart = i  => setParts(p => p.filter((_, idx) => idx !== i))
+  const updatePart = (i, field, val) => setParts(p => p.map((pt, idx) => idx === i ? { ...pt, [field]: val } : pt))
 
   const handleSave = () => {
     const name = nameRef.current?.value.trim()
@@ -303,6 +342,19 @@ function ToolSheet({ tool, onSave, onClose }) {
       const v = specRefs.current[f]?.value?.trim()
       if (v) specs[f] = v
     })
+    // Purchase info + serial into specs
+    const serial     = serialRef.current?.value.trim()
+    const fromWhere  = purchasedFromRef.current?.value.trim()
+    const cost       = costRef.current?.value.trim()
+    const purchased  = purchaseDateRef.current?.value
+    if (serial)    specs.serial_number    = serial
+    if (fromWhere) specs.purchased_from   = fromWhere
+    if (cost)      specs.cost             = cost
+    if (purchased) specs.purchase_date    = purchased
+    // Parts
+    const cleanParts = parts.filter(p => p.name.trim())
+    if (cleanParts.length) specs._parts = cleanParts
+
     onSave({
       name,
       brand:    brandRef.current?.value.trim() || '',
@@ -315,6 +367,7 @@ function ToolSheet({ tool, onSave, onClose }) {
 
   return (
     <Sheet title={tool ? 'Edit Tool' : 'Add Tool'} onClose={onClose} onSave={handleSave}>
+      {/* Core info */}
       <div className="form-group">
         <FormCell label="Tool Name">
           <input ref={nameRef} className="form-input" placeholder="No. 4 Smoothing Plane" defaultValue={tool?.name||''} autoFocus />
@@ -325,13 +378,17 @@ function ToolSheet({ tool, onSave, onClose }) {
         <FormCell label="Model">
           <input ref={modelRef} className="form-input" placeholder="Model number or name" defaultValue={tool?.model||''} />
         </FormCell>
+        <FormCell label="Serial Number">
+          <input ref={serialRef} className="form-input" placeholder="Optional" defaultValue={tool?.specs?.serial_number||''} />
+        </FormCell>
         <FormCell label="Category" last>
-          <select ref={catRef} className="form-select" value={cat} onChange={e => setCat(e.target.value)}>
+          <select className="form-select" value={cat} onChange={e => setCat(e.target.value)}>
             {TOOL_CATS.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
         </FormCell>
       </div>
 
+      {/* Technical specs */}
       {specFields.length > 0 && (
         <>
           <p style={{ fontSize:11, fontWeight:700, color:'var(--c-text-faint)', textTransform:'uppercase', letterSpacing:'.5px', margin:'16px 0 8px' }}>
@@ -352,9 +409,53 @@ function ToolSheet({ tool, onSave, onClose }) {
         </>
       )}
 
+      {/* Purchase info */}
+      <p style={{ fontSize:11, fontWeight:700, color:'var(--c-text-faint)', textTransform:'uppercase', letterSpacing:'.5px', margin:'16px 0 8px' }}>Purchase Info</p>
+      <div className="form-group">
+        <FormCell label="Purchased From">
+          <input ref={purchasedFromRef} className="form-input" placeholder="Woodcraft, Amazon, eBay…" defaultValue={tool?.specs?.purchased_from||''} />
+        </FormCell>
+        <FormCell label="Cost">
+          <input ref={costRef} className="form-input" type="number" step="0.01" placeholder="0.00" defaultValue={tool?.specs?.cost||''} />
+        </FormCell>
+        <FormCell label="Purchase Date" last>
+          <input ref={purchaseDateRef} className="form-input" type="date" defaultValue={tool?.specs?.purchase_date||''} />
+        </FormCell>
+      </div>
+
+      {/* Replacement parts */}
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', margin:'16px 0 8px' }}>
+        <p style={{ fontSize:11, fontWeight:700, color:'var(--c-text-faint)', textTransform:'uppercase', letterSpacing:'.5px', margin:0 }}>Replacement Parts</p>
+        <button type="button" className="btn-text" style={{ fontSize:12 }} onClick={addPart}>+ Add part</button>
+      </div>
+      {parts.length === 0 && (
+        <p style={{ fontSize:13, color:'var(--c-text-faint)', marginBottom:8 }}>Blades, filters, belts, brushes… tap + Add part to track them.</p>
+      )}
+      {parts.map((part, i) => (
+        <div key={i} style={{ display:'flex', gap:8, marginBottom:8, alignItems:'center' }}>
+          <div style={{ flex:1, display:'flex', flexDirection:'column', gap:6 }}>
+            <input
+              className="form-input"
+              placeholder="Part name (e.g. Replacement blade)"
+              value={part.name}
+              onChange={e => updatePart(i, 'name', e.target.value)}
+            />
+            <input
+              className="form-input"
+              placeholder="Buy link (optional)"
+              value={part.url}
+              onChange={e => updatePart(i, 'url', e.target.value)}
+            />
+          </div>
+          <button type="button" className="icon-btn" style={{ color:'var(--red)', flexShrink:0, alignSelf:'center' }}
+            onClick={() => removePart(i)}>×</button>
+        </div>
+      ))}
+
+      {/* Notes */}
       <p style={{ fontSize:13, color:'var(--c-text-muted)', margin:'16px 0 8px' }}>Notes</p>
       <textarea ref={notesRef} className="form-textarea" style={{ width:'100%' }}
-        placeholder="Sharpening notes, quirks, purchase info…"
+        placeholder="Sharpening notes, quirks, maintenance tips…"
         defaultValue={tool?.notes||''} onChange={autoExpand} />
     </Sheet>
   )
