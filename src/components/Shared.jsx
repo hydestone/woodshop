@@ -1,5 +1,4 @@
-import React, { memo } from 'react'
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, memo } from 'react'
 import { createPortal } from 'react-dom'
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
@@ -120,6 +119,7 @@ export function maintStatus(m) {
   if (diff < 3 * 86_400_000) return { label: `Due in ${Math.ceil(diff / 86_400_000)}d`,   color: 'var(--orange)', urgent: true  }
   return                              { label: `Due in ${Math.ceil(diff / 86_400_000)}d`,   color: 'var(--green)',  urgent: false }
 }
+
 
 // ─── Sheet ────────────────────────────────────────────────────────────────────
 export function Sheet({ title, onClose, onSave, saveLabel = 'Save', children }) {
@@ -319,6 +319,164 @@ export function TagInput({ tags, onChange }) {
     </div>
   )
 }
+
+// ─── DropZone ─────────────────────────────────────────────────────────────────
+
+// ─── FilterSelect — consistent native dropdown filter ────────────────────────
+export function FilterSelect({ value, onChange, options, allLabel = 'All', label }) {
+  const isActive = value !== 'all'
+  return (
+    <div className="filter-select-wrap" aria-label={label}>
+      <select
+        className={`filter-select${isActive ? ' active' : ''}`}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+      >
+        <option value="all">{allLabel}</option>
+        {options.map(o => {
+          const val = typeof o === 'string' ? o : o.value
+          const lbl = typeof o === 'string' ? o : o.label
+          return <option key={val} value={val}>{lbl}</option>
+        })}
+      </select>
+      <span className="filter-select-chevron" aria-hidden="true">▾</span>
+    </div>
+  )
+}
+
+
+// ─── Long-press hook (600ms → callback) ──────────────────────────────────────
+export function useLongPress(onLongPress, ms = 600) {
+  const timerRef = useRef(null)
+  const start = useCallback((e) => {
+    // prevent context menu on long press
+    e.preventDefault()
+    timerRef.current = setTimeout(() => onLongPress(), ms)
+  }, [onLongPress, ms])
+  const cancel = useCallback(() => {
+    clearTimeout(timerRef.current)
+  }, [])
+  return {
+    onPointerDown:   start,
+    onPointerUp:     cancel,
+    onPointerLeave:  cancel,
+    onPointerCancel: cancel,
+  }
+}
+
+
+// ─── Before / After swipe comparison ─────────────────────────────────────────
+export function BeforeAfterCompare({ beforeUrl, afterUrl, label }) {
+  const [split, setSplit] = useState(50)
+  const containerRef = useRef()
+
+  const move = useCallback((clientX) => {
+    const rect = containerRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const pct = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100))
+    setSplit(pct)
+  }, [])
+
+  const onMouseMove = e => { if (e.buttons === 1) move(e.clientX) }
+  const onTouchMove = e => {
+    e.preventDefault()
+    move(e.touches[0].clientX)
+  }
+
+  return (
+    <div ref={containerRef}
+      style={{ position:'relative', width:'100%', aspectRatio:'4/3', overflow:'hidden', borderRadius:'var(--r-md)', userSelect:'none', touchAction:'none', cursor:'ew-resize' }}
+      onMouseMove={onMouseMove}
+      onTouchMove={onTouchMove}
+      onTouchStart={e => move(e.touches[0].clientX)}
+    >
+      {/* After (full width, base layer) */}
+      <img src={afterUrl} alt="After" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', pointerEvents:'none' }} />
+      {/* Before (clipped to split%) */}
+      <div style={{ position:'absolute', inset:0, overflow:'hidden', width: split + '%' }}>
+        <img src={beforeUrl} alt="Before" style={{ position:'absolute', inset:0, width: containerRef.current?.getBoundingClientRect().width + 'px' || '100%', height:'100%', objectFit:'cover', maxWidth:'none', pointerEvents:'none' }} />
+      </div>
+      {/* Divider */}
+      <div style={{ position:'absolute', top:0, bottom:0, left: split + '%', transform:'translateX(-50%)', width:3, background:'#fff', boxShadow:'0 0 6px rgba(0,0,0,.5)', pointerEvents:'none' }}>
+        <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:32, height:32, borderRadius:'50%', background:'#fff', boxShadow:'0 2px 8px rgba(0,0,0,.3)', display:'flex', alignItems:'center', justifyContent:'center', gap:2 }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l-6-6 6-6"/><path d="M15 6l6 6-6 6"/></svg>
+        </div>
+      </div>
+      {/* Labels */}
+      <span style={{ position:'absolute', top:8, left:8, background:'rgba(0,0,0,.6)', color:'#fff', fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:99 }}>BEFORE</span>
+      <span style={{ position:'absolute', top:8, right:8, background:'rgba(0,0,0,.6)', color:'#fff', fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:99 }}>AFTER</span>
+      {label && <div style={{ position:'absolute', bottom:8, left:0, right:0, textAlign:'center', color:'#fff', fontSize:12, fontWeight:600, textShadow:'0 1px 4px rgba(0,0,0,.6)' }}>{label}</div>}
+    </div>
+  )
+}
+
+
+// ─── Count-up number animation ───────────────────────────────────────────────
+export function useCountUp(target, duration = 1200, enabled = true) {
+  const [val, setVal] = useState(0)
+  useEffect(() => {
+    if (!enabled || !target) { setVal(target); return }
+    let start = null
+    const step = ts => {
+      if (!start) start = ts
+      const progress = Math.min((ts - start) / duration, 1)
+      // ease-out cubic
+      const ease = 1 - Math.pow(1 - progress, 3)
+      setVal(Math.round(ease * target))
+      if (progress < 1) requestAnimationFrame(step)
+    }
+    const raf = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(raf)
+  }, [target, duration, enabled])
+  return val
+}
+
+// ─── Kinetic title — letter-by-letter stagger ────────────────────────────────
+export function KineticTitle({ text, className, style, tag: Tag = 'h1', delay = 0 }) {
+  return (
+    <Tag className={className} style={{ ...style, overflow: 'hidden' }}>
+      {text.split('').map((ch, i) => (
+        <span key={i} style={{
+          display: 'inline-block',
+          
+          animationDelay: `${delay + i * 35}ms`,
+          whiteSpace: ch === ' ' ? 'pre' : undefined,
+        }}>{ch}</span>
+      ))}
+    </Tag>
+  )
+}
+
+export function DropZone({ onFiles, uploading }) {
+  const [drag, setDrag] = useState(false)
+  const ref = useRef()
+
+  return (
+    <div
+      className={`drop-zone ${drag ? 'drag-over' : ''}`}
+      onDragOver={e => { e.preventDefault(); setDrag(true) }}
+      onDragLeave={() => setDrag(false)}
+      onDrop={e => { e.preventDefault(); setDrag(false); onFiles(e.dataTransfer.files) }}
+      onClick={() => ref.current?.click()}
+      role="button"
+      aria-label="Upload photos"
+      tabIndex={0}
+      onKeyDown={e => e.key === 'Enter' && ref.current?.click()}
+    >
+      <input
+        ref={ref}
+        type="file"
+        accept="image/*"
+        multiple
+        style={{ display: 'none' }}
+        onChange={e => onFiles(e.target.files)}
+      />
+      <div className="drop-zone-icon">{uploading ? '⏳' : '📁'}</div>
+      <p>{uploading ? 'Uploading…' : 'Drop photos here or click to select — JPEG, PNG, HEIC'}</p>
+    </div>
+  )
+}
+
 
 // ─── Lightbox ─────────────────────────────────────────────────────────────────
 export function Lightbox({ photos, index, onClose, onEdit }) {
@@ -775,162 +933,5 @@ function PhotoEditSheet({ photo, projects, onSave, onDelete, onClose, onOpenLigh
         </button>
       )}
     </Sheet>
-  )
-}
-
-// ─── DropZone ─────────────────────────────────────────────────────────────────
-
-// ─── FilterSelect — consistent native dropdown filter ────────────────────────
-export function FilterSelect({ value, onChange, options, allLabel = 'All', label }) {
-  const isActive = value !== 'all'
-  return (
-    <div className="filter-select-wrap" aria-label={label}>
-      <select
-        className={`filter-select${isActive ? ' active' : ''}`}
-        value={value}
-        onChange={e => onChange(e.target.value)}
-      >
-        <option value="all">{allLabel}</option>
-        {options.map(o => {
-          const val = typeof o === 'string' ? o : o.value
-          const lbl = typeof o === 'string' ? o : o.label
-          return <option key={val} value={val}>{lbl}</option>
-        })}
-      </select>
-      <span className="filter-select-chevron" aria-hidden="true">▾</span>
-    </div>
-  )
-}
-
-
-// ─── Long-press hook (600ms → callback) ──────────────────────────────────────
-export function useLongPress(onLongPress, ms = 600) {
-  const timerRef = useRef(null)
-  const start = useCallback((e) => {
-    // prevent context menu on long press
-    e.preventDefault()
-    timerRef.current = setTimeout(() => onLongPress(), ms)
-  }, [onLongPress, ms])
-  const cancel = useCallback(() => {
-    clearTimeout(timerRef.current)
-  }, [])
-  return {
-    onPointerDown:   start,
-    onPointerUp:     cancel,
-    onPointerLeave:  cancel,
-    onPointerCancel: cancel,
-  }
-}
-
-
-// ─── Before / After swipe comparison ─────────────────────────────────────────
-export function BeforeAfterCompare({ beforeUrl, afterUrl, label }) {
-  const [split, setSplit] = useState(50)
-  const containerRef = useRef()
-
-  const move = useCallback((clientX) => {
-    const rect = containerRef.current?.getBoundingClientRect()
-    if (!rect) return
-    const pct = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100))
-    setSplit(pct)
-  }, [])
-
-  const onMouseMove = e => { if (e.buttons === 1) move(e.clientX) }
-  const onTouchMove = e => {
-    e.preventDefault()
-    move(e.touches[0].clientX)
-  }
-
-  return (
-    <div ref={containerRef}
-      style={{ position:'relative', width:'100%', aspectRatio:'4/3', overflow:'hidden', borderRadius:'var(--r-md)', userSelect:'none', touchAction:'none', cursor:'ew-resize' }}
-      onMouseMove={onMouseMove}
-      onTouchMove={onTouchMove}
-      onTouchStart={e => move(e.touches[0].clientX)}
-    >
-      {/* After (full width, base layer) */}
-      <img src={afterUrl} alt="After" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', pointerEvents:'none' }} />
-      {/* Before (clipped to split%) */}
-      <div style={{ position:'absolute', inset:0, overflow:'hidden', width: split + '%' }}>
-        <img src={beforeUrl} alt="Before" style={{ position:'absolute', inset:0, width: containerRef.current?.getBoundingClientRect().width + 'px' || '100%', height:'100%', objectFit:'cover', maxWidth:'none', pointerEvents:'none' }} />
-      </div>
-      {/* Divider */}
-      <div style={{ position:'absolute', top:0, bottom:0, left: split + '%', transform:'translateX(-50%)', width:3, background:'#fff', boxShadow:'0 0 6px rgba(0,0,0,.5)', pointerEvents:'none' }}>
-        <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:32, height:32, borderRadius:'50%', background:'#fff', boxShadow:'0 2px 8px rgba(0,0,0,.3)', display:'flex', alignItems:'center', justifyContent:'center', gap:2 }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l-6-6 6-6"/><path d="M15 6l6 6-6 6"/></svg>
-        </div>
-      </div>
-      {/* Labels */}
-      <span style={{ position:'absolute', top:8, left:8, background:'rgba(0,0,0,.6)', color:'#fff', fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:99 }}>BEFORE</span>
-      <span style={{ position:'absolute', top:8, right:8, background:'rgba(0,0,0,.6)', color:'#fff', fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:99 }}>AFTER</span>
-      {label && <div style={{ position:'absolute', bottom:8, left:0, right:0, textAlign:'center', color:'#fff', fontSize:12, fontWeight:600, textShadow:'0 1px 4px rgba(0,0,0,.6)' }}>{label}</div>}
-    </div>
-  )
-}
-
-
-// ─── Count-up number animation ───────────────────────────────────────────────
-export function useCountUp(target, duration = 1200, enabled = true) {
-  const [val, setVal] = useState(0)
-  useEffect(() => {
-    if (!enabled || !target) { setVal(target); return }
-    let start = null
-    const step = ts => {
-      if (!start) start = ts
-      const progress = Math.min((ts - start) / duration, 1)
-      // ease-out cubic
-      const ease = 1 - Math.pow(1 - progress, 3)
-      setVal(Math.round(ease * target))
-      if (progress < 1) requestAnimationFrame(step)
-    }
-    const raf = requestAnimationFrame(step)
-    return () => cancelAnimationFrame(raf)
-  }, [target, duration, enabled])
-  return val
-}
-
-// ─── Kinetic title — letter-by-letter stagger ────────────────────────────────
-export function KineticTitle({ text, className, style, tag: Tag = 'h1', delay = 0 }) {
-  return (
-    <Tag className={className} style={{ ...style, overflow: 'hidden' }}>
-      {text.split('').map((ch, i) => (
-        <span key={i} style={{
-          display: 'inline-block',
-          
-          animationDelay: `${delay + i * 35}ms`,
-          whiteSpace: ch === ' ' ? 'pre' : undefined,
-        }}>{ch}</span>
-      ))}
-    </Tag>
-  )
-}
-
-export function DropZone({ onFiles, uploading }) {
-  const [drag, setDrag] = useState(false)
-  const ref = useRef()
-
-  return (
-    <div
-      className={`drop-zone ${drag ? 'drag-over' : ''}`}
-      onDragOver={e => { e.preventDefault(); setDrag(true) }}
-      onDragLeave={() => setDrag(false)}
-      onDrop={e => { e.preventDefault(); setDrag(false); onFiles(e.dataTransfer.files) }}
-      onClick={() => ref.current?.click()}
-      role="button"
-      aria-label="Upload photos"
-      tabIndex={0}
-      onKeyDown={e => e.key === 'Enter' && ref.current?.click()}
-    >
-      <input
-        ref={ref}
-        type="file"
-        accept="image/*"
-        multiple
-        style={{ display: 'none' }}
-        onChange={e => onFiles(e.target.files)}
-      />
-      <div className="drop-zone-icon">{uploading ? '⏳' : '📁'}</div>
-      <p>{uploading ? 'Uploading…' : 'Drop photos here or click to select — JPEG, PNG, HEIC'}</p>
-    </div>
   )
 }
