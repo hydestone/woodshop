@@ -374,7 +374,7 @@ function LocationSheet({ loc, onSave, onClose }) {
 
 // ── Main Stock page ───────────────────────────────────────────────────────────
 export default function Stock() {
-  const { data, mutate } = useCtx()
+  const { data, mutate, navigate } = useCtx()
   const toast = useToast()
   const [showAdd, setShowAdd]       = useState(false)
   const [editItem, setEditItem]     = useState(null)
@@ -385,6 +385,10 @@ export default function Stock() {
   const [logCache, setLogCache]     = useState({})
 
   const locations = data.woodLocations || []
+  const pwsMap = (data.projectWoodSources || []).reduce((acc, pws) => {
+    acc[pws.wood_stock_id] = pws.project_id
+    return acc
+  }, {})
 
   useEffect(() => {
     const ids = data.woodStock.map(s => s.id)
@@ -487,6 +491,18 @@ export default function Stock() {
                               <div style={{fontSize:12,color:isReady?'var(--forest)':'var(--c-text-muted)',marginTop:4}}>{isReady?'✓ Est. ready since':'Est. ready:'} {readyDate.toLocaleDateString('en-US',{month:'short',year:'numeric'})}</div>
                             )}
                             {item.notes&&<div style={{fontSize:13,color:'var(--c-text-muted)',marginTop:4}}>{item.notes}</div>}
+                            {pwsMap[item.id]&&(()=>{
+                              const proj=(data.projects||[]).find(p=>p.id===pwsMap[item.id])
+                              return proj?(
+                                <button
+                                  className="btn-text"
+                                  onClick={()=>navigate('projects',proj.id)}
+                                  style={{fontSize:12,color:'var(--accent)',padding:'4px 0',display:'flex',alignItems:'center',gap:4,marginTop:4}}
+                                >
+                                  🪵 Used in: {proj.name} ↗
+                                </button>
+                              ):null
+                            })()}
                             <div style={{display:'flex',gap:8,marginTop:10,flexWrap:'wrap'}}>
                               <button className="btn-secondary" onClick={()=>setDetail(item)}>Moisture log</button>
                               <button className="btn-secondary" onClick={()=>setStockPhotoItem(item)} style={{display:'flex',alignItems:'center',gap:5}}>
