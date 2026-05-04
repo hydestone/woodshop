@@ -228,6 +228,12 @@ export default function Auth({ onLogin }) {
           </>
         )}
       </div>
+      <div style={{ textAlign: 'center', marginTop: 16 }}>
+        <a href="#privacy" onClick={e => { e.preventDefault(); window.open('/privacy', '_blank') }}
+          style={{ fontSize: 12, color: '#94A3B8', textDecoration: 'none' }}>
+          Privacy Policy
+        </a>
+      </div>
     </div>
   )
 }

@@ -38,6 +38,7 @@ import SmokeTest        from './pages/SmokeTest.jsx'
 import BetaQuestionnaire from './pages/BetaQuestionnaire.jsx'
 import Calculators      from './pages/Calculators.jsx'
 import Trash            from './pages/Trash.jsx'
+import Privacy          from './pages/Privacy.jsx'
 import Tutorial, { useTutorialCheck } from './components/Tutorial.jsx'
 import ErrorBoundary  from './components/ErrorBoundary.jsx'
 
@@ -634,6 +635,9 @@ export default function App() {
                   </svg>
                   View Portfolio
                 </a>
+                <button className="sidebar-footer-btn" onClick={() => setTab('privacy')} style={{ opacity: 0.55, fontSize: 11 }}>
+                  Privacy Policy
+                </button>
                 <button className="sidebar-footer-btn" onClick={() => signOut()}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -690,6 +694,7 @@ export default function App() {
                   {tab === 'smoketest'   && <SmokeTest />}
                   {tab === 'calculators' && <Calculators />}
                   {tab === 'trash'       && <Trash />}
+                  {tab === 'privacy'     && <Privacy />}
                 </div>
               )}
               </ErrorBoundary>
