@@ -73,7 +73,7 @@ export default function Auth({ onLogin }) {
 
   return (
     <div style={{
-      height: '100vh', display: 'flex', alignItems: 'center',
+      height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center',
       justifyContent: 'center',
       background: 'linear-gradient(rgba(15,30,56,.82), rgba(15,30,56,.88)), url(/shavings.jpg) center/cover no-repeat',
     }}>
@@ -228,9 +228,9 @@ export default function Auth({ onLogin }) {
           </>
         )}
       </div>
-      <div style={{ textAlign: 'center', marginTop: 16 }}>
+      <div style={{ marginTop: 20, textAlign: 'center' }}>
         <a href="#privacy" onClick={e => { e.preventDefault(); window.open('/privacy', '_blank') }}
-          style={{ fontSize: 12, color: '#94A3B8', textDecoration: 'none' }}>
+          style={{ fontSize: 12, color: 'rgba(255,255,255,.5)', textDecoration: 'none', letterSpacing: '.02em' }}>
           Privacy Policy
         </a>
       </div>

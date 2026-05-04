@@ -384,11 +384,11 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    window.history.replaceState({ jdh: 0 }, '')
+    try { window.history.replaceState({ jdh: 0 }, '') } catch {}
     const onPopState = () => {
       const didGoBack = goBack()
       if (didGoBack) {
-        window.history.pushState({ jdh: navStack.current.length }, '')
+        try { window.history.pushState({ jdh: navStack.current.length }, '') } catch {}
       }
     }
     window.addEventListener('popstate', onPopState)
@@ -502,7 +502,7 @@ export default function App() {
     setTabDir(toIdx >= fromIdx || fromIdx === -1 ? 'right' : 'left')
     setTabKey(k => k + 1)
     pushNav(tab, projId, showMore)
-    window.history.pushState({ jdh: navStack.current.length }, '')
+    try { window.history.pushState({ jdh: navStack.current.length }, '') } catch {}
     setProjId(null)
     setShowMore(false)
     setTabRaw(id)
@@ -511,7 +511,7 @@ export default function App() {
   // navigate(tab, projId) — sets tab AND project without the null reset
   const navigate = useCallback((id, pid = null) => {
     pushNav(tab, projId, showMore)
-    window.history.pushState({ jdh: navStack.current.length }, '')
+    try { window.history.pushState({ jdh: navStack.current.length }, '') } catch {}
     setProjId(pid)
     setShowMore(false)
     setTabRaw(id)
@@ -580,7 +580,7 @@ export default function App() {
   const openProject = useCallback(id => {
     if (id) {
       pushNav(tab, projId, showMore)
-      window.history.pushState({ jdh: navStack.current.length }, '')
+      try { window.history.pushState({ jdh: navStack.current.length }, '') } catch {}
     }
     setProjId(id)
   }, [tab, projId, showMore, pushNav])
@@ -754,7 +754,7 @@ export default function App() {
                       className={`tab-btn ${active ? 'active' : ''}`}
                       onClick={() => {
                         if (isMore) {
-                          if (!showMore) { pushNav(tab, projId, false); window.history.pushState({ jdh: navStack.current.length }, '') }
+                          if (!showMore) { pushNav(tab, projId, false); try { window.history.pushState({ jdh: navStack.current.length }, '') } catch {} }
                           setShowMore(s => !s)
                         } else {
                           setTab(t.id)
