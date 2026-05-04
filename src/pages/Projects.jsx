@@ -574,56 +574,169 @@ export function ProjectDetail() {
   }
 
   const handlePrint = () => {
-    const photos = data.photos.filter(p => p.project_id === projId)
-    const steps = data.steps.filter(s => s.project_id === projId)
-    const coats = data.coats.filter(c => c.project_id === projId)
+    const projPhotos = data.photos.filter(p => p.project_id === projId)
+    const projSteps  = data.steps.filter(s => s.project_id === projId)
+    const projCoats  = data.coats.filter(c => c.project_id === projId)
     const timeEntries = project.time_entries ? JSON.parse(project.time_entries) : []
     const costEntries = project.cost_entries ? JSON.parse(project.cost_entries) : []
-    const totalMins = timeEntries.reduce((s, e) => s + (e.minutes || 0), 0)
-    const totalCost = costEntries.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0)
+    const totalMins  = timeEntries.reduce((s, e) => s + (e.minutes || 0), 0)
+    const totalCost  = costEntries.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0)
+    const fmtMins = m => m >= 60 ? `${Math.floor(m/60)}h ${m%60 > 0 ? m%60+'m' : ''}`.trim() : `${m}m`
+    const finishedPhotos = projPhotos.filter(p => p.tags?.includes('finished'))
+    const progressPhotos = projPhotos.filter(p => !p.tags?.includes('finished'))
+
     const win = window.open('', '_blank')
-    win.document.write(`<!DOCTYPE html><html><head><title>${project.name} — JDH Woodworks</title>
-    <style>
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      body { font-family: -apple-system, sans-serif; color: #0F172A; padding: 32px; max-width: 800px; margin: 0 auto; }
-      h1 { font-size: 28px; font-weight: 800; margin-bottom: 4px; }
-      .meta { font-size: 13px; color: #64748B; margin-bottom: 24px; display: flex; gap: 12px; flex-wrap: wrap; }
-      .pill { background: #DBEAFE; color: #1D4ED8; padding: 2px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; }
-      h2 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: #64748B; margin: 24px 0 8px; }
-      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
-      .cell { background: #F0F4F8; border-radius: 8px; padding: 10px 14px; font-size: 13px; }
-      .cell b { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #94A3B8; margin-bottom: 2px; }
-      table { width: 100%; border-collapse: collapse; font-size: 13px; }
-      td, th { padding: 8px 10px; border-bottom: 1px solid #E2E8F0; text-align: left; }
-      th { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #94A3B8; }
-      .photos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
-      .photos img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; }
-      .footer { margin-top: 32px; font-size: 11px; color: #94A3B8; text-align: center; border-top: 1px solid #E2E8F0; padding-top: 16px; }
-      @media print { body { padding: 0; } }
-    </style></head><body>
-    <div class="pill">${project.status || 'planning'}</div>
-    <h1 style="margin-top:8px">${project.name}</h1>
+    win.document.write(`<!DOCTYPE html><html><head>
+<title>${project.name} — JDH Woodworks</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,Arial,sans-serif;color:#0F172A;padding:36px;max-width:820px;margin:0 auto;font-size:13px}
+  .header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0F172A;padding-bottom:14px;margin-bottom:20px}
+  .brand{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#64748B}
+  .brand span{color:#2D5A3D}
+  h1{font-size:26px;font-weight:900;letter-spacing:-.02em;margin:6px 0 4px}
+  .meta{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:#64748B}
+  .pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px}
+  .pill-active{background:#DBEAFE;color:#1D4ED8}
+  .pill-complete{background:#DCFCE7;color:#15803D}
+  .pill-planning{background:#EDE9FE;color:#7C3AED}
+  .pill-paused{background:#FEF3C7;color:#B45309}
+  h2{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#94A3B8;margin:22px 0 8px;border-bottom:1px solid #E2E8F0;padding-bottom:4px}
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:4px}
+  .stat{background:#F8FAFC;border:1px solid #E2E8F0;padding:10px 12px}
+  .stat-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94A3B8;margin-bottom:3px}
+  .stat-val{font-size:18px;font-weight:800;color:#0F172A}
+  table{width:100%;border-collapse:collapse;margin-bottom:4px}
+  th{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94A3B8;padding:6px 8px;border-bottom:2px solid #E2E8F0;text-align:left}
+  td{padding:7px 8px;border-bottom:1px solid #F1F5F9;vertical-align:top}
+  .done{color:#15803D;font-weight:600}
+  .photo-grid{display:grid;gap:6px;margin-top:4px}
+  .photo-grid-3{grid-template-columns:repeat(3,1fr)}
+  .photo-grid-2{grid-template-columns:repeat(2,1fr)}
+  .photo-grid-1{grid-template-columns:1fr}
+  .photo-grid img{width:100%;aspect-ratio:4/3;object-fit:cover}
+  .photo-caption{font-size:10px;color:#64748B;margin-top:2px}
+  .footer{margin-top:28px;font-size:10px;color:#94A3B8;text-align:center;border-top:1px solid #E2E8F0;padding-top:12px}
+  .no-print{margin-top:20px;text-align:center}
+  @page{size:8.5in 11in;margin:.6in}
+  @media print{body{padding:0}.no-print{display:none}}
+</style></head><body>
+
+<div class="header">
+  <div>
+    <div class="brand">JDH <span>Woodworks</span></div>
+    <h1>${project.name}</h1>
     <div class="meta">
-      ${project.wood_type ? `<span>🪵 ${project.wood_type}</span>` : ''}
-      ${project.finish_used ? `<span>🎨 ${project.finish_used}</span>` : ''}
-      ${project.year_completed ? `<span>📅 ${project.year_completed}</span>` : ''}
-      ${project.category ? `<span>📁 ${project.category}</span>` : ''}
+      ${project.wood_type?`<span>🪵 ${project.wood_type}</span>`:''}
+      ${project.finish_used?`<span>🎨 ${project.finish_used}</span>`:''}
+      ${project.category?`<span>📁 ${project.category}</span>`:''}
+      ${project.year_completed?`<span>📅 ${project.year_completed}</span>`:''}
     </div>
-    ${project.description ? `<p style="font-size:14px;color:#334155;margin-bottom:16px">${project.description}</p>` : ''}
-    <div class="grid">
-      ${totalMins > 0 ? `<div class="cell"><b>Total Time</b>${totalMins >= 60 ? Math.floor(totalMins/60)+'h '+(totalMins%60)+'m' : totalMins+'m'}</div>` : ''}
-      ${totalCost > 0 ? `<div class="cell"><b>Material Cost</b>$${totalCost.toFixed(2)}</div>` : ''}
-    </div>
-    ${steps.length > 0 ? `<h2>Build Steps</h2><table><thead><tr><th>Step</th><th>Status</th></tr></thead><tbody>${steps.map(s => `<tr><td>${s.content || s.description || ''}</td><td>${s.completed ? '✓ Done' : 'Open'}</td></tr>`).join('')}</tbody></table>` : ''}
-    ${coats.length > 0 ? `<h2>Finishing</h2><table><thead><tr><th>Product</th><th>Coat</th><th>Notes</th></tr></thead><tbody>${coats.map(c => `<tr><td>${c.product || ''}</td><td>#${c.coat_number || 1}</td><td>${c.notes || ''}</td></tr>`).join('')}</tbody></table>` : ''}
-    ${timeEntries.length > 0 ? `<h2>Time Log</h2><table><thead><tr><th>Date</th><th>Duration</th><th>Note</th></tr></thead><tbody>${timeEntries.map(e => `<tr><td>${e.date || ''}</td><td>${e.minutes >= 60 ? Math.floor(e.minutes/60)+'h '+(e.minutes%60)+'m' : e.minutes+'m'}</td><td>${e.note || ''}</td></tr>`).join('')}</tbody></table>` : ''}
-    ${costEntries.length > 0 ? `<h2>Cost Breakdown</h2><table><thead><tr><th>Item</th><th>Amount</th></tr></thead><tbody>${costEntries.map(e => `<tr><td>${e.label || ''}</td><td>$${parseFloat(e.amount || 0).toFixed(2)}</td></tr>`).join('')}</tbody></table>` : ''}
-    ${photos.length > 0 ? `<h2>Photos</h2><div class="photos">${photos.slice(0,9).map(p => `<img src="${p.url}" alt="${p.caption || ''}"/>`).join('')}</div>` : ''}
-    <div class="footer">JDH Woodworks · ${project.name} · Printed ${new Date().toLocaleDateString()}</div>
-    </body></html>`)
+  </div>
+  <div style="text-align:right">
+    <div class="pill pill-${project.status||'planning'}">${project.status||'planning'}</div>
+    <div style="font-size:11px;color:#94A3B8;margin-top:4px">Exported ${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>
+  </div>
+</div>
+
+${project.description?`<p style="font-size:13px;color:#334155;margin-bottom:16px;line-height:1.6">${project.description}</p>`:''}
+
+${(totalMins>0||totalCost>0||projSteps.length>0||projCoats.length>0)?`
+<div class="stat-grid">
+  ${projSteps.length>0?`<div class="stat"><div class="stat-label">Steps</div><div class="stat-val">${projSteps.filter(s=>s.completed).length}/${projSteps.length}</div></div>`:''}
+  ${projCoats.length>0?`<div class="stat"><div class="stat-label">Coats</div><div class="stat-val">${projCoats.length}</div></div>`:''}
+  ${totalMins>0?`<div class="stat"><div class="stat-label">Time</div><div class="stat-val">${fmtMins(totalMins)}</div></div>`:''}
+  ${totalCost>0?`<div class="stat"><div class="stat-label">Materials</div><div class="stat-val">$${totalCost.toFixed(2)}</div></div>`:''}
+</div>`:''}
+
+${projSteps.length>0?`
+<h2>Build Steps</h2>
+<table><thead><tr><th>#</th><th>Step</th><th>Status</th></tr></thead><tbody>
+${projSteps.map((s,i)=>`<tr><td style="color:#94A3B8;width:28px">${i+1}</td><td>${s.content||s.description||''}</td><td class="${s.completed?'done':''}">${s.completed?'✓ Done':'—'}</td></tr>`).join('')}
+</tbody></table>`:''}
+
+${projCoats.length>0?`
+<h2>Finishing Coats</h2>
+<table><thead><tr><th>Coat</th><th>Product</th><th>Applied</th><th>Notes</th></tr></thead><tbody>
+${projCoats.map(c=>`<tr><td>#${c.coat_number||1}</td><td>${c.product||''}</td><td>${c.applied_at?new Date(c.applied_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}):'—'}</td><td>${c.notes||''}</td></tr>`).join('')}
+</tbody></table>`:''}
+
+${timeEntries.length>0?`
+<h2>Time Log</h2>
+<table><thead><tr><th>Date</th><th>Duration</th><th>Note</th></tr></thead><tbody>
+${timeEntries.map(e=>`<tr><td>${e.date||''}</td><td>${fmtMins(e.minutes||0)}</td><td>${e.note||''}</td></tr>`).join('')}
+</tbody></table>`:''}
+
+${costEntries.length>0?`
+<h2>Cost Breakdown</h2>
+<table><thead><tr><th>Item</th><th>Amount</th></tr></thead><tbody>
+${costEntries.map(e=>`<tr><td>${e.label||''}</td><td>$${parseFloat(e.amount||0).toFixed(2)}</td></tr>`).join('')}
+<tr style="font-weight:700;border-top:2px solid #0F172A"><td>Total</td><td>$${totalCost.toFixed(2)}</td></tr>
+</tbody></table>`:''}
+
+${finishedPhotos.length>0?`
+<h2>Finished Work (${finishedPhotos.length})</h2>
+<div class="photo-grid ${finishedPhotos.length===1?'photo-grid-1':finishedPhotos.length===2?'photo-grid-2':'photo-grid-3'}">
+${finishedPhotos.map(p=>`<div><img src="${p.url}" alt="${p.caption||''}"/>${p.caption?`<div class="photo-caption">${p.caption}</div>`:''}</div>`).join('')}
+</div>`:''}
+
+${progressPhotos.length>0?`
+<h2>Progress Photos (${progressPhotos.length})</h2>
+<div class="photo-grid photo-grid-3">
+${progressPhotos.slice(0,12).map(p=>`<div><img src="${p.url}" alt="${p.caption||''}"/>${p.caption?`<div class="photo-caption">${p.caption}</div>`:''}</div>`).join('')}
+${progressPhotos.length>12?`<div style="display:flex;align-items:center;justify-content:center;background:#F8FAFC;font-size:12px;color:#94A3B8">+${progressPhotos.length-12} more</div>`:''}
+</div>`:''}
+
+<div class="footer">JDH Woodworks · ${project.name} · ${new Date().toLocaleDateString()}</div>
+
+<div class="no-print">
+  <button onclick="window.print()" style="padding:10px 28px;background:#0F172A;color:#fff;border:none;font-size:14px;font-weight:700;cursor:pointer;border-radius:6px">
+    Print / Save as PDF
+  </button>
+</div>
+</body></html>`)
     win.document.close()
-    setTimeout(() => win.print(), 400)
   }
+
+  const handleExportCSV = () => {
+    const projSteps  = data.steps.filter(s => s.project_id === projId)
+    const projCoats  = data.coats.filter(c => c.project_id === projId)
+    const timeEntries = project.time_entries ? JSON.parse(project.time_entries) : []
+    const costEntries = project.cost_entries ? JSON.parse(project.cost_entries) : []
+    const rows = [
+      ['Field', 'Value'],
+      ['Name', project.name || ''],
+      ['Status', project.status || ''],
+      ['Species', project.wood_type || ''],
+      ['Finish', project.finish_used || ''],
+      ['Category', project.category || ''],
+      ['Year Completed', project.year_completed || ''],
+      ['Description', project.description || ''],
+      [''],
+      ['Steps', ''],
+      ['Step', 'Completed'],
+      ...projSteps.map(s => [s.content || s.description || '', s.completed ? 'Yes' : 'No']),
+      [''],
+      ['Finishing', ''],
+      ['Coat', 'Product', 'Applied', 'Notes'],
+      ...projCoats.map(c => [c.coat_number || '', c.product || '', c.applied_at ? new Date(c.applied_at).toLocaleDateString() : '', c.notes || '']),
+      [''],
+      ['Time Log', ''],
+      ['Date', 'Minutes', 'Note'],
+      ...timeEntries.map(e => [e.date || '', e.minutes || 0, e.note || '']),
+      [''],
+      ['Costs', ''],
+      ['Item', 'Amount'],
+      ...costEntries.map(e => [e.label || '', e.amount || 0]),
+    ]
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = `${project.name.replace(/[^a-z0-9]/gi, '-')}-jdh.csv`
+    a.click()
+  }
+
 
   const handleDelete = async () => {
     try {
@@ -976,6 +1089,14 @@ export function ProjectDetail() {
                 <rect x="6" y="14" width="12" height="8"/>
               </svg>
               <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>Print / PDF</span>
+            </div>
+            <div className="more-item" style={{ padding: '14px 16px', borderBottom: 'none' }}
+              onClick={() => { setShowActions(false); handleExportCSV() }} role="button" tabIndex={0}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+              </svg>
+              <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>Export CSV</span>
             </div>
           </div>
         </Sheet>
