@@ -304,71 +304,29 @@ ${progressPhotos.length>12?`<div style="display:flex;align-items:center;justify-
     <div style={{ height: '100%', overflowY: 'auto', background: 'var(--c-bg-raised)' }} className="slide-in">
 
       {/* ── Header ── */}
-      <div style={{ background: 'var(--c-bg-surface)', borderBottom: '1px solid var(--c-border)', padding: '12px 20px 16px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <button className="back-btn" onClick={() => setProjId(null)}>
+      <div style={{ background: 'var(--c-bg-surface)', borderBottom: '1px solid var(--c-border)' }}>
+
+        {/* Row 1: back · title · ··· */}
+        <div style={{ display: 'flex', alignItems: 'center', padding: '10px 12px 0', gap: 8 }}>
+          <button className="back-btn" onClick={() => setProjId(null)} style={{ flexShrink: 0 }}>
             <IChevL size={16} color="currentColor" sw={2.2} />
             Projects
           </button>
-          <div style={{ display: 'flex', gap: 2 }}>
-            {(() => {
-              const sorted = data.projects.slice().sort((a,b) => a.name.localeCompare(b.name))
-              const idx = sorted.findIndex(p => p.id === projId)
-              return (
-                <>
-                  <button className="icon-btn" disabled={idx <= 0} onClick={() => setProjId(sorted[idx-1].id)} aria-label="Previous project" style={{ opacity: idx <= 0 ? .3 : 1 }}>
-                    <IChevL size={16} color="var(--c-text-muted)" sw={2} />
-                  </button>
-                  <button className="icon-btn" disabled={idx >= sorted.length - 1} onClick={() => setProjId(sorted[idx+1].id)} aria-label="Next project" style={{ opacity: idx >= sorted.length - 1 ? .3 : 1 }}>
-                    <IChevR size={16} color="var(--c-text-muted)" sw={2} />
-                  </button>
-                </>
-              )
-            })()}
-          </div>
-          <div style={{ display: 'flex', gap: 4 }}>
-            <button
-              className="icon-btn"
-              onClick={() => {
-                const next = !project.is_favorite
-                mutate(d => ({ ...d, projects: d.projects.map(p => p.id === projId ? { ...p, is_favorite: next } : p) }))
-                db.toggleFavorite(projId, next).catch(e => toast(e.message, 'error'))
-                toast(next ? 'Added to favorites' : 'Removed from favorites', 'success')
-              }}
-              aria-label={project.is_favorite ? 'Remove from favorites' : 'Add to favorites'}
-              title={project.is_favorite ? 'Remove from favorites' : 'Add to favorites'}
-            >
-              <IStar size={17} fill={project.is_favorite ? 'var(--yellow,#F59E0B)' : 'none'} color={project.is_favorite ? 'var(--yellow,#F59E0B)' : 'var(--c-text-muted)'} />
-            </button>
-            <button className="icon-btn proj-detail-secondary" onClick={() => setShowReminder(true)} aria-label="Add reminder" title="Add to calendar / reminders">
-              <IBell size={17} color="var(--accent)" />
-            </button>
-            <button className="icon-btn proj-detail-secondary" onClick={handleShare} aria-label="Share project" title="Copy share link">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
-              </svg>
-            </button>
-            <button className="icon-btn proj-detail-secondary" onClick={handlePrint} aria-label="Print / PDF" title="Print or save as PDF">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
-                <rect x="6" y="14" width="12" height="8"/>
-              </svg>
-            </button>
-            <button className="icon-btn proj-detail-more" onClick={() => setShowActions(true)} aria-label="More actions">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
-            </button>
-            <button className="icon-btn" onClick={() => setEditing(true)} aria-label="Edit project"><IEdit size={17} /></button>
-            <button className="icon-btn" onClick={() => setConfirming(true)} aria-label="Delete project" style={{ color: 'var(--red)' }}><ITrash size={17} /></button>
-          </div>
+          <h2 style={{ flex: 1, fontSize: 17, fontWeight: 700, margin: 0, textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {project.name}
+          </h2>
+          <button type="button" className="icon-btn" onClick={() => setShowActions(true)} aria-label="More actions" style={{ flexShrink: 0 }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+          </button>
         </div>
 
-        <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 6 }}>{project.name}</h2>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'nowrap', overflowX: 'auto', scrollbarWidth: 'none', marginBottom: 6 }}>
-          {project.category && <span style={{ fontSize: 12, background: 'var(--blue-dim)', color: 'var(--blue)', borderRadius: 99, padding: '2px 10px', fontWeight: 600, flexShrink: 0 }}>{project.category}</span>}
-          {project.wood_type && <span style={{ fontSize: 13, color: 'var(--c-text-muted)', flexShrink: 0 }}>{project.wood_type}</span>}
-          {project.year_completed && <span style={{ fontSize: 13, color: 'var(--c-text-faint)', flexShrink: 0 }}>{project.year_completed}</span>}
+        {/* Row 2: category · status · wood · year */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', flexWrap: 'wrap' }}>
+          {project.category && (
+            <span style={{ fontSize: 12, background: 'var(--blue-dim)', color: 'var(--blue)', borderRadius: 99, padding: '2px 10px', fontWeight: 600 }}>
+              {project.category}
+            </span>
+          )}
           <select
             value={project.status}
             onChange={async e => {
@@ -395,50 +353,37 @@ ${progressPhotos.length>12?`<div style="display:flex;align-items:center;justify-
             <option value="paused">Paused</option>
             <option value="complete">Complete</option>
           </select>
-          <span style={{ width: 1, height: 16, background: 'var(--c-border)', flexShrink: 0, margin: '0 2px' }} />
-          {[
-            { id: 'overview',  label: 'Overview' },
-            { id: 'steps',     label: `Steps${steps.length ? ` ${stepsDone}/${steps.length}` : ''}` },
-            { id: 'finishing', label: `Finishing${coats.length ? ` ${coats.length}` : ''}` },
-            { id: 'photos',    label: `Photos${photos.length ? ` ${photos.length}` : ''}` },
-          ].map(t => (
-            <button key={t.id} onClick={() => setDtab(t.id)} style={{
-              flexShrink: 0, padding: '8px 10px', border: 'none', cursor: 'pointer',
-              fontSize: 11, fontWeight: 700, fontFamily: 'var(--font-heading)',
-              textTransform: 'uppercase', letterSpacing: '.05em',
-              color: dtab === t.id ? 'var(--accent)' : 'var(--c-text-muted)',
-              background: dtab === t.id ? 'var(--accent-dim)' : 'transparent',
-              borderRadius: 4, minHeight: 44,
-              transition: 'color 120ms, background 120ms',
-            }}>{t.label}</button>
-          ))}
+          {project.wood_type && <span style={{ fontSize: 12, color: 'var(--c-text-muted)' }}>{project.wood_type}</span>}
+          {project.year_completed && <span style={{ fontSize: 12, color: 'var(--c-text-faint)' }}>{project.year_completed}</span>}
         </div>
 
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          {project.built_with    && <span style={{ fontSize: 12, color: 'var(--c-text-muted)' }}>👤 {project.built_with}</span>}
-          {project.finish_used   && (
-            <button
-              className="btn-text"
-              style={{ fontSize: 12, color: 'var(--accent)', padding: 0 }}
-              onClick={() => setTab('finishes')}
-              title="View finish details"
-            >
-              {project.finish_used} ↗
+        {/* Row 3: tabs — equal width, no scroll */}
+        <div style={{ display: 'flex', borderTop: '1px solid var(--c-border-light)' }}>
+          {[
+            { id: 'overview',  label: 'Overview' },
+            { id: 'steps',     label: 'Steps',     badge: steps.length ? `${stepsDone}/${steps.length}` : null },
+            { id: 'finishing', label: 'Finishing',  badge: coats.length ? `${coats.length}` : null },
+            { id: 'photos',    label: 'Photos',     badge: photos.length ? `${photos.length}` : null },
+          ].map((t, i, arr) => (
+            <button key={t.id} type="button" onClick={() => setDtab(t.id)} style={{
+              flex: 1, padding: '10px 2px', border: 'none', cursor: 'pointer',
+              borderRight: i < arr.length - 1 ? '1px solid var(--c-border-light)' : 'none',
+              fontSize: 11, fontWeight: 700, fontFamily: 'var(--font-heading)',
+              textTransform: 'uppercase', letterSpacing: '.04em',
+              color: dtab === t.id ? 'var(--accent)' : 'var(--c-text-muted)',
+              background: dtab === t.id ? 'var(--accent-dim)' : 'transparent',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+              minHeight: 44,
+              transition: 'color 120ms, background 120ms',
+            }}>
+              {t.label}
+              {t.badge && (
+                <span style={{ fontSize: 10, fontWeight: 600, color: dtab === t.id ? 'var(--accent)' : 'var(--c-text-faint)', letterSpacing: 0, textTransform: 'none' }}>
+                  {t.badge}
+                </span>
+              )}
             </button>
-          )}
-          {project.gift_recipient&& <span style={{ fontSize: 12, color: 'var(--c-text-muted)' }}>🎁 {project.gift_recipient}</span>}
-          {project.description   && <span style={{ fontSize: 12, color: 'var(--c-text-muted)' }}>{project.description}</span>}
-          {(() => {
-            const pws = (data.projectWoodSources || []).find(s => s.project_id === projId)
-            const stock = pws ? (data.woodStock || []).find(w => w.id === pws.wood_stock_id) : null
-            if (!stock) return null
-            return (
-              <button className="btn-text" style={{ fontSize: 12, color: 'var(--accent)', padding: 0 }}
-                onClick={() => setTab('stock')} title="View in Wood Stock">
-                🪵 {stock.species || 'Wood Stock'} ↗
-              </button>
-            )
-          })()}
+          ))}
         </div>
       </div>
 
@@ -601,8 +546,24 @@ ${progressPhotos.length>12?`<div style="display:flex;align-items:center;justify-
       {showQRLabel && <QRLabelSheet project={project} onClose={() => setShowQRLabel(false)} />}
       {showReminder && <ReminderSheet project={project} onClose={() => setShowReminder(false)} />}
       {showActions && (
-        <Sheet title="More" onClose={() => setShowActions(false)} onSave={null}>
-          <div className="form-group">
+        <Sheet title="Project" onClose={() => setShowActions(false)} onSave={null}>
+          <div className="form-group" style={{ marginBottom: 8 }}>
+            <div className="more-item" style={{ padding: '14px 16px', borderBottom: '1px solid var(--c-border-light)' }}
+              onClick={() => { setShowActions(false); setEditing(true) }} role="button" tabIndex={0}>
+              <IEdit size={20} color="var(--accent)" />
+              <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>Edit project</span>
+            </div>
+            <div className="more-item" style={{ padding: '14px 16px', borderBottom: '1px solid var(--c-border-light)' }}
+              onClick={() => {
+                setShowActions(false)
+                const next = !project.is_favorite
+                mutate(d => ({ ...d, projects: d.projects.map(p => p.id === projId ? { ...p, is_favorite: next } : p) }))
+                db.toggleFavorite(projId, next).catch(e => toast(e.message, 'error'))
+                toast(next ? 'Added to favorites' : 'Removed from favorites', 'success')
+              }} role="button" tabIndex={0}>
+              <IStar size={20} fill={project.is_favorite ? 'var(--yellow,#F59E0B)' : 'none'} color={project.is_favorite ? 'var(--yellow,#F59E0B)' : 'var(--accent)'} />
+              <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>{project.is_favorite ? 'Remove from favorites' : 'Add to favorites'}</span>
+            </div>
             <div className="more-item" style={{ padding: '14px 16px', borderBottom: '1px solid var(--c-border-light)' }}
               onClick={() => { setShowActions(false); setShowReminder(true) }} role="button" tabIndex={0}>
               <IBell size={20} color="var(--accent)" sw={1.8} />
@@ -616,13 +577,13 @@ ${progressPhotos.length>12?`<div style="display:flex;align-items:center;justify-
               </svg>
               <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>Share project</span>
             </div>
-            <div className="more-item" style={{ padding: '14px 16px', borderBottom: 'none' }}
+            <div className="more-item" style={{ padding: '14px 16px', borderBottom: '1px solid var(--c-border-light)' }}
               onClick={() => { setShowActions(false); handlePrint() }} role="button" tabIndex={0}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
                 <rect x="6" y="14" width="12" height="8"/>
               </svg>
-              <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>Print / PDF</span>
+              <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>Print / Export PDF</span>
             </div>
             <div className="more-item" style={{ padding: '14px 16px', borderBottom: 'none' }}
               onClick={() => { setShowActions(false); handleExportCSV() }} role="button" tabIndex={0}>
@@ -631,6 +592,13 @@ ${progressPhotos.length>12?`<div style="display:flex;align-items:center;justify-
                 <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
               </svg>
               <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>Export CSV</span>
+            </div>
+          </div>
+          <div className="form-group">
+            <div className="more-item" style={{ padding: '14px 16px', borderBottom: 'none' }}
+              onClick={() => { setShowActions(false); setConfirming(true) }} role="button" tabIndex={0}>
+              <ITrash size={20} color="var(--red)" />
+              <span style={{ flex: 1, fontSize: 15, color: 'var(--red)' }}>Delete project</span>
             </div>
           </div>
         </Sheet>
