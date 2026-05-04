@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import ConstructionCalc from './ConstructionCalc.jsx'
+import * as db from '../db.js'
 
 // ─── Math utilities ────────────────────────────────────────────────────────────
 function gcd(a, b) { return b ? gcd(b, a % b) : Math.abs(a) }
@@ -856,21 +857,37 @@ function CalcNotes() {
   const [fontColor, setFontColor]       = useState('#000000')
   const savedRange = useRef(null)
 
+  // Load from Supabase; migrate from localStorage if first time
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('calc-notes-html') || ''
-      if (editorRef.current) {
-        editorRef.current.innerHTML = saved
-        setIsEmpty(!saved || editorRef.current.innerText.trim() === '')
-      }
-    } catch {}
+    let cancelled = false
+    async function load() {
+      try {
+        let html = await db.loadNote('calc')
+        // First-time migration: pull from localStorage if Supabase is empty
+        if (!html) {
+          try { html = localStorage.getItem('calc-notes-html') || '' } catch {}
+          if (html) await db.saveNote('calc', html).catch(() => {})
+        }
+        if (!cancelled && editorRef.current) {
+          editorRef.current.innerHTML = html || ''
+          setIsEmpty(!html || editorRef.current.innerText.trim() === '')
+        }
+      } catch {}
+    }
+    load()
+    return () => { cancelled = true }
   }, [])
 
+  const saveTimer = useRef(null)
   const save = () => {
     if (!editorRef.current) return
     const html = editorRef.current.innerHTML
-    try { localStorage.setItem('calc-notes-html', html) } catch {}
     setIsEmpty(!editorRef.current.innerText.trim())
+    // Debounce saves — write to Supabase 1.5s after last keystroke
+    clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(() => {
+      db.saveNote('calc', html).catch(() => {})
+    }, 1500)
   }
 
   const exec = (cmd, value = null) => {

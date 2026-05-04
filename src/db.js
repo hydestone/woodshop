@@ -425,3 +425,18 @@ export async function emptyTrash() {
     await permanentDeleteTrash(t.id, t).catch(() => {})
   }
 }
+
+// ── Notes ─────────────────────────────────────────────────────────────────────
+export async function loadNote(key = 'calc') {
+  const user_id = await getCurrentUserId()
+  const { data } = await supabase.from('notes').select('content').eq('user_id', user_id).eq('key', key).maybeSingle()
+  return data?.content || null
+}
+
+export async function saveNote(key = 'calc', content) {
+  const user_id = await getCurrentUserId()
+  return q(supabase.from('notes').upsert(
+    { user_id, key, content, updated_at: isoNow() },
+    { onConflict: 'user_id,key' }
+  ))
+}
