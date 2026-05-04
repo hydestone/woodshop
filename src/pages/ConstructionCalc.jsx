@@ -256,6 +256,10 @@ export default function ConstructionCalc() {
   const [conMode, setConMode]       = useState(null)
   const [showHelp, setShowHelp]     = useState(false)
   const containerRef = useRef(null)
+  const [calcWidth, setCalcWidth] = useState(() => {
+    try { return parseInt(localStorage.getItem('cm-calc-width')) || 340 } catch { return 340 }
+  })
+  const dragRef = useRef(null)
 
   const setMemory = v => { setMemoryState(v); saveMemory(v) }
   const setHistory = h => { setHistoryState(h); saveHistory(h) }
@@ -412,11 +416,6 @@ export default function ConstructionCalc() {
     if (corner) { const half=corner/2; r.miter_flat=(90-half).toFixed(2)+'°'; if (tilt!=null) { r.miter_comp=(Math.atan(Math.cos(tilt*Math.PI/180)*Math.tan(half*Math.PI/180))*180/Math.PI).toFixed(2)+'°'; r.miter_bevel=(Math.atan(Math.sin(half*Math.PI/180)*Math.sin(tilt*Math.PI/180))*180/Math.PI).toFixed(2)+'°' } }
     return r
   }, [conState])
-
-  const [calcWidth, setCalcWidth] = useState(() => {
-    try { return parseInt(localStorage.getItem('cm-calc-width')) || 340 } catch { return 340 }
-  })
-  const dragRef = useRef(null)
 
   const startDrag = (e) => {
     e.preventDefault()

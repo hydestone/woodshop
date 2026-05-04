@@ -856,6 +856,7 @@ function CalcNotes() {
   const [fontSize, setFontSize]         = useState(14)
   const [fontColor, setFontColor]       = useState('#000000')
   const savedRange = useRef(null)
+  const saveTimer  = useRef(null)
 
   // Load from Supabase; migrate from localStorage if first time
   useEffect(() => {
@@ -878,7 +879,6 @@ function CalcNotes() {
     return () => { cancelled = true }
   }, [])
 
-  const saveTimer = useRef(null)
   const save = () => {
     if (!editorRef.current) return
     const html = editorRef.current.innerHTML

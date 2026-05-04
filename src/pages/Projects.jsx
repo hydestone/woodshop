@@ -23,7 +23,14 @@ export default function Projects() {
   const [filter, setFilter]         = useState('all')
   const [showFavOnly, setShowFavOnly] = useState(false)
   const [sortBy, setSortBy]           = useState('status')
-  const [statusFilter, setStatusFilter] = useState('all')
+  const [statusFilter, setStatusFilter]     = useState('all')
+  const [locationFilter, setLocationFilter] = useState(() => {
+    const v = window.__woodLocationFilter || ''
+    window.__woodLocationFilter = ''
+    return v
+  })
+  const scrollRef   = useRef(null)
+  const savedScroll = useRef(0)
 
   // Consume tabAction — e.g. open new project modal immediately on mount
   useEffect(() => {
@@ -32,13 +39,6 @@ export default function Projects() {
       setTabAction(null)
     }
   }, [tabAction])
-  const [locationFilter, setLocationFilter] = useState(() => {
-    const v = window.__woodLocationFilter || ''
-    window.__woodLocationFilter = ''
-    return v
-  })
-  const scrollRef  = useRef(null)
-  const savedScroll = useRef(0)
 
   // Save scroll position when navigating into a project
   const openProject = useCallback((id) => {
