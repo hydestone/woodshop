@@ -13,80 +13,74 @@ import { ITree, IHouse, IZap, IFolder, IStar, IPlus, ISaw, ICamera, IBulb, ICart
 // ─── Steps ───────────────────────────────────────────────────────────────────
 const STEPS = [
   {
-    title: 'Welcome to JDH Woodworks',
-    body: 'Your personal workshop management app. This quick tour shows you the key features.',
+    title: 'App Tour',
+    body: 'A quick look at the key features. Tap Next to walk through each one, or press Escape to close anytime.',
     Icon: ITree,
     tab: 'home', target: '[data-tutorial-target="app-logo"]',
   },
   {
     title: 'Dashboard',
-    body: 'Your command center. See what needs attention today — coats to apply, overdue maintenance, and active project next steps.',
+    body: 'Your command center. See what needs attention today — coats ready to apply, active project steps, and your project analytics.',
     Icon: IHouse,
     tab: 'home', target: '[data-tutorial-target="dashboard"]',
   },
   {
     title: 'Quick Actions',
-    body: 'Jump to common tasks right from here. New project, add a photo, shopping list, or calculator.',
+    body: 'Jump straight to the most common tasks — new project, add a photo, or open the shopping list.',
     Icon: IZap,
     tab: 'home', target: '[data-tutorial-target="quick-actions"]',
   },
   {
     title: 'Projects',
-    body: 'Track every build from start to finish. Set status, wood species, finish, and category. Each project has steps, coats, photos, and notes.',
+    body: 'Track every build from start to finish. Set status, wood species, finish type, and category. Each project has steps, finishing coats, photos, time tracking, and cost tracking.',
     Icon: IFolder,
     tab: 'projects', target: '[data-tutorial-target="projects-header"]',
   },
   {
-    title: 'Favorite Projects',
-    body: 'Tap the star on any project card to bookmark it. Use the Favorites toggle to filter down to just your starred projects.',
+    title: 'Filter and Favorites',
+    body: 'Filter by status (Active, Planning, Paused, Complete) and star your most important projects. The Fav button shows only starred projects.',
     Icon: IStar,
     tab: 'projects', target: '[data-tutorial-target="project-grid"]',
   },
   {
     title: 'Add a Project',
-    body: 'Tap + to create a new project, or convert a Project Idea when you\'re ready to build.',
+    body: 'Tap + to create a new project. Set the species, category, and status. You can convert a Project Idea into a full project in one tap from the Ideas section.',
     Icon: IPlus,
     tab: 'projects', target: '[data-tutorial-target="add-project"]',
   },
   {
-    title: 'Construction Calculator',
-    body: 'Fractions, feet-inch math, pitch/rise/run, diagonals, stairs, and compound miter. Memory and history built in.',
+    title: 'Calculators',
+    body: 'Six built-in calculators: Construction Calc (feet-inch fractions, pitch, stairs, miter), Board Foot, Unit Converter, Trim Cuts with cut plan optimizer, Sheet Goods layout, and a rich Notes pad.',
     Icon: ISaw,
-    tab: 'calculators', target: '[data-tutorial-target="calculator"]',
+    tab: 'calculators', target: null,
   },
   {
     title: 'Photos',
-    body: 'Upload progress shots, before/after, and finished pieces. Tag as "finished" for your gallery or "portfolio" for your public page.',
+    body: 'Upload progress shots, before/after, and finished pieces. Tag photos to keep them organized. Finished photos appear in Finished Work. Unsorted photos can be assigned to projects using the Sort tool.',
     Icon: ICamera,
     tab: 'photos', target: '[data-tutorial-target="photo-grid"]',
   },
   {
-    title: 'Inspiration to Ideas',
-    body: 'Save inspiration photos, then tap the lightbulb to create a Project Idea. Ideas convert to full projects with one tap.',
-    Icon: IBulb,
-    tab: 'inspiration', target: '[data-tutorial-target="photo-grid"]',
-  },
-  {
     title: 'Shopping List',
-    body: 'Keep a running list organized by store. Add costs and tag items to projects. Find it under More.',
+    body: 'Keep a running list organized by store. Mark items purchased with the circle checkbox — they move to the Purchased section. Filter between Still Need and Purchased to stay organized at the store.',
     Icon: ICart,
     tab: 'shopping', target: '[data-tutorial-target="shopping-page"]',
   },
   {
     title: 'Wood Stock',
-    body: 'Track your lumber inventory: species, dimensions, moisture content, and drying progress over time.',
+    body: 'Track your lumber inventory: species, dimensions, moisture content, and location. Log moisture readings over time to track drying progress.',
     Icon: ITree,
     tab: 'stock', target: '[data-tutorial-target="stock-page"]',
   },
   {
     title: 'Search Everything',
-    body: 'Find projects, wood stock, finishes, photos, and more across the entire app. Just start typing.',
+    body: 'Find projects, photos, wood stock, finishes, and more instantly. Results appear as you type. Works across the entire app.',
     Icon: ISearch,
     tab: null, target: '[data-tutorial-target="search"]',
   },
   {
-    title: 'You\'re All Set!',
-    body: 'Start building. Tap Help anytime for tips.',
+    title: 'You\'re Ready to Build',
+    body: 'That covers the main features. Tap Help in the sidebar anytime to relaunch this tour or find tips.',
     Icon: IParty,
     tab: 'home', target: '[data-tutorial-target="app-logo"]', final: true,
   },
@@ -391,8 +385,10 @@ export default function Tutorial({ onClose, setTab }) {
 }
 
 export function useTutorialCheck() {
-  const [show, setShow] = useState(() => { try { return !localStorage.getItem('jdh-tutorial-seen') } catch { return false } })
-  const dismiss = useCallback(() => { setShow(false); try { localStorage.setItem('jdh-tutorial-seen', '1') } catch {} }, [])
-  const launch = useCallback(() => setShow(true), [])
+  // Tutorial no longer auto-shows on first visit — onboarding handles that.
+  // It is launched explicitly from the Help page or sidebar.
+  const [show, setShow] = useState(false)
+  const dismiss = useCallback(() => { setShow(false) }, [])
+  const launch  = useCallback(() => setShow(true), [])
   return { showTutorial: show, dismissTutorial: dismiss, launchTutorial: launch }
 }

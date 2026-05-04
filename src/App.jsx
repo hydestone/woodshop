@@ -614,6 +614,12 @@ export default function App() {
                   <IBrain size={16} color="currentColor" sw={1.8} />
                   Feedback
                 </button>
+                <button className="sidebar-footer-btn" onClick={launchTutorial}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+                  </svg>
+                  Take the Tour
+                </button>
                 <button className="sidebar-footer-btn" onClick={() => setShowQR(true)}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>

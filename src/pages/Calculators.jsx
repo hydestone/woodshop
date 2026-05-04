@@ -1050,7 +1050,7 @@ export default function Calculators() {
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <div className="page-header" style={{ paddingBottom: 0 }}>
+      <div className="page-header" style={{ paddingBottom: 0 }} data-tutorial-target="calculator">
         <h1 className="page-title">Calculators</h1>
         {/* Mobile: dropdown */}
         <div className="calc-tab-select-wrap">
