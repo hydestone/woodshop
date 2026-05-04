@@ -681,7 +681,7 @@ function PhotoEditSheet({ photo, projects, onSave, onDelete, onClose, onOpenLigh
   const [caption, setCaption]   = useState(photo.caption || '')
   const [tags, setTags]         = useState(photo.tags ? photo.tags.split(',').map(t => t.trim()).filter(Boolean) : [])
   const [projectId, setProjectId] = useState(photo.project_id || '')
-  const [photoType, setPhotoType] = useState(photo.photo_type || 'progress')
+  const [photoType, setPhotoType] = useState(photo.photo_type || '')
   const [confirm, setConfirm]   = useState(false)
 
   if (confirm) return (
@@ -699,7 +699,7 @@ function PhotoEditSheet({ photo, projects, onSave, onDelete, onClose, onOpenLigh
       caption,
       tags: tags.join(','),
       project_id: projectId || null,
-      photo_type: photoType,
+      ...(photoType ? { photo_type: photoType } : {}),
     })}>
       {/* Preview tap to open */}
       {onOpenLightbox && (
@@ -722,6 +722,7 @@ function PhotoEditSheet({ photo, projects, onSave, onDelete, onClose, onOpenLigh
         </FormCell>
         <FormCell label="Type">
           <select className="form-select" value={photoType} onChange={e => setPhotoType(e.target.value)}>
+            <option value="">— Unchanged —</option>
             {['progress','finished','portfolio','before','after','inspiration','unsorted'].map(t => (
               <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
             ))}

@@ -49,7 +49,7 @@ export async function loadAll() {
     safe(supabase.from('coats').select('*').limit(500).order('coat_number')),
     safe(supabase.from('maintenance').select('*').order('name')),
     safe(supabase.from('shopping').select('*').order('created_at')),
-    safe(supabase.from('photos').select('*').limit(500).order('created_at', { ascending: false })),
+    safe(supabase.from('photos').select('*').order('created_at', { ascending: false })),
     safe(supabase.from('wood_stock').select('*').order('created_at')),
     safe(supabase.from('brainstorming').select('*').order('created_at', { ascending: false })),
     safe(supabase.from('finish_products').select('*').order('name')),
