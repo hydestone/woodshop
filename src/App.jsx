@@ -688,10 +688,10 @@ export default function App() {
                   {tab === 'settings'    && <Settings />}
                   {tab === 'import'      && <BulkImport />}
                   {tab === 'costs'       && <Costs />}
-                  {tab === 'audit'       && <Audit />}
+                  {tab === 'audit'       && session?.user?.id === '956f2bdd-022b-4e17-8ec9-47246a18e152' && <Audit />}
                   {tab === 'help'        && <Help />}
                   {tab === 'beta'        && <BetaQuestionnaire />}
-                  {tab === 'smoketest'   && <SmokeTest />}
+                  {tab === 'smoketest'   && session?.user?.id === '956f2bdd-022b-4e17-8ec9-47246a18e152' && <SmokeTest />}
                   {tab === 'calculators' && <Calculators />}
                   {tab === 'trash'       && <Trash />}
                   {tab === 'privacy'     && <Privacy />}
