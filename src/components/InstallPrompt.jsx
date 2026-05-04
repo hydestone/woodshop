@@ -98,8 +98,8 @@ export default function InstallPrompt() {
         </div>
         {isIos ? (
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,.65)', lineHeight: 1.5 }}>
-            Tap <span style={{ fontWeight: 700, color: '#fff' }}>Share</span>{' '}
-            <span style={{ fontSize: 13 }}>⎙</span> then{' '}
+            Tap <span style={{ fontWeight: 700, color: '#fff' }}>···</span> then{' '}
+            <span style={{ fontWeight: 700, color: '#fff' }}>Share</span> then{' '}
             <span style={{ fontWeight: 700, color: '#fff' }}>Add to Home Screen</span>{' '}
             for the full app experience.
           </div>
