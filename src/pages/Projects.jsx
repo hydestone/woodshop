@@ -484,6 +484,26 @@ export function ProjectDetail() {
   const [showReminder, setShowReminder] = useState(false)
   const [showActions, setShowActions] = useState(false)
   const [dtab, setDtab]         = useState('overview')
+  const DTABS = ['overview', 'steps', 'finishing', 'photos']
+  const swipeRef = useRef(null)
+  const touchStartX = useRef(null)
+  const touchStartY = useRef(null)
+
+  const handleTouchStart = e => {
+    touchStartX.current = e.touches[0].clientX
+    touchStartY.current = e.touches[0].clientY
+  }
+  const handleTouchEnd = e => {
+    if (touchStartX.current === null) return
+    const dx = e.changedTouches[0].clientX - touchStartX.current
+    const dy = Math.abs(e.changedTouches[0].clientY - touchStartY.current)
+    touchStartX.current = null
+    // Only respond to predominantly horizontal swipes > 50px
+    if (Math.abs(dx) < 50 || dy > Math.abs(dx) * 0.8) return
+    const cur = DTABS.indexOf(dtab)
+    if (dx < 0 && cur < DTABS.length - 1) setDtab(DTABS[cur + 1])
+    if (dx > 0 && cur > 0) setDtab(DTABS[cur - 1])
+  }
 
   const project = data.projects.find(p => p.id === projId)
   if (!project) return null
@@ -724,12 +744,12 @@ export function ProjectDetail() {
             { id: 'photos',    label: `Photos${photos.length ? ` ${photos.length}` : ''}` },
           ].map(t => (
             <button key={t.id} onClick={() => setDtab(t.id)} style={{
-              flexShrink: 0, padding: '3px 8px', border: 'none', cursor: 'pointer',
+              flexShrink: 0, padding: '8px 10px', border: 'none', cursor: 'pointer',
               fontSize: 11, fontWeight: 700, fontFamily: 'var(--font-heading)',
               textTransform: 'uppercase', letterSpacing: '.05em',
               color: dtab === t.id ? 'var(--accent)' : 'var(--c-text-muted)',
               background: dtab === t.id ? 'var(--accent-dim)' : 'transparent',
-              borderRadius: 4,
+              borderRadius: 4, minHeight: 44,
               transition: 'color 120ms, background 120ms',
             }}>{t.label}</button>
           ))}
@@ -762,6 +782,14 @@ export function ProjectDetail() {
           })()}
         </div>
       </div>
+
+      {/* ── TAB CONTENT — swipeable ── */}
+      <div
+        ref={swipeRef}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        style={{ touchAction: 'pan-y' }}
+      >
 
       {/* ── OVERVIEW TAB ── */}
       {dtab === 'overview' && (
@@ -905,6 +933,8 @@ export function ProjectDetail() {
           )}
         </div>
       )}
+
+      </div>{/* end swipeable tab content */}
 
       {editing    && <ProjectSheet project={project} categories={categories} onSave={handleUpdate} onClose={() => setEditing(false)} mutate={mutate} />}
       {confirming && <ConfirmSheet message={`Delete "${project.name}"? All steps, coats, and photos will be removed. This cannot be undone.`} onConfirm={handleDelete} onClose={() => setConfirming(false)} />}
