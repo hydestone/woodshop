@@ -193,10 +193,10 @@ export function Sheet({ title, onClose, onSave, saveLabel = 'Save', children }) 
       <div className="sheet">
         <div className="sheet-handle" />
         <div className="sheet-header">
-          <button className="sheet-cancel" onClick={onClose} disabled={saving}>Cancel</button>
+          <button type="button" className="sheet-cancel" onClick={onClose} disabled={saving}>Cancel</button>
           <span className="sheet-title">{title}</span>
           {onSave
-            ? <button className="sheet-save" onClick={handleSave} disabled={saving}>{saving ? 'Saving…' : saveLabel}</button>
+            ? <button type="button" className="sheet-save" onClick={handleSave} disabled={saving}>{saving ? 'Saving…' : saveLabel}</button>
             : <span style={{ width: 40 }} />
           }
         </div>

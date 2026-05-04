@@ -816,7 +816,7 @@ export default function App() {
               <div className="sheet-header">
                 <span />
                 <span className="sheet-title">More</span>
-                <button className="sheet-cancel" onClick={() => setShowMore(false)} aria-label="Close">
+                <button type="button" className="sheet-cancel" onClick={() => setShowMore(false)} aria-label="Close">
                   <IClose size={18} color="var(--c-text-muted)" sw={2} />
                 </button>
               </div>
