@@ -784,7 +784,7 @@ function SheetGoods() {
   }
 
   return (
-    <div style={{ padding: '0 20px 40px', maxWidth: 640, margin: '0 auto' }}>
+    <div style={{ padding: '0 24px 40px', maxWidth: 900, margin: '0 auto' }}>
       <p style={{ fontSize: 12, color: 'var(--c-text-faint)', margin: '12px 0' }}>
         Optimize cuts from full sheets. Default: 4×8 plywood (48"×96").
       </p>
@@ -934,9 +934,12 @@ function CalcNotes() {
         <ToolBtn title="Italic (Ctrl+I)" cmd="italic"><i>I</i></ToolBtn>
         <ToolBtn title="Underline (Ctrl+U)" cmd="underline"><u>U</u></ToolBtn>
         <Div />
-        <ToolBtn title="Bullet list" cmd="insertUnorderedList">• List</ToolBtn>
-        <ToolBtn title="Numbered list" cmd="insertOrderedList">1. List</ToolBtn>
-        <button onMouseDown={e => { e.preventDefault(); exec('insertHTML', '<ul style="list-style:none;padding-left:4px"><li>☐ </li></ul>') }} title="Checkbox list"
+        <ToolBtn title="Bullet list" cmd="insertUnorderedList">• Bullets</ToolBtn>
+        <ToolBtn title="Numbered list" cmd="insertOrderedList">1. Numbers</ToolBtn>
+        <button onMouseDown={e => {
+            e.preventDefault()
+            exec('insertHTML', '<div class="note-check-item" style="display:flex;align-items:flex-start;gap:8px;margin:3px 0"><input type="checkbox" style="margin-top:3px;width:15px;height:15px;cursor:pointer;flex-shrink:0" /><span style="flex:1">&#8203;</span></div>')
+          }} title="Insert checkbox item"
           style={{ background:'none', border:'none', cursor:'pointer', padding:'4px 8px', fontSize:13, color:'var(--c-text-muted)', fontFamily:'inherit' }}>
           ☐ Check
         </button>
@@ -966,7 +969,12 @@ function CalcNotes() {
           style={{ background:'none', border:'none', cursor:'pointer', padding:'4px 8px', fontSize:12, color:'var(--c-text-muted)', fontFamily:'inherit' }}>
           🔗 Link
         </button>
-        <ToolBtn title="Remove formatting" cmd="removeFormat">✕ Fmt</ToolBtn>
+        <button onMouseDown={e => { e.preventDefault(); exec('removeFormat') }} title="Clear formatting"
+          style={{ background:'none', border:'none', cursor:'pointer', padding:'4px 8px', color:'var(--c-text-muted)', display:'flex', alignItems:'center' }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 7h16M4 12h10M4 17h6"/><line x1="18" y1="14" x2="22" y2="18"/><line x1="22" y1="14" x2="18" y2="18"/>
+          </svg>
+        </button>
         <div style={{ marginLeft:'auto' }}>
           {!isEmpty && (
             <button className="btn-text" style={{ color:'var(--red)', fontSize:12 }}

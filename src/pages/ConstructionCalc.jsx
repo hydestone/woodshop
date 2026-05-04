@@ -413,6 +413,35 @@ export default function ConstructionCalc() {
     return r
   }, [conState])
 
+  const [calcWidth, setCalcWidth] = useState(() => {
+    try { return parseInt(localStorage.getItem('cm-calc-width')) || 340 } catch { return 340 }
+  })
+  const dragRef = useRef(null)
+
+  const startDrag = (e) => {
+    e.preventDefault()
+    const startX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX
+    const startW = calcWidth
+    const outer  = dragRef.current?.closest('.cm-outer')
+    const onMove = (ev) => {
+      const x = ev.type === 'touchmove' ? ev.touches[0].clientX : ev.clientX
+      const outerW = outer?.getBoundingClientRect().width || 900
+      const newW = Math.min(Math.max(startW + (x - startX), 260), outerW - 180)
+      setCalcWidth(newW)
+    }
+    const onUp = () => {
+      setCalcWidth(w => { try { localStorage.setItem('cm-calc-width', w) } catch {} return w })
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup',   onUp)
+      window.removeEventListener('touchmove', onMove)
+      window.removeEventListener('touchend',  onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup',   onUp)
+    window.addEventListener('touchmove', onMove, { passive: false })
+    window.addEventListener('touchend',  onUp)
+  }
+
   // ── Display ──────────────────────────────────────────────────────────────
   const displayStr = result
     ? inToFtInStr(fracToDecimal(result))
@@ -429,10 +458,10 @@ export default function ConstructionCalc() {
   )
 
   return (
-    <div className="cm-outer">
+    <div className="cm-outer" ref={dragRef}>
 
       {/* ── Left: Calculator ── */}
-      <div ref={containerRef} className="cm-left">
+      <div ref={containerRef} className="cm-left" style={{ width: calcWidth }}>
 
         {/* Display */}
         <div className="cm-display">
@@ -621,6 +650,24 @@ export default function ConstructionCalc() {
             </ConPanel>
           )}
         </div>
+      </div>
+
+      {/* ── Drag handle ── */}
+      <div
+        onMouseDown={startDrag}
+        onTouchStart={startDrag}
+        title="Drag to resize"
+        style={{
+          width: 6, flexShrink: 0, cursor: 'col-resize',
+          background: 'var(--c-border)',
+          transition: 'background 120ms',
+          position: 'relative',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}
+        onMouseEnter={e => e.currentTarget.style.background = 'var(--accent)'}
+        onMouseLeave={e => e.currentTarget.style.background = 'var(--c-border)'}
+      >
+        <div style={{ width: 2, height: 32, background: 'var(--c-border-light)', borderRadius: 99, pointerEvents: 'none' }} />
       </div>
 
       {/* ── Right/Bottom: Tape ── */}
