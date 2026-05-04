@@ -552,15 +552,37 @@ export function Lightbox({ photos, index, onClose, onEdit }) {
 }
 
 // ─── PhotoGrid ────────────────────────────────────────────────────────────────
+const PHOTO_PAGE = 40  // photos rendered per batch
+
 export function PhotoGrid({ photos, onEdit, showProject, projects, onNavigateProject, onCreateIdea }) {
   const [lightboxIdx, setLightboxIdx] = useState(null)
+  const [visible, setVisible]         = useState(PHOTO_PAGE)
+  const sentinelRef = useRef(null)
+
+  // Reset visible count when photo set changes (filter change, etc.)
+  useEffect(() => { setVisible(PHOTO_PAGE) }, [photos])
+
+  // IntersectionObserver — load next batch when sentinel enters viewport
+  useEffect(() => {
+    const el = sentinelRef.current
+    if (!el) return
+    const obs = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting) {
+        setVisible(v => Math.min(v + PHOTO_PAGE, photos.length))
+      }
+    }, { rootMargin: '300px' })
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [photos.length])
 
   if (!photos.length) return null
+
+  const shown = photos.slice(0, visible)
 
   return (
     <>
       <div className="photo-grid" data-tutorial-target="photo-grid">
-        {photos.map((photo, i) => (
+        {shown.map((photo, i) => (
           <PhotoCard
             key={photo.id}
             photo={photo}
@@ -568,12 +590,20 @@ export function PhotoGrid({ photos, onEdit, showProject, projects, onNavigatePro
             onEdit={onEdit}
             showProject={showProject}
             projects={projects}
-            onOpen={() => setLightboxIdx(i)}
+            onOpen={() => setLightboxIdx(photos.indexOf(photo))}
             onNavigateProject={onNavigateProject}
             onCreateIdea={onCreateIdea}
           />
         ))}
       </div>
+      {/* Sentinel — triggers loading next batch */}
+      {visible < photos.length && (
+        <div ref={sentinelRef} style={{ height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px 0' }}>
+          <span style={{ fontSize: 12, color: 'var(--c-text-faint)' }}>
+            Showing {visible} of {photos.length}
+          </span>
+        </div>
+      )}
       {lightboxIdx !== null && (
         <Lightbox photos={photos} index={lightboxIdx} onClose={() => setLightboxIdx(null)} onEdit={onEdit} />
       )}
