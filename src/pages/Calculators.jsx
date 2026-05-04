@@ -58,14 +58,20 @@ function decToFracStr(dec, den = 16) {
 }
 
 function parseLenIn(s) {
-  s = (s || '').trim().toLowerCase()
+  s = (s || '').trim()
   if (!s) return null
-  const ftIn = s.match(/^(\d+(?:\.\d+)?)['']\s*(\d+(?:[/ ]\d+)?)\"?$/)
-  if (ftIn) { const f = parseFracObj(ftIn[2]); return parseFloat(ftIn[1]) * 12 + (f ? fracToDecimal(f) : 0) }
-  const ft = s.match(/^(\d+(?:\.\d+)?)[''f]$/)
+  // ft-in-fraction: 4\'7 1/2" or 4\'-7 1/2" or 4\'7.5 or 4\' 7 1/2
+  const ftInFrac = s.match(/^(\d+(?:\.\d+)?)[\u2018\u2019\'\''][-\s]*(\d+(?:\s+\d+\/\d+|(?:\.\d+)?))\s*"?$/)
+  if (ftInFrac) {
+    const f = parseFracObj(ftInFrac[2].trim())
+    return parseFloat(ftInFrac[1]) * 12 + (f ? fracToDecimal(f) : 0)
+  }
+  // feet only: 4\'
+  const ft = s.match(/^(\d+(?:\.\d+)?)[\u2018\u2019\'\''f]$/)
   if (ft) return parseFloat(ft[1]) * 12
-  const inM = s.match(/^(\d+(?:\.\d+)?(?:[/ ]\d+)?)\s*(?:"|in)?$/)
-  if (inM) { const f = parseFracObj(inM[1]); return f ? fracToDecimal(f) : null }
+  // inches with optional fraction: 48, 7 1/2, 3/4, 7.5
+  const inM = s.match(/^(\d+(?:\.\d+)?(?:\s+\d+\/\d+|(?:\.\d+)?)?)\s*(?:"|in)?$/)
+  if (inM) { const f = parseFracObj(inM[1].trim()); return f ? fracToDecimal(f) : null }
   return null
 }
 
@@ -175,7 +181,7 @@ function BoardFoot() {
             <button onClick={() => setTally([])} style={{ background: 'none', border: 'none', color: 'var(--c-text-muted)', cursor: 'pointer', fontSize: 11, fontFamily: 'var(--tape-font)' }}>[CLEAR]</button>
           )}
         </div>
-        <div className="cm-tape" style={{ flex: 1, maxWidth: '100%' }}>
+        <div className="cm-tape" style={{ flex: 1, maxWidth: 260 }}>
           {tally.length === 0 ? (
             <div style={{ padding: '20px 10px', color: 'var(--calc-tape-dim)', fontFamily: 'var(--tape-font)', fontSize: 12, textAlign: 'center', opacity: 0.6 }}>
               — tally is empty —<br /><span style={{ fontSize: 10 }}>add entries from the left panel</span>
@@ -747,8 +753,8 @@ function SheetGoods() {
   }
 
   const SheetDiagram = ({ sheet, sw, sh, idx }) => {
-    const SCALE = 180/Math.max(sw,sh)
-    const vw=sw*SCALE, vh=sh*SCALE
+    const SCALE = 320/Math.max(sw,sh)
+    const vw=Math.round(sw*SCALE), vh=Math.round(sh*SCALE)
     const labelColors={}; let ci=0
     return (
       <div className="card" style={{ marginBottom:8 }}>
@@ -761,7 +767,7 @@ function SheetGoods() {
             return (
               <g key={i}>
                 <rect x={x} y={y} width={w} height={h} fill={color} fillOpacity={0.75} stroke={color} strokeWidth={1}/>
-                {w>18&&h>12&&<text x={x+w/2} y={y+h/2} textAnchor="middle" dominantBaseline="middle" fill="#fff" fontSize={Math.min(10,w/5)} fontWeight="700" fontFamily="system-ui">{p.label.length>7?p.label.slice(0,6)+'…':p.label}</text>}
+                {w>18&&h>12&&<text x={x+w/2} y={y+h/2} textAnchor="middle" dominantBaseline="middle" fill="#ffffff" stroke="rgba(0,0,0,.4)" strokeWidth={0.3} fontSize={Math.min(11,w/4)} fontWeight="700" fontFamily="system-ui">{p.label.length>7?p.label.slice(0,6)+'…':p.label}</text>}
               </g>
             )
           })}
@@ -842,13 +848,14 @@ function SheetGoods() {
 
 // ─── Tab: Notes ───────────────────────────────────────────────────────────────
 function CalcNotes() {
-  const editorRef = useRef(null)
-  const [isEmpty, setIsEmpty] = useState(true)
+  const editorRef  = useRef(null)
+  const [isEmpty, setIsEmpty]           = useState(true)
   const [showLinkInput, setShowLinkInput] = useState(false)
-  const [linkUrl, setLinkUrl] = useState('')
+  const [linkUrl, setLinkUrl]           = useState('')
+  const [fontSize, setFontSize]         = useState(14)
+  const [fontColor, setFontColor]       = useState('#000000')
   const savedRange = useRef(null)
 
-  // Load saved HTML on mount
   useEffect(() => {
     try {
       const saved = localStorage.getItem('calc-notes-html') || ''
@@ -872,6 +879,22 @@ function CalcNotes() {
     save()
   }
 
+  const applyFontSize = (size) => {
+    setFontSize(size)
+    editorRef.current?.focus()
+    document.execCommand('fontSize', false, '7')
+    editorRef.current?.querySelectorAll('font[size="7"]').forEach(el => {
+      el.removeAttribute('size')
+      el.style.fontSize = size + 'px'
+    })
+    save()
+  }
+
+  const applyColor = (color) => {
+    setFontColor(color)
+    exec('foreColor', color)
+  }
+
   const insertLink = () => {
     if (!linkUrl.trim()) { setShowLinkInput(false); return }
     editorRef.current?.focus()
@@ -882,11 +905,8 @@ function CalcNotes() {
     }
     const url = linkUrl.startsWith('http') ? linkUrl : 'https://' + linkUrl
     document.execCommand('createLink', false, url)
-    // Make links open in new tab
     editorRef.current?.querySelectorAll('a').forEach(a => { a.target = '_blank'; a.rel = 'noopener' })
-    setShowLinkInput(false)
-    setLinkUrl('')
-    save()
+    setShowLinkInput(false); setLinkUrl(''); save()
   }
 
   const saveSelection = () => {
@@ -894,41 +914,62 @@ function CalcNotes() {
     if (sel.rangeCount) savedRange.current = sel.getRangeAt(0).cloneRange()
   }
 
-  const ToolBtn = ({ title, cmd, value, children, active }) => (
-    <button
-      onMouseDown={e => { e.preventDefault(); exec(cmd, value) }}
-      title={title}
-      style={{
-        background: active ? 'var(--accent-dim)' : 'none',
-        border: 'none', borderRadius: 0, cursor: 'pointer',
-        padding: '5px 9px', fontSize: 14, fontWeight: 700,
-        color: active ? 'var(--accent)' : 'var(--c-text-muted)',
-        fontFamily: 'inherit',
-        transition: 'background 120ms',
-      }}
-    >{children}</button>
+  const COLORS = ['#000000','#ffffff','#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#8b5cf6','#ec4899','#6b7280']
+  const FONT_SIZES = [11, 13, 15, 18, 22, 28]
+
+  const Div = () => <div style={{ width:1, height:20, background:'var(--c-border)', margin:'0 3px', flexShrink:0 }} />
+
+  const ToolBtn = ({ title, cmd, value, children }) => (
+    <button onMouseDown={e => { e.preventDefault(); exec(cmd, value) }} title={title}
+      style={{ background:'none', border:'none', borderRadius:0, cursor:'pointer', padding:'4px 8px', fontSize:14, fontWeight:700, color:'var(--c-text-muted)', fontFamily:'inherit' }}>
+      {children}
+    </button>
   )
 
   return (
-    <div style={{ padding: '8px 20px 40px', maxWidth: 760, margin: '0 auto' }}>
+    <div style={{ display:'flex', flexDirection:'column', height:'100%', overflow:'hidden' }}>
       {/* Toolbar */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '4px 4px', borderBottom: '1px solid var(--c-border)', marginBottom: 8, flexWrap: 'wrap' }}>
+      <div style={{ display:'flex', alignItems:'center', gap:2, padding:'6px 8px', borderBottom:'1px solid var(--c-border)', flexShrink:0, flexWrap:'wrap', background:'var(--c-bg-surface)' }}>
         <ToolBtn title="Bold (Ctrl+B)" cmd="bold"><b>B</b></ToolBtn>
         <ToolBtn title="Italic (Ctrl+I)" cmd="italic"><i>I</i></ToolBtn>
         <ToolBtn title="Underline (Ctrl+U)" cmd="underline"><u>U</u></ToolBtn>
-        <div style={{ width: 1, height: 20, background: 'var(--c-border)', margin: '0 4px' }} />
+        <Div />
         <ToolBtn title="Bullet list" cmd="insertUnorderedList">• List</ToolBtn>
         <ToolBtn title="Numbered list" cmd="insertOrderedList">1. List</ToolBtn>
-        <div style={{ width: 1, height: 20, background: 'var(--c-border)', margin: '0 4px' }} />
-        <button
-          onMouseDown={e => { e.preventDefault(); saveSelection(); setShowLinkInput(v => !v); setLinkUrl('') }}
-          title="Insert link"
-          style={{ background: showLinkInput ? 'var(--accent-dim)' : 'none', border: 'none', borderRadius: 0, cursor: 'pointer', padding: '5px 9px', fontSize: 13, color: showLinkInput ? 'var(--accent)' : 'var(--c-text-muted)', fontFamily: 'inherit' }}
-        >🔗 Link</button>
-        <ToolBtn title="Remove formatting" cmd="removeFormat">✕ Format</ToolBtn>
-        <div style={{ marginLeft: 'auto' }}>
+        <button onMouseDown={e => { e.preventDefault(); exec('insertHTML', '<ul style="list-style:none;padding-left:4px"><li>☐ </li></ul>') }} title="Checkbox list"
+          style={{ background:'none', border:'none', cursor:'pointer', padding:'4px 8px', fontSize:13, color:'var(--c-text-muted)', fontFamily:'inherit' }}>
+          ☐ Check
+        </button>
+        <Div />
+        {/* Font size */}
+        <div style={{ display:'flex', alignItems:'center', gap:3 }}>
+          <span style={{ fontSize:11, color:'var(--c-text-faint)', userSelect:'none' }}>Size</span>
+          <select value={fontSize} onChange={e => applyFontSize(+e.target.value)}
+            style={{ background:'var(--c-bg-subtle)', border:'1px solid var(--c-border)', color:'var(--c-text-primary)', fontFamily:'inherit', fontSize:12, padding:'2px 4px', borderRadius:0, cursor:'pointer' }}>
+            {FONT_SIZES.map(s => <option key={s} value={s}>{s}px</option>)}
+          </select>
+        </div>
+        <Div />
+        {/* Font color swatches */}
+        <div style={{ display:'flex', alignItems:'center', gap:3 }}>
+          <span style={{ fontSize:11, color:'var(--c-text-faint)', userSelect:'none' }}>Color</span>
+          <div style={{ display:'flex', gap:2 }}>
+            {COLORS.map(c => (
+              <button key={c} onMouseDown={e => { e.preventDefault(); applyColor(c) }}
+                title={c}
+                style={{ width:16, height:16, background:c, border: fontColor===c ? '2px solid var(--accent)' : '1px solid var(--c-border)', borderRadius:3, cursor:'pointer', padding:0, flexShrink:0 }} />
+            ))}
+          </div>
+        </div>
+        <Div />
+        <button onMouseDown={e => { e.preventDefault(); saveSelection(); setShowLinkInput(v => !v); setLinkUrl('') }} title="Insert link"
+          style={{ background:'none', border:'none', cursor:'pointer', padding:'4px 8px', fontSize:12, color:'var(--c-text-muted)', fontFamily:'inherit' }}>
+          🔗 Link
+        </button>
+        <ToolBtn title="Remove formatting" cmd="removeFormat">✕ Fmt</ToolBtn>
+        <div style={{ marginLeft:'auto' }}>
           {!isEmpty && (
-            <button className="btn-text" style={{ color: 'var(--red)', fontSize: 12 }}
+            <button className="btn-text" style={{ color:'var(--red)', fontSize:12 }}
               onClick={() => { if (editorRef.current) editorRef.current.innerHTML = ''; save() }}>
               Clear
             </button>
@@ -938,55 +979,43 @@ function CalcNotes() {
 
       {/* Link input */}
       {showLinkInput && (
-        <div style={{ display: 'flex', gap: 6, marginBottom: 8, alignItems: 'center' }}>
-          <input
-            className="calc-input"
-            value={linkUrl}
-            onChange={e => setLinkUrl(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && insertLink()}
-            placeholder="https://example.com"
-            autoFocus
-            style={{ flex: 1, fontSize: 13, padding: '6px 10px' }}
-          />
-          <button className="btn-primary" style={{ padding: '6px 14px', fontSize: 13 }} onClick={insertLink}>Insert</button>
-          <button className="btn-secondary" style={{ padding: '6px 10px', fontSize: 13 }} onClick={() => setShowLinkInput(false)}>Cancel</button>
+        <div style={{ display:'flex', gap:6, padding:'6px 12px', borderBottom:'1px solid var(--c-border)', alignItems:'center', flexShrink:0 }}>
+          <input className="calc-input" value={linkUrl} onChange={e => setLinkUrl(e.target.value)}
+            onKeyDown={e => e.key==='Enter' && insertLink()} placeholder="https://example.com" autoFocus
+            style={{ flex:1, fontSize:13, padding:'5px 10px' }} />
+          <button className="btn-primary" style={{ padding:'5px 14px', fontSize:13 }} onClick={insertLink}>Insert</button>
+          <button className="btn-secondary" style={{ padding:'5px 10px', fontSize:13 }} onClick={() => setShowLinkInput(false)}>Cancel</button>
         </div>
       )}
 
-      {/* Editable area */}
+      {/* Editor — fills remaining height */}
       <div
         ref={editorRef}
         contentEditable
         suppressContentEditableWarning
         onInput={save}
         onBlur={save}
-        data-placeholder="Measurements, cut lists, reminders… Use the toolbar above for formatting."
+        data-placeholder="Measurements, cut lists, reminders…"
         style={{
-          minHeight: 360,
-          padding: '12px 14px',
-          border: '1.5px solid var(--c-border)',
+          flex: 1,
+          padding: '16px 20px',
           outline: 'none',
-          fontSize: 14,
+          fontSize: fontSize,
           lineHeight: 1.8,
           color: 'var(--c-text-primary)',
           background: 'var(--c-bg-surface)',
           fontFamily: 'inherit',
           overflowY: 'auto',
+          minHeight: 0,
         }}
-        css={`
-          a { color: var(--accent); text-decoration: underline; }
-          ul, ol { padding-left: 20px; }
-          &:empty:before { content: attr(data-placeholder); color: var(--c-text-faint); pointer-events: none; }
-        `}
       />
       <style>{`
-        .calc-notes-editor a { color: var(--accent); text-decoration: underline; }
         [contenteditable]:empty:before { content: attr(data-placeholder); color: var(--c-text-faint); pointer-events: none; display: block; }
         [contenteditable] a { color: #3B82F6; text-decoration: underline; }
         [contenteditable] ul { list-style: disc; padding-left: 20px; }
         [contenteditable] ol { list-style: decimal; padding-left: 20px; }
+        [contenteditable] li { margin-bottom: 2px; }
       `}</style>
-      <p style={{ fontSize: 11, color: 'var(--c-text-faint)', marginTop: 8 }}>Auto-saves locally. Ctrl+B bold, Ctrl+I italic, Ctrl+U underline.</p>
     </div>
   )
 }
@@ -1038,16 +1067,16 @@ export default function Calculators() {
           ))}
         </div>
       </div>
-      {(tab === 'construction' || tab === 'boardfoot' || tab === 'trim')
+      {(tab === 'construction' || tab === 'boardfoot' || tab === 'trim' || tab === 'notes')
         ? <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             {tab === 'construction' && <ConstructionCalc />}
             {tab === 'boardfoot'    && <BoardFoot />}
             {tab === 'trim'         && <TrimCuts />}
+            {tab === 'notes'        && <CalcNotes />}
           </div>
         : <div className="scroll-page" style={{ paddingTop: 16, flex: 1 }}>
             {tab === 'converter' && <UnitConverter />}
             {tab === 'sheet'     && <SheetGoods />}
-            {tab === 'notes'     && <CalcNotes />}
           </div>
       }
     </div>
