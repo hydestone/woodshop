@@ -58,9 +58,15 @@ export default function Projects() {
       const proj = await db.addProject(fields)
       let pws = null
       if (woodStockId) {
-        pws = await db.addProjectWoodSource(proj.id, woodStockId)
+        try {
+          pws = await db.addProjectWoodSource(proj.id, woodStockId)
+        } catch (wsErr) {
+          // Wood source failed — roll back the project so we don't leave an orphan
+          await db.deleteProject(proj.id).catch(() => {})
+          toast(`Failed to link wood stock: ${wsErr.message}`, 'error')
+          return
+        }
       }
-      // Mutate only after all DB calls succeed
       mutate(d => ({
         ...d,
         projects: [...d.projects, proj],
@@ -71,7 +77,7 @@ export default function Projects() {
       toast(`${fields.name || 'Project'} added`, 'success')
       setShowAdd(false)
       navigate('projects', proj.id)
-          } catch (e) { toast(e.message, 'error') }
+    } catch (e) { toast(e.message, 'error') }
   }
 
   const categories = data.categories || []
@@ -520,28 +526,33 @@ export function ProjectDetail() {
   }
 
   const handleUpdate = async (fields, woodStockId) => {
-    // Snapshot for rollback
     const prevProjects = data.projects
     const prevWoodSources = data.projectWoodSources
     try {
       // Optimistic update
       mutate(d => ({ ...d, projects: d.projects.map(p => p.id === projId ? { ...p, ...fields } : p) }))
-      // Persist project fields
       await db.updateProject(projId, fields)
       // Persist wood source junction — only if caller passed woodStockId
       if (woodStockId !== undefined) {
-        // Get existing junction IDs before adding new — so we only delete the old ones
         const oldIds = data.projectWoodSources.filter(pws => pws.project_id === projId).map(pws => pws.id)
-        const newPws = woodStockId ? await db.addProjectWoodSource(projId, woodStockId) : null
-        // Remove old junction rows by ID (not project_id) so the new row survives
-        for (const oldId of oldIds) await db.removeProjectWoodSource(oldId)
-        mutate(d => ({
-          ...d,
-          projectWoodSources: [
-            ...d.projectWoodSources.filter(pws => pws.project_id !== projId),
-            ...(newPws ? [newPws] : [])
-          ]
-        }))
+        try {
+          // Delete old rows first, then add new — avoids duplicate window
+          for (const oldId of oldIds) await db.removeProjectWoodSource(oldId)
+          const newPws = woodStockId ? await db.addProjectWoodSource(projId, woodStockId) : null
+          mutate(d => ({
+            ...d,
+            projectWoodSources: [
+              ...d.projectWoodSources.filter(pws => pws.project_id !== projId),
+              ...(newPws ? [newPws] : [])
+            ]
+          }))
+        } catch (wsErr) {
+          // Wood source update failed — rollback to previous junction state
+          mutate(d => ({ ...d, projectWoodSources: prevWoodSources }))
+          toast(`Project saved but wood source link failed: ${wsErr.message}`, 'error')
+          setEditing(false)
+          return
+        }
       }
       toast('Saved', 'success')
       setEditing(false)
