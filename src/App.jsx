@@ -525,6 +525,14 @@ export default function App() {
     try { const d = await db.loadAll(); setData(d) } catch {}
   }, [])
 
+  const openProject = useCallback(id => {
+    if (id) {
+      pushNav(tab, projId, showMore)
+      try { window.history.pushState({ jdh: navStack.current.length }, '') } catch {}
+    }
+    setProjId(id)
+  }, [tab, projId, showMore, pushNav])
+
   // ── Auth gate ─────────────────────────────────────────────────────────────
   if (!authChecked) return (
     <div className="center-screen">
@@ -578,14 +586,6 @@ export default function App() {
     if (id === 'trash')       return trashCount
     return 0
   }
-
-  const openProject = useCallback(id => {
-    if (id) {
-      pushNav(tab, projId, showMore)
-      try { window.history.pushState({ jdh: navStack.current.length }, '') } catch {}
-    }
-    setProjId(id)
-  }, [tab, projId, showMore, pushNav])
 
   const ctx = { data, mutate, reload, tab, setTab, navigate, projId, setProjId: openProject, theme, launchTutorial, sampleIds, tabAction, setTabAction }
 
