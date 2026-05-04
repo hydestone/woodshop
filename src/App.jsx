@@ -6,6 +6,7 @@ import { supabase, getSession, signOut, onAuthStateChange } from './supabase.js'
 import Auth from './pages/Auth.jsx'
 import { ToastProvider } from './components/Toast.jsx'
 import GlobalSearch from './components/Search.jsx'
+import Onboarding from './components/Onboarding.jsx'
 import {
   IFolder, ICart, IWrench, ICamera, ITree, IBulb, ICalc,
   IStar, ICheck, IGrid, IIdea, IBrain, IDollar, ITrash, IBell,
@@ -365,6 +366,7 @@ export default function App() {
 
   const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark')
   const [showQR, setShowQR] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(false)
   const [isOffline, setIsOffline] = useState(!navigator.onLine)
   const { showTutorial, dismissTutorial, launchTutorial } = useTutorialCheck()
   const [needsPassword, setNeedsPassword] = useState(false)
@@ -419,7 +421,9 @@ export default function App() {
       // Seed check for new users (non-blocking — failures don't prevent app load)
       try {
         const s = await getSession()
-        if (s?.user && !s.user.user_metadata?.seeded_at && d.projects.length === 0) {
+        const isNew = s?.user && !s.user.user_metadata?.seeded_at && d.projects.length === 0
+        const notOnboarded = s?.user && !s.user.user_metadata?.onboarded_at
+        if (isNew) {
           const ids = await seedSampleData()
           if (ids) {
             setSampleIds(ids)
@@ -429,6 +433,8 @@ export default function App() {
         } else {
           setSampleIds(s?.user?.user_metadata?.sample_ids || null)
         }
+        // Show onboarding if never seen
+        if (notOnboarded) setShowOnboarding(true)
       } catch (seedErr) {
         console.error('Seed check:', seedErr)
       }
@@ -593,7 +599,8 @@ export default function App() {
                   </div>
                 ))}
               </div>
-              {/* Dev tools — sidebar only, not in mobile More menu */}
+              {/* Dev tools — owner only, sidebar only */}
+              {session?.user?.id === '956f2bdd-022b-4e17-8ec9-47246a18e152' && (
               <div style={{ padding: '4px 8px 0' }}>
                 {[{ id: 'audit', label: 'Data Audit' }, { id: 'smoketest', label: 'Smoke Test' }].map(t => (
                   <button key={t.id} className={`sidebar-item ${tab === t.id ? 'active' : ''}`} onClick={() => setTab(t.id)} style={{ fontSize: 12, opacity: 0.5 }}>
@@ -601,6 +608,7 @@ export default function App() {
                   </button>
                 ))}
               </div>
+              )}
               <div style={{ padding: '12px 8px', borderTop: '1px solid var(--sb-divider)' }}>
                 <button className="sidebar-footer-btn" onClick={() => setTab('beta')}>
                   <IBrain size={16} color="currentColor" sw={1.8} />
@@ -708,6 +716,7 @@ export default function App() {
         {/* QR Code modal */}
         {showQR && <QRModal onClose={() => setShowQR(false)} />}
         {showTutorial && <Tutorial onClose={dismissTutorial} setTab={setTab} />}
+        {showOnboarding && <Onboarding onDismiss={() => setShowOnboarding(false)} />}
       {isOffline && (
         <div className="offline-banner">
           ⚡ Offline — showing cached data
