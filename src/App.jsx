@@ -347,6 +347,7 @@ export default function App() {
   const [tabDir, setTabDir]     = useState('right')
   const [projId, setProjId]     = useState(null)
   const [tabAction, setTabAction] = useState(null)
+  const navStack = useRef([])  // in-app back navigation history
   const [showMore, setShowMore] = useState(false)
   const [theme, setTheme] = useState(() => {
     try { return localStorage.getItem('jdh-theme') || 'dark' } catch { return 'dark' }
@@ -368,6 +369,35 @@ export default function App() {
   const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark')
   const [showQR, setShowQR] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
+  // ── In-app back navigation ────────────────────────────────────────────────
+  const goBack = useCallback(() => {
+    const prev = navStack.current.pop()
+    if (!prev) return false
+    // Direction: going back always slides right-to-left (reverse)
+    setTabDir('left')
+    setTabKey(k => k + 1)
+    setTabRaw(prev.tab)
+    setProjId(prev.projId)
+    setShowMore(prev.showMore)
+    return true
+  }, [])
+
+  useEffect(() => {
+    // Seed one dummy entry so there's always a "previous" for the first back
+    window.history.replaceState({ jdh: 0 }, '')
+
+    const onPopState = e => {
+      const didGoBack = goBack()
+      if (didGoBack) {
+        // Re-push so the browser stack stays in sync with our internal stack
+        window.history.pushState({ jdh: navStack.current.length }, '')
+      }
+      // If stack was empty, browser exits PWA — correct behaviour
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [goBack])
+
   const [isOffline, setIsOffline] = useState(!navigator.onLine)
   const { showTutorial, dismissTutorial, launchTutorial } = useTutorialCheck()
   const [needsPassword, setNeedsPassword] = useState(false)
@@ -464,23 +494,32 @@ export default function App() {
 
   const mutate = useCallback(fn => setData(prev => fn({ ...prev })), [])
 
+  // Push current location onto stack before navigating
+  const pushNav = useCallback((fromTab, fromProjId, fromMore) => {
+    navStack.current.push({ tab: fromTab, projId: fromProjId, showMore: fromMore })
+  }, [])
+
   const setTab = useCallback(id => {
     const allIds  = ALL_NAV.map(t => t.id)
     const fromIdx = allIds.indexOf(tab)
     const toIdx   = allIds.indexOf(id)
     setTabDir(toIdx >= fromIdx || fromIdx === -1 ? 'right' : 'left')
     setTabKey(k => k + 1)
+    pushNav(tab, projId, showMore)
+    window.history.pushState({ jdh: navStack.current.length }, '')
     setProjId(null)
     setShowMore(false)
     setTabRaw(id)
-  }, [tab])
+  }, [tab, projId, showMore, pushNav])
 
   // navigate(tab, projId) — sets tab AND project without the null reset
   const navigate = useCallback((id, pid = null) => {
+    pushNav(tab, projId, showMore)
+    window.history.pushState({ jdh: navStack.current.length }, '')
     setProjId(pid)
     setShowMore(false)
     setTabRaw(id)
-  }, [])
+  }, [tab, projId, showMore, pushNav])
 
   const handleClearSamples = useCallback(async () => {
     await clearSampleData()
@@ -542,7 +581,15 @@ export default function App() {
     return 0
   }
 
-  const ctx = { data, mutate, reload, tab, setTab, navigate, projId, setProjId, theme, launchTutorial, sampleIds, tabAction, setTabAction }
+  const openProject = useCallback(id => {
+    if (id) {
+      pushNav(tab, projId, showMore)
+      window.history.pushState({ jdh: navStack.current.length }, '')
+    }
+    setProjId(id)
+  }, [tab, projId, showMore, pushNav])
+
+  const ctx = { data, mutate, reload, tab, setTab, navigate, projId, setProjId: openProject, theme, launchTutorial, sampleIds, tabAction, setTabAction }
 
   return (
     <AppCtx.Provider value={ctx}>
@@ -709,7 +756,14 @@ export default function App() {
                     <button
                       key={t.id}
                       className={`tab-btn ${active ? 'active' : ''}`}
-                      onClick={() => isMore ? setShowMore(s => !s) : setTab(t.id)}
+                      onClick={() => {
+                        if (isMore) {
+                          if (!showMore) { pushNav(tab, projId, false); window.history.pushState({ jdh: navStack.current.length }, '') }
+                          setShowMore(s => !s)
+                        } else {
+                          setTab(t.id)
+                        }
+                      }}
                       aria-label={t.label}
                       aria-current={active && !isMore ? 'page' : undefined}
                     >
