@@ -32,7 +32,9 @@ const STEPS = [
   },
   {
     title: 'Projects',
-    body: 'Track every build from start to finish. Set status, wood species, finish type, and category. Each project has steps, finishing coats, photos, time tracking, and cost tracking.',
+    body: typeof window !== 'undefined' && window.innerWidth < 768
+      ? 'Track every build from start to finish. Tap Projects in the bottom bar to get started. Each project has steps, finishing coats, photos, time tracking, and cost tracking.'
+      : 'Track every build from start to finish. Click Projects in the left sidebar to get started. Each project has steps, finishing coats, photos, time tracking, and cost tracking.',
     Icon: IFolder,
     tab: 'projects', target: '[data-tutorial-target="projects-header"]',
   },
@@ -111,9 +113,11 @@ function injectCSS() {
       to   { stroke-dashoffset: 0; }
     }
     @keyframes tutHeadIn { from { opacity: 0; } to { opacity: 1; } }
-    @keyframes tutConfetti {
-      0%   { transform: translateY(0) rotate(0); opacity: 1; }
-      100% { transform: translateY(110vh) rotate(600deg); opacity: 0; }
+    @keyframes tutShaving {
+      0%   { transform: translateY(0) rotate(0deg) scaleX(1); opacity: 0.9; }
+      30%  { transform: translateY(30vh) rotate(180deg) scaleX(0.85); opacity: 0.85; }
+      70%  { transform: translateY(75vh) rotate(380deg) scaleX(1.05); opacity: 0.6; }
+      100% { transform: translateY(115vh) rotate(540deg) scaleX(0.9); opacity: 0; }
     }
     .tut-btn { transition: transform 80ms; }
     .tut-btn:active { transform: scale(.94); }
@@ -221,19 +225,55 @@ function Dots({ i, n }) {
 }
 
 // ─── Confetti ────────────────────────────────────────────────────────────────
+// ─── Wood Shavings ───────────────────────────────────────────────────────────
+// Each shaving is an SVG spiral path — tight curl, pale wood tones
+function WoodShaving({ style }) {
+  // Tight hand-plane ribbon shaving: a thin spiral band
+  // We use a cubic bezier arc to make a curl shape
+  const w = 18 + Math.random() * 12
+  const hue = 28 + Math.random() * 14          // warm amber-blonde wood tones
+  const sat = 55 + Math.random() * 20
+  const lit = 68 + Math.random() * 14
+  const fill = `hsl(${hue},${sat}%,${lit}%)`
+  const stroke = `hsl(${hue},${sat}%,${Math.max(lit-18,40)}%)`
+  // curl path: two arcs forming a thin ribbon loop
+  const rx = w * 0.45, ry = w * 0.22
+  return (
+    <svg width={w} height={w * 0.7} viewBox={`0 0 ${w} ${w * 0.7}`}
+      style={{ position: 'absolute', ...style, overflow: 'visible' }}>
+      {/* Ribbon curl — filled thin elliptical arc */}
+      <ellipse cx={w/2} cy={w*0.38} rx={rx} ry={ry}
+        fill="none" stroke={fill} strokeWidth={3.5}
+        strokeDasharray={`${rx * 2.6} ${rx * 0.8}`}
+        strokeLinecap="round" />
+      <ellipse cx={w/2} cy={w*0.28} rx={rx*0.72} ry={ry*0.7}
+        fill="none" stroke={stroke} strokeWidth={2}
+        strokeDasharray={`${rx * 1.8} ${rx * 1.2}`}
+        strokeDashoffset={rx * 0.4}
+        strokeLinecap="round" opacity={0.7} />
+      {/* Thin tail trailing off */}
+      <path d={`M${w*0.18},${w*0.5} Q${w*0.08},${w*0.62} ${w*0.04},${w*0.66}`}
+        fill="none" stroke={fill} strokeWidth={2} strokeLinecap="round" opacity={0.5} />
+    </svg>
+  )
+}
+
 function Confetti() {
-  const C = ['#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6','#EC4899','#2D5A3D']
+  const shavings = Array.from({ length: 32 }, (_, i) => ({
+    id: i,
+    left: Math.random() * 100,
+    delay: Math.random() * 1.4,
+    dur: 2.2 + Math.random() * 2,
+    rot: Math.random() * 360,
+  }))
   return (
     <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 20006, overflow: 'hidden' }}>
-      {Array.from({ length: 50 }, (_, i) => (
-        <div key={i} style={{
-          position: 'absolute', top: -12,
-          left: `${Math.random() * 100}%`,
-          width: 4 + Math.random() * 6,
-          height: Math.random() > .5 ? (4 + Math.random() * 6) : (8 + Math.random() * 10),
-          borderRadius: Math.random() > .5 ? '50%' : 2,
-          background: C[i % C.length],
-          animation: `tutConfetti ${2 + Math.random() * 2.5}s ease-in ${Math.random() * 1.2}s both`,
+      {shavings.map(s => (
+        <WoodShaving key={s.id} style={{
+          top: -30,
+          left: `${s.left}%`,
+          animation: `tutShaving ${s.dur}s ease-in ${s.delay}s both`,
+          transform: `rotate(${s.rot}deg)`,
         }} />
       ))}
     </div>
