@@ -2,7 +2,8 @@ import { useState, useRef } from 'react'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
-import { ConfirmSheet, ITrash, IEdit, IBulb } from '../components/Shared.jsx'
+import { ConfirmSheet, Sheet, FormCell, ITrash, IEdit, IBulb } from '../components/Shared.jsx'
+import { supabase } from '../supabase.js'
 
 const fmtDate = iso => new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
 
@@ -11,13 +12,68 @@ const autoExpand = e => {
   e.target.style.height = e.target.scrollHeight + 'px'
 }
 
+function PromoteSheet({ note, onClose, onDone }) {
+  const [title, setTitle] = useState(note.content.slice(0, 80))
+  const [notes, setNotes] = useState(note.content.length > 80 ? note.content : '')
+  const [saving, setSaving] = useState(false)
+  const toast = useToast()
+
+  const save = async () => {
+    if (!title.trim()) return
+    setSaving(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      const { data: row, error } = await supabase
+        .from('project_ideas')
+        .insert({ title: title.trim(), notes: notes.trim(), status: 'idea', user_id: user.id })
+        .select().single()
+      if (error) throw error
+      toast('Saved as idea', 'success')
+      onDone(row)
+    } catch (e) {
+      toast(e.message, 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Sheet title="Save as Idea" onClose={onClose} onSave={save} saveLabel={saving ? 'Saving…' : 'Save as Idea'}>
+      <p style={{ fontSize: 13, color: 'var(--c-text-muted)', marginBottom: 16, lineHeight: 1.6 }}>
+        This will create a new Project Idea from this note. The original note is kept.
+      </p>
+      <div className="form-group">
+        <FormCell label="Idea title">
+          <input
+            className="form-input"
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+            placeholder="What do you want to build?"
+            autoFocus
+          />
+        </FormCell>
+        <FormCell label="Notes" last>
+          <textarea
+            className="form-textarea"
+            value={notes}
+            onChange={e => setNotes(e.target.value)}
+            placeholder="Details, inspiration, dimensions…"
+            style={{ width: '100%', minHeight: 80 }}
+          />
+        </FormCell>
+      </div>
+    </Sheet>
+  )
+}
+
 export default function Brainstorm() {
-  const { data, mutate } = useCtx()
+  const { data, mutate, setTab } = useCtx()
   const toast = useToast()
   const [composing, setComposing]     = useState('')
   const [editId, setEditId]           = useState(null)
   const [editVal, setEditVal]         = useState('')
   const [deleteNote, setDeleteNote]   = useState(null)
+  const [promoteNote, setPromoteNote] = useState(null)
   const composingRef = useRef()
 
   const saveNew = async () => {
@@ -66,6 +122,16 @@ export default function Brainstorm() {
     await db.updateBrainstorm(id, content).catch(e => toast(e.message, 'error'))
     toast('Saved', 'success')
     setEditId(null)
+  }
+
+  const handlePromoted = (idea) => {
+    // Add idea to local data so Ideas page updates immediately
+    mutate(d => ({ ...d, projectIdeas: [idea, ...(d.projectIdeas || [])] }))
+    setPromoteNote(null)
+    toast('Idea created — tap to view', 'success', 5000, {
+      label: 'Go to Ideas',
+      onClick: () => setTab('ideas'),
+    })
   }
 
   return (
@@ -118,7 +184,17 @@ export default function Brainstorm() {
                   <p style={{ fontSize: 15, lineHeight: 1.65, whiteSpace: 'pre-wrap', color: 'var(--c-text-primary)' }}>{note.content}</p>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
                     <span style={{ fontSize: 12, color: 'var(--c-text-faint)' }}>{fmtDate(note.created_at)}</span>
-                    <div style={{ display: 'flex', gap: 4 }}>
+                    <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                      {/* Promote to Idea */}
+                      <button
+                        className="icon-btn"
+                        onClick={() => setPromoteNote(note)}
+                        aria-label="Save as Project Idea"
+                        title="Save as Project Idea"
+                        style={{ color: 'var(--accent)' }}
+                      >
+                        <IBulb size={15} color="var(--accent)" sw={1.8} />
+                      </button>
                       <button className="icon-btn" onClick={() => { setEditId(note.id); setEditVal(note.content) }} aria-label="Edit note"><IEdit size={15} /></button>
                       <button className="icon-btn" onClick={() => setDeleteNote(note)} aria-label="Delete note"><ITrash size={15} /></button>
                     </div>
@@ -136,7 +212,8 @@ export default function Brainstorm() {
           )}
         </div>
       </div>
-      {deleteNote && <ConfirmSheet message="Delete this note?" onConfirm={() => del(deleteNote.id)} onClose={() => setDeleteNote(null)} />}
+      {deleteNote  && <ConfirmSheet message="Delete this note?" onConfirm={() => del(deleteNote.id)} onClose={() => setDeleteNote(null)} />}
+      {promoteNote && <PromoteSheet note={promoteNote} onClose={() => setPromoteNote(null)} onDone={handlePromoted} />}
     </div>
   )
 }
