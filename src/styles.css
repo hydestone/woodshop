@@ -3138,7 +3138,7 @@ body {
     padding-top: 4px;
     padding-bottom: max(env(safe-area-inset-bottom, 34px), 34px);
     /* Fully opaque — eliminates iOS compositing bleed in home indicator zone */
-    background: rgb(22, 27, 34);
+    background: #000000;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
@@ -3148,7 +3148,7 @@ body {
   }
   /* Default = dark (app default). Light mode gets the override. */
   /* Must match tabbar background exactly so any gap below tabbar is invisible */
-  html, body { background: rgb(22, 27, 34); }
+  html, body { background: #000000; }
   html[data-theme="light"],
   [data-theme="light"] body { background: #ffffff; }
 
@@ -3163,12 +3163,12 @@ body {
   .tabbar {
     padding-top: 4px;
     padding-bottom: max(env(safe-area-inset-bottom, 34px), 34px) !important;
-    background: rgb(22, 27, 34) !important;
+    background: #000000 !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
   }
   [data-theme="light"] .tabbar { background: #ffffff !important; }
-  html, body { background: rgb(22, 27, 34) !important; }
+  html, body { background: #000000 !important; }
   html[data-theme="light"],
   [data-theme="light"] body { background: #ffffff !important; }
   .scroll-page { padding-bottom: calc(48px + max(env(safe-area-inset-bottom, 34px), 34px)) !important; }
@@ -3178,13 +3178,13 @@ body {
 /* iOS fallback — JS adds .pwa-standalone to <html> */
 @media (max-width: 767px) {
   html.pwa-standalone,
-  .pwa-standalone body { background: rgb(22, 27, 34) !important; }
+  .pwa-standalone body { background: #000000 !important; }
   html.pwa-standalone[data-theme="light"],
   [data-theme="light"] .pwa-standalone body { background: #ffffff !important; }
   .pwa-standalone .tabbar {
     padding-top: 4px;
     padding-bottom: max(env(safe-area-inset-bottom, 34px), 34px) !important;
-    background: rgb(22, 27, 34) !important;
+    background: #000000 !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
   }

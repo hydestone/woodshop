@@ -885,26 +885,6 @@ export default function App() {
           </div>
         )}
       </ToastProvider>
-
-      {/* ── DIAGNOSTIC — REMOVE BEFORE BETA ── */}
-      <div style={{
-        position: 'fixed', top: 0, left: 0, right: 0,
-        background: 'red', color: '#fff', fontSize: 11, fontWeight: 700,
-        textAlign: 'center', padding: '2px 0', zIndex: 999999, pointerEvents: 'none'
-      }}>
-        BUILD 2026-05-04-diag &nbsp;|&nbsp;
-        standalone:{window.navigator.standalone ? 'Y' : 'N'} &nbsp;|&nbsp;
-        mq:{window.matchMedia('(display-mode:standalone)').matches ? 'Y' : 'N'} &nbsp;|&nbsp;
-        ih:{window.innerHeight}
-      </div>
-      {/* Magenta paint test — does CSS reach the bottom strip? */}
-      <div style={{
-        position: 'fixed', bottom: 0, left: 0, right: 0,
-        height: 60, background: 'magenta',
-        zIndex: 999998, pointerEvents: 'none',
-        opacity: 0.85,
-      }} />
-      {/* ── END DIAGNOSTIC ── */}
     </AppCtx.Provider>
   )
 }
