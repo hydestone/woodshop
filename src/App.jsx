@@ -369,11 +369,12 @@ export default function App() {
   const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark')
   const [showQR, setShowQR] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
+  const [isOffline, setIsOffline] = useState(!navigator.onLine)
+
   // ── In-app back navigation ────────────────────────────────────────────────
   const goBack = useCallback(() => {
     const prev = navStack.current.pop()
     if (!prev) return false
-    // Direction: going back always slides right-to-left (reverse)
     setTabDir('left')
     setTabKey(k => k + 1)
     setTabRaw(prev.tab)
@@ -383,22 +384,17 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    // Seed one dummy entry so there's always a "previous" for the first back
     window.history.replaceState({ jdh: 0 }, '')
-
-    const onPopState = e => {
+    const onPopState = () => {
       const didGoBack = goBack()
       if (didGoBack) {
-        // Re-push so the browser stack stays in sync with our internal stack
         window.history.pushState({ jdh: navStack.current.length }, '')
       }
-      // If stack was empty, browser exits PWA — correct behaviour
     }
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)
   }, [goBack])
 
-  const [isOffline, setIsOffline] = useState(!navigator.onLine)
   const { showTutorial, dismissTutorial, launchTutorial } = useTutorialCheck()
   const [needsPassword, setNeedsPassword] = useState(false)
 
