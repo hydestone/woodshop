@@ -300,7 +300,7 @@ export async function deleteShopImprovement(id) {
 // ── Tools ─────────────────────────────────────────────────────────────────────
 export async function addTool(fields) {
   const user_id = await getUserId()
-  return q(supabase.from('tools').insert({ id: uid(), created_at: isoNow(), user_id, ...fields }).select().single())
+  return q(supabase.from('tools').insert({ created_at: isoNow(), user_id, ...fields }).select().single())
 }
 export async function updateTool(id, fields) {
   return q(supabase.from('tools').update(fields).eq('id', id))
