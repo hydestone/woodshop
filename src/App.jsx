@@ -7,6 +7,7 @@ import Auth from './pages/Auth.jsx'
 import { ToastProvider } from './components/Toast.jsx'
 import GlobalSearch from './components/Search.jsx'
 import Onboarding from './components/Onboarding.jsx'
+import InstallPrompt from './components/InstallPrompt.jsx'
 import {
   IFolder, ICart, IWrench, ICamera, ITree, IBulb, ICalc,
   IStar, ICheck, IGrid, IIdea, IBrain, IDollar, ITrash, IBell,
@@ -16,7 +17,8 @@ import {
 
 // Pages — eager (core tabs)
 import Dashboard       from './pages/Dashboard.jsx'
-import Projects, { ProjectDetail } from './pages/Projects.jsx'
+import Projects        from './pages/Projects.jsx'
+import { ProjectDetail } from './pages/ProjectDetail.jsx'
 import Shopping         from './pages/Shopping.jsx'
 import Maintenance      from './pages/Maintenance.jsx'
 import Stock, { WoodStockGallery } from './pages/Stock.jsx'
@@ -778,6 +780,7 @@ export default function App() {
         {showQR && <QRModal onClose={() => setShowQR(false)} />}
         {showTutorial && <Tutorial onClose={dismissTutorial} setTab={setTab} />}
         {showOnboarding && <Onboarding onDismiss={() => setShowOnboarding(false)} />}
+        <InstallPrompt />
       {isOffline && (
         <div className="offline-banner">
           ⚡ Offline — showing cached data
