@@ -7,9 +7,10 @@ import { Sheet, FormCell, BulkAddSheet, ConfirmSheet, IPlus, ITrash, IEdit, ICir
 export default function Shopping() {
   const { data, mutate, sampleIds } = useCtx()
   const toast = useToast()
-  const [showAdd, setShowAdd]     = useState(false)
-  const [editItem, setEditItem]   = useState(null)
+  const [showAdd, setShowAdd]       = useState(false)
+  const [editItem, setEditItem]     = useState(null)
   const [deleteItem, setDeleteItem] = useState(null)
+  const [filter, setFilter]         = useState('all') // 'all' | 'need' | 'got'
 
   const toggle = async item => {
     const completed = !item.completed
@@ -54,7 +55,7 @@ export default function Shopping() {
       mutate(d => ({ ...d, shopping: [...d.shopping, ...saved] }))
       toast(`${saved.length} items added`, 'success')
       setShowAdd(false)
-    } catch (e) { toast(e.message, 'error') }
+    } catch(e) { toast(e.message, 'error') }
   }
 
   const handleEdit = async (id, fields) => {
@@ -64,10 +65,23 @@ export default function Shopping() {
     setEditItem(null)
   }
 
-  const active    = data.shopping.filter(s => !s.completed)
-  const done      = data.shopping.filter(s => s.completed)
-  const stores    = [...new Set(active.map(s => s.store || 'Other'))]
+  const active     = data.shopping.filter(s => !s.completed)
+  const done       = data.shopping.filter(s =>  s.completed)
+  const stores     = [...new Set(active.map(s => s.store || 'Other'))]
   const totalSpent = done.filter(s => s.cost > 0).reduce((sum, s) => sum + Number(s.cost), 0)
+
+  const FilterBtn = ({ id, label, count }) => (
+    <button onClick={() => setFilter(id)} style={{
+      padding: '6px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+      fontFamily: 'inherit', borderRadius: 0,
+      background: filter === id ? 'var(--navy)' : 'var(--c-bg-subtle)',
+      color:      filter === id ? 'var(--white)' : 'var(--c-text-muted)',
+      border: '1.5px solid var(--c-border)', borderRight: 'none',
+      transition: 'background 120ms, color 120ms',
+    }}>
+      {label}{count > 0 ? ` (${count})` : ''}
+    </button>
+  )
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
@@ -75,16 +89,23 @@ export default function Shopping() {
         <div className="page-header" data-tutorial-target="shopping-page">
           <div className="page-header-row">
             <h1 className="page-title">Shopping List</h1>
-            {done.length > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                {totalSpent > 0 && <span style={{ fontSize: 13, color: 'var(--c-text-muted)' }}>${totalSpent.toFixed(2)} spent</span>}
-                <button className="btn-text" onClick={clearDone}>Clear done</button>
-              </div>
-            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              {totalSpent > 0 && <span style={{ fontSize: 13, color: 'var(--c-text-muted)' }}>${totalSpent.toFixed(2)} spent</span>}
+              {done.length > 0 && <button className="btn-text" onClick={clearDone}>Clear purchased</button>}
+            </div>
+          </div>
+          {/* Filter toggle */}
+          <div style={{ display: 'flex', marginTop: 10 }}>
+            <FilterBtn id="all"  label="All"          count={data.shopping.length} />
+            <FilterBtn id="need" label="Still Need"   count={active.length} />
+            <FilterBtn id="got"  label="✓ Purchased"  count={done.length} />
+            <div style={{ width: 1, background: 'var(--c-border)' }} />
           </div>
         </div>
+
         <div style={{ paddingBottom: 24 }}>
-          {stores.map(store => (
+          {/* Active items grouped by store */}
+          {(filter === 'all' || filter === 'need') && stores.map(store => (
             <div key={store}>
               <span className="section-label">{store}</span>
               <div className="group">
@@ -100,6 +121,8 @@ export default function Shopping() {
               </div>
             </div>
           ))}
+
+          {/* Empty state */}
           {!active.length && !done.length && (
             <div className="empty">
               <div className="empty-icon"><ICart size={32} color="var(--c-text-muted)" sw={1.5} /></div>
@@ -107,22 +130,40 @@ export default function Shopping() {
               <p className="empty-sub">Click + to add items</p>
             </div>
           )}
-          {done.length > 0 && <>
-            <span className="section-label">Got it</span>
-            <div className="group">
-              {done.map((item, i) => (
-                <ShopRow key={item.id} item={item}
-                  last={i === done.length - 1}
-                  isSample={sampleIds?.shopIds?.includes(item.id)}
-                  onToggle={() => toggle(item)}
-                  onEdit={() => setEditItem(item)}
-                  onDelete={() => setDeleteItem(item)}
-                />
-              ))}
+
+          {/* Purchased items */}
+          {(filter === 'all' || filter === 'got') && done.length > 0 && (
+            <>
+              <span className="section-label" style={{ color: 'var(--green)' }}>✓ Purchased ({done.length})</span>
+              <div className="group">
+                {done.map((item, i) => (
+                  <ShopRow key={item.id} item={item}
+                    last={i === done.length - 1}
+                    isSample={sampleIds?.shopIds?.includes(item.id)}
+                    onToggle={() => toggle(item)}
+                    onEdit={() => setEditItem(item)}
+                    onDelete={() => setDeleteItem(item)}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+
+          {filter === 'got' && done.length === 0 && (
+            <div className="empty">
+              <div className="empty-title">Nothing purchased yet</div>
+              <p className="empty-sub">Tap the circle next to an item to mark it purchased</p>
             </div>
-          </>}
+          )}
+          {filter === 'need' && active.length === 0 && done.length > 0 && (
+            <div className="empty">
+              <div className="empty-title">All done! 🎉</div>
+              <p className="empty-sub">Everything on the list has been purchased</p>
+            </div>
+          )}
         </div>
       </div>
+
       <button className="fab" onClick={() => setShowAdd(true)} aria-label="Add items">
         <IPlus size={22} color="#fff" sw={2.5} />
       </button>
@@ -135,7 +176,12 @@ export default function Shopping() {
 
 function ShopRow({ item, onToggle, onEdit, onDelete, last, isSample }) {
   return (
-    <div className="cell" style={{ borderBottom: last ? 'none' : '1px solid var(--c-border-light)' }}>
+    <div className="cell" style={{
+      borderBottom: last ? 'none' : '1px solid var(--c-border-light)',
+      borderLeft: item.completed ? '3px solid var(--green)' : '3px solid transparent',
+      background: item.completed ? 'var(--c-bg-subtle)' : undefined,
+      transition: 'background 200ms, border-color 200ms',
+    }}>
       <button className="check-btn" onClick={onToggle} aria-label={item.completed ? 'Mark not purchased' : 'Mark purchased'}>
         {item.completed
           ? <ICheck size={22} color="var(--green)" sw={2} />
@@ -149,6 +195,11 @@ function ShopRow({ item, onToggle, onEdit, onDelete, last, isSample }) {
           {item.cost > 0 && <span style={{ color: 'var(--green)', fontWeight: 500 }}> · ${Number(item.cost).toFixed(2)}</span>}
         </div>
         {item.notes && <div style={{ fontSize: 12, color: 'var(--c-text-muted)', marginTop: 1 }}>{item.notes}</div>}
+        {item.completed && item.purchased_at && (
+          <div style={{ fontSize: 11, color: 'var(--green)', marginTop: 2 }}>
+            Purchased {new Date(item.purchased_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          </div>
+        )}
       </div>
       <button className="icon-btn" onClick={onEdit} aria-label={`Edit ${item.name}`}><IEdit size={15} /></button>
       <button className="icon-btn" onClick={onDelete} aria-label={`Delete ${item.name}`}><ITrash size={15} /></button>
@@ -185,11 +236,7 @@ function EditShopSheet({ item, onSave, onClose, projects = [] }) {
           <input ref={refs.cost} className="form-input" type="number" step="0.01" defaultValue={item.cost || ''} placeholder="0.00" />
         </FormCell>
         <FormCell label="Project" last>
-          <select
-            className="form-input"
-            value={projectId}
-            onChange={e => setProjectId(e.target.value)}
-          >
+          <select className="form-input" value={projectId} onChange={e => setProjectId(e.target.value)}>
             <option value="">— General shop —</option>
             {projects.filter(p => p.status !== 'complete').sort((a,b) => a.name.localeCompare(b.name)).map(p => (
               <option key={p.id} value={p.id}>{p.name}</option>
