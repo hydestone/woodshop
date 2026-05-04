@@ -9,6 +9,7 @@ export default function AllPhotos() {
   const { navigate, data, mutate } = useCtx()
   const toast = useToast()
   const [uploading, setUploading]       = useState(false)
+  const [showLimit, setShowLimit]       = useState(false)
   const [filter, setFilter]             = useState('all')
   const [sortBy, setSortBy]             = useState('date')
   const [includeComplete, setIncludeComplete] = useState(false)
@@ -40,7 +41,12 @@ export default function AllPhotos() {
         const photo = await db.uploadPhoto(null, file, '', 'unsorted', '')
         mutate(d => ({ ...d, photos: [photo, ...d.photos] }))
         uploaded++
-      } catch (err) { toast('Upload failed: ' + err.message, 'error') }
+      } catch (err) {
+        if (err.message?.startsWith('PHOTO_LIMIT_REACHED')) {
+          setShowLimit(true); setUploading(false); break
+        }
+        toast('Upload failed: ' + err.message, 'error')
+      }
       setUploading(false)
     }
     if (uploaded > 0) toast(`${uploaded} photo${uploaded !== 1 ? 's' : ''} added to Inbox`, 'success')
@@ -56,7 +62,12 @@ export default function AllPhotos() {
         const photo = await db.uploadPhoto(null, file, caption, 'progress', tags)
         mutate(d => ({ ...d, photos: [photo, ...d.photos] }))
         uploaded++
-      } catch (e) { toast('Upload failed: ' + e.message, 'error') }
+      } catch (e) {
+        if (e.message?.startsWith('PHOTO_LIMIT_REACHED')) {
+          setShowLimit(true); setUploading(false); break
+        }
+        toast('Upload failed: ' + e.message, 'error')
+      }
       setUploading(false)
     }
     setPendingFiles([])
@@ -348,6 +359,7 @@ export default function AllPhotos() {
           ? <div className="spinner" style={{ width: 20, height: 20, borderWidth: 2, borderTopColor: '#fff' }} />
           : <ICamera size={22} color="#fff" sw={2} />}
       </button>
+      {showLimit && <PhotoLimitSheet onClose={() => setShowLimit(false)} count={data.photos.length} />}
       {showTag && (
         <PhotoTagSheet
           count={pendingFiles.length}
@@ -369,6 +381,29 @@ export default function AllPhotos() {
           onClose={() => setShowNewProject(false)}
         />
       )}
+    </div>
+  )
+}
+
+function PhotoLimitSheet({ onClose, count }) {
+  return (
+    <div style={{ position:'fixed',inset:0,zIndex:9000,background:'rgba(0,0,0,.6)',display:'flex',alignItems:'center',justifyContent:'center',padding:'24px 20px' }}>
+      <div style={{ background:'var(--c-bg-surface)',border:'1px solid var(--c-border)',maxWidth:400,width:'100%',padding:'32px 28px',boxShadow:'0 24px 60px rgba(0,0,0,.4)' }}>
+        <div style={{ fontSize:36,marginBottom:16 }}>📷</div>
+        <h2 style={{ fontSize:20,fontWeight:800,color:'var(--c-text-primary)',marginBottom:8 }}>Photo limit reached</h2>
+        <p style={{ fontSize:14,color:'var(--c-text-muted)',lineHeight:1.7,marginBottom:20 }}>
+          You've reached the free tier limit of <strong>{count} photos</strong>. To upload more photos, contact us to discuss an upgrade. Existing photos are safe and unaffected.
+        </p>
+        <div style={{ display:'flex',gap:10 }}>
+          <a href="mailto:johnhyde23@gmail.com?subject=JDH Woodworks Photo Upgrade"
+            style={{ flex:1,padding:'10px',background:'var(--accent)',color:'#fff',border:'none',textDecoration:'none',textAlign:'center',fontSize:14,fontWeight:700,cursor:'pointer' }}>
+            Contact for upgrade
+          </a>
+          <button onClick={onClose} style={{ flex:1,padding:'10px',background:'var(--c-bg-subtle)',color:'var(--c-text-primary)',border:'1.5px solid var(--c-border)',fontSize:14,fontWeight:600,cursor:'pointer',fontFamily:'inherit' }}>
+            OK
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

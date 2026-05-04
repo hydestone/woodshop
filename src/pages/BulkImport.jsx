@@ -218,7 +218,7 @@ export default function BulkImport() {
           try {
             const photo = await db.uploadPhoto(proj.id, row.file, '', 'progress', 'finished')
             mutate(d => ({ ...d, photos: [photo, ...d.photos] }))
-          } catch(e) { console.error('Photo failed:', e) }
+          } catch(e) { if (e.message?.startsWith('PHOTO_LIMIT_REACHED')) { toast('Photo limit reached — some photos skipped', 'error'); break } console.error('Photo failed:', e) }
           uploaded++; setProgress(Math.round(uploaded/rows.length*100))
         }
       } catch(e) { toast(`Failed: ${first.name}`, 'error'); uploaded+=groupRows.length; setProgress(Math.round(uploaded/rows.length*100)) }
@@ -229,7 +229,7 @@ export default function BulkImport() {
       try {
         const photo = await db.uploadPhoto(row.existingProjId, row.file, '', 'progress', 'finished')
         mutate(d => ({ ...d, photos: [photo, ...d.photos] }))
-      } catch(e) { console.error('Existing photo failed:', e) }
+      } catch(e) { if (e.message?.startsWith('PHOTO_LIMIT_REACHED')) { toast('Photo limit reached — remaining photos skipped', 'error'); break } console.error('Existing photo failed:', e) }
       uploaded++; setProgress(Math.round(uploaded/rows.length*100))
     }
 
@@ -238,7 +238,7 @@ export default function BulkImport() {
       try {
         const photo = await db.uploadPhoto(null, row.file, `stock:${row.existingStockId}`, 'progress', 'stock')
         mutate(d => ({ ...d, photos: [photo, ...d.photos] }))
-      } catch(e) { console.error('Stock photo failed:', e) }
+      } catch(e) { if (e.message?.startsWith('PHOTO_LIMIT_REACHED')) { toast('Photo limit reached — remaining photos skipped', 'error'); break } console.error('Stock photo failed:', e) }
       uploaded++; setProgress(Math.round(uploaded/rows.length*100))
     }
 

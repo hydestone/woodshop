@@ -1411,7 +1411,13 @@ function PhotoPane({ projId, type, showAll, inline }) {
       try {
         const photo = await db.uploadPhoto(projId, file, caption, type, tags)
         mutate(d => ({ ...d, photos: [photo, ...d.photos] }))
-      } catch (e) { toast('Upload failed: ' + e.message, 'error') }
+      } catch (e) {
+        if (e.message?.startsWith('PHOTO_LIMIT_REACHED')) {
+          toast(`Photo limit reached (${db.PHOTO_LIMIT} photos). Contact us to upgrade.`, 'error', 6000)
+          setUploading(false); break
+        }
+        toast('Upload failed: ' + e.message, 'error')
+      }
       setUploading(false)
     }
     setPendingFiles([])

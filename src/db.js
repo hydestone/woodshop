@@ -176,7 +176,21 @@ async function compressImage(file, maxPx = 2400, quality = 0.92) {
   })
 }
 
+// ── Photo upload limit ────────────────────────────────────────────────────────
+export const PHOTO_LIMIT = 100 // free tier cap
+
+export async function getPhotoCount() {
+  const user_id = await getCurrentUserId()
+  const { count } = await supabase.from('photos').select('id', { count: 'exact', head: true }).eq('user_id', user_id)
+  return count || 0
+}
+
 export async function uploadPhoto(projectId, file, caption, photoType, tags) {
+  // Enforce free tier photo limit
+  const count = await getPhotoCount()
+  if (count >= PHOTO_LIMIT) {
+    throw new Error(`PHOTO_LIMIT_REACHED:${count}`)
+  }
   const compressed = await compressImage(file)
   const ext = compressed.type === 'image/jpeg' ? 'jpg' : (file.name.split('.').pop().toLowerCase() || 'jpg')
   const safeExt = ['jpg','jpeg','png','gif','webp','heic'].includes(ext) ? ext : 'jpg'
