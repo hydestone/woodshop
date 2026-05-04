@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
+import { hapticLight, hapticSuccess } from '../db.js'
 import { addToGoogleCalendar } from '../supabase.js'
 import {
   Sheet, FormCell, BulkAddSheet, ConfirmSheet, DropZone, PhotoGrid, TagInput, FilterSelect,
@@ -1012,6 +1013,7 @@ function StepsList({ projId }) {
 
   const toggle = async step => {
     const completed = !step.completed
+    completed ? hapticLight() : hapticLight()
     mutate(d => ({ ...d, steps: d.steps.map(s => s.id === step.id ? { ...s, completed } : s) }))
     await db.updateStep(step.id, { completed }).catch(e => toast(e.message, 'error'))
   }

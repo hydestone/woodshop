@@ -1,5 +1,14 @@
 import { supabase, BUCKET, photoUrl, getCurrentUserId } from './supabase.js'
 
+// ── Haptic feedback ───────────────────────────────────────────────────────────
+// Silently ignored on iOS; works on Android PWA
+export function haptic(pattern = [10]) {
+  try { navigator.vibrate?.(pattern) } catch {}
+}
+export const hapticLight  = () => haptic([8])
+export const hapticMedium = () => haptic([20])
+export const hapticSuccess = () => haptic([10, 50, 10])
+
 export const uid = () => Math.random().toString(36).slice(2, 10)
 export const isoNow = () => new Date().toISOString()
 

@@ -9,6 +9,7 @@ import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
+import { hapticLight } from '../db.js'
 import { photoUrl } from '../supabase.js'
 import * as db from '../db.js'
 import { IChevL, ICheck, IFolder } from '../components/Shared.jsx'
@@ -400,6 +401,7 @@ export default function PhotoTriage({ onClose, onNewProject }) {
       )
     }))
     try {
+      hapticLight()
       await db.updatePhoto(photoId, { project_id: projectId, photo_type: 'progress' })
       const projName = data.projects.find(p => p.id === projectId)?.name || 'project'
       toast(`Assigned to ${projName}`, 'success', 4000, {

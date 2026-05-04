@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
+import { hapticLight } from '../db.js'
 import { Sheet, FormCell, BulkAddSheet, ConfirmSheet, IPlus, ITrash, IEdit, ICircle, ICheck, ICart } from '../components/Shared.jsx'
 
 export default function Shopping() {
@@ -14,6 +15,7 @@ export default function Shopping() {
 
   const toggle = async item => {
     const completed = !item.completed
+    hapticLight()
     const updates   = { completed }
     if (completed && !item.purchased_at) updates.purchased_at = new Date().toISOString()
     mutate(d => ({ ...d, shopping: d.shopping.map(s => s.id === item.id ? { ...s, ...updates } : s) }))
