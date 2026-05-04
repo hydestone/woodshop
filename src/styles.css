@@ -830,7 +830,7 @@ body {
   display: flex;
   align-items: center;
   padding-top: 6px;
-  padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: max(calc(6px + env(safe-area-inset-bottom, 34px)), 40px);
   z-index: 50;
 }
 
@@ -3147,7 +3147,8 @@ body {
     border-top-color: rgba(0,0,0,.08);
   }
   /* Default = dark (app default). Light mode gets the override. */
-  html, body { background: #060D18; }
+  /* Must match tabbar background exactly so any gap below tabbar is invisible */
+  html, body { background: rgb(22, 27, 34); }
   html[data-theme="light"],
   [data-theme="light"] body { background: #ffffff; }
 
@@ -3167,7 +3168,7 @@ body {
     -webkit-backdrop-filter: none !important;
   }
   [data-theme="light"] .tabbar { background: #ffffff !important; }
-  html, body { background: #060D18 !important; }
+  html, body { background: rgb(22, 27, 34) !important; }
   html[data-theme="light"],
   [data-theme="light"] body { background: #ffffff !important; }
   .scroll-page { padding-bottom: calc(48px + max(env(safe-area-inset-bottom, 34px), 34px)) !important; }
@@ -3177,7 +3178,7 @@ body {
 /* iOS fallback — JS adds .pwa-standalone to <html> */
 @media (max-width: 767px) {
   html.pwa-standalone,
-  .pwa-standalone body { background: #060D18 !important; }
+  .pwa-standalone body { background: rgb(22, 27, 34) !important; }
   html.pwa-standalone[data-theme="light"],
   [data-theme="light"] .pwa-standalone body { background: #ffffff !important; }
   .pwa-standalone .tabbar {
