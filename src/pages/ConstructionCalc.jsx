@@ -131,8 +131,8 @@ function saveMemory(m) { try { if (m) localStorage.setItem(MEMORY_KEY, JSON.stri
 function ConPanel({ title, hint, children }) {
   return (
     <div className="cm-con-panel">
-      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--c-text-primary)', marginBottom: 4 }}>{title}</div>
-      {hint && <p style={{ fontSize: 11, color: 'var(--c-text-faint)', marginBottom: 10, lineHeight: 1.5 }}>{hint}</p>}
+      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--c-text-primary)', marginBottom: 4 }}>{title}</div>
+      {hint && <p style={{ fontSize: 13, color: 'var(--c-text-muted)', marginBottom: 12, lineHeight: 1.5 }}>{hint}</p>}
       {children}
     </div>
   )
@@ -184,17 +184,17 @@ function ConInput({ label, value, onChange, computed, isLen, placeholder }) {
 function ConResult({ label, value }) {
   return (
     <div className="cm-con-result-item">
-      <span style={{ fontSize: 11, color: 'var(--c-text-faint)' }}>{label}</span>
-      <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--forest)' }}>{value}</span>
+      <span style={{ fontSize: 13, color: 'var(--c-text-muted)' }}>{label}</span>
+      <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--forest)' }}>{value}</span>
     </div>
   )
 }
 
 function HelpItem({ title, desc }) {
   return (
-    <div style={{ marginBottom: 12 }}>
-      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--c-text-primary)', marginBottom: 2 }}>{title}</div>
-      <p style={{ fontSize: 12, color: 'var(--c-text-muted)', lineHeight: 1.5, margin: 0 }}>{desc}</p>
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--c-text-primary)', marginBottom: 4 }}>{title}</div>
+      <p style={{ fontSize: 14, color: 'var(--c-text-body)', lineHeight: 1.6, margin: 0 }}>{desc}</p>
     </div>
   )
 }
@@ -642,13 +642,20 @@ export default function ConstructionCalc({ conMode = null, showHelp = false }) {
               </ConPanel>
             )}
             {showHelp && (
-              <ConPanel title="Help">
+              <ConPanel title="Help — How to use each calculator">
                 <div className="cm-help-grid">
-                  <HelpItem title="Entering feet · inches · fractions" desc="Example — 9′ 1 3/8″: tap  9  ft′  1  in″  3  /8. The in″ button auto-inserts the space. The /2 /4 /8 /16 buttons set the denominator of the last digit entered." />
-                  <HelpItem title="Fractions only" desc="Type numerator, tap /8. Example: 3 then /8 → 3/8. Mixed: 1 then /4 → 1/4. Or type 3/4 directly with the / key." />
-                  <HelpItem title="Feet / inches only" desc="4 then ft′ → 4′. 9 then in″ → 9″. Plain numbers are treated as inches." />
-                  <HelpItem title="Keyboard shortcuts" desc="0–9 · + − * / · Enter or = · Esc to clear · ' feet · &quot; inches · R for √ · P for π · Backspace" />
-                  <HelpItem title="Tape" desc="Tap any row to recall that result to the display." />
+                  <HelpItem title="Calculator — Feet · Inches · Fractions"
+                    desc="Enter measurements like 9 ft 1-3/8 inch: tap 9, ft', 1, in&quot;, 3, /8. The ft' and in&quot; buttons separate feet and inches. Use /2 /4 /8 /16 to set the fraction denominator. Add, subtract, multiply, or divide any two measurements. Tap = to calculate. Tap any tape row to recall that result." />
+                  <HelpItem title="Pitch / Rise / Run — Roof &amp; Ramp Angles"
+                    desc="Enter any two values and the third is calculated. Pitch is expressed as rise per 12 inches of run — a 6/12 pitch rises 6 inches for every 12 inches of run. Enter pitch and run to get rise and rafter length. Enter rise and run to get pitch and angle." />
+                  <HelpItem title="Diagonal / Square — Squaring a Frame"
+                    desc="Enter width and height of a rectangular frame. The diagonal is calculated — both diagonals of a square frame must be equal. Use this to check if a door frame, deck, or cabinet carcass is square. If the diagonals match, it is square." />
+                  <HelpItem title="Stairs — Riser Height &amp; Tread"
+                    desc="Enter total rise (floor to floor height) and number of risers. Riser height and total run are calculated. Building code requires risers between 4 and 7-3/4 inches. The app flags if your riser is out of code. Tread depth defaults to 10 inches — adjust as needed." />
+                  <HelpItem title="Circle / Arc — Radius, Diameter, Circumference"
+                    desc="Enter any one value — radius, diameter, or circumference — and the others are calculated. Area is shown in square inches. Use this for turning blanks, roundover layouts, curved aprons, or any circular layout work." />
+                  <HelpItem title="Compound Miter — Angled Cuts on Tilted Work"
+                    desc="Used when a saw blade is tilted AND the fence is at an angle — common for crown molding, coopered boxes, and splayed legs. Enter the corner angle (total angle of the joint — a 90 degree corner is 90) and the tilt angle (degrees the work leans from vertical). Flat miter is the fence angle. Blade bevel is the saw tilt." />
                 </div>
               </ConPanel>
             )}
