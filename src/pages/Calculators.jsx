@@ -1055,6 +1055,18 @@ const TABS = [
   { id:'notes',     label:'Notes'      },
 ]
 
+const CON_MODES = [
+  { id:'construction', label:'Calculator' },
+  { id:'pitch',   label:'Pitch / Rise / Run' },
+  { id:'diag',    label:'Diagonal / Square' },
+  { id:'stairs',  label:'Stairs' },
+  { id:'circle',  label:'Circle / Arc' },
+  { id:'miter',   label:'Compound Miter' },
+  { id:'help',    label:'Help' },
+]
+
+const CON_IDS = new Set(CON_MODES.map(m => m.id))
+
 export default function Calculators() {
   const [tab, setTab] = useState(() => {
     try { return localStorage.getItem('calc-tab') || 'construction' } catch { return 'construction' }
@@ -1065,11 +1077,17 @@ export default function Calculators() {
     try { localStorage.setItem('calc-tab', t) } catch {}
   }
 
+  // Derive which calculator and which construction sub-mode are active
+  const isConstruction = CON_IDS.has(tab)
+  const conMode = isConstruction && tab !== 'construction' ? tab : null
+  const showHelp = tab === 'help'
+  const activeTab = isConstruction ? 'construction' : tab
+
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div className="page-header" style={{ paddingBottom: 0 }} data-tutorial-target="calculator">
         <h1 className="page-title">Calculators</h1>
-        {/* Mobile: dropdown */}
+        {/* Mobile: dropdown — construction modes grouped */}
         <div className="calc-tab-select-wrap">
           <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', width: '100%' }}>
             <select
@@ -1078,7 +1096,12 @@ export default function Calculators() {
               onChange={e => switchTab(e.target.value)}
               style={{ width: '100%' }}
             >
-              {TABS.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
+              <optgroup label="Construction">
+                {CON_MODES.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}
+              </optgroup>
+              <optgroup label="Other Calculators">
+                {TABS.filter(t => !CON_IDS.has(t.id)).map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
+              </optgroup>
             </select>
             <span className="filter-select-chevron" aria-hidden="true">▾</span>
           </div>
@@ -1086,22 +1109,22 @@ export default function Calculators() {
         {/* Desktop: tabs */}
         <div className="page-tabs" style={{ marginTop: 12 }}>
           {TABS.map(t => (
-            <button key={t.id} onClick={() => switchTab(t.id)} className={`page-tab${tab === t.id ? ' active' : ''}`}>
+            <button key={t.id} onClick={() => switchTab(t.id)} className={`page-tab${activeTab === t.id ? ' active' : ''}`}>
               {t.label}
             </button>
           ))}
         </div>
       </div>
-      {(tab === 'construction' || tab === 'boardfoot' || tab === 'trim' || tab === 'notes')
+      {(isConstruction || activeTab === 'boardfoot' || activeTab === 'trim' || activeTab === 'notes')
         ? <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-            {tab === 'construction' && <ConstructionCalc />}
-            {tab === 'boardfoot'    && <BoardFoot />}
-            {tab === 'trim'         && <TrimCuts />}
-            {tab === 'notes'        && <CalcNotes />}
+            {isConstruction && <ConstructionCalc conMode={conMode} showHelp={showHelp} />}
+            {activeTab === 'boardfoot' && <BoardFoot />}
+            {activeTab === 'trim'      && <TrimCuts />}
+            {activeTab === 'notes'     && <CalcNotes />}
           </div>
         : <div className="scroll-page" style={{ paddingTop: 16, flex: 1 }}>
-            {tab === 'converter' && <UnitConverter />}
-            {tab === 'sheet'     && <SheetGoods />}
+            {activeTab === 'converter' && <UnitConverter />}
+            {activeTab === 'sheet'     && <SheetGoods />}
           </div>
       }
     </div>

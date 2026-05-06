@@ -244,7 +244,7 @@ function StairsViz({ riserH, tread, numRisers }) {
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
-export default function ConstructionCalc() {
+export default function ConstructionCalc({ conMode = null, showHelp = false }) {
   const [display, setDisplay]       = useState('')
   const [left, setLeft]             = useState(null)
   const [op, setOp]                 = useState(null)
@@ -253,8 +253,6 @@ export default function ConstructionCalc() {
   const [memory, setMemoryState]    = useState(() => loadMemory())
   const [history, setHistoryState]  = useState(() => loadHistory())
   const [conState, setConState]     = useState({})
-  const [conMode, setConMode]       = useState(null)
-  const [showHelp, setShowHelp]     = useState(false)
   const [showTape, setShowTape]     = useState(false)
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
   const containerRef = useRef(null)
@@ -497,38 +495,6 @@ export default function ConstructionCalc() {
 
       {/* ── Left: Calculator ── */}
       <div ref={containerRef} className="cm-left" style={{ width: isMobile ? '100%' : calcWidth }}>
-
-        {/* Mode pill buttons — replaces dropdown, no second select */}
-        <div style={{ display: 'flex', gap: 3, marginBottom: 4, flexWrap: 'wrap' }}>
-          {[
-            { id: null,     label: 'Calc' },
-            { id: 'pitch',  label: 'Pitch' },
-            { id: 'diag',   label: 'Diag' },
-            { id: 'stairs', label: 'Stairs' },
-            { id: 'circle', label: 'Circle' },
-            { id: 'miter',  label: 'Miter' },
-            { id: 'help',   label: '?' },
-          ].map(m => {
-            const active = m.id === null ? (!conMode && !showHelp) : (m.id === 'help' ? showHelp : conMode === m.id)
-            return (
-              <button key={m.id || 'calc'} type="button"
-                onClick={() => {
-                  if (m.id === null) { setConMode(null); setShowHelp(false) }
-                  else if (m.id === 'help') { setShowHelp(h => !h); setConMode(null) }
-                  else { setConMode(m.id); setShowHelp(false) }
-                }}
-                style={{
-                  padding: '5px 10px', fontSize: 12, fontWeight: 700,
-                  borderRadius: 99, border: 'none', cursor: 'pointer',
-                  fontFamily: 'inherit', letterSpacing: '.3px',
-                  background: active ? 'var(--forest)' : 'var(--calc-key2)',
-                  color: active ? '#fff' : 'rgba(255,255,255,.65)',
-                }}>
-                {m.label}
-              </button>
-            )
-          })}
-        </div>
 
         {/* Display — single line */}
         <div className="cm-display" style={{ marginBottom: 4 }}>
