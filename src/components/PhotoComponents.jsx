@@ -5,11 +5,12 @@ import { IEdit, IClose, IChevR, IChevL, IPlus, ITrash, IImage, IBulb } from './I
 
 // ─── Lightbox ─────────────────────────────────────────────────────────────────
 export function Lightbox({ photos, index, onClose, onEdit }) {
-  const [cur, setCur]           = useState(index)
-  const [scale, setScale]       = useState(1)
-  const [rotation, setRotation] = useState(0)
-  const [pan, setPan]           = useState({ x: 0, y: 0 })
-  const [showEdit, setShowEdit] = useState(false)
+  const [cur, setCur]                   = useState(index)
+  const [scale, setScale]               = useState(1)
+  const [rotation, setRotation]         = useState(photos[index]?.rotation || 0)
+  const [pan, setPan]                   = useState({ x: 0, y: 0 })
+  const [showEdit, setShowEdit]         = useState(false)
+  const [showSaveRotation, setShowSaveRotation] = useState(false)
   const containerRef   = useRef()
   const lastDist       = useRef(null)
   const lastMid        = useRef(null)
@@ -18,7 +19,7 @@ export function Lightbox({ photos, index, onClose, onEdit }) {
   const swipeStartX    = useRef(null)
 
   const reset = () => { setScale(1); setPan({ x: 0, y: 0 }) }
-  useEffect(() => { reset(); setRotation(0) }, [cur])
+  useEffect(() => { reset(); setRotation(photos[cur]?.rotation || 0); setShowSaveRotation(false) }, [cur])
 
   // Keyboard navigation
   useEffect(() => {
@@ -216,11 +217,47 @@ export function Lightbox({ photos, index, onClose, onEdit }) {
           style={{ background: 'rgba(255,255,255,.12)', border: 'none', borderRadius: 99, width: 36, height: 36, cursor: 'pointer', color: '#fff', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           ↻
         </button>
-        <button aria-label="Close" onClick={onClose}
+        <button aria-label="Close" onClick={e => {
+          e.stopPropagation()
+          const stored = photos[cur]?.rotation || 0
+          const current = ((rotation % 360) + 360) % 360
+          if (onEdit && current !== stored) {
+            setShowSaveRotation(true)
+          } else {
+            onClose()
+          }
+        }}
           style={{ background: 'rgba(255,255,255,.12)', border: 'none', borderRadius: 99, width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <IClose size={18} color="#fff" sw={2.5} />
         </button>
       </div>
+
+      {showSaveRotation && (
+        <div style={{ position: 'absolute', bottom: 80, left: '50%', transform: 'translateX(-50%)',
+          background: 'rgba(0,0,0,.88)', borderRadius: 12, padding: '16px 24px',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, zIndex: 10,
+          boxShadow: '0 4px 24px rgba(0,0,0,.5)', whiteSpace: 'nowrap' }}>
+          <div style={{ color: '#fff', fontSize: 14, fontWeight: 500 }}>Save rotated photo?</div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button type="button" onClick={() => { setShowSaveRotation(false); setRotation(photos[cur]?.rotation || 0) }}
+              style={{ background: 'rgba(255,255,255,.18)', border: 'none', borderRadius: 8,
+                padding: '8px 18px', color: '#fff', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14 }}>
+              Discard
+            </button>
+            <button type="button" onClick={async () => {
+              const newRot = ((rotation % 360) + 360) % 360
+              await onEdit(photos[cur].id, { rotation: newRot })
+              setShowSaveRotation(false)
+              onClose()
+            }}
+              style={{ background: 'var(--forest)', border: 'none', borderRadius: 8,
+                padding: '8px 18px', color: '#fff', cursor: 'pointer', fontFamily: 'inherit',
+                fontSize: 14, fontWeight: 600 }}>
+              Save
+            </button>
+          </div>
+        </div>
+      )}
       {showEdit && onEdit && (
         <PhotoEditSheet
           photo={photos[cur]}
@@ -330,6 +367,7 @@ export const PhotoCard = memo(function PhotoCard({ photo, onEdit, onOpen, showPr
           loading="lazy"
           onError={() => setErr(true)}
           onClick={onOpen}
+          style={photo.rotation ? { transform: `rotate(${photo.rotation}deg)` } : undefined}
         />
       ) : (
         <div className="photo-placeholder">No image</div>
