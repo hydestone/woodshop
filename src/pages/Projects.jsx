@@ -11,8 +11,8 @@ import {
 } from '../components/Shared.jsx'
 import { ProjectDetail, ProjectSheet, StarBurst } from './ProjectDetail.jsx'
 
-const STATUS_ORDER = ['active', 'planning', 'paused', 'complete']
-const STATUS_LABEL = { active: 'Active', planning: 'Planning', paused: 'Paused', complete: 'Complete' }
+const STATUS_ORDER = ['active', 'planning', 'complete']
+const STATUS_LABEL = { active: 'Active', planning: 'Planning', complete: 'Complete' }
 
 // ─── Projects list ────────────────────────────────────────────────────────────
 export default function Projects() {
@@ -168,7 +168,6 @@ export default function Projects() {
                 { id: 'all',      label: 'All' },
                 { id: 'active',   label: 'Active' },
                 { id: 'planning', label: 'Planning' },
-                { id: 'paused',   label: 'Paused' },
                 { id: 'complete', label: 'Complete' },
               ].map(s => (
                 <button key={s.id} onClick={() => setStatusFilter(s.id)} style={{
@@ -294,7 +293,6 @@ function ProjectTable({ projects, categories, statusFilter, setStatusFilter }) {
     { id: 'all',      label: 'All' },
     { id: 'active',   label: 'Active' },
     { id: 'planning', label: 'Planning' },
-    { id: 'paused',   label: 'Paused' },
     { id: 'complete', label: 'Complete' },
   ]
 

@@ -151,6 +151,7 @@ export default function AllPhotos() {
     return photos
   }
 
+  const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0
   const [dragging, setDragging] = useState(false)
   const dragCount = useRef(0)
 
@@ -252,12 +253,12 @@ export default function AllPhotos() {
           </div>
         )}
 
-        {/* Photo grid with drag-drop */}
+        {/* Photo grid with drag-drop (desktop only) */}
         <div
-          onDragEnter={onGridDragEnter}
-          onDragLeave={onGridDragLeave}
-          onDragOver={onGridDragOver}
-          onDrop={onGridDrop}
+          onDragEnter={isMobile ? undefined : onGridDragEnter}
+          onDragLeave={isMobile ? undefined : onGridDragLeave}
+          onDragOver={isMobile ? undefined : onGridDragOver}
+          onDrop={isMobile ? undefined : onGridDrop}
           style={{
             position: 'relative',
             ...(dragging ? { outline: '3px dashed var(--accent)', outlineOffset: -3, borderRadius: 12, background: 'var(--accent-dim)' } : {}),
@@ -265,7 +266,7 @@ export default function AllPhotos() {
             minHeight: 200,
           }}
         >
-          {dragging && (
+          {dragging && !isMobile && (
             <div style={{
               position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
               zIndex: 10, pointerEvents: 'none',

@@ -11,14 +11,15 @@ import {
   IPlus, ITrash, ICircle, ICheck, IChevR, IChevL, IEdit, ICal, ICamera, IBell, IGrid, IStar, IList,
 } from '../components/Shared.jsx'
 
-const STATUS_ORDER = ['active', 'planning', 'paused', 'complete']
-const STATUS_LABEL = { active: 'Active', planning: 'Planning', paused: 'Paused', complete: 'Complete' }
+const STATUS_ORDER = ['active', 'planning', 'complete']
+const STATUS_LABEL = { active: 'Active', planning: 'Planning', complete: 'Complete' }
 
 export function ProjectDetail() {
   const { data, mutate, projId, setProjId, setTab } = useCtx()
   const toast = useToast()
   const [sub, setSub]           = useState(null)
   const [editing, setEditing]   = useState(false)
+  const [showStatusPicker, setShowStatusPicker] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [showRon, setShowRon]   = useState(false)
   const [showQRLabel, setShowQRLabel] = useState(false)
@@ -134,7 +135,6 @@ export function ProjectDetail() {
   .pill-active{background:#DBEAFE;color:#1D4ED8}
   .pill-complete{background:#DCFCE7;color:#15803D}
   .pill-planning{background:#EDE9FE;color:#7C3AED}
-  .pill-paused{background:#FEF3C7;color:#B45309}
   h2{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#94A3B8;margin:22px 0 8px;border-bottom:1px solid #E2E8F0;padding-bottom:4px}
   .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:4px}
   .stat{background:#F8FAFC;border:1px solid #E2E8F0;padding:10px 12px}
@@ -323,36 +323,19 @@ ${progressPhotos.length>12?`<div style="display:flex;align-items:center;justify-
         {/* Row 2: category · status · wood · year */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', flexWrap: 'wrap' }}>
           {project.category && (
-            <span style={{ fontSize: 12, background: 'var(--blue-dim)', color: 'var(--blue)', borderRadius: 99, padding: '2px 10px', fontWeight: 600 }}>
+            <button type="button" onClick={() => setEditing(true)} style={{ fontSize: 12, background: 'var(--blue-dim)', color: 'var(--blue)', borderRadius: 99, padding: '2px 10px', fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
               {project.category}
-            </span>
+            </button>
           )}
-          <select
-            value={project.status}
-            onChange={async e => {
-              const next = e.target.value
-              if (next === project.status) return
-              try {
-                await db.updateProject(project.id, { status: next })
-                mutate(d => ({ ...d, projects: d.projects.map(p => p.id === project.id ? { ...p, status: next } : p) }))
-                if (next === 'complete' && project.status !== 'complete') setShowRon(true)
-              } catch (err) { toast(err.message, 'error') }
-            }}
-            style={{
-              appearance: 'none', WebkitAppearance: 'none',
-              background: ss.bg, color: ss.color,
-              border: 'none', borderRadius: 99,
+          <button type="button" onClick={() => setShowStatusPicker(true)}
+            style={{ background: ss.bg, color: ss.color, border: 'none', borderRadius: 99,
               padding: '2px 20px 2px 10px', fontSize: 12, fontWeight: 600,
-              fontFamily: 'inherit', cursor: 'pointer', flexShrink: 0,
+              fontFamily: 'inherit', cursor: 'pointer', flexShrink: 0, position: 'relative',
               backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='${encodeURIComponent(ss.color)}' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
               backgroundRepeat: 'no-repeat', backgroundPosition: 'right 6px center',
-            }}
-          >
-            <option value="planning">Planning</option>
-            <option value="active">Active</option>
-            <option value="paused">Paused</option>
-            <option value="complete">Complete</option>
-          </select>
+            }}>
+            {STATUS_LABEL[project.status] || project.status}
+          </button>
           {project.wood_type && <span style={{ fontSize: 12, color: 'var(--c-text-muted)' }}>{project.wood_type}</span>}
           {project.year_completed && <span style={{ fontSize: 12, color: 'var(--c-text-faint)' }}>{project.year_completed}</span>}
         </div>
@@ -540,6 +523,27 @@ ${progressPhotos.length>12?`<div style="display:flex;align-items:center;justify-
 
       </div>{/* end swipeable tab content */}
 
+      {showStatusPicker && (
+        <Sheet title="Status" onClose={() => setShowStatusPicker(false)} onSave={null}>
+          <div className="form-group">
+            {['planning', 'active', 'complete'].map((s, i, arr) => (
+              <div key={s} className="more-item" style={{ padding: '14px 16px', borderBottom: i < arr.length-1 ? '1px solid var(--c-border-light)' : 'none' }}
+                onClick={async () => {
+                  setShowStatusPicker(false)
+                  if (s === project.status) return
+                  try {
+                    await db.updateProject(project.id, { status: s })
+                    mutate(d => ({ ...d, projects: d.projects.map(p => p.id === project.id ? { ...p, status: s } : p) }))
+                    if (s === 'complete' && project.status !== 'complete') setShowRon(true)
+                  } catch (err) { toast(err.message, 'error') }
+                }} role="button" tabIndex={0}>
+                <span style={{ flex: 1, fontSize: 15, color: s === project.status ? 'var(--accent)' : 'var(--c-text-primary)', fontWeight: s === project.status ? 700 : 400 }}>{STATUS_LABEL[s]}</span>
+                {s === project.status && <span style={{ color: 'var(--accent)', fontSize: 16 }}>✓</span>}
+              </div>
+            ))}
+          </div>
+        </Sheet>
+      )}
       {editing    && <ProjectSheet project={project} categories={categories} onSave={handleUpdate} onClose={() => setEditing(false)} mutate={mutate} />}
       {confirming && <ConfirmSheet message={`Delete "${project.name}"? All steps, coats, and photos will be removed. This cannot be undone.`} onConfirm={handleDelete} onClose={() => setConfirming(false)} />}
       {showRon    && <RonSwansonModal onClose={() => setShowRon(false)} />}
@@ -843,9 +847,9 @@ function TimeTracker({ project, onSave }) {
           <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
             <input className="cell-input" type="date" value={date} onChange={e => setDate(e.target.value)} />
             <input className="form-input" type="number" min="0" placeholder="0h" value={hrs} onChange={e => setHrs(e.target.value)}
-              style={{ width: 52, background: 'var(--c-bg-subtle)', borderRadius: 8, padding: '7px 8px', border: '1px solid var(--c-border-light)', fontSize: 13, textAlign: 'center' }} />
+              style={{ width: 52, background: 'var(--c-bg-subtle)', borderRadius: 8, padding: '7px 8px', border: '1px solid var(--c-border-light)', fontSize: 13, textAlign: 'right' }} />
             <input className="form-input" type="number" min="0" max="59" placeholder="00m" value={mins} onChange={e => setMins(e.target.value)}
-              style={{ width: 52, background: 'var(--c-bg-subtle)', borderRadius: 8, padding: '7px 8px', border: '1px solid var(--c-border-light)', fontSize: 13, textAlign: 'center' }} />
+              style={{ width: 52, background: 'var(--c-bg-subtle)', borderRadius: 8, padding: '7px 8px', border: '1px solid var(--c-border-light)', fontSize: 13, textAlign: 'right' }} />
           </div>
           <div style={{ display: 'flex', gap: 6 }}>
             <input className="cell-input" placeholder="Note (optional)" value={note} onChange={e => setNote(e.target.value)} />
@@ -1299,7 +1303,6 @@ export function ProjectSheet({ project, categories, onSave, onClose, mutate }) {
           <select ref={refs.status} className="form-select" defaultValue={project?.status || 'active'}>
             <option value="planning">Planning</option>
             <option value="active">Active</option>
-            <option value="paused">Paused</option>
             <option value="complete">Complete</option>
           </select>
         </FormCell>
@@ -1338,22 +1341,60 @@ export function ProjectSheet({ project, categories, onSave, onClose, mutate }) {
 }
 
 // ─── Coat sheet ───────────────────────────────────────────────────────────────
-function CoatSheet({ nextNum, defaultCoat, isEdit, onSave, onClose }) {
-  const refs = { prod: useRef(), num: useRef(), iv: useRef(), iu: useRef(), notes: useRef() }
+function CoatSheet({ nextNum, defaultCoat, isEdit, onSave, onClose, prevCoat }) {
+  const refs = { prod: useRef(), num: useRef(), iv: useRef(), iu: useRef(), notes: useRef(), applied: useRef() }
+  const [intervalVal, setIntervalVal] = useState(defaultCoat?.interval_value ?? 4)
+  const [intervalUnit, setIntervalUnit] = useState(defaultCoat?.interval_unit || 'hours')
+
+  // Calculate next coat due based on this coat's applied time + wait period
+  const nextDue = (() => {
+    const appliedVal = refs.applied?.current?.value
+    const base = appliedVal ? new Date(appliedVal) : new Date()
+    const ms = intervalUnit === 'days' ? intervalVal * 86400000 : intervalVal * 3600000
+    const due = new Date(base.getTime() + ms)
+    return due.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+  })
+
+  const localNow = () => {
+    const d = new Date(); const off = d.getTimezoneOffset() * 60000
+    return new Date(d - off).toISOString().slice(0, 16)
+  }
+
   const handleSave = async () => {
     const product = refs.prod.current?.value.trim()
     if (!product) return
-    await onSave({ product, coat_number: parseInt(refs.num.current?.value) || nextNum, interval_value: parseFloat(refs.iv.current?.value) || 4, interval_unit: refs.iu.current?.value || 'hours', notes: refs.notes.current?.value.trim() || '' })
+    const iv = parseFloat(refs.iv.current?.value) || 4
+    const iu = refs.iu.current?.value || 'hours'
+    const applied = refs.applied.current?.value ? new Date(refs.applied.current.value).toISOString() : null
+    await onSave({ product, coat_number: parseInt(refs.num.current?.value) || nextNum, interval_value: iv, interval_unit: iu, notes: refs.notes.current?.value.trim() || '', ...(applied ? { applied_at: applied } : {}) })
   }
+
   return (
     <Sheet title={isEdit ? 'Edit Coat' : 'Add Coat'} onClose={onClose} onSave={handleSave}>
       <div className="form-group">
         <FormCell label="Product"><input ref={refs.prod} className="form-input" placeholder="Arm-R-Seal" defaultValue={defaultCoat?.product || ''} autoFocus /></FormCell>
         <FormCell label="Coat #"><input ref={refs.num} className="form-input" type="number" defaultValue={isEdit ? defaultCoat?.coat_number : nextNum} /></FormCell>
-        <FormCell label="Wait"><input ref={refs.iv} className="form-input" type="number" defaultValue={defaultCoat?.interval_value ?? 4} /></FormCell>
-        <FormCell label="Unit"><select ref={refs.iu} className="form-select" defaultValue={defaultCoat?.interval_unit || 'hours'}><option value="hours">Hours</option><option value="days">Days</option></select></FormCell>
+        <FormCell label="Applied">
+          <input ref={refs.applied} className="form-input" type="datetime-local" defaultValue={defaultCoat?.applied_at ? new Date(defaultCoat.applied_at - new Date().getTimezoneOffset()*60000).toISOString().slice(0,16) : localNow()} />
+        </FormCell>
+        <FormCell label="Wait between coats">
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input ref={refs.iv} className="form-input" type="number" defaultValue={defaultCoat?.interval_value ?? 4}
+              onChange={e => setIntervalVal(parseFloat(e.target.value) || 0)} style={{ width: 70 }} />
+            <select ref={refs.iu} className="form-select" defaultValue={defaultCoat?.interval_unit || 'hours'}
+              onChange={e => setIntervalUnit(e.target.value)}>
+              <option value="hours">Hours</option>
+              <option value="days">Days</option>
+            </select>
+          </div>
+        </FormCell>
         <FormCell label="Notes" last><input ref={refs.notes} className="form-input" placeholder="Optional" defaultValue={defaultCoat?.notes || ''} /></FormCell>
       </div>
+      {!isEdit && intervalVal > 0 && (
+        <p style={{ fontSize: 12, color: 'var(--c-text-muted)', margin: '12px 0 0', textAlign: 'center' }}>
+          Next coat due <strong style={{ color: 'var(--c-text-primary)' }}>{nextDue()}</strong>
+        </p>
+      )}
     </Sheet>
   )
 }
