@@ -506,6 +506,7 @@ function useECharts(ref, getOption, deps, isDark) {
                 echarts.init(ref.current, null, { renderer: 'svg' })
 
     chart.setOption(getOption(isDark), { notMerge: true })
+    chart.resize()
 
     // Register with shared observer
     if (_ro) { _ro.observe(ref.current); _chartRefs.add(ref.current) }

@@ -329,12 +329,12 @@ ${progressPhotos.length>12?`<div style="display:flex;align-items:center;justify-
           )}
           <button type="button" onClick={() => setShowStatusPicker(true)}
             style={{ background: ss.bg, color: ss.color, border: 'none', borderRadius: 99,
-              padding: '2px 20px 2px 10px', fontSize: 12, fontWeight: 600,
-              fontFamily: 'inherit', cursor: 'pointer', flexShrink: 0, position: 'relative',
-              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='${encodeURIComponent(ss.color)}' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
-              backgroundRepeat: 'no-repeat', backgroundPosition: 'right 6px center',
+              padding: '2px 10px', fontSize: 12, fontWeight: 600,
+              fontFamily: 'inherit', cursor: 'pointer', flexShrink: 0,
+              display: 'inline-flex', alignItems: 'center', gap: 4,
             }}>
             {STATUS_LABEL[project.status] || project.status}
+            <span style={{ fontSize: 9, opacity: 0.7 }}>▾</span>
           </button>
           {project.wood_type && <span style={{ fontSize: 12, color: 'var(--c-text-muted)' }}>{project.wood_type}</span>}
           {project.year_completed && <span style={{ fontSize: 12, color: 'var(--c-text-faint)' }}>{project.year_completed}</span>}
@@ -1341,23 +1341,23 @@ export function ProjectSheet({ project, categories, onSave, onClose, mutate }) {
 }
 
 // ─── Coat sheet ───────────────────────────────────────────────────────────────
-function CoatSheet({ nextNum, defaultCoat, isEdit, onSave, onClose, prevCoat }) {
+function CoatSheet({ nextNum, defaultCoat, isEdit, onSave, onClose }) {
   const refs = { prod: useRef(), num: useRef(), iv: useRef(), iu: useRef(), notes: useRef(), applied: useRef() }
-  const [intervalVal, setIntervalVal] = useState(defaultCoat?.interval_value ?? 4)
-  const [intervalUnit, setIntervalUnit] = useState(defaultCoat?.interval_unit || 'hours')
-
-  // Calculate next coat due based on this coat's applied time + wait period
-  const nextDue = (() => {
-    const appliedVal = refs.applied?.current?.value
-    const base = appliedVal ? new Date(appliedVal) : new Date()
-    const ms = intervalUnit === 'days' ? intervalVal * 86400000 : intervalVal * 3600000
-    const due = new Date(base.getTime() + ms)
-    return due.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
-  })
 
   const localNow = () => {
-    const d = new Date(); const off = d.getTimezoneOffset() * 60000
-    return new Date(d - off).toISOString().slice(0, 16)
+    const d = new Date()
+    const offset = d.getTimezoneOffset() * 60000
+    return new Date(d.getTime() - offset).toISOString().slice(0, 16)
+  }
+
+  const appliedDefault = () => {
+    if (!defaultCoat?.applied_at) return localNow()
+    try {
+      const d = new Date(defaultCoat.applied_at)
+      if (isNaN(d.getTime())) return localNow()
+      const offset = d.getTimezoneOffset() * 60000
+      return new Date(d.getTime() - offset).toISOString().slice(0, 16)
+    } catch { return localNow() }
   }
 
   const handleSave = async () => {
@@ -1365,8 +1365,16 @@ function CoatSheet({ nextNum, defaultCoat, isEdit, onSave, onClose, prevCoat }) 
     if (!product) return
     const iv = parseFloat(refs.iv.current?.value) || 4
     const iu = refs.iu.current?.value || 'hours'
-    const applied = refs.applied.current?.value ? new Date(refs.applied.current.value).toISOString() : null
-    await onSave({ product, coat_number: parseInt(refs.num.current?.value) || nextNum, interval_value: iv, interval_unit: iu, notes: refs.notes.current?.value.trim() || '', ...(applied ? { applied_at: applied } : {}) })
+    const appliedRaw = refs.applied.current?.value
+    const applied = appliedRaw ? new Date(appliedRaw).toISOString() : null
+    await onSave({
+      product,
+      coat_number:    parseInt(refs.num.current?.value) || nextNum,
+      interval_value: iv,
+      interval_unit:  iu,
+      notes:          refs.notes.current?.value.trim() || '',
+      ...(applied ? { applied_at: applied } : {}),
+    })
   }
 
   return (
@@ -1375,14 +1383,12 @@ function CoatSheet({ nextNum, defaultCoat, isEdit, onSave, onClose, prevCoat }) 
         <FormCell label="Product"><input ref={refs.prod} className="form-input" placeholder="Arm-R-Seal" defaultValue={defaultCoat?.product || ''} autoFocus /></FormCell>
         <FormCell label="Coat #"><input ref={refs.num} className="form-input" type="number" defaultValue={isEdit ? defaultCoat?.coat_number : nextNum} /></FormCell>
         <FormCell label="Applied">
-          <input ref={refs.applied} className="form-input" type="datetime-local" defaultValue={defaultCoat?.applied_at ? new Date(defaultCoat.applied_at - new Date().getTimezoneOffset()*60000).toISOString().slice(0,16) : localNow()} />
+          <input ref={refs.applied} className="form-input" type="datetime-local" defaultValue={appliedDefault()} />
         </FormCell>
-        <FormCell label="Wait between coats">
+        <FormCell label="Wait">
           <div style={{ display: 'flex', gap: 8 }}>
-            <input ref={refs.iv} className="form-input" type="number" defaultValue={defaultCoat?.interval_value ?? 4}
-              onChange={e => setIntervalVal(parseFloat(e.target.value) || 0)} style={{ width: 70 }} />
-            <select ref={refs.iu} className="form-select" defaultValue={defaultCoat?.interval_unit || 'hours'}
-              onChange={e => setIntervalUnit(e.target.value)}>
+            <input ref={refs.iv} className="form-input" type="number" defaultValue={defaultCoat?.interval_value ?? 4} style={{ width: 70 }} />
+            <select ref={refs.iu} className="form-select" defaultValue={defaultCoat?.interval_unit || 'hours'}>
               <option value="hours">Hours</option>
               <option value="days">Days</option>
             </select>
@@ -1390,11 +1396,6 @@ function CoatSheet({ nextNum, defaultCoat, isEdit, onSave, onClose, prevCoat }) 
         </FormCell>
         <FormCell label="Notes" last><input ref={refs.notes} className="form-input" placeholder="Optional" defaultValue={defaultCoat?.notes || ''} /></FormCell>
       </div>
-      {!isEdit && intervalVal > 0 && (
-        <p style={{ fontSize: 12, color: 'var(--c-text-muted)', margin: '12px 0 0', textAlign: 'center' }}>
-          Next coat due <strong style={{ color: 'var(--c-text-primary)' }}>{nextDue()}</strong>
-        </p>
-      )}
     </Sheet>
   )
 }

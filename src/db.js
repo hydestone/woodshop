@@ -185,11 +185,18 @@ async function compressImage(file, maxPx = 2400, quality = 0.92) {
   })
 }
 
+// ── Owner/admin detection — beta testing bypass ───────────────────────────────
+// Temporary: replace with role-based permissions post-beta
+export function isOwner(userId) {
+  return userId === '956f2bdd-022b-4e17-8ec9-47246a18e152'
+}
+
 // ── Photo upload limit ────────────────────────────────────────────────────────
 export const PHOTO_LIMIT = 100 // free tier cap
 
 export async function getPhotoCount() {
   const user_id = await getCurrentUserId()
+  if (isOwner(user_id)) return 0 // owner/admin bypass
   const { count } = await supabase.from('photos').select('id', { count: 'exact', head: true }).eq('user_id', user_id)
   return count || 0
 }

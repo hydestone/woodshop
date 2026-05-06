@@ -317,6 +317,10 @@ export default function ConstructionCalc() {
   const pressEquals = useCallback(() => {
     const rhs = parsedDisplay, lhs = left
     if (!rhs || !lhs || !op) return
+    if (op === '÷' && fracToDecimal(rhs) === 0) {
+      setDisplay('÷0 Error'); setResult(null); setLeft(null); setOp(null); setJustEvaled(false)
+      return
+    }
     let res
     if (op === '+') res = fracAdd(lhs, rhs)
     else if (op === '−') res = fracSub(lhs, rhs)
@@ -415,7 +419,7 @@ export default function ConstructionCalc() {
     let cr = circR || (circD&&circD/2) || (circC&&circC/(2*Math.PI))
     if (cr) { r.circle_radius=cr; r.circle_diameter=cr*2; r.circle_circ=cr*2*Math.PI; r.circle_area=(cr*cr*Math.PI).toFixed(2)+' in²' }
     const corner = s.miter_corner, tilt = s.miter_tilt
-    if (corner) { const half=corner/2; r.miter_flat=(90-half).toFixed(2)+'°'; if (tilt!=null) { r.miter_comp=(Math.atan(Math.cos(tilt*Math.PI/180)*Math.tan(half*Math.PI/180))*180/Math.PI).toFixed(2)+'°'; r.miter_bevel=(Math.atan(Math.sin(half*Math.PI/180)*Math.sin(tilt*Math.PI/180))*180/Math.PI).toFixed(2)+'°' } }
+    if (corner) { const half=corner/2; r.miter_flat=(90-half).toFixed(2)+'°'; if (tilt!=null) { r.miter_comp=(Math.atan(Math.cos(tilt*Math.PI/180)*Math.tan(half*Math.PI/180))*180/Math.PI).toFixed(2)+'°'; r.miter_bevel=(Math.asin(Math.sin(half*Math.PI/180)*Math.sin(tilt*Math.PI/180))*180/Math.PI).toFixed(2)+'°' } }
     return r
   }, [conState])
 
