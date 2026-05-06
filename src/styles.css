@@ -1089,6 +1089,30 @@ body {
   height: calc(var(--vvh) - 12px);
   max-height: calc(var(--vvh) - 12px);
 }
+/* Form sheet variant — full screen, keyboard-stable editing surface */
+.overlay.overlay-form {
+  align-items: stretch;
+}
+.sheet.sheet-form {
+  max-height: none;
+  height: 100%;
+  border-radius: 0;
+  padding-top: env(safe-area-inset-top, 0px);
+  animation: fadeIn 180ms ease;
+}
+/* Form sheet: keyboard offset adds padding to body, sheet itself never moves */
+.sheet.sheet-form .sheet-body {
+  padding-bottom: calc(var(--keyboard-offset, 0px) + 24px);
+  transition: padding-bottom 250ms ease;
+}
+/* Suppress bottom-sheet keyboard behavior for form sheets */
+.sheet.sheet-form.sheet-keyboard {
+  margin-bottom: 0;
+  height: 100%;
+  max-height: none;
+  padding-bottom: 0;
+}
+
 .sheet-handle {
   width: 36px;
   height: 4px;

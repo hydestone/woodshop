@@ -227,7 +227,7 @@ function EditShopSheet({ item, onSave, onClose, projects = [] }) {
     })
   }
   return (
-    <Sheet title="Edit Item" onClose={onClose} onSave={handleSave}>
+    <Sheet title="Edit Item" onClose={onClose} onSave={handleSave} variant="form">
       <div className="form-group">
         <FormCell label="Item"><input ref={refs.name} className="form-input" defaultValue={item.name} autoFocus /></FormCell>
         <FormCell label="Qty"><input ref={refs.qty} className="form-input" defaultValue={item.qty} placeholder="1" /></FormCell>

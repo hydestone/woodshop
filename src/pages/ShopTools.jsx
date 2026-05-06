@@ -366,7 +366,7 @@ function ToolSheet({ tool, onSave, onClose }) {
   }
 
   return (
-    <Sheet title={tool ? 'Edit Tool' : 'Add Tool'} onClose={onClose} onSave={handleSave}>
+    <Sheet title={tool ? 'Edit Tool' : 'Add Tool'} onClose={onClose} onSave={handleSave} variant="form">
       {/* Core info */}
       <div className="form-group">
         <FormCell label="Tool Name">

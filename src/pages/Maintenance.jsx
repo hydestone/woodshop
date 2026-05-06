@@ -260,7 +260,7 @@ function MaintSheet({ item, onSave, onClose }) {
     })
   }
   return (
-    <Sheet title={item ? 'Edit Task' : 'Add Task'} onClose={onClose} onSave={handleSave}>
+    <Sheet title={item ? 'Edit Task' : 'Add Task'} onClose={onClose} onSave={handleSave} variant="form">
       <div className="form-group">
         <FormCell label="Task"><input ref={refs.name} className="form-input" placeholder="Sharpen bowl gouges" defaultValue={item?.name || ''} autoFocus /></FormCell>
         <FormCell label="Category">

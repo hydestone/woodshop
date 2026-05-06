@@ -271,7 +271,7 @@ function IdeaSheet({ idea, onSave, onClose }) {
   }
 
   return (
-    <Sheet title={idea ? 'Edit Idea' : 'New Idea'} onClose={onClose} onSave={handleSave} saveLabel={idea ? 'Update' : 'Save'}>
+    <Sheet title={idea ? 'Edit Idea' : 'New Idea'} onClose={onClose} onSave={handleSave} saveLabel={idea ? 'Update' : 'Save'} variant="form">
       <div className="form-group">
         <FormCell label="Title">
           <input className="form-input" placeholder="What do you want to build?" value={title}

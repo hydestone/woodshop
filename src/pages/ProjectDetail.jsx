@@ -1322,7 +1322,7 @@ export function ProjectSheet({ project, categories, onSave, onClose, mutate }) {
 
   return (
     <>
-    <Sheet title={project ? 'Edit Project' : 'New Project'} onClose={onClose} onSave={handleSave}>
+    <Sheet title={project ? 'Edit Project' : 'New Project'} onClose={onClose} onSave={handleSave} variant="form">
       <div className="form-group">
         <FormCell label="Name"><input ref={refs.name} className="form-input" placeholder="Cherry Bowl" defaultValue={project?.name || ''} autoFocus /></FormCell>
         <FormCell label="Category">
@@ -1492,7 +1492,7 @@ function CoatSheet({ nextNum, defaultCoat, isEdit, onSave, onClose }) {
   }
 
   return (
-    <Sheet title={isEdit ? 'Edit Coat' : 'Add Coat'} onClose={onClose} onSave={handleSave}>
+    <Sheet title={isEdit ? 'Edit Coat' : 'Add Coat'} onClose={onClose} onSave={handleSave} variant="form">
       <div className="form-group">
         <FormCell label="Product"><input ref={refs.prod} className="form-input" placeholder="Arm-R-Seal" defaultValue={defaultCoat?.product || ''} autoFocus /></FormCell>
         <FormCell label="Coat #"><input ref={refs.num} className="form-input" type="number" defaultValue={isEdit ? defaultCoat?.coat_number : nextNum} /></FormCell>

@@ -136,7 +136,7 @@ function ImprovementSheet({ item, onSave, onClose }) {
     })
   }
   return (
-    <Sheet title={item ? 'Edit Item' : 'Add Item'} onClose={onClose} onSave={handleSave}>
+    <Sheet title={item ? 'Edit Item' : 'Add Item'} onClose={onClose} onSave={handleSave} variant="form">
       <div className="form-group">
         <FormCell label="Item"><input ref={refs.title} className="form-input" placeholder="Dust collector upgrade" defaultValue={item?.title || ''} autoFocus /></FormCell>
         <FormCell label="Category" last>

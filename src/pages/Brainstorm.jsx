@@ -38,7 +38,7 @@ function PromoteSheet({ note, onClose, onDone }) {
   }
 
   return (
-    <Sheet title="Save as Idea" onClose={onClose} onSave={save} saveLabel={saving ? 'Saving…' : 'Save as Idea'}>
+    <Sheet title="Save as Idea" onClose={onClose} onSave={save} saveLabel={saving ? 'Saving…' : 'Save as Idea'} variant="form">
       <p style={{ fontSize: 13, color: 'var(--c-text-muted)', marginBottom: 16, lineHeight: 1.6 }}>
         This will create a new Project Idea from this note. The original note is kept.
       </p>

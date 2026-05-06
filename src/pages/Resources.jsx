@@ -220,7 +220,7 @@ function ResourceSheet({ item, prefill, onSave, onClose }) {
   }
 
   return (
-    <Sheet title={item ? 'Edit Resource' : 'Add Resource'} onClose={onClose} onSave={handleSave}>
+    <Sheet title={item ? 'Edit Resource' : 'Add Resource'} onClose={onClose} onSave={handleSave} variant="form">
       <div className="form-group">
         <FormCell label="Title">
           <input ref={refs.title} className="form-input" placeholder="Article title" defaultValue={item?.title || prefill?.title || ''} autoFocus />

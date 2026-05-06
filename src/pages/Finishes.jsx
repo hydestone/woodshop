@@ -174,7 +174,7 @@ function FinishSheet({ item, onSave, onClose }) {
   }
 
   return (
-    <Sheet title={item ? 'Edit Finish' : 'Add Finish'} onClose={onClose} onSave={handleSave}>
+    <Sheet title={item ? 'Edit Finish' : 'Add Finish'} onClose={onClose} onSave={handleSave} variant="form">
       <div className="form-group">
         <FormCell label="Product">
           <input ref={refs.name} className="form-input" placeholder="Arm-R-Seal" defaultValue={item?.name || ''} autoFocus />

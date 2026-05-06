@@ -122,7 +122,7 @@ export function maintStatus(m) {
 
 
 // ─── Sheet ────────────────────────────────────────────────────────────────────
-export function Sheet({ title, onClose, onSave, saveLabel = 'Save', children }) {
+export function Sheet({ title, onClose, onSave, saveLabel = 'Save', variant = 'picker', children }) {
   const [saving, setSaving] = useState(false)
   const savingRef  = useRef(false)
   const overlayRef = useRef()
@@ -230,7 +230,7 @@ export function Sheet({ title, onClose, onSave, saveLabel = 'Save', children }) 
   return createPortal(
     <div
       ref={overlayRef}
-      className="overlay"
+      className={`overlay${variant === 'form' ? ' overlay-form' : ''}`}
       role="dialog"
       aria-modal="true"
       aria-label={title}
@@ -238,7 +238,7 @@ export function Sheet({ title, onClose, onSave, saveLabel = 'Save', children }) 
       onMouseUp={e => { if (e.currentTarget._shouldClose && e.target === e.currentTarget && !saving) { onClose() } e.currentTarget._shouldClose = false }}
       onClick={e => e.stopPropagation()}
     >
-      <div ref={sheetRef} className="sheet">
+      <div ref={sheetRef} className={`sheet${variant === 'form' ? ' sheet-form' : ''}`}>
         <div className="sheet-handle" />
         <div className="sheet-header">
           <button type="button" className="sheet-cancel" onClick={onClose} disabled={saving}>Cancel</button>

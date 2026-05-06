@@ -307,7 +307,7 @@ function LocationSheet({ loc, onSave, onClose }) {
   }
 
   return (
-    <Sheet title={loc ? 'Edit Location' : 'Add Location'} onClose={onClose} onSave={handleSave}>
+    <Sheet title={loc ? 'Edit Location' : 'Add Location'} onClose={onClose} onSave={handleSave} variant="form">
       <div className="form-group" style={{marginBottom:12}}>
         <FormCell label="Name">
           <input ref={nameRef} className="form-input" placeholder="Sherborn Back Lot" defaultValue={loc?.name||''} autoFocus/>
@@ -679,7 +679,7 @@ function StockSheet({ item, locations, onSave, onClose }) {
   }
 
   return (
-    <Sheet title={item?'Edit Stock':'Add Stock Entry'} onClose={onClose} onSave={handleSave}>
+    <Sheet title={item?'Edit Stock':'Add Stock Entry'} onClose={onClose} onSave={handleSave} variant="form">
       <div className="form-group">
         <FormCell label="Species"><input ref={refs.species} className="form-input" placeholder="White Oak" defaultValue={item?.species||''} autoFocus/></FormCell>
         <FormCell label="Location">
