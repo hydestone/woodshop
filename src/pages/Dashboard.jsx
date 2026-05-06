@@ -697,7 +697,19 @@ export default function Dashboard() {
           </div>
         </>}
 
-        {!hasUrgent && <div className="empty" style={{ paddingTop: 32, paddingBottom: 0 }}><div className="empty-icon"><ITree size={32} color="var(--c-text-muted)" sw={1.5} /></div><div className="empty-title">All clear</div><p className="empty-sub">Nothing urgent today.</p></div>}
+        {!hasUrgent && <div style={{ padding: '8px 20px 0', fontSize: 13, color: 'var(--c-text-muted)' }}>✓ All clear — nothing urgent today.</div>}
+
+        {upCoats.length > 0 && <>
+          <span className="section-label" style={{ marginTop: 16 }}>Upcoming Coats</span>
+          <div className="group">
+            {upCoats.map(c => { const st = coatStatus(c); return (
+              <div key={c.id} className="cell" style={{ cursor: 'pointer' }} onClick={() => setProjId(c.project_id)}>
+                <div style={{ flex: 1 }}><div style={{ fontWeight: 500 }}>{c.product}</div><div style={{ fontSize: 13, color: 'var(--c-text-muted)' }}>Coat {c.coat_number} · {c.proj?.name} · {fmtShort(c.applied_at)}</div></div>
+                <span style={{ fontSize: 14, color: st.color, fontWeight: 500 }}>{st.label}</span>
+              </div>
+            )})}
+          </div>
+        </>}
 
         {(() => {
           const recent = [...data.projects]
@@ -739,17 +751,6 @@ export default function Dashboard() {
           <PhotoGrid photos={data.photos.slice(0, 12)} showProject projects={data.projects} />
         </>}
 
-        {upCoats.length > 0 && <>
-          <span className="section-label" style={{ marginTop: 8 }}>Upcoming Coats</span>
-          <div className="group">
-            {upCoats.map(c => { const st = coatStatus(c); return (
-              <div key={c.id} className="cell" style={{ cursor: 'pointer' }} onClick={() => setProjId(c.project_id)}>
-                <div style={{ flex: 1 }}><div style={{ fontWeight: 500 }}>{c.product}</div><div style={{ fontSize: 13, color: 'var(--c-text-muted)' }}>Coat {c.coat_number} · {c.proj?.name} · {fmtShort(c.applied_at)}</div></div>
-                <span style={{ fontSize: 14, color: st.color, fontWeight: 500 }}>{st.label}</span>
-              </div>
-            )})}
-          </div>
-        </>}
       </div>
     </div>
   )
