@@ -156,7 +156,7 @@ function ProjectsByYear({ projects, photos, onDrill , isDark = false }) {
       },
     },
     legend: {
-      data: ['Complete','Active','Planning','Paused'],
+      data: ['Complete','Active','Planning'],
       bottom: 0,
       textStyle: { color: EC.text2(dark), fontSize: 11 },
       icon: 'roundRect',
@@ -176,7 +176,7 @@ function ProjectsByYear({ projects, photos, onDrill , isDark = false }) {
       splitLine: { lineStyle: { color: EC.grid(dark) } },
       axisLabel: { color: EC.text2(dark), fontSize: 10 },
     },
-    series: ['complete','active','planning','paused'].map((status, idx) => ({
+    series: ['complete','active','planning'].map((status, idx) => ({
       name: SL[status],
       type: 'bar',
       stack: 'total',
@@ -188,6 +188,24 @@ function ProjectsByYear({ projects, photos, onDrill , isDark = false }) {
   })
 
   useECharts(chartRef, getOption, [grouped], isDark)
+
+  // Dismiss tooltip on tap outside chart or page scroll
+  useEffect(() => {
+    const el = chartRef.current
+    if (!el) return
+    const hideTip = () => {
+      const chart = echarts.getInstanceByDom(el)
+      if (chart) chart.dispatchAction({ type: 'hideTip' })
+    }
+    const onDocClick = (e) => { if (!el.contains(e.target)) hideTip() }
+    const scrollEl = el.closest('.scroll-page')
+    document.addEventListener('click', onDocClick)
+    scrollEl?.addEventListener('scroll', hideTip, { passive: true })
+    return () => {
+      document.removeEventListener('click', onDocClick)
+      scrollEl?.removeEventListener('scroll', hideTip)
+    }
+  }, [grouped])
 
   // Handle click on bar to open year carousel
   useEffect(() => {
