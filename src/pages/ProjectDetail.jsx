@@ -1287,6 +1287,12 @@ export function ProjectSheet({ project, categories, onSave, onClose, mutate }) {
     return pws?.wood_stock_id || ''
   })
 
+  // Focus Name field after sheet animation completes so keyboard opens in correct position
+  useEffect(() => {
+    const t = setTimeout(() => refs.name.current?.focus(), 300)
+    return () => clearTimeout(t)
+  }, [])
+
   const woodLocations = data?.woodLocations || []
   const woodStock     = data?.woodStock     || []
   const finishesList  = data?.finishes      || []
@@ -1324,7 +1330,7 @@ export function ProjectSheet({ project, categories, onSave, onClose, mutate }) {
     <>
     <Sheet title={project ? 'Edit Project' : 'New Project'} onClose={onClose} onSave={handleSave} variant="form">
       <div className="form-group">
-        <FormCell label="Name"><input ref={refs.name} className="form-input" placeholder="Cherry Bowl" defaultValue={project?.name || ''} autoFocus /></FormCell>
+        <FormCell label="Name"><input ref={refs.name} className="form-input" placeholder="Cherry Bowl" defaultValue={project?.name || ''} /></FormCell>
         <FormCell label="Category">
           <button type="button" onClick={() => setShowCatPicker(true)} style={{ textAlign: 'right', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-text-primary)', fontFamily: 'inherit', fontSize: 16, padding: 0, flex: 1 }}>
             {category || 'None'}
