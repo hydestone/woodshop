@@ -1081,10 +1081,13 @@ body {
   padding-bottom: var(--safe-b);
   transition: margin-bottom 250ms ease, max-height 250ms ease;
 }
-/* When a text input inside the sheet is focused, lift the sheet above the keyboard */
+/* When a text input inside the sheet is focused, expand sheet to fill space above keyboard.
+   height + margin-bottom together place the sheet from 12px below the top to just above the keyboard. */
 .sheet.sheet-keyboard {
   margin-bottom: var(--keyboard-offset);
   padding-bottom: 0;
+  height: calc(var(--vvh) - 12px);
+  max-height: calc(var(--vvh) - 12px);
 }
 .sheet-handle {
   width: 36px;
