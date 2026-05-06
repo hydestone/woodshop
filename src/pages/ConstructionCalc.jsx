@@ -458,236 +458,220 @@ export default function ConstructionCalc() {
     (!result && parsedDisplay && op) ? inToFtInStr(fracToDecimal(parsedDisplay)) : '',
   ].filter(Boolean).join(' ')
 
+  const recall = h => { setResult(h.result); setLeft(h.result); setOp(null); setDisplay(''); setJustEvaled(true) }
+
   const Btn = ({ children, cls = '', style = {}, onClick, ...rest }) => (
     <button className={`cm-key ${cls}`} onClick={onClick} style={style} {...rest}>{children}</button>
+  )
+
+  const TapeSection = () => (
+    <div style={{ borderTop: '1px solid var(--c-border)', overflowY: 'auto', flex: '0 0 auto', maxHeight: 180, minHeight: history.length ? 36 : 0 }}>
+      {history.length === 0 ? (
+        <div style={{ padding: '10px', color: 'var(--calc-tape-dim)', fontFamily: 'var(--tape-font)', fontSize: 11, textAlign: 'center', opacity: 0.5 }}>
+          — no calculations yet —
+        </div>
+      ) : history.map((h, i) => {
+        const lhsStr = inToFtInStr(fracToDecimal(h.left))
+        const rhsStr = inToFtInStr(fracToDecimal(h.right))
+        const resStr = inToFtInStr(fracToDecimal(h.result))
+        return (
+          <div key={h.ts} onClick={() => recall(h)}
+            style={{ display: 'flex', alignItems: 'center', padding: '7px 10px', borderBottom: '1px solid var(--c-border-light)', cursor: 'pointer', gap: 6 }}>
+            <span style={{ flex: 1, fontSize: 13, color: 'var(--calc-tape-dim)', fontFamily: 'var(--tape-font)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {lhsStr} {h.op} {rhsStr} = <strong style={{ color: 'var(--calc-tape-txt)', fontWeight: 700 }}>{resStr}</strong>
+            </span>
+            {i === 0 && (
+              <button type="button" onClick={e => { e.stopPropagation(); setHistory([]) }}
+                style={{ background: 'none', border: 'none', color: 'var(--c-text-faint)', fontSize: 11, cursor: 'pointer', fontFamily: 'var(--tape-font)', padding: 0, flexShrink: 0, whiteSpace: 'nowrap' }}>
+                clear
+              </button>
+            )}
+          </div>
+        )
+      })}
+    </div>
   )
 
   return (
     <div className="cm-outer" ref={dragRef}>
 
       {/* ── Left: Calculator ── */}
-      <div ref={containerRef} className="cm-left" style={{ width: calcWidth }}>
+      <div ref={containerRef} className="cm-left" style={{ width: isMobile ? '100%' : calcWidth }}>
 
-        {/* Mobile tape toggle */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 2 }}>
-          <button
-            onClick={() => setShowTape(t => !t)}
-            style={{
-              display: 'none',
-              fontSize: 10, fontWeight: 700, fontFamily: 'var(--tape-font)',
-              background: showTape ? 'rgba(74,222,128,.15)' : 'rgba(255,255,255,.06)',
-              color: showTape ? '#4ADE80' : 'var(--c-text-muted)',
-              border: '1px solid ' + (showTape ? 'rgba(74,222,128,.3)' : 'rgba(255,255,255,.1)'),
-              borderRadius: 4, padding: '3px 8px', cursor: 'pointer',
-              letterSpacing: '.5px',
-            }}
-            className="cm-tape-toggle"
-          >
-            TAPE {showTape ? '▲' : '▼'}
-          </button>
-        </div>
+        {/* Mode selector */}
+        <select
+          value={conMode || (showHelp ? 'help' : 'calc')}
+          onChange={e => {
+            const v = e.target.value
+            if (v === 'calc') { setConMode(null); setShowHelp(false) }
+            else if (v === 'help') { setConMode(null); setShowHelp(true) }
+            else { setConMode(v); setShowHelp(false) }
+          }}
+          style={{
+            width: '100%', padding: '10px 12px', fontSize: 15, fontWeight: 600,
+            background: 'var(--calc-key2)', color: '#fff',
+            border: '1px solid rgba(255,255,255,.12)', borderRadius: 8,
+            cursor: 'pointer', fontFamily: 'inherit', marginBottom: 6,
+            appearance: 'none', WebkitAppearance: 'none',
+          }}
+        >
+          <option value="calc">Calculator</option>
+          <option value="pitch">△  Pitch / Rise / Run</option>
+          <option value="diag">▭  Diagonal / Square</option>
+          <option value="stairs">▤  Stairs</option>
+          <option value="circle">○  Circle / Arc</option>
+          <option value="miter">∠  Compound Miter</option>
+          <option value="help">?  Help</option>
+        </select>
 
-        {/* Display */}
-        <div className="cm-display">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2, minHeight: 16 }}>
-            <div style={{ display: 'flex', gap: 4 }}>
-              {memory && <span className="cm-indicator">M</span>}
-              {conMode && <span className="cm-indicator" style={{ background: 'rgba(74,222,128,.15)', color: '#4ADE80' }}>{conMode.toUpperCase()}</span>}
+        {/* Display — single line */}
+        <div className="cm-display" style={{ marginBottom: 4 }}>
+          <div className="cm-display-eq" style={{ textAlign: 'right', minHeight: 14, marginBottom: 2 }}>{eqStr || '\u00a0'}</div>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
+            <div className="cm-display-main" style={{ flex: 1 }}>{displayStr}</div>
+            <div style={{ textAlign: 'right', flexShrink: 0 }}>
+              {activeVal ? (
+                <>
+                  <div className="cm-display-sub" style={{ minHeight: 'unset' }}>{fracToDecimal(activeVal).toFixed(3)}"</div>
+                  <div className="cm-display-sub" style={{ minHeight: 'unset' }}>{(fracToDecimal(activeVal)*25.4).toFixed(1)}mm</div>
+                </>
+              ) : <div className="cm-display-sub">&nbsp;</div>}
             </div>
-            <div className="cm-display-eq">{eqStr || '\u00a0'}</div>
           </div>
-          <div className="cm-display-main">{displayStr}</div>
-          <div className="cm-display-sub">
-            {activeVal ? `${fracToDecimal(activeVal).toFixed(4)}"  ${(fracToDecimal(activeVal)*25.4).toFixed(2)}mm` : '\u00a0'}
-          </div>
-          <div className="cm-input-hint">e.g. 9 ft′ → 1 in″ → 3 → /8 &nbsp;=&nbsp; 9′ 1 3/8″</div>
+          <div className="cm-input-hint">e.g. 9 ft′ → 1 in″ → 3 → /8 = 9′ 1 3/8″</div>
         </div>
 
-        {/* Memory bar */}
-        <div className="cm-memory-bar">
-          <button className="cm-mem-btn" onClick={memAdd}>M+</button>
-          <button className="cm-mem-btn" onClick={memSub}>M−</button>
-          <button className="cm-mem-btn" onClick={memRecall} disabled={!memory}>MR</button>
-          <button className="cm-mem-btn" onClick={memClear} disabled={!memory}>MC</button>
-        </div>
-
-        {/* Keypad + construction column side by side */}
-        <div style={{ display: 'flex', gap: 3, flex: '0 0 auto' }}>
-
-          {/* Left: digits/ops + fraction row */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 3 }}>
-            {/* Main 5-row keypad */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr) 2px repeat(2,1fr)', gap: 3 }}>
+        {/* Calculator keypad — full width 5 columns, hidden when construction mode active */}
+        {!conMode && !showHelp && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: '0 0 auto' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 4 }}>
               <Btn onClick={() => appendDigit('7')}>7</Btn>
               <Btn onClick={() => appendDigit('8')}>8</Btn>
               <Btn onClick={() => appendDigit('9')}>9</Btn>
-              <div style={{ background: 'rgba(255,255,255,.06)' }} />
               <Btn cls="op" onClick={() => pressOp('÷')}>÷</Btn>
               <Btn cls="ac" onClick={pressAC}>AC</Btn>
 
               <Btn onClick={() => appendDigit('4')}>4</Btn>
               <Btn onClick={() => appendDigit('5')}>5</Btn>
               <Btn onClick={() => appendDigit('6')}>6</Btn>
-              <div style={{ background: 'rgba(255,255,255,.06)' }} />
               <Btn cls="op" onClick={() => pressOp('×')}>×</Btn>
               <Btn cls="del" onClick={pressBackspace}>⌫</Btn>
 
               <Btn onClick={() => appendDigit('1')}>1</Btn>
               <Btn onClick={() => appendDigit('2')}>2</Btn>
               <Btn onClick={() => appendDigit('3')}>3</Btn>
-              <div style={{ background: 'rgba(255,255,255,.06)' }} />
               <Btn cls="op" onClick={() => pressOp('−')}>−</Btn>
               <Btn cls="unit" onClick={() => appendChar("'")} title="feet">ft '</Btn>
 
               <Btn onClick={() => appendDigit('0')}>0</Btn>
               <Btn onClick={() => appendDigit('.')}>.</Btn>
               <Btn cls="unit" onClick={() => appendChar('/')} title="fraction slash">/</Btn>
-              <div style={{ background: 'rgba(255,255,255,.06)' }} />
               <Btn cls="op" onClick={() => pressOp('+')}>+</Btn>
               <Btn cls="unit" onClick={() => appendChar('"')} title="inches">in "</Btn>
 
-              <Btn cls="fn" onClick={pressSqrt} title="Square root (R)">√</Btn>
+              <Btn cls="fn" onClick={pressSqrt} title="Square root">√</Btn>
               <Btn cls="fn" onClick={pressSq} title="Square">x²</Btn>
-              <Btn cls="fn" onClick={pressPi} title="Pi (P)">π</Btn>
-              <div style={{ background: 'rgba(255,255,255,.06)' }} />
+              <Btn cls="fn" onClick={pressPi} title="Pi">π</Btn>
               <Btn cls="eq" onClick={pressEquals} style={{ gridColumn: 'span 2' }}>=</Btn>
             </div>
 
             {/* Fraction denominators */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 3 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 4 }}>
               {[2,4,8,16].map(d => (
                 <Btn key={d} cls="frac" onClick={() => setDenominator(d)}>/{d}</Btn>
               ))}
             </div>
           </div>
+        )}
 
-          {/* Thin vertical separator */}
-          <div style={{ width: 2, background: 'rgba(255,255,255,.06)', flexShrink: 0 }} />
-
-          {/* Right: 6 construction function buttons in a single column */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 3, width: 52, flexShrink: 0 }}>
-            {[
-              ['pitch',  '△', 'Pitch'],
-              ['diag',   '▭', 'Diag'],
-              ['stairs', '▤', 'Stair'],
-              ['circle', '○', 'Circle'],
-              ['miter',  '∠', 'Miter'],
-              ['help',   '?', 'Help'],
-            ].map(([id, icon, label]) => (
-              <button
-                key={id}
-                onClick={() => id === 'help' ? setShowHelp(h => !h) : setConMode(conMode === id ? null : id)}
-                style={{
-                  flex: 1,
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1,
-                  background: (id !== 'help' && conMode === id)
-                    ? 'rgba(45,90,61,.4)'
-                    : id === 'help' && showHelp
-                      ? 'rgba(37,99,235,.2)'
-                      : 'var(--calc-key2)',
-                  border: (id !== 'help' && conMode === id)
-                    ? '1px solid var(--forest)'
-                    : id === 'help' && showHelp
-                      ? '1px solid var(--accent)'
-                      : '1px solid rgba(255,255,255,.08)',
-                  cursor: 'pointer',
-                  padding: '2px 2px',
-                  minHeight: 0,
-                  color: (id !== 'help' && conMode === id) ? 'var(--forest)' : id === 'help' && showHelp ? 'var(--accent)' : '#ffffff',
-                }}
-              >
-                <span style={{ fontSize: 13, lineHeight: 1 }}>{icon}</span>
-                <span style={{ fontSize: 9, fontWeight: 700, fontFamily: 'inherit', textTransform: 'uppercase', letterSpacing: '.3px', lineHeight: 1 }}>{label}</span>
-              </button>
-            ))}
+        {/* Construction panel */}
+        {(conMode || showHelp) && (
+          <div style={{ overflowY: 'auto', flex: 1, minHeight: 0 }}>
+            {conMode === 'pitch' && (
+              <ConPanel title="Pitch · Rise · Run" hint="Enter any two values to solve.">
+                <div className="cm-con-inputs">
+                  <ConInput label="Pitch (in 12)" value={conState.pitch_pitch} onSet={() => setConVal('pitch','pitch')} computed={!conState.pitch_pitch && conResults.pitch_pitch} />
+                  <ConInput label="Rise" value={conState.pitch_rise} onSet={() => setConVal('pitch','rise')} computed={!conState.pitch_rise && conResults.pitch_rise} isLen />
+                  <ConInput label="Run" value={conState.pitch_run} onSet={() => setConVal('pitch','run')} computed={!conState.pitch_run && conResults.pitch_run} isLen />
+                </div>
+                {(conResults.pitch_rafter||conResults.pitch_angle) && <div className="cm-con-results">{conResults.pitch_rafter && <ConResult label="Rafter" value={inToFtInStr(conResults.pitch_rafter)} />}{conResults.pitch_angle && <ConResult label="Angle" value={conResults.pitch_angle} />}</div>}
+                {conState.pitch_rise && conState.pitch_run && <PitchViz rise={conState.pitch_rise} run={conState.pitch_run} />}
+                <button className="cm-con-clear" onClick={() => setConState(s => { const n={...s}; delete n.pitch_pitch; delete n.pitch_rise; delete n.pitch_run; return n })}>Clear pitch</button>
+              </ConPanel>
+            )}
+            {conMode === 'diag' && (
+              <ConPanel title="Diagonal · Squaring" hint="Enter width and height.">
+                <div className="cm-con-inputs">
+                  <ConInput label="Width" value={conState.diag_width} onSet={() => setConVal('diag','width')} />
+                  <ConInput label="Height" value={conState.diag_height} onSet={() => setConVal('diag','height')} />
+                </div>
+                {(conResults.diag_diagonal||conResults.diag_angle) && <div className="cm-con-results">{conResults.diag_diagonal && <ConResult label="Diagonal" value={inToFtInStr(conResults.diag_diagonal)} />}{conResults.diag_angle && <ConResult label="Angle" value={conResults.diag_angle} />}</div>}
+                {conState.diag_width && conState.diag_height && <DiagViz w={conState.diag_width} h={conState.diag_height} />}
+                <button className="cm-con-clear" onClick={() => setConState(s => { const n={...s}; delete n.diag_width; delete n.diag_height; return n })}>Clear diagonal</button>
+              </ConPanel>
+            )}
+            {conMode === 'stairs' && (
+              <ConPanel title="Stairs" hint='Code: 4"–7¾" riser, 10–11" tread.'>
+                <div className="cm-con-inputs">
+                  <ConInput label="Total rise" value={conState.stairs_rise} onSet={() => setConVal('stairs','rise')} isLen />
+                  <ConInput label="# Risers" value={conState.stairs_risers} onSet={() => setConVal('stairs','risers')} />
+                  <ConInput label="Tread (in)" value={conState.stairs_tread} onSet={() => setConVal('stairs','tread')} />
+                </div>
+                {conResults.stairs_riserH && <div className="cm-con-results"><ConResult label="Riser height" value={inToFtInStr(conResults.stairs_riserH)} />{conResults.stairs_run && <ConResult label="Total run" value={inToFtInStr(conResults.stairs_run)} />}{conResults.stairs_angle && <ConResult label="Angle" value={conResults.stairs_angle} />}</div>}
+                {conResults.stairs_ok !== undefined && <div style={{ marginTop: 8, background: conResults.stairs_ok ? 'var(--green-dim)' : 'var(--orange-dim)', borderLeft: '3px solid currentColor', padding: '8px 12px', fontSize: 13, color: conResults.stairs_ok ? 'var(--green)' : 'var(--orange)' }}>{conResults.stairs_ok ? '✓ Within code (4"–7¾")' : '⚠ Outside code range'}</div>}
+                {conResults.stairs_riserH && conState.stairs_risers && <StairsViz riserH={conResults.stairs_riserH} tread={conState.stairs_tread||10} numRisers={Math.min(conState.stairs_risers,8)} />}
+                <button className="cm-con-clear" onClick={() => setConState(s => { const n={...s}; delete n.stairs_rise; delete n.stairs_risers; delete n.stairs_tread; return n })}>Clear stairs</button>
+              </ConPanel>
+            )}
+            {conMode === 'circle' && (
+              <ConPanel title="Circle · Arc" hint="Enter radius, diameter, or circumference.">
+                <div className="cm-con-inputs">
+                  <ConInput label="Radius" value={conState.circle_radius} onSet={() => setConVal('circle','radius')} computed={!conState.circle_radius && conResults.circle_radius} isLen />
+                  <ConInput label="Diameter" value={conState.circle_diameter} onSet={() => setConVal('circle','diameter')} computed={!conState.circle_diameter && conResults.circle_diameter} isLen />
+                  <ConInput label="Circumference" value={conState.circle_circ} onSet={() => setConVal('circle','circ')} computed={!conState.circle_circ && conResults.circle_circ} isLen />
+                </div>
+                {conResults.circle_area && <div className="cm-con-results"><ConResult label="Area" value={conResults.circle_area} /></div>}
+                <button className="cm-con-clear" onClick={() => setConState(s => { const n={...s}; delete n.circle_radius; delete n.circle_diameter; delete n.circle_circ; return n })}>Clear circle</button>
+              </ConPanel>
+            )}
+            {conMode === 'miter' && (
+              <ConPanel title="Compound Miter" hint="Corner angle: total angle of the joint. Blade tilt: degrees from vertical.">
+                <div className="cm-con-inputs">
+                  <ConInput label="Corner (°)" value={conState.miter_corner} onSet={() => setConVal('miter','corner')} />
+                  <ConInput label="Tilt (°)" value={conState.miter_tilt} onSet={() => setConVal('miter','tilt')} />
+                </div>
+                {(conResults.miter_flat||conResults.miter_comp) && <div className="cm-con-results">{conResults.miter_flat && <ConResult label="Flat miter" value={conResults.miter_flat} />}{conResults.miter_comp && <ConResult label="Comp. miter" value={conResults.miter_comp} />}{conResults.miter_bevel && <ConResult label="Blade bevel" value={conResults.miter_bevel} />}</div>}
+                <button className="cm-con-clear" onClick={() => setConState(s => { const n={...s}; delete n.miter_corner; delete n.miter_tilt; return n })}>Clear miter</button>
+              </ConPanel>
+            )}
+            {showHelp && (
+              <ConPanel title="Help">
+                <div className="cm-help-grid">
+                  <HelpItem title="Entering feet · inches · fractions" desc="Example — 9′ 1 3/8″: tap  9  ft′  1  in″  3  /8. The in″ button auto-inserts the space. The /2 /4 /8 /16 buttons set the denominator of the last digit entered." />
+                  <HelpItem title="Fractions only" desc="Type numerator, tap /8. Example: 3 then /8 → 3/8. Mixed: 1 then /4 → 1/4. Or type 3/4 directly with the / key." />
+                  <HelpItem title="Feet / inches only" desc="4 then ft′ → 4′. 9 then in″ → 9″. Plain numbers are treated as inches." />
+                  <HelpItem title="Keyboard shortcuts" desc="0–9 · + − * / · Enter or = · Esc to clear · ' feet · &quot; inches · R for √ · P for π · Backspace" />
+                  <HelpItem title="Tape" desc="Tap any row to recall that result to the display." />
+                </div>
+              </ConPanel>
+            )}
           </div>
-        </div>
+        )}
 
-        {/* Construction function panels */}
-        <div style={{ overflowY: 'auto', flex: 1, marginTop: 6 }}>
-
-          {conMode === 'pitch' && (
-            <ConPanel title="Pitch · Rise · Run" hint="Enter any two values to solve.">
-              <div className="cm-con-inputs">
-                <ConInput label="Pitch (in 12)" value={conState.pitch_pitch} onSet={() => setConVal('pitch','pitch')} computed={!conState.pitch_pitch && conResults.pitch_pitch} />
-                <ConInput label="Rise" value={conState.pitch_rise} onSet={() => setConVal('pitch','rise')} computed={!conState.pitch_rise && conResults.pitch_rise} isLen />
-                <ConInput label="Run" value={conState.pitch_run} onSet={() => setConVal('pitch','run')} computed={!conState.pitch_run && conResults.pitch_run} isLen />
-              </div>
-              {(conResults.pitch_rafter||conResults.pitch_angle) && <div className="cm-con-results">{conResults.pitch_rafter && <ConResult label="Rafter" value={inToFtInStr(conResults.pitch_rafter)} />}{conResults.pitch_angle && <ConResult label="Angle" value={conResults.pitch_angle} />}</div>}
-              {conState.pitch_rise && conState.pitch_run && <PitchViz rise={conState.pitch_rise} run={conState.pitch_run} />}
-              <button className="cm-con-clear" onClick={() => setConState(s => { const n={...s}; delete n.pitch_pitch; delete n.pitch_rise; delete n.pitch_run; return n })}>Clear pitch</button>
-            </ConPanel>
-          )}
-          {conMode === 'diag' && (
-            <ConPanel title="Diagonal · Squaring" hint="Enter width and height.">
-              <div className="cm-con-inputs">
-                <ConInput label="Width" value={conState.diag_width} onSet={() => setConVal('diag','width')} />
-                <ConInput label="Height" value={conState.diag_height} onSet={() => setConVal('diag','height')} />
-              </div>
-              {(conResults.diag_diagonal||conResults.diag_angle) && <div className="cm-con-results">{conResults.diag_diagonal && <ConResult label="Diagonal" value={inToFtInStr(conResults.diag_diagonal)} />}{conResults.diag_angle && <ConResult label="Angle" value={conResults.diag_angle} />}</div>}
-              {conState.diag_width && conState.diag_height && <DiagViz w={conState.diag_width} h={conState.diag_height} />}
-              <button className="cm-con-clear" onClick={() => setConState(s => { const n={...s}; delete n.diag_width; delete n.diag_height; return n })}>Clear diagonal</button>
-            </ConPanel>
-          )}
-          {conMode === 'stairs' && (
-            <ConPanel title="Stairs" hint='Code: 4"–7¾" riser, 10–11" tread.'>
-              <div className="cm-con-inputs">
-                <ConInput label="Total rise" value={conState.stairs_rise} onSet={() => setConVal('stairs','rise')} isLen />
-                <ConInput label="# Risers" value={conState.stairs_risers} onSet={() => setConVal('stairs','risers')} />
-                <ConInput label="Tread (in)" value={conState.stairs_tread} onSet={() => setConVal('stairs','tread')} />
-              </div>
-              {conResults.stairs_riserH && <div className="cm-con-results"><ConResult label="Riser height" value={inToFtInStr(conResults.stairs_riserH)} />{conResults.stairs_run && <ConResult label="Total run" value={inToFtInStr(conResults.stairs_run)} />}{conResults.stairs_angle && <ConResult label="Angle" value={conResults.stairs_angle} />}</div>}
-              {conResults.stairs_ok !== undefined && <div style={{ marginTop: 8, background: conResults.stairs_ok ? 'var(--green-dim)' : 'var(--orange-dim)', borderRadius: 0, borderLeft: '3px solid currentColor', padding: '8px 12px', fontSize: 13, color: conResults.stairs_ok ? 'var(--green)' : 'var(--orange)' }}>{conResults.stairs_ok ? '✓ Within code (4"–7¾")' : '⚠ Outside code range'}</div>}
-              {conResults.stairs_riserH && conState.stairs_risers && <StairsViz riserH={conResults.stairs_riserH} tread={conState.stairs_tread||10} numRisers={Math.min(conState.stairs_risers,8)} />}
-              <button className="cm-con-clear" onClick={() => setConState(s => { const n={...s}; delete n.stairs_rise; delete n.stairs_risers; delete n.stairs_tread; return n })}>Clear stairs</button>
-            </ConPanel>
-          )}
-          {conMode === 'circle' && (
-            <ConPanel title="Circle · Arc" hint="Enter radius, diameter, or circumference.">
-              <div className="cm-con-inputs">
-                <ConInput label="Radius" value={conState.circle_radius} onSet={() => setConVal('circle','radius')} computed={!conState.circle_radius && conResults.circle_radius} isLen />
-                <ConInput label="Diameter" value={conState.circle_diameter} onSet={() => setConVal('circle','diameter')} computed={!conState.circle_diameter && conResults.circle_diameter} isLen />
-                <ConInput label="Circumference" value={conState.circle_circ} onSet={() => setConVal('circle','circ')} computed={!conState.circle_circ && conResults.circle_circ} isLen />
-              </div>
-              {conResults.circle_area && <div className="cm-con-results"><ConResult label="Area" value={conResults.circle_area} /></div>}
-              <button className="cm-con-clear" onClick={() => setConState(s => { const n={...s}; delete n.circle_radius; delete n.circle_diameter; delete n.circle_circ; return n })}>Clear circle</button>
-            </ConPanel>
-          )}
-          {conMode === 'miter' && (
-            <ConPanel title="Compound Miter" hint="Corner angle: total joint angle. Blade tilt: degrees from vertical.">
-              <div className="cm-con-inputs">
-                <ConInput label="Corner (°)" value={conState.miter_corner} onSet={() => setConVal('miter','corner')} />
-                <ConInput label="Tilt (°)" value={conState.miter_tilt} onSet={() => setConVal('miter','tilt')} />
-              </div>
-              {(conResults.miter_flat||conResults.miter_comp) && <div className="cm-con-results">{conResults.miter_flat && <ConResult label="Flat miter" value={conResults.miter_flat} />}{conResults.miter_comp && <ConResult label="Comp. miter" value={conResults.miter_comp} />}{conResults.miter_bevel && <ConResult label="Blade bevel" value={conResults.miter_bevel} />}</div>}
-              <button className="cm-con-clear" onClick={() => setConState(s => { const n={...s}; delete n.miter_corner; delete n.miter_tilt; return n })}>Clear miter</button>
-            </ConPanel>
-          )}
-          {showHelp && (
-            <ConPanel title="Help">
-              <div className="cm-help-grid">
-                <HelpItem title="Entering feet · inches · fractions" desc="Example — 9′ 1 3/8″: tap  9  ft′  1  in″  3  /8. The in″ button auto-inserts the space between inches and fraction. No need to type a space. The /2 /4 /8 /16 buttons set the denominator of the last digit entered." />
-                <HelpItem title="Fractions only" desc="Type numerator, tap /8 (or any denominator button). Example: 3 then /8 → 3/8. For mixed number: tap 1, then /4 → 1/4. Or type 3/4 directly with the / key." />
-                <HelpItem title="Feet only or inches only" desc="4 then ft′ → 4′ (4 feet). 9 then in″ → 9″ (9 inches). Entering a plain number without ft/in is treated as inches." />
-                <HelpItem title="Keyboard" desc="0–9 digits · + − * / operators · Enter or = · Esc clear · ' feet · &quot; inches · R √ · P π · Backspace delete" />
-                <HelpItem title="Memory" desc="M+ add to memory · M− subtract · MR recall · MC clear" />
-                <HelpItem title="Tape" desc="Tap any tape row to recall that result. Clear wipes the tape history." />
-              </div>
-            </ConPanel>
-          )}
-        </div>
+        {/* Tape — always visible at bottom of calculator */}
+        <TapeSection />
       </div>
 
-      {/* ── Drag handle ── */}
+      {/* ── Drag handle — desktop only ── */}
       <div
         onMouseDown={startDrag}
         onTouchStart={startDrag}
         title="Drag to resize"
+        className="cm-drag-handle"
         style={{
           width: 6, flexShrink: 0, cursor: 'col-resize',
           background: 'var(--c-border)',
           transition: 'background 120ms',
-          position: 'relative',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}
         onMouseEnter={e => e.currentTarget.style.background = 'var(--accent)'}
@@ -696,29 +680,21 @@ export default function ConstructionCalc() {
         <div style={{ width: 2, height: 32, background: 'var(--c-border-light)', borderRadius: 99, pointerEvents: 'none' }} />
       </div>
 
-      {/* ── Right/Bottom: Tape ── */}
-      <div className={`cm-right${showTape ? ' tape-open' : ''}`}>
-        <div className="cm-tape-header">
-          <span>CALCULATION TAPE</span>
-          <button onClick={() => setHistory([])} style={{ background: 'none', border: 'none', color: 'var(--c-text-muted)', cursor: 'pointer', fontSize: 11, fontFamily: 'var(--tape-font)' }}>
-            [CLEAR]
-          </button>
-        </div>
-        <div className="cm-tape" style={{ flex: 1, maxWidth: '100%' }}>
-          {history.length === 0 && (
+      {/* ── Right: Desktop tape panel ── */}
+      <div className="cm-right">
+        <div className="cm-tape" style={{ flex: 1 }}>
+          {history.length === 0 ? (
             <div style={{ padding: '20px 10px', color: 'var(--calc-tape-dim)', fontFamily: 'var(--tape-font)', fontSize: 12, textAlign: 'center', opacity: 0.6 }}>
               — no calculations yet —<br />
-              <span style={{ fontSize: 10 }}>tap any tape row to recall</span>
+              <span style={{ fontSize: 10 }}>tap any row to recall</span>
             </div>
-          )}
-          {history.map((h, i) => (
-            <TapeRow key={h.ts} entry={h} onClick={() => {
-              setResult(h.result); setLeft(h.result); setOp(null); setDisplay(''); setJustEvaled(true)
-            }} />
+          ) : history.map((h, i) => (
+            <TapeRow key={h.ts} entry={h} onClick={() => recall(h)} />
           ))}
         </div>
-
-        {/* Nearest fractions — bottom of tape panel */}
+        <div style={{ padding: '6px 10px', borderTop: '1px solid var(--c-border)' }}>
+          <button onClick={() => setHistory([])} style={{ background: 'none', border: 'none', color: 'var(--c-text-muted)', cursor: 'pointer', fontSize: 11, fontFamily: 'var(--tape-font)' }}>[CLEAR]</button>
+        </div>
         {activeVal && (
           <div className="cm-conversions">
             <div className="label-caps" style={{ marginBottom: 6 }}>Nearest fractions</div>

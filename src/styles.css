@@ -2335,15 +2335,15 @@ body {
 .cm-key {
   background: var(--calc-key);
   border: 1px solid rgba(255,255,255,.1);
-  border-radius: 0;
-  padding: 7px 4px;
-  font-size: 15px;
+  border-radius: 6px;
+  padding: 8px 4px;
+  font-size: 20px;
   font-weight: 600;
   font-family: var(--font);
   color: #ffffff;
   cursor: pointer;
   transition: transform 60ms, background 80ms;
-  min-height: 36px;
+  min-height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2840,18 +2840,9 @@ body {
     flex: 0 0 auto;
     overflow: visible;
   }
-  .cm-right {
-    border-left: none;
-    border-top: 1px solid var(--c-border);
-    flex: 0 0 auto;
-    min-height: 180px;
-    max-height: 300px;
-  }
-  /* Show tape toggle button on mobile */
-  .cm-tape-toggle { display: block !important; }
-  /* Hide tape on mobile by default — shown via toggle */
+  /* Hide desktop tape and drag handle on mobile — tape is inline in cm-left */
   .cm-right { display: none; }
-  .cm-right.tape-open { display: flex; }
+  .cm-drag-handle { display: none; }
   /* Always show input hint on mobile */
   .cm-input-hint { display: block; }
 }
