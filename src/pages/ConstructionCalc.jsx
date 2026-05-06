@@ -139,7 +139,16 @@ function ConPanel({ title, hint, children }) {
 }
 
 function ConInput({ label, value, onChange, computed, isLen, placeholder }) {
-  // Direct input — user types value, no shared keypad needed
+  // Local string state lets user edit freely — parent numeric state updates only when valid
+  const [localStr, setLocalStr] = useState(() =>
+    value != null ? (isLen ? inToFtInStr(value) : String(value)) : ''
+  )
+
+  // Reset local string when parent clears the value (e.g. Clear button)
+  useEffect(() => {
+    if (value == null) setLocalStr('')
+  }, [value])
+
   const displayComputed = computed != null && value == null
     ? (isLen ? inToFtInStr(computed) : String(parseFloat(computed).toFixed(3)))
     : null
@@ -151,18 +160,17 @@ function ConInput({ label, value, onChange, computed, isLen, placeholder }) {
         type="text"
         inputMode="decimal"
         className="form-input"
-        value={value != null ? (isLen ? inToFtInStr(value) : String(value)) : ''}
-        placeholder={displayComputed || (placeholder || '—')}
+        value={localStr}
+        placeholder={displayComputed || placeholder || '—'}
         onChange={e => {
-          const raw = e.target.value.trim()
-          if (!raw) { onChange(null); return }
-          // Accept decimal or ft-in-fraction
-          const parsed = parseLenIn(raw)
-          if (parsed !== null) onChange(parsed)
-          else {
-            const n = parseFloat(raw)
-            if (!isNaN(n)) onChange(n)
-          }
+          const raw = e.target.value
+          setLocalStr(raw)
+          const trimmed = raw.trim()
+          if (!trimmed) { onChange(null); return }
+          const parsed = parseLenIn(trimmed)
+          if (parsed !== null) { onChange(parsed); return }
+          const n = parseFloat(trimmed)
+          if (!isNaN(n)) onChange(n)
         }}
         style={{
           width: '100%', fontSize: 16,
