@@ -138,20 +138,45 @@ function ConPanel({ title, hint, children }) {
   )
 }
 
-function ConInput({ label, value, onSet, computed, isLen }) {
-  const displayVal = computed
-    ? (isLen ? inToFtInStr(computed) : String(computed))
-    : value != null ? (isLen ? inToFtInStr(value) : String(value)) : null
-  const isComputed = computed && !value
+function ConInput({ label, value, onChange, computed, isLen, placeholder }) {
+  // Direct input — user types value, no shared keypad needed
+  const displayComputed = computed != null && value == null
+    ? (isLen ? inToFtInStr(computed) : String(parseFloat(computed).toFixed(3)))
+    : null
+
   return (
     <div className="cm-con-input-wrap">
-      <div style={{ fontSize: 11, color: 'var(--c-text-faint)', marginBottom: 3 }}>{label}</div>
-      <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-        <div className={`cm-con-value${isComputed ? ' computed' : ''}${displayVal ? ' has-value' : ''}`}>
-          {displayVal || '—'}
+      <div style={{ fontSize: 12, color: 'var(--c-text-faint)', marginBottom: 4 }}>{label}</div>
+      <input
+        type="text"
+        inputMode="decimal"
+        className="form-input"
+        value={value != null ? (isLen ? inToFtInStr(value) : String(value)) : ''}
+        placeholder={displayComputed || (placeholder || '—')}
+        onChange={e => {
+          const raw = e.target.value.trim()
+          if (!raw) { onChange(null); return }
+          // Accept decimal or ft-in-fraction
+          const parsed = parseLenIn(raw)
+          if (parsed !== null) onChange(parsed)
+          else {
+            const n = parseFloat(raw)
+            if (!isNaN(n)) onChange(n)
+          }
+        }}
+        style={{
+          width: '100%', fontSize: 16,
+          background: 'var(--c-bg-subtle)',
+          color: 'var(--c-text-primary)',
+          border: '1px solid var(--c-border)',
+          borderRadius: 6, padding: '8px 10px',
+        }}
+      />
+      {displayComputed && (
+        <div style={{ fontSize: 11, color: 'var(--forest)', marginTop: 3 }}>
+          Computed: {displayComputed}
         </div>
-        <button className="cm-con-set-btn" onClick={onSet}>Set</button>
-      </div>
+      )}
     </div>
   )
 }
@@ -513,8 +538,8 @@ export default function ConstructionCalc({ conMode = null, showHelp = false }) {
           <div className="cm-input-hint">e.g. 9 ft′ → 1 in″ → 3 → /8 = 9′ 1 3/8″</div>
         </div>
 
-        {/* Calculator keypad — full width 5 columns */}
-        {true && (
+        {/* Calculator keypad — only shown in Calculator mode */}
+        {true && !conMode && !showHelp && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: '0 0 auto' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 4 }}>
               <Btn onClick={() => appendDigit('7')}>7</Btn>
@@ -562,9 +587,9 @@ export default function ConstructionCalc({ conMode = null, showHelp = false }) {
             {conMode === 'pitch' && (
               <ConPanel title="Pitch · Rise · Run" hint="Enter any two values to solve.">
                 <div className="cm-con-inputs">
-                  <ConInput label="Pitch (in 12)" value={conState.pitch_pitch} onSet={() => setConVal('pitch','pitch')} computed={!conState.pitch_pitch && conResults.pitch_pitch} />
-                  <ConInput label="Rise" value={conState.pitch_rise} onSet={() => setConVal('pitch','rise')} computed={!conState.pitch_rise && conResults.pitch_rise} isLen />
-                  <ConInput label="Run" value={conState.pitch_run} onSet={() => setConVal('pitch','run')} computed={!conState.pitch_run && conResults.pitch_run} isLen />
+                  <ConInput label="Pitch (in 12)" value={conState.pitch_pitch} onChange={v => setConState(s => ({...s, pitch_pitch: v}))} />
+                  <ConInput label="Rise" value={conState.pitch_rise} onChange={v => setConState(s => ({...s, pitch_rise: v}))} isLen />
+                  <ConInput label="Run" value={conState.pitch_run} onChange={v => setConState(s => ({...s, pitch_run: v}))} isLen />
                 </div>
                 {(conResults.pitch_rafter||conResults.pitch_angle) && <div className="cm-con-results">{conResults.pitch_rafter && <ConResult label="Rafter" value={inToFtInStr(conResults.pitch_rafter)} />}{conResults.pitch_angle && <ConResult label="Angle" value={conResults.pitch_angle} />}</div>}
                 {conState.pitch_rise && conState.pitch_run && <PitchViz rise={conState.pitch_rise} run={conState.pitch_run} />}
@@ -574,8 +599,8 @@ export default function ConstructionCalc({ conMode = null, showHelp = false }) {
             {conMode === 'diag' && (
               <ConPanel title="Diagonal · Squaring" hint="Enter width and height.">
                 <div className="cm-con-inputs">
-                  <ConInput label="Width" value={conState.diag_width} onSet={() => setConVal('diag','width')} />
-                  <ConInput label="Height" value={conState.diag_height} onSet={() => setConVal('diag','height')} />
+                  <ConInput label="Width" value={conState.diag_width} onChange={v => setConState(s => ({...s, diag_width: v}))} />
+                  <ConInput label="Height" value={conState.diag_height} onChange={v => setConState(s => ({...s, diag_height: v}))} />
                 </div>
                 {(conResults.diag_diagonal||conResults.diag_angle) && <div className="cm-con-results">{conResults.diag_diagonal && <ConResult label="Diagonal" value={inToFtInStr(conResults.diag_diagonal)} />}{conResults.diag_angle && <ConResult label="Angle" value={conResults.diag_angle} />}</div>}
                 {conState.diag_width && conState.diag_height && <DiagViz w={conState.diag_width} h={conState.diag_height} />}
@@ -585,9 +610,9 @@ export default function ConstructionCalc({ conMode = null, showHelp = false }) {
             {conMode === 'stairs' && (
               <ConPanel title="Stairs" hint='Code: 4"–7¾" riser, 10–11" tread.'>
                 <div className="cm-con-inputs">
-                  <ConInput label="Total rise" value={conState.stairs_rise} onSet={() => setConVal('stairs','rise')} isLen />
-                  <ConInput label="# Risers" value={conState.stairs_risers} onSet={() => setConVal('stairs','risers')} />
-                  <ConInput label="Tread (in)" value={conState.stairs_tread} onSet={() => setConVal('stairs','tread')} />
+                  <ConInput label="Total rise" value={conState.stairs_rise} onChange={v => setConState(s => ({...s, stairs_rise: v}))} isLen />
+                  <ConInput label="# Risers" value={conState.stairs_risers} onChange={v => setConState(s => ({...s, stairs_risers: v}))} />
+                  <ConInput label="Tread (in)" value={conState.stairs_tread} onChange={v => setConState(s => ({...s, stairs_tread: v}))} />
                 </div>
                 {conResults.stairs_riserH && <div className="cm-con-results"><ConResult label="Riser height" value={inToFtInStr(conResults.stairs_riserH)} />{conResults.stairs_run && <ConResult label="Total run" value={inToFtInStr(conResults.stairs_run)} />}{conResults.stairs_angle && <ConResult label="Angle" value={conResults.stairs_angle} />}</div>}
                 {conResults.stairs_ok !== undefined && <div style={{ marginTop: 8, background: conResults.stairs_ok ? 'var(--green-dim)' : 'var(--orange-dim)', borderLeft: '3px solid currentColor', padding: '8px 12px', fontSize: 13, color: conResults.stairs_ok ? 'var(--green)' : 'var(--orange)' }}>{conResults.stairs_ok ? '✓ Within code (4"–7¾")' : '⚠ Outside code range'}</div>}
@@ -598,9 +623,9 @@ export default function ConstructionCalc({ conMode = null, showHelp = false }) {
             {conMode === 'circle' && (
               <ConPanel title="Circle · Arc" hint="Enter radius, diameter, or circumference.">
                 <div className="cm-con-inputs">
-                  <ConInput label="Radius" value={conState.circle_radius} onSet={() => setConVal('circle','radius')} computed={!conState.circle_radius && conResults.circle_radius} isLen />
-                  <ConInput label="Diameter" value={conState.circle_diameter} onSet={() => setConVal('circle','diameter')} computed={!conState.circle_diameter && conResults.circle_diameter} isLen />
-                  <ConInput label="Circumference" value={conState.circle_circ} onSet={() => setConVal('circle','circ')} computed={!conState.circle_circ && conResults.circle_circ} isLen />
+                  <ConInput label="Radius" value={conState.circle_radius} onChange={v => setConState(s => ({...s, circle_radius: v}))} isLen />
+                  <ConInput label="Diameter" value={conState.circle_diameter} onChange={v => setConState(s => ({...s, circle_diameter: v}))} isLen />
+                  <ConInput label="Circumference" value={conState.circle_circ} onChange={v => setConState(s => ({...s, circle_circ: v}))} isLen />
                 </div>
                 {conResults.circle_area && <div className="cm-con-results"><ConResult label="Area" value={conResults.circle_area} /></div>}
                 <button className="cm-con-clear" onClick={() => setConState(s => { const n={...s}; delete n.circle_radius; delete n.circle_diameter; delete n.circle_circ; return n })}>Clear circle</button>
@@ -609,8 +634,8 @@ export default function ConstructionCalc({ conMode = null, showHelp = false }) {
             {conMode === 'miter' && (
               <ConPanel title="Compound Miter" hint="Corner angle: total angle of the joint. Blade tilt: degrees from vertical.">
                 <div className="cm-con-inputs">
-                  <ConInput label="Corner (°)" value={conState.miter_corner} onSet={() => setConVal('miter','corner')} />
-                  <ConInput label="Tilt (°)" value={conState.miter_tilt} onSet={() => setConVal('miter','tilt')} />
+                  <ConInput label="Corner (°)" value={conState.miter_corner} onChange={v => setConState(s => ({...s, miter_corner: v}))} placeholder="e.g. 90" />
+                  <ConInput label="Tilt (°)" value={conState.miter_tilt} onChange={v => setConState(s => ({...s, miter_tilt: v}))} placeholder="e.g. 45" />
                 </div>
                 {(conResults.miter_flat||conResults.miter_comp) && <div className="cm-con-results">{conResults.miter_flat && <ConResult label="Flat miter" value={conResults.miter_flat} />}{conResults.miter_comp && <ConResult label="Comp. miter" value={conResults.miter_comp} />}{conResults.miter_bevel && <ConResult label="Blade bevel" value={conResults.miter_bevel} />}</div>}
                 <button className="cm-con-clear" onClick={() => setConState(s => { const n={...s}; delete n.miter_corner; delete n.miter_tilt; return n })}>Clear miter</button>
@@ -631,7 +656,8 @@ export default function ConstructionCalc({ conMode = null, showHelp = false }) {
         )}
 
         {/* Tape — always visible at bottom of calculator */}
-        <TapeSection />
+        {/* Tape — only shown in Calculator mode */}
+        {!conMode && !showHelp && <TapeSection />}
       </div>
 
       {/* ── Drag handle — desktop only ── */}
