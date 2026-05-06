@@ -151,8 +151,12 @@ export function Sheet({ title, onClose, onSave, saveLabel = 'Save', children }) 
     if (!vv) return
     const update = () => {
       if (!overlayRef.current) return
-      overlayRef.current.style.height = vv.height + 'px'
-      overlayRef.current.style.top = vv.offsetTop + 'px'
+      requestAnimationFrame(() => {
+        if (!overlayRef.current) return
+        overlayRef.current.style.height = vv.height + 'px'
+        overlayRef.current.style.top    = vv.offsetTop + 'px'
+        overlayRef.current.style.bottom = 'auto'
+      })
     }
     vv.addEventListener('resize', update)
     vv.addEventListener('scroll', update)
@@ -172,7 +176,7 @@ export function Sheet({ title, onClose, onSave, saveLabel = 'Save', children }) 
           if (document.activeElement === e.target) {
             e.target.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
           }
-        }, 350)
+        }, 400)
       }
     }
     document.addEventListener('focusin', handleFocus)
@@ -450,6 +454,10 @@ export function KineticTitle({ text, className, style, tag: Tag = 'h1', delay = 
 export function DropZone({ onFiles, uploading }) {
   const [drag, setDrag] = useState(false)
   const ref = useRef()
+
+  // No drag/drop on touch devices — file input only via camera button
+  const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+  if (isMobile) return null
 
   return (
     <div
