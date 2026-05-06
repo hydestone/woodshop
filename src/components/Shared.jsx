@@ -124,18 +124,19 @@ export function maintStatus(m) {
 // ─── Sheet ────────────────────────────────────────────────────────────────────
 export function Sheet({ title, onClose, onSave, saveLabel = 'Save', children }) {
   const [saving, setSaving] = useState(false)
-  const savingRef = useRef(false)
+  const savingRef  = useRef(false)
   const overlayRef = useRef()
+  const sheetRef   = useRef()
+  const rafRef     = useRef(null)
 
   const handleSave = useCallback(async () => {
     if (savingRef.current || !onSave) return
-    savingRef.current = true
-    setSaving(true)
+    savingRef.current = true; setSaving(true)
     try { await onSave() }
     finally { savingRef.current = false; setSaving(false) }
   }, [onSave])
 
-  // Close on Escape, save on Enter
+  // Keyboard shortcuts: Escape to close, Enter to save
   useEffect(() => {
     const handler = e => {
       if (e.key === 'Escape' && !savingRef.current) onClose()
@@ -145,7 +146,64 @@ export function Sheet({ title, onClose, onSave, saveLabel = 'Save', children }) 
     return () => window.removeEventListener('keydown', handler)
   }, [onClose, handleSave])
 
-  // Prevent background scroll when sheet is open
+  // Visual viewport: track --vvh and --keyboard-offset as CSS variables on :root
+  // Sheet max-height and margin-bottom read these variables — overlay never moves
+  useEffect(() => {
+    const vv  = window.visualViewport
+    const root = document.documentElement
+
+    const update = () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+      rafRef.current = requestAnimationFrame(() => {
+        const vh = vv ? vv.height : window.innerHeight
+        const keyboardOffset = vv ? Math.max(0, window.innerHeight - vv.height - vv.offsetTop) : 0
+        root.style.setProperty('--vvh', vh + 'px')
+        root.style.setProperty('--keyboard-offset', keyboardOffset + 'px')
+      })
+    }
+
+    vv?.addEventListener('resize', update)
+    vv?.addEventListener('scroll', update)
+    window.addEventListener('orientationchange', update)
+    update()
+
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+      vv?.removeEventListener('resize', update)
+      vv?.removeEventListener('scroll', update)
+      window.removeEventListener('orientationchange', update)
+      root.style.removeProperty('--vvh')
+      root.style.removeProperty('--keyboard-offset')
+    }
+  }, [])
+
+  // Keyboard class: add .sheet-keyboard when an input inside the sheet is focused
+  // This triggers margin-bottom: var(--keyboard-offset) via CSS, lifting the sheet above the keyboard
+  useEffect(() => {
+    const panel = sheetRef.current
+    if (!panel) return
+    const onIn  = e => { if (e.target.matches('input, textarea')) panel.classList.add('sheet-keyboard') }
+    const onOut = () => {
+      setTimeout(() => {
+        if (!panel.contains(document.activeElement) || !document.activeElement?.matches('input, textarea'))
+          panel.classList.remove('sheet-keyboard')
+      }, 100)
+    }
+    panel.addEventListener('focusin',  onIn)
+    panel.addEventListener('focusout', onOut)
+    return () => { panel.removeEventListener('focusin', onIn); panel.removeEventListener('focusout', onOut) }
+  }, [])
+
+  // Scroll lock: prevent .scroll-page (app's scroll container) from moving behind the sheet
+  useEffect(() => {
+    const scrollers = document.querySelectorAll('.scroll-page')
+    scrollers.forEach(el => { el.dataset.sheetPrevOverflow = el.style.overflow; el.style.overflow = 'hidden' })
+    return () => {
+      scrollers.forEach(el => { el.style.overflow = el.dataset.sheetPrevOverflow || ''; delete el.dataset.sheetPrevOverflow })
+    }
+  }, [])
+
+  // Backdrop scroll prevention: block touchmove on overlay, allow it inside sheet-body
   useEffect(() => {
     const overlay = overlayRef.current
     if (!overlay) return
@@ -154,52 +212,19 @@ export function Sheet({ title, onClose, onSave, saveLabel = 'Save', children }) 
     return () => overlay.removeEventListener('touchmove', prevent)
   }, [])
 
-  // iOS keyboard: resize overlay to match visual viewport so sheet stays above keyboard
+  // Focused input scroll: bring active input into view after keyboard animation settles
   useEffect(() => {
-    const vv = window.visualViewport
-    if (!vv) return
-
-    const update = () => requestAnimationFrame(() => {
-      if (!overlayRef.current) return
-      overlayRef.current.style.height = vv.height + 'px'
-      overlayRef.current.style.top    = vv.offsetTop + 'px'
-      overlayRef.current.style.bottom = 'auto'
-    })
-
-    // Multiple triggers for reliability across Safari and PWA standalone mode
-    vv.addEventListener('resize', update)
-    vv.addEventListener('scroll', update)
-    window.addEventListener('resize', update)
-
-    // focusin/out fires when keyboard opens/closes — use as fallback
-    const onFocusChange = () => { setTimeout(update, 150); setTimeout(update, 400) }
-    document.addEventListener('focusin',  onFocusChange)
-    document.addEventListener('focusout', onFocusChange)
-
-    update()
-    return () => {
-      vv.removeEventListener('resize', update)
-      vv.removeEventListener('scroll', update)
-      window.removeEventListener('resize', update)
-      document.removeEventListener('focusin',  onFocusChange)
-      document.removeEventListener('focusout', onFocusChange)
+    const panel = sheetRef.current
+    if (!panel) return
+    const onFocusIn = e => {
+      if (!e.target.matches('input, textarea, select')) return
+      setTimeout(() => {
+        if (document.activeElement === e.target)
+          e.target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }, 300)
     }
-  }, [])
-
-  // iOS keyboard: scroll focused input into view inside sheet-body
-  useEffect(() => {
-    const handleFocus = (e) => {
-      const tag = e.target?.tagName
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
-        setTimeout(() => {
-          if (document.activeElement === e.target) {
-            e.target.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
-          }
-        }, 400)
-      }
-    }
-    document.addEventListener('focusin', handleFocus)
-    return () => document.removeEventListener('focusin', handleFocus)
+    panel.addEventListener('focusin', onFocusIn)
+    return () => panel.removeEventListener('focusin', onFocusIn)
   }, [])
 
   return createPortal(
@@ -210,10 +235,10 @@ export function Sheet({ title, onClose, onSave, saveLabel = 'Save', children }) 
       aria-modal="true"
       aria-label={title}
       onMouseDown={e => { if (e.target === e.currentTarget) e.currentTarget._shouldClose = true }}
-      onMouseUp={e => { if (e.currentTarget._shouldClose && e.target === e.currentTarget && !saving) { onClose(); } e.currentTarget._shouldClose = false }}
+      onMouseUp={e => { if (e.currentTarget._shouldClose && e.target === e.currentTarget && !saving) { onClose() } e.currentTarget._shouldClose = false }}
       onClick={e => e.stopPropagation()}
     >
-      <div className="sheet">
+      <div ref={sheetRef} className="sheet">
         <div className="sheet-handle" />
         <div className="sheet-header">
           <button type="button" className="sheet-cancel" onClick={onClose} disabled={saving}>Cancel</button>

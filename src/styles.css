@@ -257,6 +257,8 @@
   --topbar-h:    84px;
   --tabbar-h:    56px;
   --safe-b:      env(safe-area-inset-bottom, 0px);
+  --vvh:         100dvh;
+  --keyboard-offset: 0px;
 
   /* Extended palette */
   --navy:        #0F1E38;
@@ -431,9 +433,6 @@
   background: var(--c-bg-surface);
   border-radius: var(--r-lg) var(--r-lg) 0 0;
   width: 100%;
-  max-height: 92vh;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
 }
 [data-theme="dark"] .sheet-header {
   border-bottom-color: var(--c-border-light);
@@ -1072,7 +1071,7 @@ body {
 }
 .sheet {
   width: 100%;
-  max-height: 92dvh;
+  max-height: min(92dvh, calc(var(--vvh) * 0.97));
   background: var(--c-bg-raised);
   border-radius: var(--r-lg) var(--r-lg) 0 0;
   display: flex;
@@ -1080,6 +1079,12 @@ body {
   overflow: hidden;
   animation: sheetUp 240ms cubic-bezier(.32,.72,0,1);
   padding-bottom: var(--safe-b);
+  transition: margin-bottom 250ms ease, max-height 250ms ease;
+}
+/* When a text input inside the sheet is focused, lift the sheet above the keyboard */
+.sheet.sheet-keyboard {
+  margin-bottom: var(--keyboard-offset);
+  padding-bottom: 0;
 }
 .sheet-handle {
   width: 36px;
