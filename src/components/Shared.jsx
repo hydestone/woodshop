@@ -145,25 +145,44 @@ export function Sheet({ title, onClose, onSave, saveLabel = 'Save', children }) 
     return () => window.removeEventListener('keydown', handler)
   }, [onClose, handleSave])
 
+  // Prevent background scroll when sheet is open
+  useEffect(() => {
+    const overlay = overlayRef.current
+    if (!overlay) return
+    const prevent = e => { if (!e.target.closest('.sheet-body')) e.preventDefault() }
+    overlay.addEventListener('touchmove', prevent, { passive: false })
+    return () => overlay.removeEventListener('touchmove', prevent)
+  }, [])
+
   // iOS keyboard: resize overlay to match visual viewport so sheet stays above keyboard
   useEffect(() => {
     const vv = window.visualViewport
     if (!vv) return
-    const update = () => {
+
+    const update = () => requestAnimationFrame(() => {
       if (!overlayRef.current) return
-      requestAnimationFrame(() => {
-        if (!overlayRef.current) return
-        overlayRef.current.style.height = vv.height + 'px'
-        overlayRef.current.style.top    = vv.offsetTop + 'px'
-        overlayRef.current.style.bottom = 'auto'
-      })
-    }
+      overlayRef.current.style.height = vv.height + 'px'
+      overlayRef.current.style.top    = vv.offsetTop + 'px'
+      overlayRef.current.style.bottom = 'auto'
+    })
+
+    // Multiple triggers for reliability across Safari and PWA standalone mode
     vv.addEventListener('resize', update)
     vv.addEventListener('scroll', update)
+    window.addEventListener('resize', update)
+
+    // focusin/out fires when keyboard opens/closes — use as fallback
+    const onFocusChange = () => { setTimeout(update, 150); setTimeout(update, 400) }
+    document.addEventListener('focusin',  onFocusChange)
+    document.addEventListener('focusout', onFocusChange)
+
     update()
     return () => {
       vv.removeEventListener('resize', update)
       vv.removeEventListener('scroll', update)
+      window.removeEventListener('resize', update)
+      document.removeEventListener('focusin',  onFocusChange)
+      document.removeEventListener('focusout', onFocusChange)
     }
   }, [])
 
