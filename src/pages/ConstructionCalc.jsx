@@ -255,6 +255,8 @@ export default function ConstructionCalc() {
   const [conState, setConState]     = useState({})
   const [conMode, setConMode]       = useState(null)
   const [showHelp, setShowHelp]     = useState(false)
+  const [showTape, setShowTape]     = useState(false)
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
   const containerRef = useRef(null)
   const [calcWidth, setCalcWidth] = useState(() => {
     try { return parseInt(localStorage.getItem('cm-calc-width')) || 340 } catch { return 340 }
@@ -286,7 +288,7 @@ export default function ConstructionCalc() {
       }
       // Auto-space before fraction if display has " (e.g. 6'4" → "6'4" 1")
       if (c === '/' && prev.includes('"') && !prev.endsWith(' ')) {
-        return prev.replace('"', '') + ' ' + c
+        return prev.replace('"', '') + c
       }
       return prev + c
     })
@@ -462,6 +464,25 @@ export default function ConstructionCalc() {
       {/* ── Left: Calculator ── */}
       <div ref={containerRef} className="cm-left" style={{ width: calcWidth }}>
 
+        {/* Mobile tape toggle */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 2 }}>
+          <button
+            onClick={() => setShowTape(t => !t)}
+            style={{
+              display: 'none',
+              fontSize: 10, fontWeight: 700, fontFamily: 'var(--tape-font)',
+              background: showTape ? 'rgba(74,222,128,.15)' : 'rgba(255,255,255,.06)',
+              color: showTape ? '#4ADE80' : 'var(--c-text-muted)',
+              border: '1px solid ' + (showTape ? 'rgba(74,222,128,.3)' : 'rgba(255,255,255,.1)'),
+              borderRadius: 4, padding: '3px 8px', cursor: 'pointer',
+              letterSpacing: '.5px',
+            }}
+            className="cm-tape-toggle"
+          >
+            TAPE {showTape ? '▲' : '▼'}
+          </button>
+        </div>
+
         {/* Display */}
         <div className="cm-display">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2, minHeight: 16 }}>
@@ -475,6 +496,7 @@ export default function ConstructionCalc() {
           <div className="cm-display-sub">
             {activeVal ? `${fracToDecimal(activeVal).toFixed(4)}"  ${(fracToDecimal(activeVal)*25.4).toFixed(2)}mm` : '\u00a0'}
           </div>
+          <div className="cm-input-hint">e.g. 9 ft′ → 1 in″ → 3 → /8 &nbsp;=&nbsp; 9′ 1 3/8″</div>
         </div>
 
         {/* Memory bar */}
@@ -640,8 +662,9 @@ export default function ConstructionCalc() {
           {showHelp && (
             <ConPanel title="Help">
               <div className="cm-help-grid">
-                <HelpItem title="Feet-Inch-Fraction" desc="Example: 6'4 1/8&quot; → tap 6, ft', 4, in&quot;, 1, /8. The /2 /4 /8 /16 buttons set the denominator of the last digit." />
-                <HelpItem title="Fractions" desc="Type 3/4 directly, or tap a digit then a /den button. Mixed numbers: type 3 then /4 for 3/4, or 1 then /8 for 1/8." />
+                <HelpItem title="Entering feet · inches · fractions" desc="Example — 9′ 1 3/8″: tap  9  ft′  1  in″  3  /8. The in″ button auto-inserts the space between inches and fraction. No need to type a space. The /2 /4 /8 /16 buttons set the denominator of the last digit entered." />
+                <HelpItem title="Fractions only" desc="Type numerator, tap /8 (or any denominator button). Example: 3 then /8 → 3/8. For mixed number: tap 1, then /4 → 1/4. Or type 3/4 directly with the / key." />
+                <HelpItem title="Feet only or inches only" desc="4 then ft′ → 4′ (4 feet). 9 then in″ → 9″ (9 inches). Entering a plain number without ft/in is treated as inches." />
                 <HelpItem title="Keyboard" desc="0–9 digits · + − * / operators · Enter or = · Esc clear · ' feet · &quot; inches · R √ · P π · Backspace delete" />
                 <HelpItem title="Memory" desc="M+ add to memory · M− subtract · MR recall · MC clear" />
                 <HelpItem title="Tape" desc="Tap any tape row to recall that result. Clear wipes the tape history." />
@@ -670,7 +693,7 @@ export default function ConstructionCalc() {
       </div>
 
       {/* ── Right/Bottom: Tape ── */}
-      <div className="cm-right">
+      <div className={`cm-right${showTape ? ' tape-open' : ''}`}>
         <div className="cm-tape-header">
           <span>CALCULATION TAPE</span>
           <button onClick={() => setHistory([])} style={{ background: 'none', border: 'none', color: 'var(--c-text-muted)', cursor: 'pointer', fontSize: 11, fontFamily: 'var(--tape-font)' }}>

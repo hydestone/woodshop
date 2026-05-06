@@ -2413,6 +2413,16 @@ body {
   text-transform: uppercase;
 }
 .cm-tape-dim { color: var(--calc-tape-dim); font-size: 14px; }
+.cm-input-hint {
+  display: none;
+  font-size: 10px;
+  color: var(--c-text-faint);
+  font-family: var(--tape-font);
+  letter-spacing: .2px;
+  text-align: center;
+  padding: 2px 0 0;
+  opacity: 0.7;
+}
 
 .cm-history {
   background: var(--c-bg-subtle);
@@ -2821,6 +2831,8 @@ body {
 @media (max-width: 767px) {
   .cm-outer {
     flex-direction: column;
+    height: auto;       /* don't clip to 100% — let tape show */
+    overflow: visible;
   }
   .cm-left {
     width: 100%;
@@ -2831,9 +2843,17 @@ body {
   .cm-right {
     border-left: none;
     border-top: 1px solid var(--c-border);
-    flex: 0 0 180px;
-    min-height: 0;
+    flex: 0 0 auto;
+    min-height: 180px;
+    max-height: 300px;
   }
+  /* Show tape toggle button on mobile */
+  .cm-tape-toggle { display: block !important; }
+  /* Hide tape on mobile by default — shown via toggle */
+  .cm-right { display: none; }
+  .cm-right.tape-open { display: flex; }
+  /* Always show input hint on mobile */
+  .cm-input-hint { display: block; }
 }
 
 /* Landscape on mobile: side by side but tighter */
