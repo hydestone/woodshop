@@ -20,6 +20,7 @@ export function ProjectDetail() {
   const [sub, setSub]           = useState(null)
   const [editing, setEditing]   = useState(false)
   const [showStatusPicker, setShowStatusPicker] = useState(false)
+  const [showCategoryPicker, setShowCategoryPicker] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [showRon, setShowRon]   = useState(false)
   const [showQRLabel, setShowQRLabel] = useState(false)
@@ -323,7 +324,7 @@ ${progressPhotos.length>12?`<div style="display:flex;align-items:center;justify-
         {/* Row 2: category · status · wood · year */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', flexWrap: 'wrap' }}>
           {project.category && (
-            <button type="button" onClick={() => setEditing(true)} style={{ fontSize: 12, background: 'var(--blue-dim)', color: 'var(--blue)', borderRadius: 99, padding: '2px 10px', fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+            <button type="button" onClick={() => setShowCategoryPicker(true)} style={{ fontSize: 12, background: 'var(--blue-dim)', color: 'var(--blue)', borderRadius: 99, padding: '2px 10px', fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
               {project.category}
             </button>
           )}
@@ -523,6 +524,29 @@ ${progressPhotos.length>12?`<div style="display:flex;align-items:center;justify-
 
       </div>{/* end swipeable tab content */}
 
+      {showCategoryPicker && (
+        <Sheet title="Category" onClose={() => setShowCategoryPicker(false)} onSave={null}>
+          <div className="form-group">
+            {categories.map((cat, i) => (
+              <div key={cat.id} className="more-item" style={{ padding: '14px 16px', borderBottom: i < categories.length-1 ? '1px solid var(--c-border-light)' : 'none' }}
+                onClick={async () => {
+                  setShowCategoryPicker(false)
+                  if (cat.name === project.category) return
+                  try {
+                    await db.updateProject(project.id, { category: cat.name })
+                    mutate(d => ({ ...d, projects: d.projects.map(p => p.id === project.id ? { ...p, category: cat.name } : p) }))
+                  } catch (err) { toast(err.message, 'error') }
+                }} role="button" tabIndex={0}>
+                <span style={{ flex: 1, fontSize: 15, color: cat.name === project.category ? 'var(--accent)' : 'var(--c-text-primary)', fontWeight: cat.name === project.category ? 700 : 400 }}>{cat.name}</span>
+                {cat.name === project.category && <span style={{ color: 'var(--accent)', fontSize: 16 }}>✓</span>}
+              </div>
+            ))}
+            {categories.length === 0 && (
+              <div style={{ padding: '20px', color: 'var(--c-text-muted)', fontSize: 14, textAlign: 'center' }}>No categories yet — add one in Edit Project.</div>
+            )}
+          </div>
+        </Sheet>
+      )}
       {showStatusPicker && (
         <Sheet title="Status" onClose={() => setShowStatusPicker(false)} onSave={null}>
           <div className="form-group">
@@ -1243,11 +1267,19 @@ export function ProjectSheet({ project, categories, onSave, onClose, mutate }) {
   const { data } = useCtx()
   const toast = useToast()
   const refs = {
-    name: useRef(), desc: useRef(), status: useRef(),
+    name: useRef(), desc: useRef(),
     final: useRef(), builtWith: useRef(), year: useRef(), giftRecipient: useRef(),
   }
   const [category,   setCategory]   = useState(project?.category    || '')
   const [finishVal,  setFinishVal]  = useState(project?.finish_used || '')
+  const [statusVal,  setStatusVal]  = useState(project?.status      || 'active')
+  const [showCatPicker,    setShowCatPicker]    = useState(false)
+  const [showFinishPicker, setShowFinishPicker] = useState(false)
+  const [showStatusPicker2, setShowStatusPicker2] = useState(false)
+  const [newCatVal,    setNewCatVal]    = useState('')
+  const [showNewCat,   setShowNewCat]   = useState(false)
+  const [newFinishVal, setNewFinishVal] = useState('')
+  const [showNewFinish, setShowNewFinish] = useState(false)
   const existingWoodSrc = data?.projectWoodSources?.find(pws => pws.project_id === project?.id)
   const [woodSrcId, setWoodSrcId] = useState(() => {
     // useState initializer function runs once on mount with current data
@@ -1278,7 +1310,7 @@ export function ProjectSheet({ project, categories, onSave, onClose, mutate }) {
       category,
       wood_type:        derivedWoodType,
       description:      refs.desc.current?.value.trim()       || '',
-      status:           refs.status.current?.value            || 'active',
+      status:           statusVal,
       dimensions_final: refs.final.current?.value.trim()      || '',
       built_with:       refs.builtWith.current?.value.trim()  || '',
       finish_used:      finishVal,
@@ -1289,22 +1321,19 @@ export function ProjectSheet({ project, categories, onSave, onClose, mutate }) {
   }
 
   return (
+    <>
     <Sheet title={project ? 'Edit Project' : 'New Project'} onClose={onClose} onSave={handleSave}>
       <div className="form-group">
         <FormCell label="Name"><input ref={refs.name} className="form-input" placeholder="Cherry Bowl" defaultValue={project?.name || ''} autoFocus /></FormCell>
-        <ManagedSelect label="Category" value={category} onChange={setCategory}
-          items={categories} addLabel="category"
-          onAddNew={async name => {
-            const cat = await db.addCategory(name)
-            mutate(d => ({ ...d, categories: [...(d.categories||[]), cat].sort((a,b)=>a.name.localeCompare(b.name)) }))
-          }}
-        />
+        <FormCell label="Category">
+          <button type="button" onClick={() => setShowCatPicker(true)} style={{ textAlign: 'right', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-text-primary)', fontFamily: 'inherit', fontSize: 16, padding: 0, flex: 1 }}>
+            {category || 'None'}
+          </button>
+        </FormCell>
         <FormCell label="Status" last>
-          <select ref={refs.status} className="form-select" defaultValue={project?.status || 'active'}>
-            <option value="planning">Planning</option>
-            <option value="active">Active</option>
-            <option value="complete">Complete</option>
-          </select>
+          <button type="button" onClick={() => setShowStatusPicker2(true)} style={{ textAlign: 'right', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-text-primary)', fontFamily: 'inherit', fontSize: 16, padding: 0, flex: 1 }}>
+            {STATUS_LABEL[statusVal] || statusVal}
+          </button>
         </FormCell>
       </div>
       <div className="form-group">
@@ -1324,20 +1353,105 @@ export function ProjectSheet({ project, categories, onSave, onClose, mutate }) {
           </select>
         </FormCell>
         <FormCell label="Built with"><input ref={refs.builtWith} className="form-input" placeholder="Solo, with dad…" defaultValue={project?.built_with || ''} /></FormCell>
-        <ManagedSelect label="Finish used" value={finishVal} onChange={setFinishVal}
-          items={finishesList} addLabel="finish"
-          onAddNew={async name => {
-            const f = await db.addFinish(name)
-            mutate(d => ({ ...d, finishes: [...(d.finishes||[]), f].sort((a,b)=>a.name.localeCompare(b.name)) }))
-          }}
-        />
+        <FormCell label="Finish used">
+          <button type="button" onClick={() => setShowFinishPicker(true)} style={{ textAlign: 'right', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-text-primary)', fontFamily: 'inherit', fontSize: 16, padding: 0, flex: 1 }}>
+            {finishVal || 'None'}
+          </button>
+        </FormCell>
         <FormCell label="Year completed"><input ref={refs.year} className="form-input" type="number" placeholder={new Date().getFullYear()} defaultValue={project?.year_completed || ''} /></FormCell>
         <FormCell label="Notes"><input ref={refs.desc} className="form-input" placeholder="Optional" defaultValue={project?.description || ''} /></FormCell>
         <FormCell label="Gift / recipient"><input ref={refs.giftRecipient} className="form-input" placeholder="Dad, Christmas 2023" defaultValue={project?.gift_recipient || ''} /></FormCell>
         <FormCell label="Final dimensions" last><input ref={refs.final} className="form-input" placeholder='10" × 3"' defaultValue={project?.dimensions_final || ''} /></FormCell>
       </div>
     </Sheet>
-  )
+
+    {showCatPicker && (
+      <Sheet title="Category" onClose={() => { setShowCatPicker(false); setShowNewCat(false); setNewCatVal('') }} onSave={null}>
+        <div className="form-group">
+          <div className="more-item" style={{ padding: '14px 16px', borderBottom: '1px solid var(--c-border-light)' }}
+            onClick={() => { setCategory(''); setShowCatPicker(false) }} role="button" tabIndex={0}>
+            <span style={{ flex: 1, fontSize: 15, color: !category ? 'var(--accent)' : 'var(--c-text-primary)', fontWeight: !category ? 700 : 400 }}>None</span>
+            {!category && <span style={{ color: 'var(--accent)' }}>✓</span>}
+          </div>
+          {categories.map((cat, i) => (
+            <div key={cat.id} className="more-item" style={{ padding: '14px 16px', borderBottom: i < categories.length-1 || showNewCat ? '1px solid var(--c-border-light)' : 'none' }}
+              onClick={() => { setCategory(cat.name); setShowCatPicker(false) }} role="button" tabIndex={0}>
+              <span style={{ flex: 1, fontSize: 15, color: cat.name === category ? 'var(--accent)' : 'var(--c-text-primary)', fontWeight: cat.name === category ? 700 : 400 }}>{cat.name}</span>
+              {cat.name === category && <span style={{ color: 'var(--accent)' }}>✓</span>}
+            </div>
+          ))}
+          {!showNewCat ? (
+            <div className="more-item" style={{ padding: '14px 16px' }} onClick={() => setShowNewCat(true)} role="button" tabIndex={0}>
+              <span style={{ fontSize: 15, color: 'var(--accent)' }}>+ Add category…</span>
+            </div>
+          ) : (
+            <div style={{ padding: '12px 16px', display: 'flex', gap: 8 }}>
+              <input className="form-input" placeholder="Category name" value={newCatVal} onChange={e => setNewCatVal(e.target.value)} autoFocus style={{ flex: 1 }} />
+              <button className="btn-text" onClick={async () => {
+                if (!newCatVal.trim()) return
+                try {
+                  const cat = await db.addCategory(newCatVal.trim())
+                  mutate(d => ({ ...d, categories: [...(d.categories||[]), cat].sort((a,b)=>a.name.localeCompare(b.name)) }))
+                  setCategory(cat.name); setShowCatPicker(false); setShowNewCat(false); setNewCatVal('')
+                } catch(e) { toast(e.message, 'error') }
+              }}>Add</button>
+            </div>
+          )}
+        </div>
+      </Sheet>
+    )}
+
+    {showStatusPicker2 && (
+      <Sheet title="Status" onClose={() => setShowStatusPicker2(false)} onSave={null}>
+        <div className="form-group">
+          {['planning','active','complete'].map((s, i, arr) => (
+            <div key={s} className="more-item" style={{ padding: '14px 16px', borderBottom: i < arr.length-1 ? '1px solid var(--c-border-light)' : 'none' }}
+              onClick={() => { setStatusVal(s); setShowStatusPicker2(false) }} role="button" tabIndex={0}>
+              <span style={{ flex: 1, fontSize: 15, color: s === statusVal ? 'var(--accent)' : 'var(--c-text-primary)', fontWeight: s === statusVal ? 700 : 400 }}>{STATUS_LABEL[s]}</span>
+              {s === statusVal && <span style={{ color: 'var(--accent)' }}>✓</span>}
+            </div>
+          ))}
+        </div>
+      </Sheet>
+    )}
+
+    {showFinishPicker && (
+      <Sheet title="Finish used" onClose={() => { setShowFinishPicker(false); setShowNewFinish(false); setNewFinishVal('') }} onSave={null}>
+        <div className="form-group">
+          <div className="more-item" style={{ padding: '14px 16px', borderBottom: '1px solid var(--c-border-light)' }}
+            onClick={() => { setFinishVal(''); setShowFinishPicker(false) }} role="button" tabIndex={0}>
+            <span style={{ flex: 1, fontSize: 15, color: !finishVal ? 'var(--accent)' : 'var(--c-text-primary)', fontWeight: !finishVal ? 700 : 400 }}>None</span>
+            {!finishVal && <span style={{ color: 'var(--accent)' }}>✓</span>}
+          </div>
+          {finishesList.map((f, i) => (
+            <div key={f.id} className="more-item" style={{ padding: '14px 16px', borderBottom: i < finishesList.length-1 || showNewFinish ? '1px solid var(--c-border-light)' : 'none' }}
+              onClick={() => { setFinishVal(f.name); setShowFinishPicker(false) }} role="button" tabIndex={0}>
+              <span style={{ flex: 1, fontSize: 15, color: f.name === finishVal ? 'var(--accent)' : 'var(--c-text-primary)', fontWeight: f.name === finishVal ? 700 : 400 }}>{f.name}</span>
+              {f.name === finishVal && <span style={{ color: 'var(--accent)' }}>✓</span>}
+            </div>
+          ))}
+          {!showNewFinish ? (
+            <div className="more-item" style={{ padding: '14px 16px' }} onClick={() => setShowNewFinish(true)} role="button" tabIndex={0}>
+              <span style={{ fontSize: 15, color: 'var(--accent)' }}>+ Add finish…</span>
+            </div>
+          ) : (
+            <div style={{ padding: '12px 16px', display: 'flex', gap: 8 }}>
+              <input className="form-input" placeholder="Finish name" value={newFinishVal} onChange={e => setNewFinishVal(e.target.value)} autoFocus style={{ flex: 1 }} />
+              <button className="btn-text" onClick={async () => {
+                if (!newFinishVal.trim()) return
+                try {
+                  const f = await db.addFinish(newFinishVal.trim())
+                  mutate(d => ({ ...d, finishes: [...(d.finishes||[]), f].sort((a,b)=>a.name.localeCompare(b.name)) }))
+                  setFinishVal(f.name); setShowFinishPicker(false); setShowNewFinish(false); setNewFinishVal('')
+                } catch(e) { toast(e.message, 'error') }
+              }}>Add</button>
+            </div>
+          )}
+        </div>
+      </Sheet>
+    )}
+  </>
+)
 }
 
 // ─── Coat sheet ───────────────────────────────────────────────────────────────
