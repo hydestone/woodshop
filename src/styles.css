@@ -2235,12 +2235,11 @@ body {
 .key-btn.den   { background: var(--forest); color: var(--white); font-size: 14px; }
 .key-btn.den:not(.active) { background: var(--c-bg-subtle); color: var(--c-text-muted); }
 
-/* ─── Construction Calculator (CM Pro) ──────────────────────────────────────── */
 /* ─── Construction Calculator ────────────────────────────────────────────────── */
 :root {
   --calc-bg:     #1C1F26;
-  --calc-key:    #2A2E38;
-  --calc-key2:   #252830;
+  --calc-key:    #343840;
+  --calc-key2:   #2C303A;
   --calc-op:     #1E3A5F;
   --calc-op-txt: #ffffff;
   --calc-eq:     #1A3D2B;
@@ -2258,8 +2257,8 @@ body {
 [data-theme="dark"] {
   --calc-tape-bg1: #1a1d24;
   --calc-tape-bg2: #161820;
-  --calc-tape-txt: #e2e8f0;
-  --calc-tape-dim: #64748b;
+  --calc-tape-txt: #f1f5f9;
+  --calc-tape-dim: #94a3b8;
 }
 
 .cm-display {
@@ -2282,14 +2281,14 @@ body {
 .cm-display-eq {
   font-family: var(--tape-font);
   font-size: 12px;
-  color: rgba(74,222,128,.5);
+  color: rgba(74,222,128,.75);
   text-align: right;
   min-height: 16px;
 }
 .cm-display-sub {
   font-family: var(--tape-font);
-  font-size: 10px;
-  color: rgba(74,222,128,.4);
+  font-size: 11px;
+  color: rgba(255,255,255,.55);
   text-align: right;
   min-height: 12px;
 }
@@ -2412,7 +2411,7 @@ body {
   border-bottom: 1px solid var(--c-border);
   text-transform: uppercase;
 }
-.cm-tape-dim { color: var(--calc-tape-dim); font-size: 14px; }
+.cm-tape-dim { color: var(--calc-tape-dim); font-size: 15px; }
 .cm-input-hint {
   display: none;
   font-size: 10px;

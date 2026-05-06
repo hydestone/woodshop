@@ -498,31 +498,37 @@ export default function ConstructionCalc() {
       {/* ── Left: Calculator ── */}
       <div ref={containerRef} className="cm-left" style={{ width: isMobile ? '100%' : calcWidth }}>
 
-        {/* Mode selector */}
-        <select
-          value={conMode || (showHelp ? 'help' : 'calc')}
-          onChange={e => {
-            const v = e.target.value
-            if (v === 'calc') { setConMode(null); setShowHelp(false) }
-            else if (v === 'help') { setConMode(null); setShowHelp(true) }
-            else { setConMode(v); setShowHelp(false) }
-          }}
-          style={{
-            width: '100%', padding: '10px 12px', fontSize: 15, fontWeight: 600,
-            background: 'var(--calc-key2)', color: '#fff',
-            border: '1px solid rgba(255,255,255,.12)', borderRadius: 8,
-            cursor: 'pointer', fontFamily: 'inherit', marginBottom: 6,
-            appearance: 'none', WebkitAppearance: 'none',
-          }}
-        >
-          <option value="calc">Calculator</option>
-          <option value="pitch">△  Pitch / Rise / Run</option>
-          <option value="diag">▭  Diagonal / Square</option>
-          <option value="stairs">▤  Stairs</option>
-          <option value="circle">○  Circle / Arc</option>
-          <option value="miter">∠  Compound Miter</option>
-          <option value="help">?  Help</option>
-        </select>
+        {/* Mode pill buttons — replaces dropdown, no second select */}
+        <div style={{ display: 'flex', gap: 3, marginBottom: 4, flexWrap: 'wrap' }}>
+          {[
+            { id: null,     label: 'Calc' },
+            { id: 'pitch',  label: 'Pitch' },
+            { id: 'diag',   label: 'Diag' },
+            { id: 'stairs', label: 'Stairs' },
+            { id: 'circle', label: 'Circle' },
+            { id: 'miter',  label: 'Miter' },
+            { id: 'help',   label: '?' },
+          ].map(m => {
+            const active = m.id === null ? (!conMode && !showHelp) : (m.id === 'help' ? showHelp : conMode === m.id)
+            return (
+              <button key={m.id || 'calc'} type="button"
+                onClick={() => {
+                  if (m.id === null) { setConMode(null); setShowHelp(false) }
+                  else if (m.id === 'help') { setShowHelp(h => !h); setConMode(null) }
+                  else { setConMode(m.id); setShowHelp(false) }
+                }}
+                style={{
+                  padding: '5px 10px', fontSize: 12, fontWeight: 700,
+                  borderRadius: 99, border: 'none', cursor: 'pointer',
+                  fontFamily: 'inherit', letterSpacing: '.3px',
+                  background: active ? 'var(--forest)' : 'var(--calc-key2)',
+                  color: active ? '#fff' : 'rgba(255,255,255,.65)',
+                }}>
+                {m.label}
+              </button>
+            )
+          })}
+        </div>
 
         {/* Display — single line */}
         <div className="cm-display" style={{ marginBottom: 4 }}>
@@ -541,8 +547,8 @@ export default function ConstructionCalc() {
           <div className="cm-input-hint">e.g. 9 ft′ → 1 in″ → 3 → /8 = 9′ 1 3/8″</div>
         </div>
 
-        {/* Calculator keypad — full width 5 columns, hidden when construction mode active */}
-        {!conMode && !showHelp && (
+        {/* Calculator keypad — full width 5 columns */}
+        {true && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: '0 0 auto' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 4 }}>
               <Btn onClick={() => appendDigit('7')}>7</Btn>
