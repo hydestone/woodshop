@@ -829,8 +829,8 @@ body {
   display: flex;
   align-items: center;
   padding-top: 6px;
-  padding-bottom: max(calc(6px + env(safe-area-inset-bottom, 34px)), 40px);
-  z-index: 50;
+  padding-bottom: calc(6px + var(--safe-b));
+  z-index: 100;
 }
 
 .tab-btn {
@@ -2898,7 +2898,7 @@ body {
 #table-toggle-btn { display: none; }
 
 @media screen and (orientation: landscape) {
-  .tabbar { padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px)); }
+  .tabbar { padding-bottom: calc(6px + var(--safe-b)); }
 
   .sidebar { padding-bottom: env(safe-area-inset-bottom); }
 }
@@ -3181,7 +3181,7 @@ body {
   :root { --tabbar-h: 48px; }
   .tabbar {
     padding-top: 4px;
-    padding-bottom: max(env(safe-area-inset-bottom, 34px), 34px);
+    padding-bottom: calc(6px + var(--safe-b));
     /* Fully opaque — eliminates iOS compositing bleed in home indicator zone */
     background: #000000;
     backdrop-filter: none;
