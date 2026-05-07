@@ -257,9 +257,8 @@
   --topbar-h:    84px;
   --tabbar-h:    56px;
   --safe-b:      env(safe-area-inset-bottom, 0px);
-  /* Canonical tab bar variables — matches CRM implementation */
+  /* Canonical safe-area variable */
   --safe-bottom:    env(safe-area-inset-bottom, 0px);
-  --tabbar-height:  72px;
   --tabbar-bg:      rgb(22, 27, 34);
   --keyboard-offset: 0px;
   --vvh:            100dvh;
@@ -801,18 +800,20 @@ body {
 
 /* ─── Main area ──────────────────────────────────────────────────────────── */
 .main-area {
-  flex: 1;
+  flex: 1 1 auto;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
+  position: relative;
 }
 .scroll-page {
-  flex: 1;
+  height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: 20px;
+  padding-bottom: 0;
 }
 /* Override for pages that set their own padding */
 .scroll-page[style*="paddingBottom"] { padding-bottom: unset; }
@@ -821,19 +822,24 @@ body {
 .scroll-page::-webkit-scrollbar-thumb { background: var(--c-border); border-radius: 4px; }
 .scroll-page { scrollbar-width: thin; scrollbar-color: var(--c-border) transparent; }
 
-/* ─── Tab bar (mobile) ───────────────────────────────────────────────────── */
+/* ─── Tab bar (mobile) — flex child, not fixed overlay ──────────────────── */
 .tabbar {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 100;
-  background: var(--tabbar-bg);
-  border-top: 1px solid var(--c-border);
+  position: relative;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
+  z-index: 100;
+  background: rgb(22, 27, 34);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  height: calc(56px + env(safe-area-inset-bottom, 0px));
   padding-top: 6px;
-  padding-bottom: calc(6px + var(--safe-bottom));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ProjectDetail occupies the same flex slot as .tab-panel */
+.main-area > .slide-in {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .tab-btn {
@@ -1814,11 +1820,10 @@ body {
 
 /* ─── Tab transition panel ───────────────────────────────────────────────── */
 .tab-panel {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  flex: 1 1 auto;
   min-height: 0;
+  position: relative;
+  overflow: hidden;
 }
 @keyframes tabSlideFromRight {
   from { opacity: 0; transform: translateX(24px); }
@@ -2901,8 +2906,6 @@ body {
 #table-toggle-btn { display: none; }
 
 @media screen and (orientation: landscape) {
-  .tabbar { padding-bottom: calc(6px + var(--safe-b)); }
-
   .sidebar { padding-bottom: env(safe-area-inset-bottom); }
 }
 
@@ -2947,8 +2950,6 @@ body {
   .page-tabs { display: none; }
 
   .sidebar { display: none; }
-
-  .scroll-page { padding-bottom: calc(var(--tabbar-height) + var(--safe-bottom)); }
 
   .toast-container { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 10px); }
 
@@ -3183,9 +3184,7 @@ body {
   /* Tighter padding in PWA mode — no browser chrome */
   :root { --tabbar-h: 48px; }
   .tabbar {
-    padding-top: 4px;
-    /* padding-bottom handled by main rule: calc(6px + var(--safe-bottom)) */
-    /* Fully opaque — eliminates iOS compositing bleed in home indicator zone */
+    /* tabbar height/padding from main rule — no override needed in flex model */
     background: #000000;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
@@ -3194,23 +3193,18 @@ body {
     background: #ffffff;
     border-top-color: rgba(0,0,0,.08);
   }
-  /* Default = dark (app default). Light mode gets the override. */
-  /* Must match tabbar background exactly so any gap below tabbar is invisible */
   html, body { background: #000000; }
   html[data-theme="light"],
   [data-theme="light"] body { background: #ffffff; }
 
-  .scroll-page { padding-bottom: calc(var(--tabbar-height) + var(--safe-bottom)); }
-  .fab { bottom: calc(var(--tabbar-height) + var(--safe-bottom) + 10px); }
-  .fab.fab-secondary { bottom: calc(var(--tabbar-height) + var(--safe-bottom) + 62px); }
+  .fab { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 10px); }
+  .fab.fab-secondary { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 62px); }
 }
 
-/* Standalone + mobile combined — ensures override on iPhone PWA */
+/* Standalone + mobile combined — background only, tabbar layout handled by flex model */
 @media (display-mode: standalone) and (max-width: 767px) {
   :root { --tabbar-h: 48px; }
   .tabbar {
-    padding-top: 4px;
-    /* padding-bottom from main rule: calc(6px + var(--safe-bottom)) */
     background: #000000 !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
@@ -3219,9 +3213,8 @@ body {
   html, body { background: #000000 !important; }
   html[data-theme="light"],
   [data-theme="light"] body { background: #ffffff !important; }
-  .scroll-page { padding-bottom: calc(var(--tabbar-height) + var(--safe-bottom)) !important; }
-  .fab { bottom: calc(var(--tabbar-height) + var(--safe-bottom) + 10px) !important; }
-  .fab.fab-secondary { bottom: calc(var(--tabbar-height) + var(--safe-bottom) + 62px) !important; }
+  .fab { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 10px) !important; }
+  .fab.fab-secondary { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 62px) !important; }
 }
 /* iOS fallback — JS adds .pwa-standalone to <html> */
 @media (max-width: 767px) {
@@ -3230,16 +3223,13 @@ body {
   html.pwa-standalone[data-theme="light"],
   [data-theme="light"] .pwa-standalone body { background: #ffffff !important; }
   .pwa-standalone .tabbar {
-    padding-top: 4px;
-    /* padding-bottom from main rule: calc(6px + var(--safe-bottom)) */
     background: #000000 !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
   }
   [data-theme="light"] .pwa-standalone .tabbar { background: #ffffff !important; }
-  .pwa-standalone .scroll-page { padding-bottom: calc(var(--tabbar-height) + var(--safe-bottom)) !important; }
-  .pwa-standalone .fab { bottom: calc(var(--tabbar-height) + var(--safe-bottom) + 10px) !important; }
-  .pwa-standalone .fab.fab-secondary { bottom: calc(var(--tabbar-height) + var(--safe-bottom) + 62px) !important; }
+  .pwa-standalone .fab { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 10px) !important; }
+  .pwa-standalone .fab.fab-secondary { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 62px) !important; }
 }
 
 /* ─── Dashboard lazy-load skeleton ──────────────────────────────────────────── */

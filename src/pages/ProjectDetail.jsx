@@ -302,7 +302,7 @@ ${progressPhotos.length>12?`<div style="display:flex;align-items:center;justify-
   }
 
   return (
-    <div style={{ height: '100%', overflowY: 'auto', background: 'var(--c-bg-raised)' }} className="slide-in">
+    <div style={{ overflowY: 'auto', background: 'var(--c-bg-raised)' }} className="slide-in">
 
       {/* ── Header ── */}
       <div style={{ background: 'var(--c-bg-surface)', borderBottom: '1px solid var(--c-border)' }}>
