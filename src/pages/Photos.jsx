@@ -188,14 +188,14 @@ export default function AllPhotos() {
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
       <div className="scroll-page" style={{ paddingBottom: 80 }}>
-        {/* Compact header with inline filters */}
-        <div style={{ padding: '16px 16px 0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
+        {/* Compact header with inline filters — sticky */}
+        <div style={{ padding: '12px 16px', position: 'sticky', top: 0, zIndex: 10, background: 'var(--c-bg-raised)', borderBottom: '1px solid var(--c-border)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
               <h1 className="page-title" style={{ margin: 0 }}>All Photos</h1>
               <span style={{ fontSize: 13, color: 'var(--c-text-muted)' }}>{data.photos.length}</span>
             </div>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'nowrap', overflowX: 'auto', scrollbarWidth: 'none' }}>
+            <div className="filter-bar" style={{ display: 'flex', gap: 6, flexWrap: 'nowrap', overflowX: 'auto', scrollbarWidth: 'none' }}>
               <FilterSelect
                 value={filter.startsWith('cat:') ? 'all' : filter}
                 onChange={v => { setFilter(v); if (v !== 'unsorted') { setUnsortedStatus('all'); setIncludeComplete(false) } }}
@@ -229,29 +229,28 @@ export default function AllPhotos() {
                 </select>
                 <span className="filter-select-chevron" aria-hidden="true">▾</span>
               </div>
+              {/* Inline unsorted pill — desktop only */}
+              {!isMobile && unsortedCount > 0 && filter !== 'unsorted' && (
+                <div
+                  onClick={() => setFilter('unsorted')}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '5px 10px', borderRadius: 6, cursor: 'pointer', flexShrink: 0,
+                    background: 'var(--orange-dim)', border: '1px solid var(--orange)',
+                  }}
+                >
+                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--c-text-primary)', whiteSpace: 'nowrap' }}>
+                    {unsortedCount} unsorted
+                  </span>
+                  <button className="btn-primary" style={{ padding: '3px 10px', fontSize: 11, flexShrink: 0, lineHeight: 1.4 }}
+                    onClick={e => { e.stopPropagation(); setShowTriage(true) }}>
+                    Sort →
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
-
-        {/* Inbox banner */}
-        {unsortedCount > 0 && filter !== 'unsorted' && (
-          <div
-            onClick={() => setFilter('unsorted')}
-            style={{
-              margin: '0 16px 12px', padding: '10px 14px',
-              background: 'var(--orange-dim)', borderRadius: 10,
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              cursor: 'pointer', border: '1px solid var(--orange)',
-            }}
-          >
-            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--c-text-primary)' }}>
-              {unsortedCount} unsorted
-            </span>
-            <button className="btn-primary" style={{ padding: '6px 14px', fontSize: 12, flexShrink: 0 }} onClick={e => { e.stopPropagation(); setShowTriage(true) }}>
-              Sort →
-            </button>
-          </div>
-        )}
 
         {/* Photo grid with drag-drop (desktop only) */}
         <div
