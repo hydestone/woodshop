@@ -700,7 +700,7 @@ export default function App() {
               {projId ? (
                 <ProjectDetail />
               ) : (
-                <div key={tabKey} className={`tab-panel tab-panel--${tabDir}`}>
+                <div key={tabKey} className="tab-panel">
                   {tab === 'home'        && <>
                     {sampleIds?.projectId && (
                       <div className="sample-banner">
@@ -758,6 +758,10 @@ export default function App() {
                         if (isMore) {
                           if (!showMore) { pushNav(tab, projId, false); try { window.history.pushState({ jdh: navStack.current.length }, '') } catch {} }
                           setShowMore(s => !s)
+                        } else if (tab === t.id && !projId) {
+                          // Re-tap active tab — scroll to top (iOS convention)
+                          const el = document.querySelector('.tab-panel .scroll-page') || document.querySelector('.scroll-page')
+                          if (el) el.scrollTo({ top: 0, behavior: 'smooth' })
                         } else {
                           setTab(t.id)
                         }

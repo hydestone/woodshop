@@ -1897,7 +1897,13 @@ body {
   min-height: 0;
   position: relative;
   overflow: hidden;
+  animation: tabFadeIn 120ms ease both;
 }
+@keyframes tabFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+/* Legacy slide keyframes — kept for ProjectDetail transitions */
 @keyframes tabSlideFromRight {
   from { opacity: 0; transform: translateX(24px); }
   to   { opacity: 1; transform: translateX(0); }
