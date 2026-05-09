@@ -803,7 +803,7 @@ export function Lightbox({ photos, index, onClose, onEdit }) {
 // ─── PhotoGrid ────────────────────────────────────────────────────────────────
 const PHOTO_PAGE = 40  // photos rendered per batch
 
-export function PhotoGrid({ photos, onEdit, showProject, projects, onNavigateProject, onCreateIdea, selectMode, selectedIds, onToggleSelect, onEnterSelectMode }) {
+export function PhotoGrid({ photos, onEdit, showProject, projects, onNavigateProject, onCreateIdea, selectMode, selectedIds, onToggleSelect, onEnterSelectMode, sortBy }) {
   const [lightboxIdx, setLightboxIdx] = useState(null)
   const [visible, setVisible]         = useState(PHOTO_PAGE)
   const sentinelRef = useRef(null)
@@ -828,26 +828,46 @@ export function PhotoGrid({ photos, onEdit, showProject, projects, onNavigatePro
 
   const shown = photos.slice(0, visible)
 
+  // Build grid items with date section headers when sorted by date
+  const gridItems = []
+  let lastMonth = ''
+  shown.forEach((photo, i) => {
+    if (sortBy === 'date' && photo.created_at) {
+      const d = new Date(photo.created_at)
+      const key = `${d.getFullYear()}-${d.getMonth()}`
+      if (key !== lastMonth) {
+        lastMonth = key
+        const label = d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
+        gridItems.push(
+          <div key={`hdr-${key}`} className="photo-grid-date-header">
+            {label}
+          </div>
+        )
+      }
+    }
+    gridItems.push(
+      <PhotoCard
+        key={photo.id}
+        photo={photo}
+        tileIndex={i}
+        onEdit={onEdit}
+        showProject={showProject}
+        projects={projects}
+        onOpen={() => !selectMode && setLightboxIdx(photos.indexOf(photo))}
+        onNavigateProject={onNavigateProject}
+        onCreateIdea={onCreateIdea}
+        selectMode={selectMode}
+        isSelected={selectedIds?.has(photo.id)}
+        onToggleSelect={onToggleSelect}
+        onEnterSelectMode={onEnterSelectMode}
+      />
+    )
+  })
+
   return (
     <>
       <div className="photo-grid" data-tutorial-target="photo-grid">
-        {shown.map((photo, i) => (
-          <PhotoCard
-            key={photo.id}
-            photo={photo}
-            tileIndex={i}
-            onEdit={onEdit}
-            showProject={showProject}
-            projects={projects}
-            onOpen={() => !selectMode && setLightboxIdx(photos.indexOf(photo))}
-            onNavigateProject={onNavigateProject}
-            onCreateIdea={onCreateIdea}
-            selectMode={selectMode}
-            isSelected={selectedIds?.has(photo.id)}
-            onToggleSelect={onToggleSelect}
-            onEnterSelectMode={onEnterSelectMode}
-          />
-        ))}
+        {gridItems}
       </div>
       {/* Sentinel — triggers loading next batch */}
       {visible < photos.length && (

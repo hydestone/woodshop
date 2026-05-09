@@ -24,6 +24,7 @@ export default function AllPhotos() {
   const [duplicateGroups, setDuplicateGroups] = useState([])
   const [selectMode, setSelectMode]     = useState(false)
   const [selectedIds, setSelectedIds]   = useState(new Set())
+  const [showFabMenu, setShowFabMenu]   = useState(false)
   const fileRef = useRef()
   const quickRef = useRef()
 
@@ -449,6 +450,7 @@ export default function AllPhotos() {
                     selectedIds={selectedIds}
                     onToggleSelect={handleToggleSelect}
                     onEnterSelectMode={handleEnterSelectMode}
+                    sortBy={sortBy}
                   />
                 : (
                   <div className="empty" style={{ paddingTop: 60 }}>
@@ -464,24 +466,63 @@ export default function AllPhotos() {
         </div>
       </div>
 
-      {/* Quick Upload — hidden input */}
+      {/* Hidden file inputs */}
       <input ref={quickRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handleQuickUpload} />
-
-      {/* Tag Upload — hidden input */}
       <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => handleFiles(e.target.files)} />
 
-      {/* Two FABs — Quick Upload (secondary, above) + Tag Upload (primary) */}
+      {/* FAB menu backdrop */}
+      {showFabMenu && (
+        <div
+          onClick={() => setShowFabMenu(false)}
+          style={{ position: 'fixed', inset: 0, zIndex: 39 }}
+        />
+      )}
+
+      {/* FAB popover menu */}
+      {showFabMenu && (
+        <div className="fab-menu">
+          <button
+            onClick={() => { setShowFabMenu(false); quickRef.current?.click() }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+              padding: '14px 16px', border: 'none', borderBottom: '1px solid var(--c-border)',
+              background: 'none', cursor: 'pointer', fontFamily: 'inherit',
+              fontSize: 14, fontWeight: 600, color: 'var(--c-text-primary)',
+              textAlign: 'left',
+            }}
+          >
+            <IPlus size={18} color="var(--orange)" sw={2.5} />
+            <div>
+              <div>Quick Upload</div>
+              <div style={{ fontSize: 11, fontWeight: 400, color: 'var(--c-text-muted)', marginTop: 1 }}>Skip tagging, sort later</div>
+            </div>
+          </button>
+          <button
+            onClick={() => { setShowFabMenu(false); fileRef.current?.click() }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+              padding: '14px 16px', border: 'none',
+              background: 'none', cursor: 'pointer', fontFamily: 'inherit',
+              fontSize: 14, fontWeight: 600, color: 'var(--c-text-primary)',
+              textAlign: 'left',
+            }}
+          >
+            <ICamera size={18} color="var(--accent)" sw={2} />
+            <div>
+              <div>Upload with Tags</div>
+              <div style={{ fontSize: 11, fontWeight: 400, color: 'var(--c-text-muted)', marginTop: 1 }}>Add caption and tags</div>
+            </div>
+          </button>
+        </div>
+      )}
+
+      {/* Single FAB */}
       <button
-        className="fab fab-secondary"
-        onClick={() => quickRef.current?.click()}
+        className="fab"
+        onClick={() => setShowFabMenu(v => !v)}
         disabled={uploading}
-        aria-label="Quick upload to inbox"
-        title="Quick upload — no tagging, sort later"
-        style={{ background: 'var(--orange)', boxShadow: '0 4px 12px rgba(245,158,11,.3)' }}
+        aria-label="Upload photos"
       >
-        <IPlus size={22} color="#fff" sw={2.5} />
-      </button>
-      <button className="fab" onClick={() => fileRef.current?.click()} disabled={uploading} aria-label="Upload photos with tags">
         {uploading
           ? <div className="spinner" style={{ width: 20, height: 20, borderWidth: 2, borderTopColor: '#fff' }} />
           : <ICamera size={22} color="#fff" sw={2} />}

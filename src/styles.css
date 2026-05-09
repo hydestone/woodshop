@@ -1062,6 +1062,19 @@ body {
 }
 .fab:active { transform: scale(.97); }
 .fab:disabled { opacity: .5; cursor: default; transform: none; }
+.fab-menu {
+  position: fixed;
+  right: 20px;
+  bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 76px);
+  z-index: 41;
+  background: var(--c-bg-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 12px;
+  overflow: hidden;
+  min-width: 200px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.25);
+  animation: sheetIn 180ms cubic-bezier(.32,.72,0,1);
+}
 
 /* ─── Overlay & Sheet ────────────────────────────────────────────────────── */
 .overlay {
@@ -1483,6 +1496,15 @@ body {
   grid-template-columns: repeat(1, 1fr);
   gap: 10px;
   padding: 16px 20px;
+}
+.photo-grid-date-header {
+  grid-column: 1 / -1;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--c-text-muted);
+  letter-spacing: 0.02em;
+  padding: 8px 0 2px;
+  text-transform: uppercase;
 }
 .photo-card {
   border-radius: var(--r-md);
@@ -3090,6 +3112,7 @@ body {
   .scroll-page { padding-bottom: 20px; }
 
   .fab { bottom: 24px; }
+  .fab-menu { bottom: 84px; }
   .fab.fab-secondary { bottom: 84px; }
 
   .page-header { padding-top: 20px; }
@@ -3249,6 +3272,7 @@ body {
   [data-theme="light"] body { background: #ffffff; }
 
   .fab { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 10px); }
+  .fab-menu { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 70px); }
   .fab.fab-secondary { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 62px); }
 }
 
@@ -3265,6 +3289,7 @@ body {
   html[data-theme="light"],
   [data-theme="light"] body { background: #ffffff !important; }
   .fab { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 10px) !important; }
+  .fab-menu { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 70px) !important; }
   .fab.fab-secondary { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 62px) !important; }
 }
 /* iOS fallback — JS adds .pwa-standalone to <html> */
@@ -3280,6 +3305,7 @@ body {
   }
   [data-theme="light"] .pwa-standalone .tabbar { background: #ffffff !important; }
   .pwa-standalone .fab { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 10px) !important; }
+  .pwa-standalone .fab-menu { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 70px) !important; }
   .pwa-standalone .fab.fab-secondary { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 62px) !important; }
 }
 
