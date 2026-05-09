@@ -1547,6 +1547,60 @@ body {
   color: var(--c-text-muted);
 }
 
+/* ─── Photo selection mode ────────────────────────────────────────────────── */
+.photo-select-check {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.7);
+  background: rgba(0,0,0,.3);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 4;
+  opacity: 0;
+  transition: opacity 150ms, background 150ms, border-color 150ms;
+  pointer-events: none;
+}
+.photo-card:hover .photo-select-check,
+.photo-card .photo-select-check.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.photo-select-check.checked {
+  background: var(--accent);
+  border-color: var(--accent);
+  opacity: 1;
+  pointer-events: auto;
+}
+.photo-card.selected {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+}
+.photo-card.selected img {
+  opacity: .85;
+}
+.select-toolbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  background: var(--c-bg-surface);
+  border-top: 1px solid var(--c-border);
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  box-shadow: 0 -4px 20px rgba(0,0,0,.15);
+}
+
 /* ─── Drop zone ──────────────────────────────────────────────────────────── */
 .drop-zone {
   border: 2px dashed var(--c-border);
