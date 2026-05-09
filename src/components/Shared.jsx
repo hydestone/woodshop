@@ -803,7 +803,7 @@ export function Lightbox({ photos, index, onClose, onEdit }) {
 // ─── PhotoGrid ────────────────────────────────────────────────────────────────
 const PHOTO_PAGE = 40  // photos rendered per batch
 
-export function PhotoGrid({ photos, onEdit, showProject, projects, onNavigateProject, onCreateIdea, selectMode, selectedIds, onToggleSelect, onEnterSelectMode, sortBy }) {
+export function PhotoGrid({ photos, onEdit, showProject, projects, onNavigateProject, onCreateIdea, selectMode, selectedIds, onToggleSelect, onEnterSelectMode, sortBy, gridCols }) {
   const [lightboxIdx, setLightboxIdx] = useState(null)
   const [visible, setVisible]         = useState(PHOTO_PAGE)
   const sentinelRef = useRef(null)
@@ -866,7 +866,7 @@ export function PhotoGrid({ photos, onEdit, showProject, projects, onNavigatePro
 
   return (
     <>
-      <div className="photo-grid" data-tutorial-target="photo-grid">
+      <div className="photo-grid" data-tutorial-target="photo-grid" style={gridCols ? { gridTemplateColumns: `repeat(${gridCols}, 1fr)` } : undefined}>
         {gridItems}
       </div>
       {/* Sentinel — triggers loading next batch */}

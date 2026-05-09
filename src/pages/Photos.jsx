@@ -2,7 +2,7 @@ import { useState, useRef, useMemo, useCallback } from 'react'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
-import { PhotoGrid, Sheet, FormCell, TagInput, ICamera, IPlus, IClose, IDuplicates, FilterSelect } from '../components/Shared.jsx'
+import { PhotoGrid, Sheet, FormCell, TagInput, ICamera, IPlus, IClose, IDuplicates, ISearch, IGrid, FilterSelect } from '../components/Shared.jsx'
 import PhotoTriage from '../components/PhotoTriage.jsx'
 
 export default function AllPhotos() {
@@ -25,6 +25,8 @@ export default function AllPhotos() {
   const [selectMode, setSelectMode]     = useState(false)
   const [selectedIds, setSelectedIds]   = useState(new Set())
   const [showFabMenu, setShowFabMenu]   = useState(false)
+  const [search, setSearch]             = useState('')
+  const [gridCols, setGridCols]         = useState(0) // 0 = auto (CSS default)
   const fileRef = useRef()
   const quickRef = useRef()
 
@@ -218,6 +220,18 @@ export default function AllPhotos() {
       .filter(Boolean)
   )].sort()
 
+  // Count photos per type/tag for filter labels
+  const typeCounts = useMemo(() => {
+    const counts = {}
+    const types = ['finished', 'portfolio', 'progress', 'inspiration', 'before', 'after']
+    types.forEach(t => { counts[t] = 0 })
+    data.photos.forEach(p => {
+      const tags = (p.tags || '').split(',').map(t => t.trim())
+      types.forEach(t => { if (tags.includes(t)) counts[t]++ })
+    })
+    return counts
+  }, [data.photos])
+
   const getFiltered = () => {
     let photos = filter === 'all'
       ? data.photos.filter(p => p.photo_type !== 'unsorted')  // all types except inbox
@@ -231,6 +245,17 @@ export default function AllPhotos() {
         : filter.startsWith('cat:')
           ? data.photos.filter(p => projMap[p.project_id]?.category === filter.slice(4))
           : data.photos.filter(p => p.tags?.split(',').map(t => t.trim()).includes(filter))
+
+    // Search filter — matches caption, tags, and project name
+    if (search.trim()) {
+      const q = search.trim().toLowerCase()
+      photos = photos.filter(p => {
+        const caption = (p.caption || '').toLowerCase()
+        const tags = (p.tags || '').toLowerCase()
+        const projName = (projMap[p.project_id]?.name || '').toLowerCase()
+        return caption.includes(q) || tags.includes(q) || projName.includes(q)
+      })
+    }
 
     photos = photos.slice().sort((a, b) => {
       if (sortBy === 'date') return new Date(b.created_at || 0) - new Date(a.created_at || 0)
@@ -302,12 +327,12 @@ export default function AllPhotos() {
                 onChange={v => { setFilter(v); if (v !== 'unsorted') { setUnsortedStatus('all'); setIncludeComplete(false) } }}
                 options={[
                   ...(unsortedCount > 0 ? [{ value: 'unsorted', label: `Inbox (${unsortedCount})` }] : []),
-                  { value: 'finished', label: 'Finished' },
-                  { value: 'portfolio', label: 'Portfolio' },
-                  { value: 'progress', label: 'Progress' },
-                  { value: 'inspiration', label: 'Inspiration' },
-                  { value: 'before', label: 'Before' },
-                  { value: 'after', label: 'After' },
+                  { value: 'finished', label: `Finished${typeCounts.finished ? ` (${typeCounts.finished})` : ''}` },
+                  { value: 'portfolio', label: `Portfolio${typeCounts.portfolio ? ` (${typeCounts.portfolio})` : ''}` },
+                  { value: 'progress', label: `Progress${typeCounts.progress ? ` (${typeCounts.progress})` : ''}` },
+                  { value: 'inspiration', label: `Inspiration${typeCounts.inspiration ? ` (${typeCounts.inspiration})` : ''}` },
+                  { value: 'before', label: `Before${typeCounts.before ? ` (${typeCounts.before})` : ''}` },
+                  { value: 'after', label: `After${typeCounts.after ? ` (${typeCounts.after})` : ''}` },
                 ]}
                 allLabel="All Types"
                 label="Filter by type"
@@ -367,6 +392,73 @@ export default function AllPhotos() {
                 {!isMobile && <span>Duplicates</span>}
               </button>
             </div>
+          </div>
+          {/* Search + grid density row */}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 8 }}>
+            <div style={{ flex: 1, position: 'relative' }}>
+              <ISearch size={14} color="var(--c-text-muted)" sw={2} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+              <input
+                type="text"
+                placeholder="Search captions, tags, projects…"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                style={{
+                  width: '100%', padding: '7px 10px 7px 30px',
+                  fontSize: 13, fontFamily: 'inherit',
+                  background: 'var(--c-bg-subtle)', border: '1.5px solid var(--c-border)',
+                  borderRadius: 6, color: 'var(--c-text-primary)',
+                  outline: 'none',
+                }}
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch('')}
+                  style={{
+                    position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)',
+                    background: 'var(--c-text-muted)', border: 'none', borderRadius: '50%',
+                    width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', padding: 0,
+                  }}
+                >
+                  <IClose size={10} color="var(--c-bg-surface)" sw={3} />
+                </button>
+              )}
+            </div>
+            {/* Grid density toggle — desktop only */}
+            {!isMobile && (
+              <div style={{ display: 'flex', gap: 0, flexShrink: 0 }}>
+                {[2, 3, 4].map(n => (
+                  <button
+                    key={n}
+                    onClick={() => setGridCols(gridCols === n ? 0 : n)}
+                    title={`${n} columns`}
+                    style={{
+                      padding: '6px 10px', fontSize: 11, fontWeight: 700,
+                      fontFamily: 'inherit', cursor: 'pointer',
+                      background: gridCols === n ? 'var(--navy)' : 'var(--c-bg-subtle)',
+                      color: gridCols === n ? 'var(--white)' : 'var(--c-text-muted)',
+                      border: '1.5px solid var(--c-border)',
+                      borderRight: 'none',
+                    }}
+                  >
+                    {n}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setGridCols(gridCols === 5 ? 0 : 5)}
+                  title="5 columns"
+                  style={{
+                    padding: '6px 10px', fontSize: 11, fontWeight: 700,
+                    fontFamily: 'inherit', cursor: 'pointer',
+                    background: gridCols === 5 ? 'var(--navy)' : 'var(--c-bg-subtle)',
+                    color: gridCols === 5 ? 'var(--white)' : 'var(--c-text-muted)',
+                    border: '1.5px solid var(--c-border)',
+                  }}
+                >
+                  5
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -451,6 +543,7 @@ export default function AllPhotos() {
                     onToggleSelect={handleToggleSelect}
                     onEnterSelectMode={handleEnterSelectMode}
                     sortBy={sortBy}
+                    gridCols={gridCols}
                   />
                 : (
                   <div className="empty" style={{ paddingTop: 60 }}>
