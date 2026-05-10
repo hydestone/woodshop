@@ -2,6 +2,7 @@
 setlocal enabledelayedexpansion
 
 set PROJECT=C:\Users\John Hyde\Documents\woodshop-app
+
 set DOWNLOADS=%USERPROFILE%\Downloads
 
 echo.
@@ -66,7 +67,7 @@ echo  Build succeeded.
 echo.
 
 :: ── Commit and push ──────────────────────────────────────────────────
-set /p MSG="Commit message (or press Enter for default): "
+set MSG=deploy %DATE% %TIME%
 if "%MSG%"=="" set MSG=deploy %date% %time:~0,5%
 
 git add .
