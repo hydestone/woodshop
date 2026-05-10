@@ -1167,6 +1167,18 @@ export default function Calculators() {
             </button>
           ))}
         </div>
+        {/* Desktop: construction sub-mode tabs */}
+        {activeTab === 'construction' && (
+          <div className="page-tabs" style={{ marginTop: 0, borderTop: 'none', paddingTop: 4 }}>
+            {CON_MODES.map(m => (
+              <button key={m.id} onClick={() => switchTab(m.id)}
+                className={`page-tab${tab === m.id ? ' active' : ''}`}
+                style={{ fontSize: 12, padding: '6px 12px' }}>
+                {m.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
       {(isConstruction || activeTab === 'boardfoot' || activeTab === 'trim' || activeTab === 'notes')
         ? <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
