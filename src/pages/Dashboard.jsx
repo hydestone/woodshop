@@ -644,8 +644,15 @@ export default function Dashboard() {
     }
   }, [])
 
-  const urgCoats  = data.coats.filter(c => c.applied_at && coatStatus(c).urgent).map(c => ({ ...c, proj: data.projects.find(p => p.id === c.project_id) }))
-  const upCoats   = data.coats.filter(c => c.applied_at && !coatStatus(c).urgent).map(c => ({ ...c, proj: data.projects.find(p => p.id === c.project_id) })).slice(0, 3)
+  const urgCoats  = data.coats.filter(c => {
+    if (!c.applied_at || !coatStatus(c).urgent) return false
+    // Only show if there's a next unapplied coat in the same project+product
+    return data.coats.some(cc => cc.project_id === c.project_id && cc.product === c.product && cc.coat_number > c.coat_number && !cc.applied_at)
+  }).map(c => ({ ...c, proj: data.projects.find(p => p.id === c.project_id) }))
+  const upCoats   = data.coats.filter(c => {
+    if (!c.applied_at || coatStatus(c).urgent) return false
+    return data.coats.some(cc => cc.project_id === c.project_id && cc.product === c.product && cc.coat_number > c.coat_number && !cc.applied_at)
+  }).map(c => ({ ...c, proj: data.projects.find(p => p.id === c.project_id) })).slice(0, 3)
   const urgMaint  = data.maintenance.filter(m => maintStatus(m).urgent)
   const nextSteps = data.projects.filter(p => p.status === 'active').flatMap(p => {
     const step = data.steps.filter(s => s.project_id === p.id && !s.completed).sort((a, b) => a.sort_order - b.sort_order)[0]
