@@ -114,6 +114,70 @@ const MOBILE_TABS = [
 
 
 
+// ── Confetti celebration ──────────────────────────────────────────────────────
+const CONFETTI_COLORS = ['#4ADE80', '#60A5FA', '#F59E0B', '#F87171', '#A78BFA', '#34D399', '#FBBF24', '#FB923C']
+function Confetti() {
+  const particles = React.useMemo(() =>
+    Array.from({ length: 36 }, (_, i) => {
+      const angle = (i / 36) * 360 + (Math.random() * 20 - 10)
+      const dist = 120 + Math.random() * 200
+      const rad = angle * Math.PI / 180
+      return {
+        id: i,
+        x: Math.cos(rad) * dist,
+        y: Math.sin(rad) * dist - 80,
+        rot: Math.random() * 720 - 360,
+        size: 6 + Math.random() * 6,
+        color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+        delay: Math.random() * 200,
+        dur: 1200 + Math.random() * 800,
+        shape: Math.random() > 0.5 ? '50%' : '2px',
+      }
+    }), [])
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <style>{`
+        @keyframes confettiBurst {
+          0% { transform: translate(0,0) rotate(0deg) scale(1); opacity: 1; }
+          100% { transform: translate(var(--cx), var(--cy)) rotate(var(--cr)) scale(0.3); opacity: 0; }
+        }
+        @keyframes checkPop {
+          0% { transform: scale(0); opacity: 0; }
+          50% { transform: scale(1.2); opacity: 1; }
+          70% { transform: scale(0.95); }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes checkFade {
+          0%, 70% { opacity: 1; }
+          100% { opacity: 0; }
+        }
+      `}</style>
+      <div style={{
+        width: 64, height: 64, borderRadius: '50%',
+        background: 'var(--forest)', display: 'flex',
+        alignItems: 'center', justifyContent: 'center',
+        animation: 'checkPop 500ms cubic-bezier(.34,1.56,.64,1) both, checkFade 2500ms ease both',
+        boxShadow: '0 8px 32px rgba(45,90,61,.4)',
+      }}>
+        <svg width={32} height={32} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20 6L9 17l-5-5" />
+        </svg>
+      </div>
+      {particles.map(p => (
+        <div key={p.id} style={{
+          position: 'absolute',
+          width: p.size, height: p.size,
+          borderRadius: p.shape,
+          background: p.color,
+          '--cx': p.x + 'px', '--cy': p.y + 'px', '--cr': p.rot + 'deg',
+          animation: `confettiBurst ${p.dur}ms cubic-bezier(.25,.46,.45,.94) ${p.delay}ms both`,
+        }} />
+      ))}
+    </div>
+  )
+}
+
 // ── QR Code Modal ─────────────────────────────────────────────────────────────
 function QRModal({ onClose }) {
   const PORTFOLIO_URL = 'https://woodshop-pdd2.vercel.app/portfolio'
@@ -645,6 +709,24 @@ export default function App() {
     ? data?.projects?.find(p => p.id === projId)?.name || 'Project'
     : ALL_NAV.find(t => t.id === tab)?.label || 'Home'
 
+  // ── Celebration — detect project completion ──────────────────────────────
+  const [celebrating, setCelebrating] = useState(false)
+  const prevProjectsRef = useRef(null)
+  useEffect(() => {
+    if (!data?.projects) return
+    const prev = prevProjectsRef.current
+    prevProjectsRef.current = data.projects
+    if (!prev) return
+    for (const p of data.projects) {
+      const old = prev.find(o => o.id === p.id)
+      if (old && old.status !== 'complete' && p.status === 'complete') {
+        setCelebrating(true)
+        setTimeout(() => setCelebrating(false), 2500)
+        break
+      }
+    }
+  }, [data?.projects])
+
   const ctx = { data, mutate, reload, tab, setTab, navigate, projId, setProjId: openProject, theme, launchTutorial, sampleIds, tabAction, setTabAction }
 
   return (
@@ -863,6 +945,8 @@ export default function App() {
         {showTutorial && <Tutorial onClose={dismissTutorial} setTab={setTab} />}
         {showOnboarding && <Onboarding onDismiss={() => setShowOnboarding(false)} />}
         <InstallPrompt />
+      {/* Celebration confetti */}
+      {celebrating && <Confetti />}
       {isOffline && (
         <div className="offline-banner">
           ⚡ Offline — showing cached data
