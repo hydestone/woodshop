@@ -6,7 +6,7 @@ import * as db from '../db.js'
 import { hapticLight, hapticSuccess } from '../db.js'
 import { addToGoogleCalendar } from '../supabase.js'
 import {
-  Sheet, FormCell, BulkAddSheet, ConfirmSheet, DropZone, PhotoGrid, TagInput, FilterSelect,
+  Sheet, FormCell, BulkAddSheet, ConfirmSheet, DropZone, PhotoGrid, TagInput, FilterSelect, SwipeRow,
   STATUS, coatStatus, fmtShort, localDt, useLongPress, BeforeAfterCompare,
   IPlus, ITrash, ICircle, ICheck, IChevR, IChevL, IEdit, ICal, ICamera, IBell, IGrid, IStar, IList,
 } from '../components/Shared.jsx'
@@ -902,9 +902,13 @@ function FinishingList({ projId, sub, setSub }) {
               const isOverdue = isNextDue && isReady
 
               return (
-                <div key={coat.id} style={{
+                <SwipeRow key={coat.id} actions={[
+                  { label: 'Edit', bg: 'var(--accent)', onClick: () => setEditCoat(coat) },
+                  { label: 'Delete', bg: 'var(--red)', onClick: () => del(coat.id) },
+                ]}>
+                <div style={{
                   display: 'flex', gap: 10, alignItems: 'flex-start',
-                  padding: '8px 0',
+                  padding: '8px 16px 8px 0',
                   borderBottom: ci < group.coats.length - 1 ? '1px solid var(--c-border-light)' : 'none',
                   opacity: locked ? 0.45 : 1,
                 }}>
@@ -921,12 +925,7 @@ function FinishingList({ projId, sub, setSub }) {
                   </div>
                   {/* Content */}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--c-text-primary)' }}>Coat {coat.coat_number}</span>
-                      <button className="icon-btn" onClick={() => setEditCoat(coat)} style={{ padding: 4 }}>
-                        <IEdit size={12} color="var(--c-text-faint)" />
-                      </button>
-                    </div>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--c-text-primary)' }}>Coat {coat.coat_number}</span>
                     <div style={{ fontSize: 12, color: 'var(--c-text-muted)', marginTop: 1 }}>
                       {applied
                         ? `Applied ${fmtShort(coat.applied_at)} · ${coat.interval_value}${coat.interval_unit === 'hours' ? 'h' : 'd'} dry`
@@ -948,6 +947,7 @@ function FinishingList({ projId, sub, setSub }) {
                     )}
                   </div>
                 </div>
+                </SwipeRow>
               )
             })}
           </div>

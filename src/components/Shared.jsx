@@ -127,6 +127,120 @@ export function maintStatus(m) {
 }
 
 
+// ─── SwipeRow ─────────────────────────────────────────────────────────────────
+// iOS-style swipe-to-reveal actions. Wrap any list row.
+// actions: [{ label, color, bg, onClick }]
+export function SwipeRow({ children, actions = [], style }) {
+  const rowRef = useRef(null)
+  const state = useRef({ startX: 0, startY: 0, currentX: 0, open: false, swiping: false })
+  const actionsWidth = actions.length * 72
+
+  const setTranslate = (x, animate) => {
+    const el = rowRef.current?.querySelector('.swipe-content')
+    if (!el) return
+    el.style.transition = animate ? 'transform 250ms cubic-bezier(.25,.46,.45,.94)' : 'none'
+    el.style.transform = `translateX(${x}px)`
+  }
+
+  const close = () => {
+    state.current.open = false
+    state.current.currentX = 0
+    setTranslate(0, true)
+  }
+
+  useEffect(() => {
+    const el = rowRef.current
+    if (!el) return
+
+    const onStart = e => {
+      const t = e.touches[0]
+      state.current.startX = t.clientX
+      state.current.startY = t.clientY
+      state.current.swiping = false
+    }
+
+    const onMove = e => {
+      const s = state.current
+      const t = e.touches[0]
+      const dx = t.clientX - s.startX
+      const dy = t.clientY - s.startY
+
+      // If vertical scroll dominates, bail
+      if (!s.swiping && Math.abs(dy) > Math.abs(dx)) return
+
+      // Only swipe left (negative dx) or snap back right
+      if (!s.swiping && dx < -10) s.swiping = true
+      if (!s.swiping) return
+
+      e.preventDefault()
+      const base = s.open ? -actionsWidth : 0
+      const raw = base + dx
+      // Clamp: can't swipe right past 0, rubber-band past actionsWidth
+      const clamped = Math.max(-actionsWidth - 30, Math.min(0, raw))
+      s.currentX = clamped
+      setTranslate(clamped, false)
+    }
+
+    const onEnd = () => {
+      const s = state.current
+      if (!s.swiping) return
+      // If swiped more than 40% of actions width, open; else close
+      if (s.currentX < -actionsWidth * 0.4) {
+        s.open = true
+        s.currentX = -actionsWidth
+        setTranslate(-actionsWidth, true)
+      } else {
+        close()
+      }
+    }
+
+    el.addEventListener('touchstart', onStart, { passive: true })
+    el.addEventListener('touchmove', onMove, { passive: false })
+    el.addEventListener('touchend', onEnd)
+    return () => {
+      el.removeEventListener('touchstart', onStart)
+      el.removeEventListener('touchmove', onMove)
+      el.removeEventListener('touchend', onEnd)
+    }
+  }, [actionsWidth])
+
+  // Close when tapping outside
+  useEffect(() => {
+    const onClick = e => {
+      if (state.current.open && rowRef.current && !rowRef.current.contains(e.target)) close()
+    }
+    document.addEventListener('touchstart', onClick, { passive: true })
+    return () => document.removeEventListener('touchstart', onClick)
+  }, [])
+
+  return (
+    <div ref={rowRef} style={{ position: 'relative', overflow: 'hidden', ...style }}>
+      {/* Action buttons — positioned behind content */}
+      <div style={{
+        position: 'absolute', right: 0, top: 0, bottom: 0,
+        display: 'flex', alignItems: 'stretch',
+      }}>
+        {actions.map((a, i) => (
+          <button key={i} onClick={() => { close(); a.onClick?.() }} style={{
+            width: 72, border: 'none', cursor: 'pointer',
+            background: a.bg || 'var(--red)',
+            color: a.color || '#fff',
+            fontSize: 12, fontWeight: 700, fontFamily: 'inherit',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            {a.label}
+          </button>
+        ))}
+      </div>
+      {/* Foreground content */}
+      <div className="swipe-content" style={{ position: 'relative', zIndex: 1, background: 'var(--c-bg-surface)' }}>
+        {children}
+      </div>
+    </div>
+  )
+}
+
+
 // ─── Sheet ────────────────────────────────────────────────────────────────────
 export function Sheet({ title, onClose, onSave, saveLabel = 'Save', variant = 'picker', children }) {
   const [saving, setSaving] = useState(false)
