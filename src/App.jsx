@@ -11,7 +11,7 @@ import InstallPrompt from './components/InstallPrompt.jsx'
 import {
   IFolder, ICart, IWrench, ICamera, ITree, IBulb, ICalc,
   IStar, ICheck, IGrid, IIdea, IBrain, IDollar, ITrash, IBell,
-  IBook, IHouse, IImage, ILayers, IMore, IClose,
+  IBook, IHouse, IImage, ILayers, IMore, IClose, IEdit,
   coatStatus, maintStatus,
 } from './components/Shared.jsx'
 
@@ -116,6 +116,55 @@ const MOBILE_TABS = [
 
 // ── Confetti celebration ──────────────────────────────────────────────────────
 const CONFETTI_COLORS = ['#4ADE80', '#60A5FA', '#F59E0B', '#F87171', '#A78BFA', '#34D399', '#FBBF24', '#FB923C']
+// ─── ScratchPad — simple persistent notepad ───────────────────────────────────
+function ScratchPad() {
+  const [text, setText] = useState('')
+  const [saved, setSaved] = useState(true)
+  const saveTimer = useRef(null)
+
+  useEffect(() => {
+    let cancelled = false
+    db.loadNote('scratch').then(content => {
+      if (!cancelled) setText(content || '')
+    }).catch(() => {})
+    return () => { cancelled = true }
+  }, [])
+
+  const handleChange = (val) => {
+    setText(val)
+    setSaved(false)
+    clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(() => {
+      db.saveNote('scratch', val).then(() => setSaved(true)).catch(() => {})
+    }, 1200)
+  }
+
+  return (
+    <div className="scroll-page" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div className="page-header" style={{ flexShrink: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h1 className="page-title" style={{ fontSize: 18 }}>Notes</h1>
+          <span style={{ fontSize: 11, color: saved ? 'var(--green)' : 'var(--c-text-faint)', fontWeight: 600 }}>
+            {saved ? '✓ Saved' : 'Saving…'}
+          </span>
+        </div>
+      </div>
+      <textarea
+        value={text}
+        onChange={e => handleChange(e.target.value)}
+        placeholder="Jot down measurements, cut lists, notes…"
+        style={{
+          flex: 1, width: '100%', minHeight: 300,
+          padding: '12px 20px', margin: 0,
+          background: 'transparent', border: 'none', outline: 'none',
+          color: 'var(--c-text-primary)', fontSize: 15, lineHeight: 1.6,
+          fontFamily: 'inherit', resize: 'none',
+        }}
+      />
+    </div>
+  )
+}
+
 function Confetti() {
   const particles = React.useMemo(() =>
     Array.from({ length: 36 }, (_, i) => {
@@ -898,6 +947,7 @@ export default function App() {
                   {tab === 'beta'        && <BetaQuestionnaire />}
                   {tab === 'smoketest'   && session?.user?.id === '956f2bdd-022b-4e17-8ec9-47246a18e152' && <SmokeTest />}
                   {tab === 'calculators' && <Calculators />}
+                  {tab === 'scratchpad' && <ScratchPad />}
                   {tab === 'trash'       && <Trash />}
                   {tab === 'privacy'     && <Privacy />}
                 </div>
@@ -993,6 +1043,11 @@ export default function App() {
                     onClick={() => { setShowMore(false); setTab('beta') }} role="button" tabIndex={0}>
                     <IBrain size={20} color="var(--accent)" sw={1.8} />
                     <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>Feedback</span>
+                  </div>
+                  <div className="more-item" style={{ padding: '13px 16px' }}
+                    onClick={() => { setShowMore(false); setTab('scratchpad') }} role="button" tabIndex={0}>
+                    <IEdit size={20} color="var(--orange)" sw={1.8} />
+                    <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>Notes</span>
                   </div>
                 </div>
 
