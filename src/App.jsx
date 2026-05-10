@@ -114,70 +114,6 @@ const MOBILE_TABS = [
 
 
 
-// ── Confetti celebration ──────────────────────────────────────────────────────
-const CONFETTI_COLORS = ['#4ADE80', '#60A5FA', '#F59E0B', '#F87171', '#A78BFA', '#34D399', '#FBBF24', '#FB923C']
-function Confetti() {
-  const particles = React.useMemo(() =>
-    Array.from({ length: 36 }, (_, i) => {
-      const angle = (i / 36) * 360 + (Math.random() * 20 - 10)
-      const dist = 120 + Math.random() * 200
-      const rad = angle * Math.PI / 180
-      return {
-        id: i,
-        x: Math.cos(rad) * dist,
-        y: Math.sin(rad) * dist - 80,
-        rot: Math.random() * 720 - 360,
-        size: 6 + Math.random() * 6,
-        color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
-        delay: Math.random() * 200,
-        dur: 1200 + Math.random() * 800,
-        shape: Math.random() > 0.5 ? '50%' : '2px',
-      }
-    }), [])
-
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <style>{`
-        @keyframes confettiBurst {
-          0% { transform: translate(0,0) rotate(0deg) scale(1); opacity: 1; }
-          100% { transform: translate(var(--cx), var(--cy)) rotate(var(--cr)) scale(0.3); opacity: 0; }
-        }
-        @keyframes checkPop {
-          0% { transform: scale(0); opacity: 0; }
-          50% { transform: scale(1.2); opacity: 1; }
-          70% { transform: scale(0.95); }
-          100% { transform: scale(1); opacity: 1; }
-        }
-        @keyframes checkFade {
-          0%, 70% { opacity: 1; }
-          100% { opacity: 0; }
-        }
-      `}</style>
-      <div style={{
-        width: 64, height: 64, borderRadius: '50%',
-        background: 'var(--forest)', display: 'flex',
-        alignItems: 'center', justifyContent: 'center',
-        animation: 'checkPop 500ms cubic-bezier(.34,1.56,.64,1) both, checkFade 2500ms ease both',
-        boxShadow: '0 8px 32px rgba(45,90,61,.4)',
-      }}>
-        <svg width={32} height={32} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
-          <path d="M20 6L9 17l-5-5" />
-        </svg>
-      </div>
-      {particles.map(p => (
-        <div key={p.id} style={{
-          position: 'absolute',
-          width: p.size, height: p.size,
-          borderRadius: p.shape,
-          background: p.color,
-          '--cx': p.x + 'px', '--cy': p.y + 'px', '--cr': p.rot + 'deg',
-          animation: `confettiBurst ${p.dur}ms cubic-bezier(.25,.46,.45,.94) ${p.delay}ms both`,
-        }} />
-      ))}
-    </div>
-  )
-}
-
 // ── QR Code Modal ─────────────────────────────────────────────────────────────
 function QRModal({ onClose }) {
   const PORTFOLIO_URL = 'https://woodshop-pdd2.vercel.app/portfolio'
@@ -556,59 +492,6 @@ export default function App() {
 
   const mutate = useCallback(fn => setData(prev => fn({ ...prev })), [])
 
-  // ── Pull-to-refresh ─────────────────────────────────────────────────────────
-  const [pullUI, setPullUI] = useState({ distance: 0, refreshing: false })
-  const pullState = useRef({ startY: null, distance: 0, refreshing: false })
-
-  useEffect(() => {
-    const mainArea = document.getElementById('main-content')
-    if (!mainArea) return
-
-    const onTouchStart = (e) => {
-      if (pullState.current.refreshing) return
-      const sp = mainArea.querySelector('.scroll-page')
-      if (!sp || sp.scrollTop > 5) return
-      pullState.current.startY = e.touches[0].clientY
-    }
-
-    const onTouchMove = (e) => {
-      const ps = pullState.current
-      if (ps.startY === null || ps.refreshing) return
-      const dy = e.touches[0].clientY - ps.startY
-      if (dy < 0) { ps.startY = null; ps.distance = 0; setPullUI(u => ({ ...u, distance: 0 })); return }
-      ps.distance = Math.min(dy * 0.4, 80)
-      setPullUI(u => ({ ...u, distance: ps.distance }))
-    }
-
-    const onTouchEnd = () => {
-      const ps = pullState.current
-      if (ps.startY === null) return
-      ps.startY = null
-      if (ps.distance > 50) {
-        ps.refreshing = true
-        ps.distance = 0
-        setPullUI({ distance: 0, refreshing: true })
-        reload().finally(() => {
-          ps.refreshing = false
-          setPullUI({ distance: 0, refreshing: false })
-        })
-      } else {
-        ps.distance = 0
-        setPullUI({ distance: 0, refreshing: false })
-      }
-    }
-
-    mainArea.addEventListener('touchstart', onTouchStart, { passive: true })
-    mainArea.addEventListener('touchmove', onTouchMove, { passive: true })
-    mainArea.addEventListener('touchend', onTouchEnd)
-
-    return () => {
-      mainArea.removeEventListener('touchstart', onTouchStart)
-      mainArea.removeEventListener('touchmove', onTouchMove)
-      mainArea.removeEventListener('touchend', onTouchEnd)
-    }
-  }, [reload])
-
   // Push current location onto stack before navigating
   const pushNav = useCallback((fromTab, fromProjId, fromMore) => {
     navStack.current.push({ tab: fromTab, projId: fromProjId, showMore: fromMore })
@@ -704,29 +587,6 @@ export default function App() {
     return 0
   }
 
-  // Contextual page title for mobile top bar
-  const pageTitle = projId
-    ? data?.projects?.find(p => p.id === projId)?.name || 'Project'
-    : ALL_NAV.find(t => t.id === tab)?.label || 'Home'
-
-  // ── Celebration — detect project completion ──────────────────────────────
-  const [celebrating, setCelebrating] = useState(false)
-  const prevProjectsRef = useRef(null)
-  useEffect(() => {
-    if (!data?.projects) return
-    const prev = prevProjectsRef.current
-    prevProjectsRef.current = data.projects
-    if (!prev) return
-    for (const p of data.projects) {
-      const old = prev.find(o => o.id === p.id)
-      if (old && old.status !== 'complete' && p.status === 'complete') {
-        setCelebrating(true)
-        setTimeout(() => setCelebrating(false), 2500)
-        break
-      }
-    }
-  }, [data?.projects])
-
   const ctx = { data, mutate, reload, tab, setTab, navigate, projId, setProjId: openProject, theme, launchTutorial, sampleIds, tabAction, setTabAction }
 
   return (
@@ -739,7 +599,6 @@ export default function App() {
             <div className="top-bar-brand" data-tutorial-target="app-logo">
               <img src="/New_Logo.png" alt="" aria-hidden="true" className="top-bar-logo" />
               <div className="top-bar-title">JDH <span className="top-bar-accent">WOODWORKS</span></div>
-              <div className="top-bar-page-title">{pageTitle}</div>
             </div>
             <div className="top-bar-search-right"><GlobalSearch /></div>
             <button
@@ -837,30 +696,11 @@ export default function App() {
 
             {/* ── Content ── */}
             <main className="main-area" id="main-content">
-              {/* Pull-to-refresh indicator */}
-              {(pullUI.distance > 0 || pullUI.refreshing) && (
-                <div style={{
-                  position: 'absolute', top: 0, left: 0, right: 0,
-                  height: pullUI.refreshing ? 40 : pullUI.distance,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  zIndex: 5, overflow: 'hidden',
-                  transition: pullUI.refreshing ? 'height 200ms ease' : 'none',
-                }}>
-                  <div
-                    className="spinner"
-                    style={{
-                      width: 18, height: 18, borderWidth: 2,
-                      opacity: pullUI.refreshing ? 1 : Math.min(pullUI.distance / 50, 1),
-                      transform: pullUI.refreshing ? undefined : `rotate(${pullUI.distance * 5}deg)`,
-                    }}
-                  />
-                </div>
-              )}
               <ErrorBoundary>
               {projId ? (
                 <ProjectDetail />
               ) : (
-                <div key={tabKey} className="tab-panel">
+                <div key={tabKey} className={`tab-panel tab-panel--${tabDir}`}>
                   {tab === 'home'        && <>
                     {sampleIds?.projectId && (
                       <div className="sample-banner">
@@ -918,10 +758,6 @@ export default function App() {
                         if (isMore) {
                           if (!showMore) { pushNav(tab, projId, false); try { window.history.pushState({ jdh: navStack.current.length }, '') } catch {} }
                           setShowMore(s => !s)
-                        } else if (tab === t.id && !projId) {
-                          // Re-tap active tab — scroll to top (iOS convention)
-                          const el = document.querySelector('.tab-panel .scroll-page') || document.querySelector('.scroll-page')
-                          if (el) el.scrollTo({ top: 0, behavior: 'smooth' })
                         } else {
                           setTab(t.id)
                         }
@@ -945,8 +781,6 @@ export default function App() {
         {showTutorial && <Tutorial onClose={dismissTutorial} setTab={setTab} />}
         {showOnboarding && <Onboarding onDismiss={() => setShowOnboarding(false)} />}
         <InstallPrompt />
-      {/* Celebration confetti */}
-      {celebrating && <Confetti />}
       {isOffline && (
         <div className="offline-banner">
           ⚡ Offline — showing cached data
@@ -987,13 +821,31 @@ export default function App() {
                 </button>
               </div>
               <div className="sheet-body">
-                {/* Feedback — top action for beta */}
+                {/* Portfolio links */}
                 <div className="form-group" style={{ marginBottom: 8 }}>
-                  <div className="more-item" style={{ padding: '13px 16px' }}
+                  <div className="more-item" style={{ borderBottom: '1px solid var(--c-border-light)', padding: '13px 16px' }}
                     onClick={() => { setShowMore(false); setTab('beta') }} role="button" tabIndex={0}>
                     <IBrain size={20} color="var(--accent)" sw={1.8} />
                     <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>Feedback</span>
                   </div>
+                  <div className="more-item" style={{ borderBottom: '1px solid var(--c-border-light)', padding: '13px 16px' }}
+                    onClick={() => { setShowMore(false); setShowQR(true) }} role="button" tabIndex={0}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                      <rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/>
+                    </svg>
+                    <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>Share Portfolio</span>
+                  </div>
+                  <a href="/portfolio" target="_blank" rel="noopener noreferrer"
+                    className="more-item"
+                    style={{ borderBottom: 'none', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 14, padding: '13px 16px' }}
+                    onClick={() => setShowMore(false)}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                      <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+                    </svg>
+                    <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>View Portfolio</span>
+                  </a>
                 </div>
 
                 {/* Grouped nav sections — mobile shows essentials only */}

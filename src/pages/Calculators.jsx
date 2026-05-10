@@ -250,7 +250,7 @@ function ConverterRow({ title, cfg }) {
   const result = val !== '' ? doConvert(parseFloat(val), from, to, cfg) : ''
 
   return (
-    <div className="conv-grid" style={{ display:'grid', gridTemplateColumns: CONV_GRID, gap:4, alignItems:'center', padding:'5px 0', borderBottom:'1px solid var(--c-border-light)' }}>
+    <div style={{ display:'grid', gridTemplateColumns: CONV_GRID, gap:4, alignItems:'center', padding:'5px 0', borderBottom:'1px solid var(--c-border-light)' }}>
       {/* Label with green left accent */}
       <div style={{ display:'flex', alignItems:'center', gap:0 }}>
         <div style={{ width:3, alignSelf:'stretch', background:'var(--forest)', marginRight:8, flexShrink:0 }} />
@@ -307,7 +307,7 @@ function WildcardConverter() {
     <div style={{ background:'var(--navy)', marginBottom:12, borderLeft:'3px solid var(--accent)' }}>
       <div style={{ padding:'6px 12px 4px', fontSize:10, fontWeight:700, color:'rgba(255,255,255,.4)', textTransform:'uppercase', letterSpacing:'.5px' }}>QUICK CONVERT</div>
       {/* Same grid as rows for alignment */}
-      <div className="conv-grid" style={{ display:'grid', gridTemplateColumns: CONV_GRID, gap:4, alignItems:'center', padding:'0 0 10px 0' }}>
+      <div style={{ display:'grid', gridTemplateColumns: CONV_GRID, gap:4, alignItems:'center', padding:'0 0 10px 0' }}>
         {/* Category label col — dropdown */}
         <div style={{ paddingLeft:12 }}>
           <select value={cat} onChange={e=>handleCat(e.target.value)} style={{ ...darkSel, fontSize:11, fontWeight:700 }}>
@@ -375,46 +375,30 @@ function TrimCuts() {
   const [stockSel, setStockSel] = useState([8, 10, 12])
   const [kerf, setKerf]   = useState('0.125')
   const [cuts, setCuts] = useState([
-    { id:1, ft:'', ins:'', qty:1, label:'' },
-    { id:2, ft:'', ins:'', qty:1, label:'' },
+    { id:1, len:'', qty:1, label:'' },
+    { id:2, len:'', qty:1, label:'' },
   ])
   const [result, setResult] = useState(null)
   const [error, setError]   = useState(null)
   const [view, setView]     = useState('summary') // 'summary' | 'plans'
-  const firstRefs = useRef({})
 
   const toggleStock = ft => setStockSel(s => s.includes(ft) ? s.filter(x=>x!==ft) : [...s, ft].sort((a,b)=>a-b))
   const upd = (id, f, v) => setCuts(c => c.map(x => x.id===id ? {...x,[f]:v} : x))
   const addRow = () => {
     const newId = Date.now()
-    setCuts(c => [...c, { id: newId, ft:'', ins:'', qty: 1, label: '' }])
-    setTimeout(() => firstRefs.current[newId]?.focus(), 50)
+    setCuts(c => [...c, { id: newId, len: '', qty: 1, label: '' }])
+    setTimeout(() => document.getElementById('len-' + newId)?.focus(), 50)
   }
   const clearAll = () => {
-    setCuts([{ id:1, ft:'', ins:'', qty:1, label:'' }, { id:2, ft:'', ins:'', qty:1, label:'' }])
+    setCuts([{ id:1, len:'', qty:1, label:'' }, { id:2, len:'', qty:1, label:'' }])
     setResult(null); setError(null); setView('summary')
-  }
-
-  // Parse a single inches value: handles fractions, mixed numbers, decimals
-  const parseInsVal = (s) => {
-    s = (s || '').trim()
-    if (!s) return 0
-    const mixed = s.match(/^(\d+)\s+(\d+)\/(\d+)$/)
-    if (mixed) return parseInt(mixed[1]) + parseInt(mixed[2]) / parseInt(mixed[3])
-    const frac = s.match(/^(\d+)\/(\d+)$/)
-    if (frac) return parseInt(frac[1]) / parseInt(frac[2])
-    const num = parseFloat(s)
-    return isNaN(num) ? null : num
   }
 
   const calc = () => {
     setError(null); setResult(null)
     const pc = cuts.map(c => {
-      const ftVal = parseFloat(c.ft) || 0
-      const insVal = parseInsVal(c.ins)
-      if (insVal === null) return null
-      const total = ftVal * 12 + insVal
-      return total > 0 ? { length: Math.round(total*16)/16, qty: Math.max(1,parseInt(c.qty)||1), label: c.label.trim() } : null
+      const v = parseLenIn(c.len)
+      return v > 0 ? { length: Math.round(v*16)/16, qty: Math.max(1,parseInt(c.qty)||1), label: c.label.trim() } : null
     }).filter(Boolean)
     if (!pc.length) { setError('Enter at least one cut.'); return }
     if (!stockSel.length) { setError('Select at least one stock length.'); return }
@@ -580,25 +564,20 @@ ${boardRows}
         <div style={{ display:'flex', flex:1, overflow:'hidden', minHeight:0 }}>
           <div style={{ flex:'0 0 auto', width:380, padding:'10px 14px', overflowY:'auto', overflowX:'hidden', borderRight:'2px solid var(--c-border)' }}>
             <p style={{ fontSize:11, color:'var(--c-text-faint)', margin:'0 0 10px', lineHeight:1.4, wordBreak:'break-word' }}>
-              Inches accepts fractions: 3/8, 1 3/16, 5.5
+              Lengths: inches (48), feet (4'), or ft/in (4'6"). Fractions OK: 3 7/8
             </p>
-            <div className="trim-label-row" style={{ display:'grid', gridTemplateColumns:'52px minmax(0,1.5fr) 48px minmax(0,2fr) 28px', gap:4, marginBottom:4 }}>
-              {['Ft','Inches','Qty','Label',''].map(h => (
+            <div style={{ display:'grid', gridTemplateColumns:'minmax(0,2.5fr) 48px minmax(0,2fr) 28px', gap:4, marginBottom:4 }}>
+              {['Length','Qty','Label',''].map(h => (
                 <div key={h} className="calc-label" style={{ marginBottom:0, textAlign:'center' }}>{h}</div>
               ))}
             </div>
-            {cuts.map((c, i) => (
-              <div key={c.id} className="trim-row" style={{ display:'grid', gridTemplateColumns:'52px minmax(0,1.5fr) 48px minmax(0,2fr) 28px', gap:4, marginBottom:5, alignItems:'center' }}>
-                <input ref={el => firstRefs.current[c.id] = el} className="calc-input" value={c.ft}
-                  onChange={e => upd(c.id,'ft',e.target.value)}
-                  placeholder="0" inputMode="numeric"
-                  onKeyDown={e => e.key==='Enter' && (i===cuts.length-1 ? addRow() : firstRefs.current[cuts[i+1].id]?.focus())}
-                  style={{ fontSize:13, padding:'7px 4px', textAlign:'center' }} />
-                <input className="calc-input" value={c.ins}
-                  onChange={e => upd(c.id,'ins',e.target.value)}
-                  placeholder="0 or 3/8"
-                  onKeyDown={e => e.key==='Enter' && (i===cuts.length-1 ? addRow() : firstRefs.current[cuts[i+1].id]?.focus())}
-                  style={{ fontSize:13, padding:'7px 8px' }} />
+            {cuts.map(c => (
+              <div key={c.id} style={{ display:'grid', gridTemplateColumns:'minmax(0,2.5fr) 48px minmax(0,2fr) 28px', gap:4, marginBottom:5, alignItems:'center' }}>
+                <input id={'len-'+c.id} className="calc-input" value={c.len}
+                  onChange={e => upd(c.id,'len',e.target.value)}
+                  placeholder="48 or 4'6&quot;"
+                  style={{ fontSize:13, padding:'7px 8px' }}
+                  onKeyDown={e => e.key==='Enter' && addRow()} />
                 <input className="calc-input" type="number" min="1" value={c.qty}
                   onChange={e => upd(c.id,'qty',e.target.value)}
                   style={{ textAlign:'center', fontSize:13, padding:'7px 4px' }} />
@@ -628,38 +607,6 @@ ${boardRows}
                 </div>
               ) : (
                 <>
-                  {/* What to Buy — summary cards */}
-                  <div style={{ padding:'10px 10px 6px', display:'flex', gap:6, flexWrap:'wrap' }}>
-                    {Object.entries(result.summary).sort(([a],[b])=>+a-+b).map(([len,cnt]) => (
-                      <div key={len} style={{ background:'var(--navy)', padding:'8px 14px', textAlign:'center', flex:'1 0 auto', minWidth:60 }}>
-                        <div style={{ fontSize:22, fontWeight:900, color:'#fff' }}>{cnt}</div>
-                        <div style={{ fontSize:11, color:'#8BA8D0', marginTop:1 }}>× {inToFtInStr(+len)}</div>
-                      </div>
-                    ))}
-                  </div>
-                  {/* Stats row */}
-                  {(() => {
-                    const totalStock = result.boards.reduce((s,b) => s + b.sl, 0)
-                    const totalUsed  = result.boards.reduce((s,b) => s + b.used, 0)
-                    const wasteIn = Math.max(0, totalStock - totalUsed)
-                    return (
-                      <div style={{ display:'flex', gap:4, padding:'6px 10px 10px' }}>
-                        <div style={{ flex:1, background:'var(--c-bg-subtle)', padding:'6px 8px', textAlign:'center', border:'1px solid var(--c-border-light)' }}>
-                          <div style={{ fontSize:16, fontWeight:700, color:'var(--c-text-primary)' }}>{result.boards.length}</div>
-                          <div style={{ fontSize:9, color:'var(--c-text-muted)', textTransform:'uppercase', letterSpacing:'.4px' }}>boards</div>
-                        </div>
-                        <div style={{ flex:1, background:'var(--c-bg-subtle)', padding:'6px 8px', textAlign:'center', border:'1px solid var(--c-border-light)' }}>
-                          <div style={{ fontSize:16, fontWeight:700, color: waste>25 ? 'var(--orange)' : 'var(--forest)' }}>{waste}%</div>
-                          <div style={{ fontSize:9, color:'var(--c-text-muted)', textTransform:'uppercase', letterSpacing:'.4px' }}>waste</div>
-                        </div>
-                        <div style={{ flex:1, background:'var(--c-bg-subtle)', padding:'6px 8px', textAlign:'center', border:'1px solid var(--c-border-light)' }}>
-                          <div style={{ fontSize:16, fontWeight:700, color:'var(--c-text-primary)' }}>{inToFtInStr(wasteIn)}</div>
-                          <div style={{ fontSize:9, color:'var(--c-text-muted)', textTransform:'uppercase', letterSpacing:'.4px' }}>cutoff</div>
-                        </div>
-                      </div>
-                    )
-                  })()}
-                  {/* Tape details */}
                   <div className="cm-tape-row tape-result" style={{ borderBottom:'2px solid var(--calc-tape-dim)', marginBottom:4 }}>
                     <span style={{ fontFamily:'var(--tape-font)' }}>BOARDS NEEDED</span>
                     <span className="tape-val">{result.boards.length} pcs</span>
@@ -1167,18 +1114,6 @@ export default function Calculators() {
             </button>
           ))}
         </div>
-        {/* Desktop: construction sub-mode tabs */}
-        {activeTab === 'construction' && (
-          <div className="page-tabs" style={{ marginTop: 0, borderTop: 'none', paddingTop: 4 }}>
-            {CON_MODES.map(m => (
-              <button key={m.id} onClick={() => switchTab(m.id)}
-                className={`page-tab${tab === m.id ? ' active' : ''}`}
-                style={{ fontSize: 12, padding: '6px 12px' }}>
-                {m.label}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
       {(isConstruction || activeTab === 'boardfoot' || activeTab === 'trim' || activeTab === 'notes')
         ? <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
