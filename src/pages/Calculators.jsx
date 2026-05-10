@@ -1120,15 +1120,34 @@ const CON_MODES = [
 
 const CON_IDS = new Set(CON_MODES.map(m => m.id))
 
+// ── Calculator card definitions ──────────────────────────────────────────────
+const CALC_CARDS = [
+  { section: 'Construction', items: [
+    { id: 'construction', name: 'Calculator', desc: 'Feet · inches · fractions math', color: 'var(--accent)', icon: 'M4 5h16v14H4zM8 2v3M16 2v3M4 9h16' },
+    { id: 'pitch', name: 'Pitch / Rise / Run', desc: 'Roof and ramp angles', color: 'var(--accent)', icon: 'M3 20h18M3 20l9-16 9 16M8 12h8' },
+    { id: 'diag', name: 'Diagonal / Square', desc: 'Check if frames are square', color: 'var(--accent)', icon: 'M4 4h16v16H4zM4 4l16 16' },
+    { id: 'stairs', name: 'Stairs', desc: 'Riser height and code check', color: 'var(--accent)', icon: 'M4 20h4v-4h4v-4h4v-4h4v-4' },
+    { id: 'circle', name: 'Circle / Arc', desc: 'Radius, diameter, area', color: 'var(--accent)', icon: 'M12 12m-8 0a8 8 0 1 0 16 0 8 8 0 1 0-16 0M12 4v8l5.5 3' },
+    { id: 'miter', name: 'Compound Miter', desc: 'Angled cuts on tilted work', color: 'var(--accent)', icon: 'M4 20L20 4M4 20l8-4M4 20l4-8M14 6l2 2M17 3l4 4' },
+    { id: 'help', name: 'Help Guide', desc: 'How to use each calculator', color: 'var(--c-text-muted)', icon: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM12 16v-1M12 8a2 2 0 0 1 2 2c0 1.1-.9 1.6-1.4 2-.4.3-.6.6-.6 1' },
+  ]},
+  { section: 'Workshop', items: [
+    { id: 'boardfoot', name: 'Board Foot', desc: 'Lumber volume and cost tally', color: 'var(--forest)', icon: 'M4 6h16v12H4zM4 10h16M10 6v12' },
+    { id: 'converter', name: 'Unit Converter', desc: 'Length, area, volume, weight', color: 'var(--forest)', icon: 'M7 16l-4-4 4-4M17 8l4 4-4 4M14 4l-4 16' },
+    { id: 'trim', name: 'Trim Cuts', desc: 'Cut list optimizer with PDF export', color: 'var(--forest)', icon: 'M4 6h16M4 10h12M4 14h8M4 18h14M20 4v16' },
+    { id: 'sheet', name: 'Sheet Goods', desc: 'Panel cutting layout planner', color: 'var(--forest)', icon: 'M3 3h18v18H3zM3 9h18M3 15h18M9 3v18M15 3v18' },
+    { id: 'notes', name: 'Notes', desc: 'Measurements, cut lists, reminders', color: 'var(--orange)', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h6' },
+  ]},
+]
+
 export default function Calculators() {
-  const [tab, setTab] = useState(() => {
-    try { return localStorage.getItem('calc-tab') || 'construction' } catch { return 'construction' }
-  })
+  const [tab, setTab] = useState('home')
 
   const switchTab = t => {
     setTab(t)
-    try { localStorage.setItem('calc-tab', t) } catch {}
   }
+
+  const goHome = () => setTab('home')
 
   // Derive which calculator and which construction sub-mode are active
   const isConstruction = CON_IDS.has(tab)
@@ -1136,40 +1155,81 @@ export default function Calculators() {
   const showHelp = tab === 'help'
   const activeTab = isConstruction ? 'construction' : tab
 
+  // Landing page — card grid
+  if (tab === 'home') {
+    return (
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <div className="page-header" data-tutorial-target="calculator">
+          <h1 className="page-title">Calculators</h1>
+        </div>
+        <div className="scroll-page" style={{ flex: 1 }}>
+          <div style={{ padding: '0 20px 32px' }}>
+            {CALC_CARDS.map(section => (
+              <div key={section.section}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--c-text-faint)', textTransform: 'uppercase', letterSpacing: '.8px', padding: '16px 0 8px' }}>
+                  {section.section}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 8 }}>
+                  {section.items.map(card => (
+                    <button
+                      key={card.id}
+                      onClick={() => switchTab(card.id)}
+                      style={{
+                        display: 'flex', gap: 14, alignItems: 'center',
+                        padding: '16px', textAlign: 'left', cursor: 'pointer',
+                        background: 'var(--c-bg-surface)', border: '1px solid var(--c-border)',
+                        fontFamily: 'inherit', transition: 'transform 300ms ease',
+                        borderRadius: 0,
+                      }}
+                    >
+                      <div style={{
+                        width: 40, height: 40, borderRadius: 10, flexShrink: 0,
+                        background: card.color === 'var(--c-text-muted)' ? 'var(--c-bg-subtle)' : `color-mix(in srgb, ${card.color} 15%, transparent)`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={card.color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                          {card.icon.split(/(?=[A-Z])/).length > 1
+                            ? card.icon.split('M').filter(Boolean).map((seg, i) => <path key={i} d={`M${seg}`} />)
+                            : <path d={card.icon} />
+                          }
+                        </svg>
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--c-text-primary)' }}>{card.name}</div>
+                        <div style={{ fontSize: 12, color: 'var(--c-text-muted)', marginTop: 1 }}>{card.desc}</div>
+                      </div>
+                      <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="var(--c-text-faint)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Active calculator view
+  const currentName = [...CALC_CARDS.flatMap(s => s.items)].find(c => c.id === tab || (isConstruction && c.id === (conMode || 'construction')))?.name || 'Calculator'
+
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div className="page-header" style={{ paddingBottom: 0 }} data-tutorial-target="calculator">
-        <h1 className="page-title">Calculators</h1>
-        {/* Mobile: dropdown — construction modes grouped */}
-        <div className="calc-tab-select-wrap">
-          <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', width: '100%' }}>
-            <select
-              className="filter-select"
-              value={tab}
-              onChange={e => switchTab(e.target.value)}
-              style={{ width: '100%' }}
-            >
-              <optgroup label="Construction">
-                {CON_MODES.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}
-              </optgroup>
-              <optgroup label="Other Calculators">
-                {TABS.filter(t => !CON_IDS.has(t.id)).map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
-              </optgroup>
-            </select>
-            <span className="filter-select-chevron" aria-hidden="true">▾</span>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+          <button onClick={goHome} style={{
+            background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0',
+            fontSize: 13, fontWeight: 600, color: 'var(--accent)', fontFamily: 'inherit',
+            display: 'flex', alignItems: 'center', gap: 4,
+          }}>
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            Calculators
+          </button>
         </div>
-        {/* Desktop: tabs */}
-        <div className="page-tabs" style={{ marginTop: 12 }}>
-          {TABS.map(t => (
-            <button key={t.id} onClick={() => switchTab(t.id)} className={`page-tab${activeTab === t.id ? ' active' : ''}`}>
-              {t.label}
-            </button>
-          ))}
-        </div>
+        <h1 className="page-title" style={{ fontSize: 18 }}>{currentName}</h1>
         {/* Desktop: construction sub-mode tabs */}
         {activeTab === 'construction' && (
-          <div className="page-tabs" style={{ marginTop: 0, borderTop: 'none', paddingTop: 4 }}>
+          <div className="page-tabs" style={{ marginTop: 8, borderTop: 'none', paddingTop: 0 }}>
             {CON_MODES.map(m => (
               <button key={m.id} onClick={() => switchTab(m.id)}
                 className={`page-tab${tab === m.id ? ' active' : ''}`}
