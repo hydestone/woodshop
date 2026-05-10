@@ -190,7 +190,7 @@ function ShopRow({ item, onToggle, onEdit, onDelete, last, isSample }) {
           : <ICircle size={22} color="var(--c-text-faint)" sw={1.5} />}
       </button>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ textDecoration: item.completed ? 'line-through' : 'none', color: item.completed ? 'var(--c-text-muted)' : 'var(--c-text-primary)' }}>
+        <div style={{ color: item.completed ? 'var(--c-text-muted)' : 'var(--c-text-primary)' }}>
           {item.name}
           {isSample && <span className="sample-badge">SAMPLE</span>}
           {item.qty && <span style={{ color: 'var(--c-text-muted)' }}> · {item.qty}{item.unit ? ` ${item.unit}` : ''}</span>}
