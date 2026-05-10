@@ -301,47 +301,83 @@ ${progressPhotos.length>12?`<div style="display:flex;align-items:center;justify-
     await db.updatePhoto(id, fields).catch(e => toast(e.message, 'error'))
   }
 
+  // Hero photo — prefer finished, then any progress, then any photo
+  const heroPhoto = photos.find(p => p.tags?.includes('finished'))
+    || photos.find(p => p.photo_type === 'progress')
+    || photos[0]
+
   return (
     <div style={{ overflowY: 'auto', background: 'var(--c-bg-raised)' }} className="slide-in">
 
       {/* ── Header ── */}
       <div style={{ background: 'var(--c-bg-surface)', borderBottom: '1px solid var(--c-border)' }}>
 
-        {/* Row 1: back · title · ··· */}
-        <div style={{ display: 'flex', alignItems: 'center', padding: '10px 12px 0', gap: 8 }}>
-          <button className="back-btn" onClick={() => setProjId(null)} style={{ flexShrink: 0 }}>
-            <IChevL size={16} color="currentColor" sw={2.2} />
-            Projects
-          </button>
-          <h2 style={{ flex: 1, fontSize: 17, fontWeight: 700, margin: 0, textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {project.name}
-          </h2>
-          <button type="button" className="icon-btn" onClick={() => setShowActions(true)} aria-label="More actions" style={{ flexShrink: 0 }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
-          </button>
-        </div>
-
-        {/* Row 2: category · status · wood · year */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', flexWrap: 'wrap' }}>
-          {project.category && (
-            <button type="button" onClick={() => setShowCategoryPicker(true)} style={{ fontSize: 12, background: 'var(--blue-dim)', color: 'var(--blue)', borderRadius: 99, padding: '2px 10px', fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
-              {project.category}
-            </button>
+        {/* Hero image or compact header */}
+        <div style={{
+          position: 'relative',
+          minHeight: heroPhoto ? 160 : 'auto',
+          background: heroPhoto ? `url(${heroPhoto.url}) center/cover` : 'transparent',
+          display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
+        }}>
+          {/* Gradient overlay for readability */}
+          {heroPhoto && (
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,.3) 0%, rgba(0,0,0,.1) 40%, rgba(0,0,0,.7) 100%)' }} />
           )}
-          <button type="button" onClick={() => setShowStatusPicker(true)}
-            style={{ background: ss.bg, color: ss.color, border: 'none', borderRadius: 99,
-              padding: '2px 10px', fontSize: 12, fontWeight: 600,
-              fontFamily: 'inherit', cursor: 'pointer', flexShrink: 0,
-              display: 'inline-flex', alignItems: 'center', gap: 4,
+
+          {/* Back + more buttons — always on top */}
+          <div style={{ position: heroPhoto ? 'absolute' : 'relative', top: 0, left: 0, right: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', zIndex: 1 }}>
+            <button className="back-btn" onClick={() => setProjId(null)} style={{ flexShrink: 0, color: heroPhoto ? '#fff' : 'var(--accent)' }}>
+              <IChevL size={16} color="currentColor" sw={2.2} />
+              Projects
+            </button>
+            <button type="button" className="icon-btn" onClick={() => setShowActions(true)} aria-label="More actions" style={{ flexShrink: 0, color: heroPhoto ? '#fff' : 'var(--c-text-primary)' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+            </button>
+          </div>
+
+          {/* Title + metadata — overlaid on image or inline */}
+          <div style={{ position: 'relative', zIndex: 1, padding: heroPhoto ? '0 16px 14px' : '0 16px 10px' }}>
+            <h2 style={{
+              fontSize: heroPhoto ? 22 : 17, fontWeight: 800, margin: 0,
+              color: heroPhoto ? '#fff' : 'var(--c-text-primary)',
+              textShadow: heroPhoto ? '0 1px 4px rgba(0,0,0,.5)' : 'none',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}>
-            {STATUS_LABEL[project.status] || project.status}
-            <span style={{ fontSize: 9, opacity: 0.7 }}>▾</span>
-          </button>
-          {project.wood_type && <span style={{ fontSize: 12, color: 'var(--c-text-muted)' }}>{project.wood_type}</span>}
-          {project.year_completed && <span style={{ fontSize: 12, color: 'var(--c-text-faint)' }}>{project.year_completed}</span>}
+              {project.name}
+            </h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
+              <button type="button" onClick={() => setShowStatusPicker(true)}
+                style={{
+                  background: heroPhoto ? 'rgba(255,255,255,.2)' : ss.bg,
+                  color: heroPhoto ? '#fff' : ss.color,
+                  backdropFilter: heroPhoto ? 'blur(8px)' : 'none',
+                  WebkitBackdropFilter: heroPhoto ? 'blur(8px)' : 'none',
+                  border: 'none', borderRadius: 99,
+                  padding: '2px 10px', fontSize: 12, fontWeight: 600,
+                  fontFamily: 'inherit', cursor: 'pointer', flexShrink: 0,
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                }}>
+                {STATUS_LABEL[project.status] || project.status}
+                <span style={{ fontSize: 9, opacity: 0.7 }}>▾</span>
+              </button>
+              {project.category && (
+                <button type="button" onClick={() => setShowCategoryPicker(true)} style={{
+                  fontSize: 12, borderRadius: 99, padding: '2px 10px', fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                  background: heroPhoto ? 'rgba(255,255,255,.2)' : 'var(--blue-dim)',
+                  color: heroPhoto ? '#fff' : 'var(--blue)',
+                  backdropFilter: heroPhoto ? 'blur(8px)' : 'none',
+                  WebkitBackdropFilter: heroPhoto ? 'blur(8px)' : 'none',
+                }}>
+                  {project.category}
+                </button>
+              )}
+              {project.wood_type && <span style={{ fontSize: 12, color: heroPhoto ? 'rgba(255,255,255,.8)' : 'var(--c-text-muted)' }}>{project.wood_type}</span>}
+              {project.year_completed && <span style={{ fontSize: 12, color: heroPhoto ? 'rgba(255,255,255,.6)' : 'var(--c-text-faint)' }}>{project.year_completed}</span>}
+            </div>
+          </div>
         </div>
 
-        {/* Row 3: tabs — equal width, no scroll */}
+        {/* Tabs — equal width */}
         <div style={{ display: 'flex', borderTop: '1px solid var(--c-border-light)' }}>
           {[
             { id: 'overview',  label: 'Overview' },
