@@ -987,31 +987,13 @@ export default function App() {
                 </button>
               </div>
               <div className="sheet-body">
-                {/* Portfolio links */}
+                {/* Feedback — top action for beta */}
                 <div className="form-group" style={{ marginBottom: 8 }}>
-                  <div className="more-item" style={{ borderBottom: '1px solid var(--c-border-light)', padding: '13px 16px' }}
+                  <div className="more-item" style={{ padding: '13px 16px' }}
                     onClick={() => { setShowMore(false); setTab('beta') }} role="button" tabIndex={0}>
                     <IBrain size={20} color="var(--accent)" sw={1.8} />
                     <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>Feedback</span>
                   </div>
-                  <div className="more-item" style={{ borderBottom: '1px solid var(--c-border-light)', padding: '13px 16px' }}
-                    onClick={() => { setShowMore(false); setShowQR(true) }} role="button" tabIndex={0}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
-                      <rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/>
-                    </svg>
-                    <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>Share Portfolio</span>
-                  </div>
-                  <a href="/portfolio" target="_blank" rel="noopener noreferrer"
-                    className="more-item"
-                    style={{ borderBottom: 'none', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 14, padding: '13px 16px' }}
-                    onClick={() => setShowMore(false)}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                      <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
-                    </svg>
-                    <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>View Portfolio</span>
-                  </a>
                 </div>
 
                 {/* Grouped nav sections — mobile shows essentials only */}
