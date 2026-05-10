@@ -492,6 +492,59 @@ export default function App() {
 
   const mutate = useCallback(fn => setData(prev => fn({ ...prev })), [])
 
+  // ── Pull-to-refresh ─────────────────────────────────────────────────────────
+  const [pullUI, setPullUI] = useState({ distance: 0, refreshing: false })
+  const pullState = useRef({ startY: null, distance: 0, refreshing: false })
+
+  useEffect(() => {
+    const mainArea = document.getElementById('main-content')
+    if (!mainArea) return
+
+    const onTouchStart = (e) => {
+      if (pullState.current.refreshing) return
+      const sp = mainArea.querySelector('.scroll-page')
+      if (!sp || sp.scrollTop > 5) return
+      pullState.current.startY = e.touches[0].clientY
+    }
+
+    const onTouchMove = (e) => {
+      const ps = pullState.current
+      if (ps.startY === null || ps.refreshing) return
+      const dy = e.touches[0].clientY - ps.startY
+      if (dy < 0) { ps.startY = null; ps.distance = 0; setPullUI(u => ({ ...u, distance: 0 })); return }
+      ps.distance = Math.min(dy * 0.4, 80)
+      setPullUI(u => ({ ...u, distance: ps.distance }))
+    }
+
+    const onTouchEnd = () => {
+      const ps = pullState.current
+      if (ps.startY === null) return
+      ps.startY = null
+      if (ps.distance > 50) {
+        ps.refreshing = true
+        ps.distance = 0
+        setPullUI({ distance: 0, refreshing: true })
+        reload().finally(() => {
+          ps.refreshing = false
+          setPullUI({ distance: 0, refreshing: false })
+        })
+      } else {
+        ps.distance = 0
+        setPullUI({ distance: 0, refreshing: false })
+      }
+    }
+
+    mainArea.addEventListener('touchstart', onTouchStart, { passive: true })
+    mainArea.addEventListener('touchmove', onTouchMove, { passive: true })
+    mainArea.addEventListener('touchend', onTouchEnd)
+
+    return () => {
+      mainArea.removeEventListener('touchstart', onTouchStart)
+      mainArea.removeEventListener('touchmove', onTouchMove)
+      mainArea.removeEventListener('touchend', onTouchEnd)
+    }
+  }, [reload])
+
   // Push current location onto stack before navigating
   const pushNav = useCallback((fromTab, fromProjId, fromMore) => {
     navStack.current.push({ tab: fromTab, projId: fromProjId, showMore: fromMore })
@@ -696,6 +749,25 @@ export default function App() {
 
             {/* ── Content ── */}
             <main className="main-area" id="main-content">
+              {/* Pull-to-refresh indicator */}
+              {(pullUI.distance > 0 || pullUI.refreshing) && (
+                <div style={{
+                  position: 'absolute', top: 0, left: 0, right: 0,
+                  height: pullUI.refreshing ? 40 : pullUI.distance,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  zIndex: 5, overflow: 'hidden',
+                  transition: pullUI.refreshing ? 'height 200ms ease' : 'none',
+                }}>
+                  <div
+                    className="spinner"
+                    style={{
+                      width: 18, height: 18, borderWidth: 2,
+                      opacity: pullUI.refreshing ? 1 : Math.min(pullUI.distance / 50, 1),
+                      transform: pullUI.refreshing ? undefined : `rotate(${pullUI.distance * 5}deg)`,
+                    }}
+                  />
+                </div>
+              )}
               <ErrorBoundary>
               {projId ? (
                 <ProjectDetail />
