@@ -201,6 +201,64 @@ export async function getPhotoCount() {
   return count || 0
 }
 
+// ── Perceptual hash — duplicate detection ─────────────────────────────────────
+// Draws image to 8×8 grayscale canvas, computes average brightness,
+// each pixel above average = '1', below = '0' → 64-char binary string.
+// Identical images produce identical hashes regardless of URL or filename.
+export function computePhash(source) {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    const isBlob = source instanceof Blob
+    const url = isBlob ? URL.createObjectURL(source) : source
+    img.onload = () => {
+      if (isBlob) URL.revokeObjectURL(url)
+      const canvas = document.createElement('canvas')
+      canvas.width = 8
+      canvas.height = 8
+      const ctx = canvas.getContext('2d')
+      ctx.drawImage(img, 0, 0, 8, 8)
+      const data = ctx.getImageData(0, 0, 8, 8).data
+      const grays = []
+      for (let i = 0; i < data.length; i += 4) {
+        grays.push(data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114)
+      }
+      const avg = grays.reduce((a, b) => a + b, 0) / grays.length
+      resolve(grays.map(g => g >= avg ? '1' : '0').join(''))
+    }
+    img.onerror = () => {
+      if (isBlob) URL.revokeObjectURL(url)
+      resolve(null)
+    }
+    img.src = url
+  })
+}
+
+export async function backfillPhashes(photos, onProgress) {
+  const needsHash = photos.filter(p => !p.phash && p.url)
+  let done = 0
+  for (const photo of needsHash) {
+    const hash = await computePhash(photo.url)
+    if (hash) {
+      await updatePhoto(photo.id, { phash: hash })
+      photo.phash = hash
+    }
+    done++
+    if (onProgress) onProgress(done, needsHash.length)
+  }
+  return done
+}
+
+export function findDuplicateGroups(photos) {
+  const groups = {}
+  for (const p of photos) {
+    if (!p.phash) continue
+    if (!groups[p.phash]) groups[p.phash] = []
+    groups[p.phash].push(p)
+  }
+  return Object.values(groups).filter(g => g.length > 1)
+}
+
 export async function uploadPhoto(projectId, file, caption, photoType, tags) {
   // Enforce free tier photo limit
   const count = await getPhotoCount()
@@ -208,13 +266,14 @@ export async function uploadPhoto(projectId, file, caption, photoType, tags) {
     throw new Error(`PHOTO_LIMIT_REACHED:${count}`)
   }
   const compressed = await compressImage(file)
+  const phash = await computePhash(compressed)
   const ext = compressed.type === 'image/jpeg' ? 'jpg' : (file.name.split('.').pop().toLowerCase() || 'jpg')
   const safeExt = ['jpg','jpeg','png','gif','webp','heic'].includes(ext) ? ext : 'jpg'
   const path = `${projectId || 'general'}/${uid()}.${safeExt}`
   const { error: uploadError } = await supabase.storage.from(BUCKET).upload(path, compressed, { contentType: compressed.type, upsert: false })
   if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`)
   const user_id = await getCurrentUserId()
-  const row = { id: uid(), project_id: projectId || null, storage_path: path, caption: caption || '', photo_type: photoType || 'progress', tags: tags || '', created_at: isoNow(), user_id }
+  const row = { id: uid(), project_id: projectId || null, storage_path: path, caption: caption || '', photo_type: photoType || 'progress', tags: tags || '', created_at: isoNow(), user_id, phash }
   const saved = await q(supabase.from('photos').insert(row).select().single())
   return { ...saved, url: photoUrl(path) }
 }

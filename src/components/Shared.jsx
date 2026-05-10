@@ -38,6 +38,12 @@ export const ITree     = p => <I {...p} d={['M17 14l3-3-3-3','M7 10l-3 3 3 3','M
 export const IBulb     = p => <I {...p} d={['M9 18h6','M10 22h4','M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z']} />
 export const IBook     = p => <I {...p} d={['M4 19.5A2.5 2.5 0 0 1 6.5 17H20','M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z']} />
 export const IHouse    = p => <I {...p} d={['M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z','M9 22V12h6v10']} />
+export const IDuplicates = p => <I {...p} d={[
+  'M9 3h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2',
+  'M5 7h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z',
+  'M21 16.5a2.5 2.5 0 1 0-5 0 2.5 2.5 0 0 0 5 0z',
+  'M20.5 18.5l2 2',
+]} />
 export const IImage    = p => <I {...p} d={['M21 15l-5-5L5 21','M3 3h18v18H3z','M8.5 8.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z']} />
 export const ILayers   = p => <I {...p} d={['M12 2L2 7l10 5 10-5-10-5','M2 17l10 5 10-5','M2 12l10 5 10-5']} />
 export const IMore     = p => <I {...p} d="M5 12h.01M12 12h.01M19 12h.01" sw={3} />
@@ -797,7 +803,7 @@ export function Lightbox({ photos, index, onClose, onEdit }) {
 // ─── PhotoGrid ────────────────────────────────────────────────────────────────
 const PHOTO_PAGE = 40  // photos rendered per batch
 
-export function PhotoGrid({ photos, onEdit, showProject, projects, onNavigateProject, onCreateIdea }) {
+export function PhotoGrid({ photos, onEdit, showProject, projects, onNavigateProject, onCreateIdea, selectMode, selectedIds, onToggleSelect, onEnterSelectMode, sortBy, gridCols }) {
   const [lightboxIdx, setLightboxIdx] = useState(null)
   const [visible, setVisible]         = useState(PHOTO_PAGE)
   const sentinelRef = useRef(null)
@@ -822,22 +828,46 @@ export function PhotoGrid({ photos, onEdit, showProject, projects, onNavigatePro
 
   const shown = photos.slice(0, visible)
 
+  // Build grid items with date section headers when sorted by date
+  const gridItems = []
+  let lastMonth = ''
+  shown.forEach((photo, i) => {
+    if (sortBy === 'date' && photo.created_at) {
+      const d = new Date(photo.created_at)
+      const key = `${d.getFullYear()}-${d.getMonth()}`
+      if (key !== lastMonth) {
+        lastMonth = key
+        const label = d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
+        gridItems.push(
+          <div key={`hdr-${key}`} className="photo-grid-date-header">
+            {label}
+          </div>
+        )
+      }
+    }
+    gridItems.push(
+      <PhotoCard
+        key={photo.id}
+        photo={photo}
+        tileIndex={i}
+        onEdit={onEdit}
+        showProject={showProject}
+        projects={projects}
+        onOpen={() => !selectMode && setLightboxIdx(photos.indexOf(photo))}
+        onNavigateProject={onNavigateProject}
+        onCreateIdea={onCreateIdea}
+        selectMode={selectMode}
+        isSelected={selectedIds?.has(photo.id)}
+        onToggleSelect={onToggleSelect}
+        onEnterSelectMode={onEnterSelectMode}
+      />
+    )
+  })
+
   return (
     <>
-      <div className="photo-grid" data-tutorial-target="photo-grid">
-        {shown.map((photo, i) => (
-          <PhotoCard
-            key={photo.id}
-            photo={photo}
-            tileIndex={i}
-            onEdit={onEdit}
-            showProject={showProject}
-            projects={projects}
-            onOpen={() => setLightboxIdx(photos.indexOf(photo))}
-            onNavigateProject={onNavigateProject}
-            onCreateIdea={onCreateIdea}
-          />
-        ))}
+      <div className="photo-grid" data-tutorial-target="photo-grid" style={gridCols ? { gridTemplateColumns: `repeat(${gridCols}, 1fr)` } : undefined}>
+        {gridItems}
       </div>
       {/* Sentinel — triggers loading next batch */}
       {visible < photos.length && (
@@ -855,16 +885,17 @@ export function PhotoGrid({ photos, onEdit, showProject, projects, onNavigatePro
 }
 
 // ─── PhotoCard ────────────────────────────────────────────────────────────────
-export const PhotoCard = memo(function PhotoCard({ photo, onEdit, onOpen, showProject, projects, tileIndex = 0, onNavigateProject, onCreateIdea }) {
+export const PhotoCard = memo(function PhotoCard({ photo, onEdit, onOpen, showProject, projects, tileIndex = 0, onNavigateProject, onCreateIdea, selectMode, isSelected, onToggleSelect, onEnterSelectMode }) {
   const cardRef = useRef()
   const onMove = useCallback(e => {
+    if (selectMode) return
     const el = cardRef.current; if (!el) return
     const r = el.getBoundingClientRect()
     const x = (e.clientX - r.left) / r.width  - 0.5
     const y = (e.clientY - r.top)  / r.height - 0.5
     el.style.transform = `perspective(600px) rotateY(${x*7}deg) rotateX(${-y*7}deg) scale(1.03)`
     el.style.boxShadow = `${-x*8}px ${y*8}px 24px rgba(0,0,0,.18)`
-  }, [])
+  }, [selectMode])
   const onLeave = useCallback(() => {
     const el = cardRef.current; if (!el) return
     el.style.transform = ''
@@ -875,21 +906,78 @@ export const PhotoCard = memo(function PhotoCard({ photo, onEdit, onOpen, showPr
   const proj = showProject && projects ? projects.find(p => p.id === photo.project_id) : null
   const tags = photo.tags ? photo.tags.split(',').map(t => t.trim()).filter(Boolean) : []
 
+  // Long-press to enter select mode — tracks movement to allow scrolling
+  const touchStart = useRef(null)
+  const lpTimer = useRef(null)
+  const handleTouchStart = useCallback((e) => {
+    if (selectMode) return // already in select mode, taps handle selection
+    const t = e.touches[0]
+    touchStart.current = { x: t.clientX, y: t.clientY }
+    lpTimer.current = setTimeout(() => {
+      if (onEnterSelectMode) onEnterSelectMode(photo.id)
+      if (navigator.vibrate) navigator.vibrate(50)
+      touchStart.current = null
+    }, 500)
+  }, [selectMode, onEnterSelectMode, photo.id])
+  const handleTouchMove = useCallback((e) => {
+    if (!touchStart.current) return
+    const t = e.touches[0]
+    if (Math.abs(t.clientX - touchStart.current.x) > 10 || Math.abs(t.clientY - touchStart.current.y) > 10) {
+      clearTimeout(lpTimer.current)
+      touchStart.current = null
+    }
+  }, [])
+  const handleTouchEnd = useCallback(() => {
+    clearTimeout(lpTimer.current)
+    touchStart.current = null
+  }, [])
+
+  const handleCardClick = useCallback((e) => {
+    if (selectMode && onToggleSelect) {
+      e.stopPropagation()
+      onToggleSelect(photo.id)
+    }
+  }, [selectMode, onToggleSelect, photo.id])
+
+  const handleCheckboxClick = useCallback((e) => {
+    e.stopPropagation()
+    if (selectMode) {
+      onToggleSelect && onToggleSelect(photo.id)
+    } else {
+      onEnterSelectMode && onEnterSelectMode(photo.id)
+    }
+  }, [selectMode, onToggleSelect, onEnterSelectMode, photo.id])
+
   return (
     <div
       ref={cardRef}
-      className="photo-card"
+      className={`photo-card${isSelected ? ' selected' : ''}`}
       onMouseMove={onMove}
       onMouseLeave={onLeave}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
+      onClick={handleCardClick}
       style={{ transition: 'transform 200ms cubic-bezier(.25,.46,.45,.94), box-shadow 200ms ease' }}
     >
+      {/* Selection checkbox */}
+      <div
+        className={`photo-select-check${isSelected ? ' checked' : ''}${selectMode ? ' visible' : ''}`}
+        onClick={handleCheckboxClick}
+      >
+        {isSelected && (
+          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        )}
+      </div>
+
       {!err ? (
         <img
           src={photo.url}
           alt={photo.caption || 'Workshop photo'}
           loading="lazy"
           onError={() => setErr(true)}
-          onClick={onOpen}
+          onClick={selectMode ? undefined : onOpen}
         />
       ) : (
         <div className="photo-placeholder">No image</div>
@@ -915,7 +1003,7 @@ export const PhotoCard = memo(function PhotoCard({ photo, onEdit, onOpen, showPr
         </div>
       )}
 
-      {onEdit && (
+      {onEdit && !selectMode && (
         <button
           className="photo-overlay-btn photo-edit-btn"
           onClick={e => { e.stopPropagation(); setShowEdit(true) }}
@@ -925,7 +1013,7 @@ export const PhotoCard = memo(function PhotoCard({ photo, onEdit, onOpen, showPr
         </button>
       )}
 
-      {onCreateIdea && (
+      {onCreateIdea && !selectMode && (
         <button
           className="photo-overlay-btn photo-idea-btn"
           onClick={e => { e.stopPropagation(); onCreateIdea(photo) }}

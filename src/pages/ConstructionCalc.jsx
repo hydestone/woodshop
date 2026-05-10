@@ -535,12 +535,8 @@ export default function ConstructionCalc({ conMode = null, showHelp = false }) {
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
             <div className="cm-display-main" style={{ flex: 1 }}>{displayStr}</div>
             <div style={{ textAlign: 'right', flexShrink: 0 }}>
-              {activeVal ? (
-                <>
-                  <div className="cm-display-sub" style={{ minHeight: 'unset' }}>{fracToDecimal(activeVal).toFixed(3)}"</div>
-                  <div className="cm-display-sub" style={{ minHeight: 'unset' }}>{(fracToDecimal(activeVal)*25.4).toFixed(1)}mm</div>
-                </>
-              ) : <div className="cm-display-sub">&nbsp;</div>}
+              <div className="cm-display-sub" style={{ minHeight: 'unset' }}>{activeVal ? `${fracToDecimal(activeVal).toFixed(3)}"` : '\u00a0'}</div>
+              <div className="cm-display-sub" style={{ minHeight: 'unset' }}>{activeVal ? `${(fracToDecimal(activeVal)*25.4).toFixed(1)}mm` : '\u00a0'}</div>
             </div>
           </div>
           <div className="cm-input-hint">e.g. 9 ft′ → 1 in″ → 3 → /8 = 9′ 1 3/8″</div>
