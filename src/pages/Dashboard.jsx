@@ -647,11 +647,16 @@ export default function Dashboard() {
   const urgCoats  = data.coats.filter(c => {
     if (!c.applied_at || !coatStatus(c).urgent) return false
     // Only show if there's a next unapplied coat in the same project+product
-    return data.coats.some(cc => cc.project_id === c.project_id && cc.product === c.product && cc.coat_number > c.coat_number && !cc.applied_at)
+    if (!data.coats.some(cc => cc.project_id === c.project_id && cc.product === c.product && cc.coat_number > c.coat_number && !cc.applied_at)) return false
+    // Only show if this is the LAST applied coat in the group (prevents duplicate cards)
+    if (data.coats.some(cc => cc.project_id === c.project_id && cc.product === c.product && cc.coat_number > c.coat_number && cc.applied_at)) return false
+    return true
   }).map(c => ({ ...c, proj: data.projects.find(p => p.id === c.project_id) }))
   const upCoats   = data.coats.filter(c => {
     if (!c.applied_at || coatStatus(c).urgent) return false
-    return data.coats.some(cc => cc.project_id === c.project_id && cc.product === c.product && cc.coat_number > c.coat_number && !cc.applied_at)
+    if (!data.coats.some(cc => cc.project_id === c.project_id && cc.product === c.product && cc.coat_number > c.coat_number && !cc.applied_at)) return false
+    if (data.coats.some(cc => cc.project_id === c.project_id && cc.product === c.product && cc.coat_number > c.coat_number && cc.applied_at)) return false
+    return true
   }).map(c => ({ ...c, proj: data.projects.find(p => p.id === c.project_id) })).slice(0, 3)
   const urgMaint  = data.maintenance.filter(m => maintStatus(m).urgent)
   const nextSteps = data.projects.filter(p => p.status === 'active').flatMap(p => {
