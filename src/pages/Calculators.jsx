@@ -250,7 +250,7 @@ function ConverterRow({ title, cfg }) {
   const result = val !== '' ? doConvert(parseFloat(val), from, to, cfg) : ''
 
   return (
-    <div style={{ display:'grid', gridTemplateColumns: CONV_GRID, gap:4, alignItems:'center', padding:'5px 0', borderBottom:'1px solid var(--c-border-light)' }}>
+    <div className="conv-grid" style={{ display:'grid', gridTemplateColumns: CONV_GRID, gap:4, alignItems:'center', padding:'5px 0', borderBottom:'1px solid var(--c-border-light)' }}>
       {/* Label with green left accent */}
       <div style={{ display:'flex', alignItems:'center', gap:0 }}>
         <div style={{ width:3, alignSelf:'stretch', background:'var(--forest)', marginRight:8, flexShrink:0 }} />
@@ -307,7 +307,7 @@ function WildcardConverter() {
     <div style={{ background:'var(--navy)', marginBottom:12, borderLeft:'3px solid var(--accent)' }}>
       <div style={{ padding:'6px 12px 4px', fontSize:10, fontWeight:700, color:'rgba(255,255,255,.4)', textTransform:'uppercase', letterSpacing:'.5px' }}>QUICK CONVERT</div>
       {/* Same grid as rows for alignment */}
-      <div style={{ display:'grid', gridTemplateColumns: CONV_GRID, gap:4, alignItems:'center', padding:'0 0 10px 0' }}>
+      <div className="conv-grid" style={{ display:'grid', gridTemplateColumns: CONV_GRID, gap:4, alignItems:'center', padding:'0 0 10px 0' }}>
         {/* Category label col — dropdown */}
         <div style={{ paddingLeft:12 }}>
           <select value={cat} onChange={e=>handleCat(e.target.value)} style={{ ...darkSel, fontSize:11, fontWeight:700 }}>

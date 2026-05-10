@@ -3056,7 +3056,11 @@ body {
   }
 
   /* Calculator mobile improvements */
-  .conv-grid { grid-template-columns: 1fr !important; }
+  .conv-grid {
+    grid-template-columns: 1fr 52px 14px 1fr 52px 28px !important;
+    row-gap: 2px !important;
+  }
+  .conv-grid > :first-child { grid-column: 1 / -1; }
   .trim-row { grid-template-columns: 40px minmax(0,1fr) 40px minmax(0,1.2fr) 24px !important; }
   .trim-label-row { display: none !important; }
   .calc-input { padding: 12px 10px; }
