@@ -1522,7 +1522,9 @@ body {
   border-radius: var(--r-md);
   overflow: hidden;
   position: relative;
-  background: var(--c-bg-subtle);
+  background: linear-gradient(90deg, var(--c-bg-subtle) 25%, var(--c-bg-subtle-2) 50%, var(--c-bg-subtle) 75%);
+  background-size: 200% 100%;
+  animation: shimmerLoad 1.4s ease infinite;
   cursor: pointer;
   aspect-ratio: 1 / 1;
 }
