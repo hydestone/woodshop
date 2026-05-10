@@ -720,6 +720,18 @@ body {
 }
 .top-bar-accent { color: #2D5A3D; }
 [data-theme="dark"] .top-bar-accent { color: #4ADE80; }
+.top-bar-page-title {
+  display: none;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--c-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-heading);
+  letter-spacing: .02em;
+  text-transform: uppercase;
+}
 
 /* ─── App body ───────────────────────────────────────────────────────────── */
 .app { display: flex; flex: 1; overflow: hidden; }
@@ -3074,7 +3086,8 @@ body {
     justify-content: flex-start;
   }
 
-  .top-bar-title { font-size: 18px; white-space: nowrap; }
+  .top-bar-title { display: none; }
+  .top-bar-page-title { display: block; }
 
   .top-bar-logo { height: 30px; width: 30px; }
 

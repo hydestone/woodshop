@@ -640,6 +640,11 @@ export default function App() {
     return 0
   }
 
+  // Contextual page title for mobile top bar
+  const pageTitle = projId
+    ? data?.projects?.find(p => p.id === projId)?.name || 'Project'
+    : ALL_NAV.find(t => t.id === tab)?.label || 'Home'
+
   const ctx = { data, mutate, reload, tab, setTab, navigate, projId, setProjId: openProject, theme, launchTutorial, sampleIds, tabAction, setTabAction }
 
   return (
@@ -652,6 +657,7 @@ export default function App() {
             <div className="top-bar-brand" data-tutorial-target="app-logo">
               <img src="/New_Logo.png" alt="" aria-hidden="true" className="top-bar-logo" />
               <div className="top-bar-title">JDH <span className="top-bar-accent">WOODWORKS</span></div>
+              <div className="top-bar-page-title">{pageTitle}</div>
             </div>
             <div className="top-bar-search-right"><GlobalSearch /></div>
             <button
