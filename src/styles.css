@@ -187,9 +187,9 @@
 }
 
 /* Universal press feedback */
-.btn-primary:active, .btn-secondary:active, .fab:active { transform: scale(0.97); }
-.icon-btn:active { transform: scale(0.9); }
-.form-cell:active, .more-item:active { opacity: 0.7; }
+.btn-primary:active, .btn-secondary:active, .fab:active { transform: scale(0.97); transition: none; }
+.icon-btn:active { transform: scale(0.9); transition: none; }
+.form-cell:active, .more-item:active { opacity: 0.65; transition: none; }
 
 
 /* ─── Projects page header controls — one line on mobile ─────────────────── */
@@ -1857,18 +1857,39 @@ body {
 /* ─── Desktop layout ─────────────────────────────────────────────────────── */
 
 
-/* ─── Micro-interactions ─────────────────────────────────────────────────── */
-.btn-primary, .btn-secondary, .btn-text, .icon-btn, .fab, .sidebar-item, .tab-btn, .more-item {
-  transition: transform 80ms ease, opacity 120ms ease, background 150ms ease, color 150ms ease;
+/* ─── Micro-interactions — instant press, slow release ─────────────────── */
+.btn-primary, .btn-secondary, .btn-text, .icon-btn, .fab, .sidebar-item, .tab-btn, .more-item,
+.proj-card, .dash-card, .form-cell, .filter-select, .photo-card {
+  transition: transform 300ms ease, opacity 300ms ease, background 150ms ease, color 150ms ease, box-shadow 300ms ease;
 }
 .btn-primary:active, .btn-secondary:active, .fab:active {
-  transform: scale(0.97);
+  transform: scale(0.96);
+  transition: none;
 }
 .icon-btn:active {
-  transform: scale(0.9);
+  transform: scale(0.88);
+  transition: none;
 }
-.sidebar-item:active, .tab-btn:active, .more-item:active {
+.sidebar-item:active, .more-item:active {
+  opacity: 0.6;
+  transition: none;
+}
+.tab-btn:active {
+  transform: scale(0.92);
   opacity: 0.7;
+  transition: none;
+}
+.proj-card:active, .dash-card:active {
+  transform: scale(0.98);
+  transition: none;
+}
+.form-cell:active {
+  opacity: 0.65;
+  transition: none;
+}
+.filter-select:active {
+  opacity: 0.7;
+  transition: none;
 }
 /* Slide-in for project detail */
 @keyframes slideInRight {
