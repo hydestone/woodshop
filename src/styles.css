@@ -3057,8 +3057,8 @@ body {
 
   /* Calculator mobile improvements */
   .conv-grid { grid-template-columns: 1fr !important; }
-  .trim-row { grid-template-columns: minmax(0,1fr) 52px 32px !important; }
-  .trim-label-row { display: block !important; }
+  .trim-row { grid-template-columns: 40px minmax(0,1fr) 40px minmax(0,1.2fr) 24px !important; }
+  .trim-label-row { display: none !important; }
   .calc-input { padding: 12px 10px; }
 
   .page-tabs { display: none; }
