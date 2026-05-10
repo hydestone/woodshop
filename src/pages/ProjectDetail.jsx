@@ -495,7 +495,7 @@ ${progressPhotos.length>12?`<div style="display:flex;align-items:center;justify-
           <div style={{ background: 'var(--c-bg-surface)', padding: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
               <div className="label-caps">Finishing</div>
-              <button className="icon-btn" onClick={() => setSub('finish-add')} aria-label="Add coat"><IPlus size={18} color="var(--accent)" /></button>
+              <button className="icon-btn" onClick={() => setSub('finish-setup')} aria-label="Set up finish"><IPlus size={18} color="var(--accent)" /></button>
             </div>
             <FinishingList projId={projId} sub={sub} setSub={setSub} />
           </div>
@@ -646,15 +646,21 @@ ${progressPhotos.length>12?`<div style="display:flex;align-items:center;justify-
           onClose={() => setSub(null)}
         />
       )}
-      {/* Add coat sheet */}
-      {sub === 'finish-add' && (
-        <CoatSheet
-          nextNum={(data.coats.filter(c=>c.project_id===projId).at(-1)?.coat_number??0)+1}
-          defaultCoat={data.coats.filter(c=>c.project_id===projId).at(-1)}
-          onSave={async fields => {
-            const coat = await db.addCoat({ project_id: projId, applied_at: null, ...fields })
-            mutate(d => ({ ...d, coats: [...d.coats, coat] }))
+      {/* Set up finish sheet */}
+      {sub === 'finish-setup' && (
+        <SetUpFinishSheet
+          projId={projId}
+          existingCoats={data.coats.filter(c => c.project_id === projId)}
+          finishProducts={data.finishProducts || []}
+          onSave={async (coats) => {
+            const saved = []
+            for (const fields of coats) {
+              const coat = await db.addCoat({ project_id: projId, applied_at: null, ...fields })
+              saved.push(coat)
+            }
+            mutate(d => ({ ...d, coats: [...d.coats, ...saved] }))
             setSub(null)
+            toast(`${saved.length} coats planned`, 'success')
           }}
           onClose={() => setSub(null)}
         />
@@ -731,23 +737,64 @@ function StepsList({ projId }) {
 function FinishingList({ projId, sub, setSub }) {
   const { data, mutate } = useCtx()
   const toast = useToast()
-  const [markId, setMarkId]     = useState(null)
   const [editCoat, setEditCoat] = useState(null)
+  const [calendarOffer, setCalendarOffer] = useState(null) // { coat, nextCoat }
 
   const coats = data.coats.filter(c => c.project_id === projId).sort((a, b) => a.coat_number - b.coat_number)
   const proj  = data.projects.find(p => p.id === projId)
+
+  // Group coats by product
+  const groups = useMemo(() => {
+    const map = {}
+    coats.forEach(c => {
+      const key = c.product || 'Untitled'
+      if (!map[key]) map[key] = []
+      map[key].push(c)
+    })
+    return Object.entries(map).map(([product, items]) => ({
+      product,
+      coats: items,
+      applied: items.filter(c => c.applied_at).length,
+      total: items.length,
+    }))
+  }, [coats])
 
   const del = async id => {
     mutate(d => ({ ...d, coats: d.coats.filter(c => c.id !== id) }))
     await db.deleteCoat(id).catch(e => toast(e.message, 'error'))
   }
 
-  const markApplied = async (id, dt) => {
-    const applied_at = new Date(dt).toISOString()
-    mutate(d => ({ ...d, coats: d.coats.map(c => c.id === id ? { ...c, applied_at } : c) }))
-    await db.updateCoat(id, { applied_at }).catch(e => toast(e.message, 'error'))
-    toast('Coat logged', 'success')
-    setMarkId(null)
+  const handleApply = async (coat) => {
+    const applied_at = new Date().toISOString()
+    mutate(d => ({ ...d, coats: d.coats.map(c => c.id === coat.id ? { ...c, applied_at } : c) }))
+    await db.updateCoat(coat.id, { applied_at }).catch(e => toast(e.message, 'error'))
+
+    // Find next coat in same group
+    const sameProduct = coats.filter(c => c.product === coat.product)
+    const nextIdx = sameProduct.findIndex(c => c.id === coat.id) + 1
+    const nextCoat = nextIdx < sameProduct.length ? sameProduct[nextIdx] : null
+
+    const dryStr = coat.interval_unit === 'hours' ? `${coat.interval_value}h` : `${coat.interval_value}d`
+    if (nextCoat) {
+      toast(`Coat ${coat.coat_number} applied · Next ready in ${dryStr}`, 'success')
+      setCalendarOffer({ coat: { ...coat, applied_at }, nextCoat })
+    } else {
+      toast(`${coat.product} finishing complete!`, 'success')
+    }
+  }
+
+  const addToCalendar = () => {
+    if (!calendarOffer) return
+    const { coat, nextCoat } = calendarOffer
+    const ms = coat.interval_unit === 'hours' ? coat.interval_value * 3600000 : coat.interval_value * 86400000
+    const readyAt = new Date(new Date(coat.applied_at).getTime() + ms)
+    addToGoogleCalendar({
+      title: `Apply coat ${nextCoat.coat_number} — ${coat.product}${proj ? ` (${proj.name})` : ''}`,
+      start: readyAt,
+      end: new Date(readyAt.getTime() + 3600000),
+      description: `Coat ${coat.coat_number} drying complete. Ready for coat ${nextCoat.coat_number}.`,
+    })
+    setCalendarOffer(null)
   }
 
   const handleEdit = async (id, fields) => {
@@ -757,68 +804,146 @@ function FinishingList({ projId, sub, setSub }) {
     setEditCoat(null)
   }
 
+  const deleteGroup = async (product) => {
+    const groupCoats = coats.filter(c => c.product === product)
+    mutate(d => ({ ...d, coats: d.coats.filter(c => !(c.project_id === projId && c.product === product)) }))
+    for (const c of groupCoats) {
+      await db.deleteCoat(c.id).catch(() => {})
+    }
+    toast(`${product} removed`, 'success')
+  }
+
   if (!coats.length) return (
-    <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--c-text-faint)', fontSize: 13 }}>No coats yet — click + to add</div>
+    <div style={{ textAlign: 'center', padding: '24px 0' }}>
+      <div style={{ fontSize: 13, color: 'var(--c-text-faint)', marginBottom: 12 }}>No finishing plan yet</div>
+      <button className="btn-primary" style={{ padding: '10px 20px', fontSize: 14 }}
+        onClick={() => setSub('finish-setup')}>
+        Set Up Finish
+      </button>
+    </div>
   )
 
   return (
     <div>
-      {coats.map((coat, idx) => {
-        const st     = coatStatus(coat)
-        const prevOk = idx === 0 || !!coats[idx - 1].applied_at
-        const locked = !coat.applied_at && !prevOk
-        const applied= !!coat.applied_at
-        const circleClass = applied ? 'coat-circle applied' : st.urgent ? 'coat-circle urgent' : 'coat-circle'
-        return (
-          <div key={coat.id} style={{ borderBottom: idx < coats.length - 1 ? '1px solid var(--c-border-light)' : 'none', padding: '12px 0' }}>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <div className={circleClass} style={{ flexShrink: 0 }}>{coat.coat_number}</div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <span style={{ fontWeight: 600, fontSize: 14 }}>{coat.product}</span>
-                  <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: st.color }}>{st.label}</span>
-                    <button className="icon-btn" onClick={() => setEditCoat(coat)}><IEdit size={13} /></button>
-                    <button className="icon-btn" onClick={() => del(coat.id)} style={{ color: 'var(--red)' }}><ITrash size={13} /></button>
-                  </div>
-                </div>
-                {coat.notes && <div style={{ fontSize: 12, color: 'var(--c-text-muted)', marginTop: 2 }}>{coat.notes}</div>}
-                <div style={{ fontSize: 12, color: 'var(--c-text-muted)', marginTop: 3 }}>
-                  {coat.applied_at ? `Applied ${fmtShort(coat.applied_at)} · ` : ''}Wait {coat.interval_value}{coat.interval_unit === 'hours' ? 'h' : 'd'}
-                </div>
-                {!locked && (
-                  <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
-                    <button className={st.urgent ? 'btn-primary' : 'btn-secondary'} style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => setMarkId(coat.id)}>
-                      {coat.applied_at ? (st.urgent ? 'Apply next coat' : 'Re-log') : 'Mark applied'}
-                    </button>
-                    {applied && <>
-                      <button className="btn-cal" onClick={() => {
-                        const ms = coat.interval_unit==='hours' ? coat.interval_value*3600000 : coat.interval_value*86400000
-                        const readyAt = new Date(new Date(coat.applied_at).getTime()+ms)
-                        addToGoogleCalendar({ title: `Apply coat ${coat.coat_number+1} — ${coat.product}${proj?` (${proj.name})`:''}`, start: readyAt, end: new Date(readyAt.getTime()+3600000), description: `Coat ${coat.coat_number} is ready.` })
-                      }}><ICal size={12} color="currentColor" /> Calendar</button>
+      {groups.map((group, gi) => {
+        // Find next due coat in this group
+        const nextDue = group.coats.find(c => !c.applied_at)
+        // Is previous group complete? (for sequential finishes)
+        const prevGroup = gi > 0 ? groups[gi - 1] : null
+        const prevComplete = !prevGroup || prevGroup.applied === prevGroup.total
 
-                    </>}
-                  </div>
-                )}
-                {locked && <div style={{ fontSize: 12, color: 'var(--c-text-muted)', marginTop: 4 }}>Waiting for coat {coat.coat_number - 1}</div>}
+        return (
+          <div key={group.product} style={{ marginBottom: gi < groups.length - 1 ? 16 : 0 }}>
+            {/* Group header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--c-text-primary)', textTransform: 'uppercase', letterSpacing: '.02em' }}>{group.product}</div>
+                <div style={{ fontSize: 12, color: group.applied === group.total ? 'var(--forest)' : 'var(--c-text-muted)', marginTop: 1 }}>
+                  {group.applied === group.total ? '✓ Complete' : `${group.applied} of ${group.total} applied`}
+                </div>
               </div>
+              <button className="icon-btn" onClick={() => deleteGroup(group.product)} style={{ color: 'var(--c-text-faint)' }}>
+                <ITrash size={13} />
+              </button>
             </div>
+            {/* Progress bar */}
+            <div style={{ height: 4, background: 'var(--c-bg-subtle)', borderRadius: 2, marginBottom: 10, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${(group.applied / group.total) * 100}%`, background: 'var(--forest)', borderRadius: 2, transition: 'width 300ms ease' }} />
+            </div>
+            {/* Coat list */}
+            {group.coats.map((coat, ci) => {
+              const applied = !!coat.applied_at
+              const isNextDue = coat.id === nextDue?.id && prevComplete
+              const locked = !applied && (!prevComplete || (nextDue && coat.id !== nextDue.id))
+              // Calculate ready time based on previous coat
+              const prevCoat = ci > 0 ? group.coats[ci - 1] : null
+              let readyTime = null
+              if (prevCoat?.applied_at) {
+                const ms = prevCoat.interval_unit === 'hours' ? prevCoat.interval_value * 3600000 : prevCoat.interval_value * 86400000
+                readyTime = new Date(new Date(prevCoat.applied_at).getTime() + ms)
+              }
+              const isReady = readyTime ? new Date() >= readyTime : ci === 0
+              const isOverdue = isNextDue && isReady
+
+              return (
+                <div key={coat.id} style={{
+                  display: 'flex', gap: 10, alignItems: 'flex-start',
+                  padding: '8px 0',
+                  borderBottom: ci < group.coats.length - 1 ? '1px solid var(--c-border-light)' : 'none',
+                  opacity: locked ? 0.45 : 1,
+                }}>
+                  {/* Status indicator */}
+                  <div style={{
+                    width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 12, fontWeight: 700, marginTop: 2,
+                    background: applied ? 'var(--forest)' : isOverdue ? 'var(--orange-dim)' : 'var(--c-bg-subtle)',
+                    color: applied ? '#fff' : isOverdue ? 'var(--orange)' : 'var(--c-text-muted)',
+                    border: applied ? 'none' : isOverdue ? '2px solid var(--orange)' : '2px solid var(--c-border)',
+                  }}>
+                    {applied ? '✓' : coat.coat_number}
+                  </div>
+                  {/* Content */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--c-text-primary)' }}>Coat {coat.coat_number}</span>
+                      <button className="icon-btn" onClick={() => setEditCoat(coat)} style={{ padding: 4 }}>
+                        <IEdit size={12} color="var(--c-text-faint)" />
+                      </button>
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--c-text-muted)', marginTop: 1 }}>
+                      {applied
+                        ? `Applied ${fmtShort(coat.applied_at)} · ${coat.interval_value}${coat.interval_unit === 'hours' ? 'h' : 'd'} dry`
+                        : isNextDue && readyTime
+                          ? (isReady ? 'Ready now' : `Ready ${fmtShort(readyTime.toISOString())}`)
+                          : isNextDue ? 'Ready to apply' : locked ? `After coat ${coat.coat_number - 1}` : ''
+                      }
+                    </div>
+                    {coat.notes && <div style={{ fontSize: 11, color: 'var(--c-text-faint)', marginTop: 2 }}>{coat.notes}</div>}
+                    {/* Apply button — only on next due coat */}
+                    {isNextDue && prevComplete && (
+                      <button
+                        className={isOverdue ? 'btn-primary' : 'btn-secondary'}
+                        style={{ fontSize: 12, padding: '5px 14px', marginTop: 6 }}
+                        onClick={() => handleApply(coat)}
+                      >
+                        {isReady ? 'Apply Now' : 'Apply Early'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
           </div>
         )
       })}
-      {markId && (
-        <Sheet title="Mark Applied" onClose={() => setMarkId(null)} onSave={async () => {
-          const el = document.getElementById('coat-dt-input')
-          if (el?.value) await markApplied(markId, el.value)
+
+      {/* Add another finish */}
+      <button className="btn-text" style={{ fontSize: 13, marginTop: 12 }}
+        onClick={() => setSub('finish-setup')}>
+        + Add Another Finish
+      </button>
+
+      {/* Calendar offer after applying */}
+      {calendarOffer && (
+        <div style={{
+          marginTop: 12, padding: '12px 14px', background: 'var(--accent-dim)',
+          border: '1px solid var(--accent)', borderRadius: 8,
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         }}>
-          <div className="form-group">
-            <FormCell label="Date & time" last>
-              <input id="coat-dt-input" className="form-input" type="datetime-local" defaultValue={localDt()} />
-            </FormCell>
+          <span style={{ fontSize: 13, color: 'var(--c-text-primary)' }}>
+            Remind me for coat {calendarOffer.nextCoat.coat_number}?
+          </span>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button className="btn-primary" style={{ fontSize: 12, padding: '5px 12px' }} onClick={addToCalendar}>
+              <ICal size={12} color="#fff" /> Add to Calendar
+            </button>
+            <button className="btn-text" style={{ fontSize: 12, color: 'var(--c-text-muted)' }}
+              onClick={() => setCalendarOffer(null)}>Skip</button>
           </div>
-        </Sheet>
+        </div>
       )}
+
       {editCoat && <CoatSheet nextNum={editCoat.coat_number} defaultCoat={editCoat} isEdit onSave={f => handleEdit(editCoat.id, f)} onClose={() => setEditCoat(null)} />}
     </div>
   )
@@ -1515,6 +1640,103 @@ function CoatSheet({ nextNum, defaultCoat, isEdit, onSave, onClose }) {
           </div>
         </FormCell>
         <FormCell label="Notes" last><input ref={refs.notes} className="form-input" placeholder="Optional" defaultValue={defaultCoat?.notes || ''} /></FormCell>
+      </div>
+    </Sheet>
+  )
+}
+
+// ─── Set Up Finish — batch coat creation ─────────────────────────────────────
+function SetUpFinishSheet({ projId, existingCoats, finishProducts, onSave, onClose }) {
+  const [product, setProduct] = useState('')
+  const [numCoats, setNumCoats] = useState(3)
+  const [intervalVal, setIntervalVal] = useState('24')
+  const [intervalUnit, setIntervalUnit] = useState('hours')
+  const [notes, setNotes] = useState('')
+
+  const nextNum = (existingCoats.at(-1)?.coat_number ?? 0) + 1
+
+  const handleSave = () => {
+    const prod = product.trim()
+    if (!prod) return
+    const iv = parseFloat(intervalVal) || 24
+    const coats = []
+    for (let i = 0; i < numCoats; i++) {
+      coats.push({
+        product: prod,
+        coat_number: nextNum + i,
+        interval_value: iv,
+        interval_unit: intervalUnit,
+        notes: i === 0 ? notes : '',
+      })
+    }
+    onSave(coats)
+  }
+
+  return (
+    <Sheet title="Set Up Finish" onClose={onClose} onSave={handleSave} saveLabel="Create Plan" variant="form">
+      <div className="form-group">
+        <FormCell label="Product">
+          <input
+            className="form-input"
+            placeholder="e.g. Arm-R-Seal, Walnut Oil"
+            value={product}
+            onChange={e => setProduct(e.target.value)}
+            list="finish-products-list"
+            autoFocus
+          />
+          {finishProducts.length > 0 && (
+            <datalist id="finish-products-list">
+              {finishProducts.map(fp => <option key={fp.id} value={fp.name} />)}
+            </datalist>
+          )}
+        </FormCell>
+        <FormCell label="Number of coats">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button
+              onClick={() => setNumCoats(n => Math.max(1, n - 1))}
+              style={{
+                width: 36, height: 36, borderRadius: '50%',
+                border: '1.5px solid var(--c-border)', background: 'var(--c-bg-subtle)',
+                fontSize: 18, fontWeight: 700, cursor: 'pointer', color: 'var(--c-text-primary)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontFamily: 'inherit',
+              }}
+            >−</button>
+            <span style={{ fontSize: 22, fontWeight: 700, color: 'var(--c-text-primary)', minWidth: 32, textAlign: 'center' }}>{numCoats}</span>
+            <button
+              onClick={() => setNumCoats(n => Math.min(12, n + 1))}
+              style={{
+                width: 36, height: 36, borderRadius: '50%',
+                border: '1.5px solid var(--c-border)', background: 'var(--c-bg-subtle)',
+                fontSize: 18, fontWeight: 700, cursor: 'pointer', color: 'var(--c-text-primary)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontFamily: 'inherit',
+              }}
+            >+</button>
+          </div>
+        </FormCell>
+        <FormCell label="Dry time between coats">
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input
+              className="form-input"
+              type="number"
+              value={intervalVal}
+              onChange={e => setIntervalVal(e.target.value)}
+              style={{ width: 70 }}
+            />
+            <select className="form-select" value={intervalUnit} onChange={e => setIntervalUnit(e.target.value)}>
+              <option value="hours">Hours</option>
+              <option value="days">Days</option>
+            </select>
+          </div>
+        </FormCell>
+        <FormCell label="Notes" last>
+          <input className="form-input" placeholder="Optional" value={notes} onChange={e => setNotes(e.target.value)} />
+        </FormCell>
+      </div>
+      <div style={{ padding: '12px 0 4px', fontSize: 13, color: 'var(--c-text-muted)' }}>
+        This will create {numCoats} coat{numCoats !== 1 ? 's' : ''} of <strong>{product || '…'}</strong> with {intervalVal}{intervalUnit === 'hours' ? 'h' : 'd'} dry time between each.
+        {existingCoats.length > 0 && <span> Coats will be numbered starting at {nextNum}.</span>}
       </div>
     </Sheet>
   )
