@@ -754,7 +754,7 @@ function StepsList({ projId }) {
                 <button className="btn-text" onClick={() => saveEdit(s.id)}>Save</button>
               </div>
             ) : (
-              <div style={{ fontSize: 14, textDecoration: s.completed ? 'line-through' : 'none', color: s.completed ? 'var(--c-text-faint)' : 'var(--c-text-primary)', cursor: 'text' }}
+              <div style={{ fontSize: 14, color: s.completed ? 'var(--c-text-faint)' : 'var(--c-text-primary)', cursor: 'text' }}
                 onClick={() => { setEditId(s.id); setEditVal(s.title) }}>
                 {s.title}
               </div>
