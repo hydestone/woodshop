@@ -8,7 +8,7 @@ import { addToGoogleCalendar } from '../supabase.js'
 import {
   Sheet, FormCell, BulkAddSheet, ConfirmSheet, DropZone, PhotoGrid, TagInput, FilterSelect, SwipeRow,
   STATUS, coatStatus, fmtShort, localDt, useLongPress, BeforeAfterCompare,
-  IPlus, ITrash, ICircle, ICheck, IChevR, IChevL, IEdit, ICal, ICamera, IBell, IGrid, IStar, IList,
+  IPlus, ITrash, ICircle, ICheck, IChevR, IChevL, IEdit, ICal, ICamera, IBell, IGrid, IStar, IList, IDollar,
 } from '../components/Shared.jsx'
 
 const STATUS_ORDER = ['active', 'planning', 'complete']
@@ -26,8 +26,9 @@ export function ProjectDetail() {
   const [showQRLabel, setShowQRLabel] = useState(false)
   const [showReminder, setShowReminder] = useState(false)
   const [showActions, setShowActions] = useState(false)
-  const [dtab, setDtab]         = useState('overview')
-  const DTABS = ['overview', 'steps', 'finishing', 'photos']
+  const [dtab, setDtab]         = useState(() => window.innerWidth < 768 ? 'steps' : 'overview')
+  const isMobile = window.innerWidth < 768
+  const DTABS = isMobile ? ['steps', 'finishing', 'photos'] : ['overview', 'steps', 'finishing', 'photos']
   const swipeRef = useRef(null)
   const touchStartX = useRef(null)
   const touchStartY = useRef(null)
@@ -345,6 +346,7 @@ ${progressPhotos.length>12?`<div style="display:flex;align-items:center;justify-
             }}>
               {project.name}
             </h2>
+            {!isMobile && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
               <button type="button" onClick={() => setShowStatusPicker(true)}
                 style={{
@@ -374,15 +376,16 @@ ${progressPhotos.length>12?`<div style="display:flex;align-items:center;justify-
               {project.wood_type && <span style={{ fontSize: 12, color: heroPhoto ? 'rgba(255,255,255,.8)' : 'var(--c-text-muted)' }}>{project.wood_type}</span>}
               {project.year_completed && <span style={{ fontSize: 12, color: heroPhoto ? 'rgba(255,255,255,.6)' : 'var(--c-text-faint)' }}>{project.year_completed}</span>}
             </div>
+            )}
           </div>
         </div>
 
         {/* Tabs — equal width */}
         <div style={{ display: 'flex', borderTop: '1px solid var(--c-border-light)' }}>
           {[
-            { id: 'overview',  label: 'Overview' },
+            ...(!isMobile ? [{ id: 'overview', label: 'Overview' }] : []),
             { id: 'steps',     label: 'Steps',     badge: steps.length ? `${stepsDone}/${steps.length}` : null },
-            { id: 'finishing', label: 'Finishing',  badge: coats.length ? `${coats.length}` : null },
+            { id: 'finishing', label: 'Finishing',  badge: coats.length ? `${coats.filter(c=>c.applied_at).length}/${coats.length}` : null },
             { id: 'photos',    label: 'Photos',     badge: photos.length ? `${photos.length}` : null },
           ].map((t, i, arr) => (
             <button key={t.id} type="button" onClick={() => setDtab(t.id)} style={{
@@ -516,10 +519,12 @@ ${progressPhotos.length>12?`<div style="display:flex;align-items:center;justify-
         <div style={{ background: 'var(--c-bg-surface)', padding: '20px',  }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <div>
-              <div className="label-caps">Build Steps</div>
-              {steps.length > 0 && <div style={{ fontSize: 12, color: 'var(--c-text-faint)', marginTop: 2 }}>{stepsDone} of {steps.length} complete</div>}
+              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--c-text-primary)' }}>Build Steps</div>
+              {steps.length > 0 && <div style={{ fontSize: 13, color: 'var(--c-text-faint)', marginTop: 2 }}>{stepsDone} of {steps.length} complete</div>}
             </div>
-            <button className="icon-btn" onClick={() => setSub('steps-add')} aria-label="Add step"><IPlus size={18} color="var(--accent)" /></button>
+            <button className="icon-btn" onClick={() => setSub('steps-add')} aria-label="Add step" style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <IPlus size={24} color="var(--accent)" sw={2.5} />
+            </button>
           </div>
           <StepsList projId={projId} />
         </div>
@@ -527,19 +532,14 @@ ${progressPhotos.length>12?`<div style="display:flex;align-items:center;justify-
 
       {/* ── FINISHING TAB ── */}
       {dtab === 'finishing' && (
-        <div style={{  }}>
-          <div style={{ background: 'var(--c-bg-surface)', padding: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <div className="label-caps">Finishing</div>
-              <button className="icon-btn" onClick={() => setSub('finish-setup')} aria-label="Set up finish"><IPlus size={18} color="var(--accent)" /></button>
-            </div>
-            <FinishingList projId={projId} sub={sub} setSub={setSub} />
+        <div style={{ background: 'var(--c-bg-surface)', padding: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--c-text-primary)' }}>Finishing</div>
+            <button className="icon-btn" onClick={() => setSub('finish-setup')} aria-label="Set up finish" style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <IPlus size={24} color="var(--accent)" sw={2.5} />
+            </button>
           </div>
-          {/* Time & Cost */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'var(--c-border-light)', marginTop: 1 }}>
-            <TimeTracker project={project} onSave={handleUpdate} />
-            <CostTracker project={project} onSave={handleUpdate} projId={projId} shopping={data.shopping} />
-          </div>
+          <FinishingList projId={projId} sub={sub} setSub={setSub} />
         </div>
       )}
 
@@ -649,6 +649,18 @@ ${progressPhotos.length>12?`<div style="display:flex;align-items:center;justify-
               </svg>
               <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>Print / Export PDF</span>
             </div>
+            <div className="more-item" style={{ padding: '14px 16px', borderBottom: '1px solid var(--c-border-light)' }}
+              onClick={() => { setShowActions(false); setSub('add-time') }} role="button" tabIndex={0}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>Add time</span>
+            </div>
+            <div className="more-item" style={{ padding: '14px 16px', borderBottom: '1px solid var(--c-border-light)' }}
+              onClick={() => { setShowActions(false); setSub('add-cost') }} role="button" tabIndex={0}>
+              <IDollar size={20} color="var(--accent)" sw={1.8} />
+              <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>Add cost</span>
+            </div>
             <div className="more-item" style={{ padding: '14px 16px', borderBottom: 'none' }}
               onClick={() => { setShowActions(false); handleExportCSV() }} role="button" tabIndex={0}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -701,6 +713,84 @@ ${progressPhotos.length>12?`<div style="display:flex;align-items:center;justify-
           onClose={() => setSub(null)}
         />
       )}
+      {/* Edit finish plan sheet */}
+      {typeof sub === 'string' && sub.startsWith('edit-finish-') && (() => {
+        const product = sub.replace('edit-finish-', '')
+        const groupCoats = data.coats.filter(c => c.project_id === projId && c.product === product)
+        if (!groupCoats.length) return null
+        const first = groupCoats[0]
+        return (
+          <Sheet title={`Edit: ${product}`} onClose={() => setSub(null)} onSave={null}>
+            <div className="form-group" style={{ marginBottom: 8 }}>
+              <div className="more-item" style={{ padding: '14px 16px', borderBottom: '1px solid var(--c-border-light)' }}
+                onClick={() => { setSub('finish-setup') }} role="button" tabIndex={0}>
+                <IPlus size={20} color="var(--accent)" />
+                <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>Add another finish type</span>
+              </div>
+            </div>
+            <div className="form-group" style={{ marginBottom: 8 }}>
+              <div style={{ padding: '14px 16px', fontSize: 13, color: 'var(--c-text-muted)' }}>
+                {groupCoats.length} coats · {first.interval_value}{first.interval_unit === 'hours' ? 'h' : 'd'} dry time
+              </div>
+            </div>
+            <div className="form-group">
+              <div className="more-item" style={{ padding: '14px 16px' }}
+                onClick={async () => {
+                  mutate(d => ({ ...d, coats: d.coats.filter(c => !(c.project_id === projId && c.product === product)) }))
+                  for (const c of groupCoats) { await db.deleteCoat(c.id).catch(() => {}) }
+                  toast(`${product} removed`, 'success')
+                  setSub(null)
+                }} role="button" tabIndex={0}>
+                <ITrash size={20} color="var(--red)" />
+                <span style={{ flex: 1, fontSize: 15, color: 'var(--red)' }}>Delete this finish</span>
+              </div>
+            </div>
+          </Sheet>
+        )
+      })()}
+      {/* Add time sheet */}
+      {sub === 'add-time' && (() => {
+        const entries = (() => { try { return JSON.parse(project.time_entries || '[]') } catch { return [] } })()
+        return (
+          <Sheet title="Log Time" onClose={() => setSub(null)} onSave={async () => {
+            const hrs = parseInt(document.getElementById('time-hrs')?.value) || 0
+            const mins = parseInt(document.getElementById('time-mins')?.value) || 0
+            const m = hrs * 60 + mins
+            if (!m) { toast('Enter a duration', 'error'); return }
+            const entry = { id: Math.random().toString(36).slice(2), date: document.getElementById('time-date')?.value || new Date().toISOString().slice(0,10), minutes: m, note: document.getElementById('time-note')?.value?.trim() || '' }
+            await handleUpdate({ time_entries: JSON.stringify([...entries, entry]) })
+            toast('Time logged', 'success')
+            setSub(null)
+          }} saveLabel="Log" variant="form">
+            <div className="form-group">
+              <FormCell label="Date"><input id="time-date" className="form-input" type="date" defaultValue={new Date().toISOString().slice(0,10)} /></FormCell>
+              <FormCell label="Hours"><input id="time-hrs" className="form-input" type="number" min="0" placeholder="0" /></FormCell>
+              <FormCell label="Minutes"><input id="time-mins" className="form-input" type="number" min="0" max="59" placeholder="0" /></FormCell>
+              <FormCell label="Note" last><input id="time-note" className="form-input" placeholder="Optional" /></FormCell>
+            </div>
+          </Sheet>
+        )
+      })()}
+      {/* Add cost sheet */}
+      {sub === 'add-cost' && (() => {
+        const entries = (() => { try { return JSON.parse(project.cost_entries || '[]') } catch { return [] } })()
+        return (
+          <Sheet title="Log Cost" onClose={() => setSub(null)} onSave={async () => {
+            const amt = parseFloat(document.getElementById('cost-amt')?.value)
+            if (!amt) { toast('Enter an amount', 'error'); return }
+            const entry = { id: Math.random().toString(36).slice(2), date: document.getElementById('cost-date')?.value || new Date().toISOString().slice(0,10), amount: amt, note: document.getElementById('cost-note')?.value?.trim() || '' }
+            await handleUpdate({ cost_entries: JSON.stringify([...entries, entry]) })
+            toast('Cost logged', 'success')
+            setSub(null)
+          }} saveLabel="Log" variant="form">
+            <div className="form-group">
+              <FormCell label="Date"><input id="cost-date" className="form-input" type="date" defaultValue={new Date().toISOString().slice(0,10)} /></FormCell>
+              <FormCell label="Amount ($)"><input id="cost-amt" className="form-input" type="number" step="0.01" placeholder="0.00" autoFocus /></FormCell>
+              <FormCell label="Note" last><input id="cost-note" className="form-input" placeholder="Material, tool, etc." /></FormCell>
+            </div>
+          </Sheet>
+        )
+      })()}
     </div>
   )
 }
@@ -851,10 +941,10 @@ function FinishingList({ projId, sub, setSub }) {
 
   if (!coats.length) return (
     <div style={{ textAlign: 'center', padding: '24px 0' }}>
-      <div style={{ fontSize: 13, color: 'var(--c-text-faint)', marginBottom: 12 }}>No finishing plan yet</div>
-      <button className="btn-primary" style={{ padding: '10px 20px', fontSize: 14 }}
+      <div style={{ fontSize: 15, color: 'var(--c-text-muted)', marginBottom: 16 }}>No finishing plan yet</div>
+      <button className="btn-primary" style={{ padding: '12px 28px', fontSize: 16, fontWeight: 700 }}
         onClick={() => setSub('finish-setup')}>
-        Set Up Finish
+        Create Finish Plan
       </button>
     </div>
   )
@@ -871,27 +961,26 @@ function FinishingList({ projId, sub, setSub }) {
         return (
           <div key={group.product} style={{ marginBottom: gi < groups.length - 1 ? 16 : 0 }}>
             {/* Group header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--c-text-primary)', textTransform: 'uppercase', letterSpacing: '.02em' }}>{group.product}</div>
-                <div style={{ fontSize: 12, color: group.applied === group.total ? 'var(--forest)' : 'var(--c-text-muted)', marginTop: 1 }}>
-                  {group.applied === group.total ? '✓ Complete' : `${group.applied} of ${group.total} applied`}
-                </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--c-text-primary)', textTransform: 'uppercase', letterSpacing: '.02em' }}>{group.product}</span>
+                <span style={{ fontSize: 12, color: group.applied === group.total ? 'var(--forest)' : 'var(--c-text-muted)', marginLeft: 8 }}>
+                  {group.applied === group.total ? '✓ Complete' : `${group.applied}/${group.total}`}
+                </span>
               </div>
-              <button className="icon-btn" onClick={() => deleteGroup(group.product)} style={{ color: 'var(--c-text-faint)' }}>
-                <ITrash size={13} />
+              <button className="icon-btn" onClick={() => setSub('edit-finish-' + group.product)} style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <IEdit size={16} color="var(--c-text-muted)" />
               </button>
             </div>
             {/* Progress bar */}
-            <div style={{ height: 4, background: 'var(--c-bg-subtle)', borderRadius: 2, marginBottom: 10, overflow: 'hidden' }}>
+            <div style={{ height: 3, background: 'var(--c-bg-subtle)', borderRadius: 2, marginBottom: 8, overflow: 'hidden' }}>
               <div style={{ height: '100%', width: `${(group.applied / group.total) * 100}%`, background: 'var(--forest)', borderRadius: 2, transition: 'width 300ms ease' }} />
             </div>
-            {/* Coat list */}
+            {/* Coat list — single line per coat */}
             {group.coats.map((coat, ci) => {
               const applied = !!coat.applied_at
               const isNextDue = coat.id === nextDue?.id && prevComplete
               const locked = !applied && (!prevComplete || (nextDue && coat.id !== nextDue.id))
-              // Calculate ready time based on previous coat
               const prevCoat = ci > 0 ? group.coats[ci - 1] : null
               let readyTime = null
               if (prevCoat?.applied_at) {
@@ -901,51 +990,42 @@ function FinishingList({ projId, sub, setSub }) {
               const isReady = readyTime ? new Date() >= readyTime : ci === 0
               const isOverdue = isNextDue && isReady
 
+              const statusText = applied
+                ? `Applied ${fmtShort(coat.applied_at)}`
+                : isNextDue ? (isReady ? 'Ready' : `Ready ${fmtShort(readyTime?.toISOString())}`) : locked ? 'Waiting' : ''
+
               return (
                 <SwipeRow key={coat.id} actions={[
                   { label: 'Edit', bg: 'var(--accent)', onClick: () => setEditCoat(coat) },
                   { label: 'Delete', bg: 'var(--red)', onClick: () => del(coat.id) },
                 ]}>
                 <div style={{
-                  display: 'flex', gap: 10, alignItems: 'flex-start',
-                  padding: '8px 16px 8px 0',
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '10px 4px',
                   borderBottom: ci < group.coats.length - 1 ? '1px solid var(--c-border-light)' : 'none',
-                  opacity: locked ? 0.45 : 1,
+                  opacity: locked ? 0.4 : 1,
                 }}>
-                  {/* Status indicator */}
                   <div style={{
-                    width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+                    width: 24, height: 24, borderRadius: '50%', flexShrink: 0,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 12, fontWeight: 700, marginTop: 2,
+                    fontSize: 11, fontWeight: 700,
                     background: applied ? 'var(--forest)' : isOverdue ? 'var(--orange-dim)' : 'var(--c-bg-subtle)',
                     color: applied ? '#fff' : isOverdue ? 'var(--orange)' : 'var(--c-text-muted)',
-                    border: applied ? 'none' : isOverdue ? '2px solid var(--orange)' : '2px solid var(--c-border)',
+                    border: applied ? 'none' : isOverdue ? '2px solid var(--orange)' : '1.5px solid var(--c-border)',
                   }}>
                     {applied ? '✓' : coat.coat_number}
                   </div>
-                  {/* Content */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--c-text-primary)' }}>Coat {coat.coat_number}</span>
-                    <div style={{ fontSize: 12, color: 'var(--c-text-muted)', marginTop: 1 }}>
-                      {applied
-                        ? `Applied ${fmtShort(coat.applied_at)} · ${coat.interval_value}${coat.interval_unit === 'hours' ? 'h' : 'd'} dry`
-                        : isNextDue && readyTime
-                          ? (isReady ? 'Ready now' : `Ready ${fmtShort(readyTime.toISOString())}`)
-                          : isNextDue ? 'Ready to apply' : locked ? `After coat ${coat.coat_number - 1}` : ''
-                      }
-                    </div>
-                    {coat.notes && <div style={{ fontSize: 11, color: 'var(--c-text-faint)', marginTop: 2 }}>{coat.notes}</div>}
-                    {/* Apply button — only on next due coat */}
-                    {isNextDue && prevComplete && (
-                      <button
-                        className={isOverdue ? 'btn-primary' : 'btn-secondary'}
-                        style={{ fontSize: 12, padding: '5px 14px', marginTop: 6 }}
-                        onClick={() => handleApply(coat)}
-                      >
-                        {isReady ? 'Apply Now' : 'Apply Early'}
-                      </button>
-                    )}
-                  </div>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--c-text-primary)', flexShrink: 0 }}>Coat {coat.coat_number}</span>
+                  <span style={{ fontSize: 13, color: applied ? 'var(--c-text-muted)' : isOverdue ? 'var(--orange)' : 'var(--c-text-faint)', flex: 1 }}>{statusText}</span>
+                  {isNextDue && prevComplete && (
+                    <button
+                      className="btn-primary"
+                      style={{ fontSize: 12, padding: '4px 12px', flexShrink: 0 }}
+                      onClick={() => handleApply(coat)}
+                    >
+                      Apply Now
+                    </button>
+                  )}
                 </div>
                 </SwipeRow>
               )
@@ -953,12 +1033,6 @@ function FinishingList({ projId, sub, setSub }) {
           </div>
         )
       })}
-
-      {/* Add another finish */}
-      <button className="btn-text" style={{ fontSize: 13, marginTop: 12 }}
-        onClick={() => setSub('finish-setup')}>
-        + Add Another Finish
-      </button>
 
       {/* Calendar offer after applying */}
       {calendarOffer && (
@@ -1684,15 +1758,18 @@ function CoatSheet({ nextNum, defaultCoat, isEdit, onSave, onClose }) {
 // ─── Set Up Finish — batch coat creation ─────────────────────────────────────
 function SetUpFinishSheet({ projId, existingCoats, finishProducts, onSave, onClose }) {
   const [product, setProduct] = useState('')
+  const [customProduct, setCustomProduct] = useState('')
+  const [showCustom, setShowCustom] = useState(false)
   const [numCoats, setNumCoats] = useState(3)
   const [intervalVal, setIntervalVal] = useState('24')
   const [intervalUnit, setIntervalUnit] = useState('hours')
   const [notes, setNotes] = useState('')
 
   const nextNum = (existingCoats.at(-1)?.coat_number ?? 0) + 1
+  const effectiveProduct = showCustom ? customProduct.trim() : product
 
   const handleSave = () => {
-    const prod = product.trim()
+    const prod = effectiveProduct
     if (!prod) return
     const iv = parseFloat(intervalVal) || 24
     const coats = []
@@ -1712,18 +1789,23 @@ function SetUpFinishSheet({ projId, existingCoats, finishProducts, onSave, onClo
     <Sheet title="Set Up Finish" onClose={onClose} onSave={handleSave} saveLabel="Create Plan" variant="form">
       <div className="form-group">
         <FormCell label="Product">
-          <input
-            className="form-input"
-            placeholder="e.g. Arm-R-Seal, Walnut Oil"
-            value={product}
-            onChange={e => setProduct(e.target.value)}
-            list="finish-products-list"
-            autoFocus
-          />
-          {finishProducts.length > 0 && (
-            <datalist id="finish-products-list">
-              {finishProducts.map(fp => <option key={fp.id} value={fp.name} />)}
-            </datalist>
+          {!showCustom ? (
+            <select className="form-select" value={product} onChange={e => {
+              if (e.target.value === '__new__') { setShowCustom(true); setProduct('') }
+              else setProduct(e.target.value)
+            }}>
+              <option value="">Select a finish…</option>
+              {finishProducts.map(fp => <option key={fp.id} value={fp.name}>{fp.name}</option>)}
+              <option value="__new__">+ Add New</option>
+            </select>
+          ) : (
+            <input
+              className="form-input"
+              placeholder="e.g. Arm-R-Seal, Walnut Oil"
+              value={customProduct}
+              onChange={e => setCustomProduct(e.target.value)}
+              autoFocus
+            />
           )}
         </FormCell>
         <FormCell label="Number of coats">
@@ -1771,7 +1853,7 @@ function SetUpFinishSheet({ projId, existingCoats, finishProducts, onSave, onClo
         </FormCell>
       </div>
       <div style={{ padding: '12px 0 4px', fontSize: 13, color: 'var(--c-text-muted)' }}>
-        This will create {numCoats} coat{numCoats !== 1 ? 's' : ''} of <strong>{product || '…'}</strong> with {intervalVal}{intervalUnit === 'hours' ? 'h' : 'd'} dry time between each.
+        This will create {numCoats} coat{numCoats !== 1 ? 's' : ''} of <strong>{effectiveProduct || '…'}</strong> with {intervalVal}{intervalUnit === 'hours' ? 'h' : 'd'} dry time between each.
         {existingCoats.length > 0 && <span> Coats will be numbered starting at {nextNum}.</span>}
       </div>
     </Sheet>
