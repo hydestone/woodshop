@@ -517,7 +517,7 @@ ${progressPhotos.length>12?`<div style="display:flex;align-items:center;justify-
       {/* ── STEPS TAB ── */}
       {dtab === 'steps' && (
         <div style={{ background: 'var(--c-bg-surface)', padding: '20px',  }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
             <div>
               <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--c-text-primary)' }}>Build Steps</div>
               {steps.length > 0 && <div style={{ fontSize: 13, color: 'var(--c-text-faint)', marginTop: 2 }}>{stepsDone} of {steps.length} complete</div>}
@@ -526,6 +526,11 @@ ${progressPhotos.length>12?`<div style="display:flex;align-items:center;justify-
               <IPlus size={24} color="var(--accent)" sw={2.5} />
             </button>
           </div>
+          {steps.length > 0 && (
+            <div style={{ height: 3, background: 'var(--c-bg-subtle)', borderRadius: 2, marginBottom: 12, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${(stepsDone / steps.length) * 100}%`, background: 'var(--accent)', borderRadius: 2, transition: 'width 300ms ease' }} />
+            </div>
+          )}
           <StepsList projId={projId} />
         </div>
       )}
@@ -716,21 +721,67 @@ ${progressPhotos.length>12?`<div style="display:flex;align-items:center;justify-
       {/* Edit finish plan sheet */}
       {typeof sub === 'string' && sub.startsWith('edit-finish-') && (() => {
         const product = sub.replace('edit-finish-', '')
-        const groupCoats = data.coats.filter(c => c.project_id === projId && c.product === product)
+        const groupCoats = data.coats.filter(c => c.project_id === projId && c.product === product).sort((a, b) => a.coat_number - b.coat_number)
         if (!groupCoats.length) return null
         const first = groupCoats[0]
+        const applied = groupCoats.filter(c => c.applied_at).length
+        const nextNum = (groupCoats.at(-1)?.coat_number ?? 0) + 1
         return (
           <Sheet title={`Edit: ${product}`} onClose={() => setSub(null)} onSave={null}>
-            <div className="form-group" style={{ marginBottom: 8 }}>
-              <div className="more-item" style={{ padding: '14px 16px', borderBottom: '1px solid var(--c-border-light)' }}
-                onClick={() => { setSub('finish-setup') }} role="button" tabIndex={0}>
-                <IPlus size={20} color="var(--accent)" />
-                <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>Add another finish type</span>
+            {/* Plan summary */}
+            <div style={{ padding: '14px 16px', fontSize: 14, color: 'var(--c-text-primary)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                <span style={{ fontWeight: 600 }}>{groupCoats.length} coats</span>
+                <span style={{ color: 'var(--c-text-muted)' }}>{applied} applied</span>
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--c-text-muted)' }}>
+                {first.interval_value}{first.interval_unit === 'hours' ? 'h' : 'd'} dry time between coats
               </div>
             </div>
             <div className="form-group" style={{ marginBottom: 8 }}>
-              <div style={{ padding: '14px 16px', fontSize: 13, color: 'var(--c-text-muted)' }}>
-                {groupCoats.length} coats · {first.interval_value}{first.interval_unit === 'hours' ? 'h' : 'd'} dry time
+              {/* Add a coat to this plan */}
+              <div className="more-item" style={{ padding: '14px 16px', borderBottom: '1px solid var(--c-border-light)' }}
+                onClick={async () => {
+                  const coat = await db.addCoat({
+                    project_id: projId, applied_at: null, product,
+                    coat_number: nextNum,
+                    interval_value: first.interval_value,
+                    interval_unit: first.interval_unit,
+                    notes: '',
+                  })
+                  mutate(d => ({ ...d, coats: [...d.coats, coat] }))
+                  toast(`Coat ${nextNum} added to ${product}`, 'success')
+                  setSub(null)
+                }} role="button" tabIndex={0}>
+                <IPlus size={20} color="var(--accent)" />
+                <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>Add a coat</span>
+              </div>
+              {/* Change dry time */}
+              <div className="more-item" style={{ padding: '14px 16px', borderBottom: '1px solid var(--c-border-light)' }}
+                onClick={async () => {
+                  const val = prompt('Dry time (number):', String(first.interval_value))
+                  if (val === null) return
+                  const iv = parseFloat(val)
+                  if (!iv || iv <= 0) return
+                  for (const c of groupCoats) {
+                    await db.updateCoat(c.id, { interval_value: iv }).catch(() => {})
+                  }
+                  mutate(d => ({ ...d, coats: d.coats.map(c =>
+                    c.project_id === projId && c.product === product ? { ...c, interval_value: iv } : c
+                  )}))
+                  toast('Dry time updated', 'success')
+                  setSub(null)
+                }} role="button" tabIndex={0}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+                <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>Change dry time</span>
+              </div>
+              {/* Add another finish type */}
+              <div className="more-item" style={{ padding: '14px 16px' }}
+                onClick={() => { setSub('finish-setup') }} role="button" tabIndex={0}>
+                <IGrid size={20} color="var(--accent)" />
+                <span style={{ flex: 1, fontSize: 15, color: 'var(--c-text-primary)' }}>Add another finish type</span>
               </div>
             </div>
             <div className="form-group">
@@ -844,7 +895,7 @@ function StepsList({ projId }) {
                 <button className="btn-text" onClick={() => saveEdit(s.id)}>Save</button>
               </div>
             ) : (
-              <div style={{ fontSize: 14, color: s.completed ? 'var(--c-text-faint)' : 'var(--c-text-primary)', cursor: 'text' }}
+              <div style={{ fontSize: 16, color: s.completed ? 'var(--c-text-faint)' : 'var(--c-text-primary)', cursor: 'text' }}
                 onClick={() => { setEditId(s.id); setEditVal(s.title) }}>
                 {s.title}
               </div>
