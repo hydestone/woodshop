@@ -761,7 +761,7 @@ ${progressPhotos.length>12?`<div style="display:flex;align-items:center;justify-
             await handleUpdate({ time_entries: JSON.stringify([...entries, entry]) })
             toast('Time logged', 'success')
             setSub(null)
-          }} saveLabel="Log" variant="form">
+          }} saveLabel="Log">
             <div className="form-group">
               <FormCell label="Date"><input id="time-date" className="form-input" type="date" defaultValue={new Date().toISOString().slice(0,10)} /></FormCell>
               <FormCell label="Hours"><input id="time-hrs" className="form-input" type="number" min="0" placeholder="0" /></FormCell>
@@ -782,7 +782,7 @@ ${progressPhotos.length>12?`<div style="display:flex;align-items:center;justify-
             await handleUpdate({ cost_entries: JSON.stringify([...entries, entry]) })
             toast('Cost logged', 'success')
             setSub(null)
-          }} saveLabel="Log" variant="form">
+          }} saveLabel="Log">
             <div className="form-group">
               <FormCell label="Date"><input id="cost-date" className="form-input" type="date" defaultValue={new Date().toISOString().slice(0,10)} /></FormCell>
               <FormCell label="Amount ($)"><input id="cost-amt" className="form-input" type="number" step="0.01" placeholder="0.00" autoFocus /></FormCell>
