@@ -76,6 +76,7 @@ const NAV_SECTIONS = [
     items: [
       { id: 'shoptools',   label: 'Shop & Tools',      Icon: IWrench },
       { id: 'calculators', label: 'Calculators',        Icon: ICalc   },
+      { id: 'scratchpad',  label: 'Notes',              Icon: IEdit   },
       { id: 'finishes',    label: 'Finishes',          Icon: ILayers },
       { id: 'resources',   label: 'Resources',         Icon: IBook   },
     ],
