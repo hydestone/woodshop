@@ -916,6 +916,8 @@ function FinishingList({ projId, sub, setSub }) {
   const toast = useToast()
   const [editCoat, setEditCoat] = useState(null)
   const [calendarOffer, setCalendarOffer] = useState(null) // { coat, nextCoat }
+  const [adjustCoat, setAdjustCoat] = useState(null) // coat to adjust date
+  const longPressTimer = useRef(null)
 
   const coats = data.coats.filter(c => c.project_id === projId).sort((a, b) => a.coat_number - b.coat_number)
   const proj  = data.projects.find(p => p.id === projId)
@@ -1055,7 +1057,11 @@ function FinishingList({ projId, sub, setSub }) {
                   padding: '10px 4px',
                   borderBottom: ci < group.coats.length - 1 ? '1px solid var(--c-border-light)' : 'none',
                   opacity: locked ? 0.4 : 1,
-                }}>
+                }}
+                  onTouchStart={() => { longPressTimer.current = setTimeout(() => setAdjustCoat(coat), 500) }}
+                  onTouchMove={() => clearTimeout(longPressTimer.current)}
+                  onTouchEnd={() => clearTimeout(longPressTimer.current)}
+                >
                   <div style={{
                     width: 24, height: 24, borderRadius: '50%', flexShrink: 0,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -1106,6 +1112,24 @@ function FinishingList({ projId, sub, setSub }) {
       )}
 
       {editCoat && <CoatSheet nextNum={editCoat.coat_number} defaultCoat={editCoat} isEdit onSave={f => handleEdit(editCoat.id, f)} onClose={() => setEditCoat(null)} />}
+      {adjustCoat && (
+        <Sheet title={`Coat ${adjustCoat.coat_number} — ${adjustCoat.product}`} onClose={() => setAdjustCoat(null)} onSave={async () => {
+          const el = document.getElementById('adjust-dt')
+          if (!el?.value) return
+          const applied_at = new Date(el.value).toISOString()
+          mutate(d => ({ ...d, coats: d.coats.map(c => c.id === adjustCoat.id ? { ...c, applied_at } : c) }))
+          await db.updateCoat(adjustCoat.id, { applied_at }).catch(e => toast(e.message, 'error'))
+          toast('Date updated', 'success')
+          setAdjustCoat(null)
+        }} saveLabel="Save">
+          <div className="form-group">
+            <FormCell label={adjustCoat.applied_at ? 'Adjust applied date' : 'Set applied date'} last>
+              <input id="adjust-dt" className="form-input" type="datetime-local"
+                defaultValue={adjustCoat.applied_at ? adjustCoat.applied_at.slice(0, 16) : localDt()} />
+            </FormCell>
+          </div>
+        </Sheet>
+      )}
     </div>
   )
 }

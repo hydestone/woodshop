@@ -393,7 +393,7 @@ export function BulkAddSheet({ title, hint, onSave, onClose }) {
     if (lines.length) return onSave(lines)
   }
   return (
-    <Sheet title={title} onClose={onClose} onSave={handleSave} saveLabel="Add">
+    <Sheet title={title} onClose={onClose} onSave={handleSave} saveLabel="Add" variant="form">
       <textarea
         ref={ref}
         className="form-textarea"
