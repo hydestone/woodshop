@@ -374,6 +374,7 @@ function TrimCuts() {
   const STOCK_OPTS = [8, 10, 12, 14, 16]
   const [stockSel, setStockSel] = useState([8, 10, 12])
   const [kerf, setKerf]   = useState('0.125')
+  const [mode, setMode]   = useState('detailed') // 'detailed' | 'bulk'
   const [cuts, setCuts] = useState([
     { id:1, ft:'', ins:'', qty:1, label:'' },
     { id:2, ft:'', ins:'', qty:1, label:'' },
@@ -382,6 +383,13 @@ function TrimCuts() {
   const [error, setError]   = useState(null)
   const [view, setView]     = useState('summary') // 'summary' | 'plans'
   const firstRefs = useRef({})
+
+  // Bulk mode state
+  const [bulkLF, setBulkLF]       = useState('')
+  const [bulkStock, setBulkStock] = useState('12')
+  const [bulkWaste, setBulkWaste] = useState('10')
+  const [bulkPrice, setBulkPrice] = useState('')
+  const isMobile = window.innerWidth < 768
 
   const toggleStock = ft => setStockSel(s => s.includes(ft) ? s.filter(x=>x!==ft) : [...s, ft].sort((a,b)=>a-b))
   const upd = (id, f, v) => setCuts(c => c.map(x => x.id===id ? {...x,[f]:v} : x))
@@ -535,6 +543,121 @@ ${boardRows}
 
   return (
     <div style={{ display:'flex', flexDirection:'column', height:'100%', overflow:'hidden' }}>
+
+      {/* Mode toggle */}
+      <div style={{ display:'flex', gap:0, padding:'10px 16px', borderBottom:'1px solid var(--c-border)', flexShrink:0 }}>
+        <button onClick={() => { setMode('detailed'); setResult(null) }} style={{
+          flex:1, padding: isMobile ? '10px 8px' : '10px 16px',
+          background: mode==='detailed' ? 'var(--navy)' : 'var(--c-bg-subtle)',
+          color: mode==='detailed' ? '#fff' : 'var(--c-text-muted)',
+          border:'1.5px solid var(--c-border)', borderRight:'none',
+          fontSize: 14, fontWeight: 700, cursor:'pointer', fontFamily:'inherit',
+          textAlign: isMobile ? 'center' : 'left',
+        }}>
+          {isMobile ? 'Detailed' : 'Detailed Cuts'}
+          {!isMobile && <div style={{ fontSize:11, fontWeight:400, marginTop:2, opacity:0.7 }}>Enter individual cut lengths</div>}
+        </button>
+        <button onClick={() => { setMode('bulk'); setResult(null) }} style={{
+          flex:1, padding: isMobile ? '10px 8px' : '10px 16px',
+          background: mode==='bulk' ? 'var(--navy)' : 'var(--c-bg-subtle)',
+          color: mode==='bulk' ? '#fff' : 'var(--c-text-muted)',
+          border:'1.5px solid var(--c-border)',
+          fontSize: 14, fontWeight: 700, cursor:'pointer', fontFamily:'inherit',
+          textAlign: isMobile ? 'center' : 'left',
+        }}>
+          {isMobile ? 'Bulk' : 'Bulk Estimate'}
+          {!isMobile && <div style={{ fontSize:11, fontWeight:400, marginTop:2, opacity:0.7 }}>Enter total linear feet needed</div>}
+        </button>
+      </div>
+
+      {/* BULK MODE */}
+      {mode === 'bulk' && (
+        <div style={{ flex:1, overflowY:'auto', padding:'16px' }}>
+          <div style={{ maxWidth:480, margin:'0 auto' }}>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:16 }}>
+              <div>
+                <label className="calc-label" style={{ marginBottom:4, display:'block' }}>TOTAL LINEAR FEET</label>
+                <input className="calc-input" type="number" value={bulkLF} onChange={e => setBulkLF(e.target.value)}
+                  placeholder="200" autoFocus
+                  style={{ width:'100%', fontSize:18, padding:'10px 12px', fontWeight:700, textAlign:'center' }} />
+              </div>
+              <div>
+                <label className="calc-label" style={{ marginBottom:4, display:'block' }}>STOCK LENGTH</label>
+                <select className="form-select" value={bulkStock} onChange={e => setBulkStock(e.target.value)}
+                  style={{ width:'100%', fontSize:16, padding:'10px 12px', fontWeight:600 }}>
+                  {STOCK_OPTS.map(ft => <option key={ft} value={ft}>{ft}' boards</option>)}
+                </select>
+              </div>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:20 }}>
+              <div>
+                <label className="calc-label" style={{ marginBottom:4, display:'block' }}>WASTE FACTOR</label>
+                <select className="form-select" value={bulkWaste} onChange={e => setBulkWaste(e.target.value)}
+                  style={{ width:'100%', fontSize:14, padding:'10px 12px' }}>
+                  <option value="5">5% — straight runs</option>
+                  <option value="10">10% — standard</option>
+                  <option value="15">15% — many corners</option>
+                  <option value="20">20% — complex layout</option>
+                </select>
+              </div>
+              <div>
+                <label className="calc-label" style={{ marginBottom:4, display:'block' }}>PRICE PER BOARD (optional)</label>
+                <input className="calc-input" type="number" step="0.01" value={bulkPrice} onChange={e => setBulkPrice(e.target.value)}
+                  placeholder="$0.00"
+                  style={{ width:'100%', fontSize:14, padding:'10px 12px' }} />
+              </div>
+            </div>
+
+            {/* Results */}
+            {(() => {
+              const lf = parseFloat(bulkLF)
+              const sl = parseInt(bulkStock)
+              const wf = parseInt(bulkWaste) / 100
+              if (!lf || lf <= 0) return (
+                <div style={{ textAlign:'center', padding:'32px 0', color:'var(--c-text-faint)', fontSize:14 }}>
+                  Enter total linear feet to see estimate
+                </div>
+              )
+              const exact = lf / sl
+              const withWaste = Math.ceil(exact * (1 + wf))
+              const price = parseFloat(bulkPrice)
+              const totalCost = price > 0 ? withWaste * price : null
+              return (
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8 }}>
+                  <div style={{ background:'var(--c-bg-subtle)', padding:'16px', textAlign:'center', border:'1px solid var(--c-border)' }}>
+                    <div style={{ fontSize:28, fontWeight:900, color:'var(--c-text-primary)' }}>{Math.ceil(exact)}</div>
+                    <div style={{ fontSize:11, color:'var(--c-text-muted)', textTransform:'uppercase', letterSpacing:'.4px', marginTop:4 }}>minimum</div>
+                  </div>
+                  <div style={{ background:'var(--navy)', padding:'16px', textAlign:'center' }}>
+                    <div style={{ fontSize:28, fontWeight:900, color:'#fff' }}>{withWaste}</div>
+                    <div style={{ fontSize:11, color:'#8BA8D0', textTransform:'uppercase', letterSpacing:'.4px', marginTop:4 }}>recommended</div>
+                  </div>
+                  <div style={{ background:'var(--c-bg-subtle)', padding:'16px', textAlign:'center', border:'1px solid var(--c-border)' }}>
+                    {totalCost ? (
+                      <>
+                        <div style={{ fontSize:28, fontWeight:900, color:'var(--green)' }}>${totalCost.toFixed(0)}</div>
+                        <div style={{ fontSize:11, color:'var(--c-text-muted)', textTransform:'uppercase', letterSpacing:'.4px', marginTop:4 }}>est. cost</div>
+                      </>
+                    ) : (
+                      <>
+                        <div style={{ fontSize:28, fontWeight:900, color:'var(--c-text-primary)' }}>{(withWaste * sl)}'</div>
+                        <div style={{ fontSize:11, color:'var(--c-text-muted)', textTransform:'uppercase', letterSpacing:'.4px', marginTop:4 }}>total stock</div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )
+            })()}
+
+            <div style={{ marginTop:16, fontSize:12, color:'var(--c-text-faint)', lineHeight:1.5 }}>
+              {parseFloat(bulkLF) > 0 && `${bulkLF} LF ÷ ${bulkStock}' stock = ${(parseFloat(bulkLF)/parseInt(bulkStock)).toFixed(1)} boards + ${bulkWaste}% waste`}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DETAILED MODE */}
+      {mode === 'detailed' && (<>
 
       {/* Top bar */}
       <div style={{ padding:'10px 16px 8px', borderBottom:'1px solid var(--c-border)', flexShrink:0, display:'flex', alignItems:'center', gap:16, flexWrap:'wrap' }}>
@@ -728,6 +851,7 @@ ${boardRows}
           ))}
         </div>
       )}
+    </>)}
     </div>
   )
 }
