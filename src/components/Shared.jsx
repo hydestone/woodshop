@@ -181,9 +181,10 @@ export function SwipeRow({ children, actions = [], style }) {
       setTranslate(clamped, false)
     }
 
-    const onEnd = () => {
+    const onEnd = (e) => {
       const s = state.current
       if (!s.swiping) return
+      e.stopPropagation()
       // If swiped more than 40% of actions width, open; else close
       if (s.currentX < -actionsWidth * 0.4) {
         s.open = true
