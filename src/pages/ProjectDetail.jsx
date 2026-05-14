@@ -24,6 +24,21 @@ export function ProjectDetail() {
   const [confirming, setConfirming] = useState(false)
   const [showRon, setShowRon]   = useState(false)
   const [showQRLabel, setShowQRLabel] = useState(false)
+  const photoInputRef = useRef(null)
+
+  const handleQuickPhotoUpload = async (e) => {
+    const files = e.target.files
+    if (!files?.length) return
+    setSub(null)
+    for (const file of files) {
+      try {
+        const photo = await db.uploadPhoto(projId, file, '', 'progress', [])
+        mutate(d => ({ ...d, photos: [photo, ...d.photos] }))
+      } catch (err) { toast(err.message, 'error') }
+    }
+    toast(`${files.length} photo${files.length > 1 ? 's' : ''} added`, 'success')
+    e.target.value = ''
+  }
   const [showReminder, setShowReminder] = useState(false)
   const [showActions, setShowActions] = useState(false)
   const [dtab, setDtab]         = useState(() => window.innerWidth < 768 ? 'steps' : 'overview')
@@ -552,6 +567,13 @@ ${progressPhotos.length>12?`<div style="display:flex;align-items:center;justify-
       {dtab === 'photos' && (
         <div style={{  }}>
           <div style={{ background: 'var(--c-bg-surface)', padding: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--c-text-primary)' }}>Photos</div>
+              <button className="icon-btn" onClick={() => photoInputRef.current?.click()} aria-label="Add photo" style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <IPlus size={24} color="var(--accent)" sw={2.5} />
+              </button>
+              <input ref={photoInputRef} type="file" accept="image/*" multiple capture="environment" style={{ display: 'none' }} onChange={handleQuickPhotoUpload} />
+            </div>
             <PhotoTimeline projId={projId} />
           </div>
           {data.photos.filter(p => p.project_id === projId && p.photo_type === 'inspiration').length > 0 && (
