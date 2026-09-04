@@ -1,0 +1,6 @@
+NAME=R27-C-bundle
+COMMIT_MSG=Hardening C: lazy analytics (ECharts off critical path), lazy secondary pages, PHOTO_LIMIT 500, RLS docs corrected. Cumulative: includes A and B.
+=== VERIFY ===
+- Cold load Network tab: only index + react JS before scrolling; echarts loads when Analytics scrolls into view
+- Every tab opens (secondary pages first-open may show a brief blank <200ms)
+- Full regression checklist in test-plans.md

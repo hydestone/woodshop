@@ -31,6 +31,11 @@ export async function getCurrentUserId() {
 
 export async function signOut() {
   await supabase.auth.signOut()
+  // Drop per-user session cache so a shared computer never shows the next
+  // user the previous user's reference lists.
+  try {
+    Object.keys(sessionStorage).filter(k => k.startsWith('jdh_cache_')).forEach(k => sessionStorage.removeItem(k))
+  } catch {}
 }
 
 export function onAuthStateChange(callback) {
@@ -39,19 +44,27 @@ export function onAuthStateChange(callback) {
   })
 }
 
-export function photoUrl(storagePath, opts = {}) {
+export function photoUrl(storagePath) {
   if (!storagePath) return null
-  const { data } = supabase.storage.from(BUCKET).getPublicUrl(storagePath, {
-    transform: opts.thumb
-      ? { width: opts.width || 400, quality: 75, format: 'origin' }
-      : undefined
-  })
-  return data.publicUrl
+  return supabase.storage.from(BUCKET).getPublicUrl(storagePath).data.publicUrl
 }
 
-// Thumbnail URL — used in grids (smaller, faster)
-export function photoThumb(storagePath, width = 400) {
-  return photoUrl(storagePath, { thumb: true, width })
+// ── Photo derivatives ─────────────────────────────────────────────────────────
+// Every stored photo may have two JPEG derivatives at deterministic sibling paths:
+//   <path>.t.jpg  — 480px long edge  (grids, cards, strips)
+//   <path>.m.jpg  — 1200px long edge (hero headers, portfolio tiles)
+// The original is never modified. Renderers fall back to the next size up on
+// error, so photos without derivatives (pre-backfill) still display.
+export const DERIV = { thumb: { suffix: '.t.jpg', maxPx: 480, quality: 0.78 },
+                       medium:{ suffix: '.m.jpg', maxPx: 1200, quality: 0.80 } }
+export const derivPath = (storagePath, kind) => storagePath ? storagePath + DERIV[kind].suffix : null
+export const allPhotoPaths = storagePath => [storagePath, derivPath(storagePath, 'thumb'), derivPath(storagePath, 'medium')]
+export function photoUrls(storagePath) {
+  return {
+    url:       photoUrl(storagePath),
+    thumbUrl:  photoUrl(derivPath(storagePath, 'thumb')),
+    mediumUrl: photoUrl(derivPath(storagePath, 'medium')),
+  }
 }
 
 export function addToGoogleCalendar({ title, start, end, description }) {

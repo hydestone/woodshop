@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
-import { ConfirmSheet, IFolder, ICamera, ICart, IBulb, IWrench, IPalette, IBook, IHouse, ITree, ITrash as ITrashIcon, IList } from '../components/Shared.jsx'
+import { ConfirmSheet, PhotoImg, IFolder, ICamera, ICart, IBulb, IWrench, IPalette, IBook, IHouse, ITree, ITrash as ITrashIcon, IList } from '../components/Shared.jsx'
 import * as db from '../db.js'
-import { photoUrl } from '../supabase.js'
+import { photoUrls } from '../supabase.js'
 
 const TYPE_LABELS = {
   project: 'Project', photo: 'Photo', shopping: 'Shopping', brainstorm: 'Brainstorm',
@@ -139,14 +139,14 @@ export default function Trash() {
           <div className="group">
             {filtered.map((t, i) => {
               const isPhoto = t.item_type === 'photo'
-              const thumbUrl = isPhoto && t.item_data?.storage_path ? photoUrl(t.item_data.storage_path) : null
+              const thumbPhoto = isPhoto && t.item_data?.storage_path ? { id: t.id, ...photoUrls(t.item_data.storage_path) } : null
               return (
                 <div key={t.id} style={{
                   padding: '14px 16px', display: 'flex', gap: 12, alignItems: 'center',
                   borderBottom: i < filtered.length - 1 ? '1px solid var(--c-border-light)' : 'none',
                 }}>
-                  {thumbUrl ? (
-                    <img src={thumbUrl} alt="" style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 6, flexShrink: 0 }} />
+                  {thumbPhoto ? (
+                    <PhotoImg photo={thumbPhoto} alt="" style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 6, flexShrink: 0 }} />
                   ) : (
                     <span style={{ flexShrink: 0, width: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><TypeIcon type={t.item_type} size={24} /></span>
                   )}

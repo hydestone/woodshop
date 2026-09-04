@@ -3,7 +3,7 @@ import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
 import { addToGoogleCalendar, addToAppleReminders } from '../supabase.js'
-import { Sheet, FormCell, ConfirmSheet, DropZone, STOCK_STATUS, fmt, IPlus, ITrash, IEdit, ICal, IBell, ICamera, ITree, IDrop } from '../components/Shared.jsx'
+import { Sheet, FormCell, ConfirmSheet, PhotoImg, STOCK_STATUS, fmt, IPlus, ITrash, IEdit, ICal, IBell, ICamera, ITree, IDrop } from '../components/Shared.jsx'
 
 const STATUS_ORDER = ['Freshly cut','Drying','Ready to use','Used up']
 
@@ -583,7 +583,7 @@ export function WoodStockGallery() {
           <div className="photo-grid">
             {photos.map((photo, i) => (
               <div key={photo.id} className="photo-card" onClick={() => setLightbox({ photos, idx: i })}>
-                <img src={photo.url} alt={photo.caption || label} loading="lazy" />
+                <PhotoImg photo={photo} alt={photo.caption || label} loading="lazy" />
                 {photo.caption && !photo.caption.startsWith('stock:') && (
                   <div className="photo-footer">
                     <div className="photo-caption-text">{photo.caption}</div>
@@ -644,7 +644,7 @@ function StockPhotoSheet({ item, onClose }) {
           : <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
               {photos.map(p => (
                 <div key={p.id} style={{position:'relative',borderRadius:8,overflow:'hidden',aspectRatio:'1',background:'var(--c-bg-subtle)'}}>
-                  <img src={p.url} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+                  <PhotoImg photo={p} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
                   <button onClick={()=>deletePhoto(p)} style={{
                     position:'absolute',top:4,right:4,background:'rgba(0,0,0,.6)',border:'none',
                     borderRadius:'50%',width:24,height:24,cursor:'pointer',color:'#fff',fontSize:14,

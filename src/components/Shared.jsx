@@ -918,6 +918,24 @@ export function Lightbox({ photos, index, onClose, onEdit }) {
 // ─── PhotoGrid ────────────────────────────────────────────────────────────────
 const PHOTO_PAGE = 40  // photos rendered per batch
 
+// ─── PhotoImg ─────────────────────────────────────────────────────────────────
+// Renders the smallest derivative that fits (thumb → medium → original) and
+// steps up on load error, so photos without derivatives still display.
+export function PhotoImg({ photo, size = 'thumb', onFail, ...imgProps }) {
+  const chain = size === 'full'   ? [photo.url]
+              : size === 'medium' ? [photo.mediumUrl, photo.url]
+              :                     [photo.thumbUrl, photo.mediumUrl, photo.url]
+  const srcs = chain.filter(Boolean)
+  const [idx, setIdx] = useState(0)
+  useEffect(() => { setIdx(0) }, [photo.id, size])
+  const handleError = () => {
+    if (idx < srcs.length - 1) setIdx(idx + 1)
+    else onFail?.()
+  }
+  return <img src={srcs[idx]} onError={handleError} {...imgProps} />
+}
+
+
 export function PhotoGrid({ photos, onEdit, showProject, projects, onNavigateProject, onCreateIdea, selectMode, selectedIds, onToggleSelect, onEnterSelectMode, sortBy, gridCols }) {
   const [lightboxIdx, setLightboxIdx] = useState(null)
   const [visible, setVisible]         = useState(PHOTO_PAGE)
@@ -1087,11 +1105,11 @@ export const PhotoCard = memo(function PhotoCard({ photo, onEdit, onOpen, showPr
       </div>
 
       {!err ? (
-        <img
-          src={photo.url}
+        <PhotoImg
+          photo={photo}
           alt={photo.caption || 'Workshop photo'}
           loading="lazy"
-          onError={() => setErr(true)}
+          onFail={() => setErr(true)}
           onClick={selectMode ? undefined : onOpen}
         />
       ) : (
@@ -1180,7 +1198,7 @@ function PhotoEditSheet({ photo, projects, onSave, onDelete, onClose, onOpenLigh
       {/* Preview tap to open */}
       {onOpenLightbox && (
         <div style={{ marginBottom: 12, borderRadius: 0, overflow: 'hidden', cursor: 'pointer', maxHeight: 180, position: 'relative' }} onClick={onOpenLightbox}>
-          <img src={photo.url} alt="" style={{ width: '100%', height: 180, objectFit: 'cover', display: 'block' }} />
+          <PhotoImg photo={photo} size="medium" alt="" style={{ width: '100%', height: 180, objectFit: 'cover', display: 'block' }} />
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <span style={{ color: '#fff', fontSize: 13, fontWeight: 700, background: 'rgba(0,0,0,.4)', padding: '4px 12px', borderRadius: 99 }}>Tap to view full size</span>
           </div>

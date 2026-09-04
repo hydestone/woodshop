@@ -1,17 +1,23 @@
-import * as echarts from 'echarts'
-import { useMemo, useState, useEffect, useRef } from 'react'
-import { createPortal } from 'react-dom'
+import { useMemo, useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { useCtx } from '../App.jsx'
-import { coatStatus, maintStatus, fmtShort, fmt, IChevR, IChevL, IFolder, ICamera, ICart, ISaw, ITree, PhotoGrid, KineticTitle } from '../components/Shared.jsx'
-import { useToast } from '../components/Toast.jsx'
-import * as db from '../db.js'
-
-// Read CSS variable values for ECharts (which can't use var() directly)
-const cv = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+import { coatStatus, maintStatus, IChevR, IFolder, ITree, PhotoGrid, PhotoImg, KineticTitle } from '../components/Shared.jsx'
 
 const SC = { active:'var(--accent)', planning:'var(--purple)', paused:'var(--orange)', complete:'var(--green)' }
 const SL = { active:'Active', planning:'Planning', paused:'Paused', complete:'Complete' }
-const SO = ['complete','active','planning','paused']
+const AnalyticsSection = lazy(() => import('./DashboardAnalytics.jsx'))
+
+// Mount children only once the placeholder nears the viewport (rootMargin 400px)
+function LazyOnView({ children, fallback }) {
+  const ref = useRef(null)
+  const [inView, setInView] = useState(false)
+  useEffect(() => {
+    if (inView || !ref.current || typeof IntersectionObserver === 'undefined') { setInView(true); return }
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setInView(true); io.disconnect() } }, { rootMargin: '400px' })
+    io.observe(ref.current)
+    return () => io.disconnect()
+  }, [inView])
+  return <div ref={ref}>{inView ? <Suspense fallback={fallback}>{children}</Suspense> : fallback}</div>
+}
 
 // ── Drill-down list (YearReview pattern) ──────────────────────────────────────
 function DrillList({ title, projects, onBack, onOpen }) {
@@ -52,568 +58,6 @@ function DrillList({ title, projects, onBack, onOpen }) {
       </div>
     </div>
   )
-}
-
-// ── Year Carousel ─────────────────────────────────────────────────────────────
-function YearCarousel({ year, projects, photos, onClose }) {
-  const yearProjects = projects.filter(p => p.year_completed === Number(year))
-  const carouselPhotos = yearProjects.flatMap(p => {
-    const projPhotos = photos.filter(ph => ph.project_id === p.id && ph.photo_type === 'finished')
-    if (!projPhotos.length) {
-      const any = photos.find(ph => ph.project_id === p.id)
-      if (any) return [{ ...any, _projName: p.name, _projWood: p.wood_type, _projCat: p.category }]
-      return []
-    }
-    return projPhotos.map(ph => ({ ...ph, _projName: p.name, _projWood: p.wood_type, _projCat: p.category }))
-  })
-  const [cur, setCur] = useState(0)
-  const photo = carouselPhotos[cur]
-
-  useEffect(() => {
-    const onKey = e => {
-      if (e.key === 'Escape') onClose()
-      if (e.key === 'ArrowRight' && cur < carouselPhotos.length - 1) setCur(i => i + 1)
-      if (e.key === 'ArrowLeft' && cur > 0) setCur(i => i - 1)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [cur, carouselPhotos.length, onClose])
-
-  if (!carouselPhotos.length) return (
-    <div className="overlay" onClick={onClose} style={{ alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ background: 'var(--c-bg-surface)', borderRadius: 16, padding: '32px 24px', maxWidth: 360, width: '90%', textAlign: 'center' }}>
-        <div style={{ marginBottom: 12 }}><ICamera size={36} color="var(--c-text-muted)" sw={1.5} /></div>
-        <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 8 }}>{year} — No photos yet</div>
-        <p style={{ fontSize: 13, color: 'var(--c-text-muted)', marginBottom: 16 }}>{yearProjects.length} project{yearProjects.length !== 1 ? 's' : ''} but no finished photos uploaded.</p>
-        <button className="btn-primary" style={{ width: '100%', justifyContent: 'center' }} onClick={onClose}>Close</button>
-      </div>
-    </div>
-  )
-
-  return (
-    <div className="fs-overlay">
-      <div className="fs-overlay-bar">
-        <button onClick={onClose} className="fs-back-btn"><IChevL size={16} color="#fff" sw={2} /> Back</button>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>{year}</div>
-          <div style={{ color: 'rgba(255,255,255,.6)', fontSize: 12 }}>{cur + 1} of {carouselPhotos.length}</div>
-        </div>
-        <div style={{ width: 60 }} />
-      </div>
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-        <img src={photo.url} alt={photo._projName} style={{ maxWidth: '100vw', maxHeight: '100vh', objectFit: 'contain' }} />
-        {cur > 0 && <button onClick={() => setCur(i => i - 1)} className="fs-nav-btn prev"><IChevL size={20} color="#fff" sw={2} /></button>}
-        {cur < carouselPhotos.length - 1 && <button onClick={() => setCur(i => i + 1)} className="fs-nav-btn next"><IChevR size={20} color="#fff" sw={2} /></button>}
-      </div>
-      <div className="fs-overlay-caption">
-        <div style={{ color: '#fff', fontWeight: 600, fontSize: 15 }}>{photo._projName}</div>
-        <div style={{ color: 'rgba(255,255,255,.6)', fontSize: 13, marginTop: 2 }}>{[photo._projWood, photo._projCat, photo.caption].filter(Boolean).join(' · ')}</div>
-        {carouselPhotos.length > 1 && (
-          <div style={{ display: 'flex', gap: 6, marginTop: 10, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 2 }}>
-            {carouselPhotos.map((ph, i) => (
-              <img key={ph.id} src={ph.url} alt="" onClick={() => setCur(i)} loading="lazy"
-                style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 6, flexShrink: 0, cursor: 'pointer', opacity: cur === i ? 1 : 0.5, outline: cur === i ? '2px solid #fff' : 'none', outlineOffset: 1 }} />
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ── Projects by Year — ECharts stacked bar ───────────────────────────────────
-function ProjectsByYear({ projects, photos, onDrill , isDark = false }) {
-  const [carouselYear, setCarouselYear] = useState(null)
-  const chartRef = useRef()
-
-  const grouped = useMemo(() => {
-    const m = {}
-    projects.forEach(p => {
-      const y = p.year_completed; if (!y) return
-      if (!m[y]) m[y] = { active:0, planning:0, paused:0, complete:0 }
-      m[y][p.status] = (m[y][p.status]||0)+1
-    })
-    return Object.entries(m).sort((a,b) => Number(a[0])-Number(b[0]))
-  }, [projects])
-
-  const getOption = (dark) => ({
-    backgroundColor: 'transparent',
-    animation: true,
-    animationDuration: 800,
-    animationEasing: 'cubicOut',
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: { type: 'shadow' },
-      backgroundColor: cv('--chart-bg'),
-      borderColor: cv('--chart-border'),
-      textStyle: { color: EC.text(dark), fontSize: 12 },
-      confine: true,
-      position: function(point, params, dom, rect, size) {
-        // Always keep tooltip inside chart
-        const x = Math.min(point[0], size.viewSize[0] - size.contentSize[0] - 8)
-        const y = Math.max(8, point[1] - size.contentSize[1] - 8)
-        return [Math.max(0, x), y]
-      },
-    },
-    legend: {
-      data: ['Complete','Active','Planning'],
-      bottom: 0,
-      textStyle: { color: EC.text2(dark), fontSize: 11 },
-      icon: 'roundRect',
-      itemWidth: 10, itemHeight: 10,
-    },
-    grid: { top: 8, left: 32, right: 8, bottom: 40, containLabel: false },
-    xAxis: {
-      type: 'category',
-      data: grouped.map(([y]) => y),
-      axisLine: { lineStyle: { color: EC.grid(dark) } },
-      axisTick: { show: false },
-      axisLabel: { color: EC.text2(dark), fontSize: 10 },
-    },
-    yAxis: {
-      type: 'value',
-      minInterval: 1,
-      splitLine: { lineStyle: { color: EC.grid(dark) } },
-      axisLabel: { color: EC.text2(dark), fontSize: 10 },
-    },
-    series: ['complete','active','planning'].map((status, idx) => ({
-      name: SL[status],
-      type: 'bar',
-      stack: 'total',
-      barMaxWidth: 36,
-      itemStyle: { color: SC[status], borderRadius: idx === 0 ? [4,4,0,0] : 0 },
-      data: grouped.map(([,c]) => c[status] || 0),
-      emphasis: { itemStyle: { opacity: 0.85 } },
-    })),
-  })
-
-  useECharts(chartRef, getOption, [grouped], isDark)
-
-  // Dismiss tooltip on tap outside chart or page scroll
-  useEffect(() => {
-    const el = chartRef.current
-    if (!el) return
-    const hideTip = () => {
-      const chart = echarts.getInstanceByDom(el)
-      if (chart) chart.dispatchAction({ type: 'hideTip' })
-    }
-    const onDocClick = (e) => { if (!el.contains(e.target)) hideTip() }
-    const scrollEl = el.closest('.scroll-page')
-    document.addEventListener('click', onDocClick)
-    scrollEl?.addEventListener('scroll', hideTip, { passive: true })
-    return () => {
-      document.removeEventListener('click', onDocClick)
-      scrollEl?.removeEventListener('scroll', hideTip)
-    }
-  }, [grouped])
-
-  // Handle click on bar to open year carousel
-  useEffect(() => {
-    const el = chartRef.current
-    if (!el) return
-    const chart = echarts.getInstanceByDom(el)
-    if (!chart) return
-    const handler = (params) => setCarouselYear(String(params.name || grouped[params.dataIndex]?.[0]))
-    chart.on('click', handler)
-    return () => chart.off('click', handler)
-  }, [grouped])
-
-  if (!grouped.length) return <div style={{ textAlign:'center', padding:'24px 0', color:'var(--c-text-muted)', fontSize:13 }}>No years set on projects yet</div>
-
-  return (
-    <div>
-      <div ref={chartRef} style={{ width:'100%', height: 180 }} />
-      <div style={{ fontSize:11, color:'var(--c-text-faint)', marginTop:4 }}>Click a bar to browse that year</div>
-      {carouselYear && <YearCarousel year={carouselYear} projects={projects} photos={photos} onClose={()=>setCarouselYear(null)}/>}
-    </div>
-  )
-}
-
-// ── Species Breakdown — ECharts radial ring ──────────────────────────────────
-function SpeciesDonut({ projects, onDrill , isDark = false }) {
-  const chartRef = useRef()
-
-  const data = useMemo(() => {
-    const m = {}
-    projects.forEach(p => { const s = p.wood_type?.trim(); if(s) m[s]=(m[s]||0)+1 })
-    return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,8)
-      .map(([name,value],i) => ({ name, value, itemStyle:{color:EC.palette[i%EC.palette.length]} }))
-  }, [projects])
-
-  const getOption = (dark) => ({
-    backgroundColor: 'transparent',
-    tooltip: {
-      trigger: 'item',
-      formatter: '{b}: {c} ({d}%)',
-      backgroundColor: cv('--chart-bg'),
-      borderColor: cv('--chart-border'),
-      textStyle: { color: EC.text(dark), fontSize: 12 },
-      confine: true,
-    },
-    legend: {
-      type: 'scroll', orient: 'horizontal', bottom: 4, left: 'center',
-      textStyle: { color: EC.text2(dark), fontSize: 10 },
-      icon: 'roundRect', itemWidth: 8, itemHeight: 8,
-      pageIconColor: EC.text(dark), pageTextStyle: { color: EC.text2(dark) },
-    },
-    series: [{
-      type: 'pie', radius: ['40%','65%'], center: ['50%','46%'],
-      avoidLabelOverlap: false,
-      label: { show: false },
-      emphasis: { label: { show: true, fontSize: 12, fontWeight: 700 }, scaleSize: 6 },
-      animationType: 'scale', animationEasing: 'elasticOut', animationDelay: (i) => i * 80,
-      data,
-    }],
-  })
-
-  useECharts(chartRef, getOption, [data], isDark)
-
-  useEffect(() => {
-    const el = chartRef.current
-    if (!el) return
-    const chart = echarts.getInstanceByDom(el)
-    if (!chart) return
-    const handler = (p) => onDrill('species', p.name)
-    chart.on('click', handler)
-    return () => chart.off('click', handler)
-  }, [data, onDrill])
-
-  if (!data.length) return <div style={{textAlign:'center',padding:'24px 0',color:'var(--c-text-muted)',fontSize:13}}>No species logged yet</div>
-  return <div ref={chartRef} style={{ width:'100%', height: 260 }} />
-}
-
-
-// ── Category Heatmap — ECharts ───────────────────────────────────────────────
-function CategoryHeatmap({ projects, categories, onDrill , isDark = false }) {
-  const chartRef = useRef()
-
-  const { years, cats, grid } = useMemo(() => {
-    const ySet = new Set(), cSet = new Set()
-    projects.forEach(p => {
-      if (p.year_completed) ySet.add(String(p.year_completed))
-      if (p.category) cSet.add(p.category)
-    })
-    const years = [...ySet].sort().slice(-8)
-    const cats = categories.length ? categories.map(c => c.name) : [...cSet].sort()
-    const grid = {}
-    projects.forEach(p => {
-      if (p.year_completed && p.category) {
-        const k = `${p.category}||${p.year_completed}`
-        grid[k] = (grid[k]||0) + 1
-      }
-    })
-    return { years, cats, grid }
-  }, [projects, categories])
-
-  const data = useMemo(() => {
-    const rows = []
-    cats.forEach((cat, ci) => {
-      years.forEach((yr, yi) => {
-        const v = grid[`${cat}||${yr}`] || 0
-        rows.push([yi, ci, v])
-      })
-    })
-    return rows
-  }, [cats, years, grid])
-
-  const getOption = (dark) => ({
-    backgroundColor: 'transparent',
-    tooltip: {
-      formatter: p => `${cats[p.value[1]]} / ${years[p.value[0]]}: ${p.value[2]} project${p.value[2]!==1?'s':''}`,
-      backgroundColor: cv('--chart-bg'),
-      borderColor: cv('--chart-border'),
-      textStyle: { color: EC.text(dark), fontSize: 12 },
-    },
-    grid: { top: 8, left: 80, right: 8, bottom: 24 },
-    xAxis: {
-      type: 'category', data: years,
-      splitArea: { show: true, areaStyle: { color: ['transparent','transparent'] } },
-      axisLabel: { color: EC.text2(dark), fontSize: 10 },
-      axisLine: { show: false }, axisTick: { show: false },
-    },
-    yAxis: {
-      type: 'category', data: cats,
-      splitArea: { show: true },
-      axisLabel: { color: EC.text(dark), fontSize: 10, width: 72, overflow: 'truncate' },
-      axisLine: { show: false }, axisTick: { show: false },
-    },
-    visualMap: {
-      min: 0, max: Math.max(1, ...data.map(d => d[2])),
-      show: false,
-      inRange: { color: dark
-        ? [cv('--chart-green-1'),cv('--chart-green-2'),cv('--chart-green-3'),cv('--chart-green-4'),cv('--chart-green-5')]
-        : [cv('--chart-green-1'),cv('--chart-green-2'),cv('--chart-green-3'),cv('--chart-green-4'),cv('--chart-green-5')]
-      },
-    },
-    series: [{
-      type: 'heatmap',
-      data,
-      label: { show: true, color: '#fff', fontSize: 10, formatter: p => p.value[2] || '' },
-      emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,.3)' } },
-      itemStyle: { borderRadius: 3, borderWidth: 2, borderColor: cv('--chart-green-1') },
-      animationDelay: (i) => i * 15,
-    }],
-  })
-
-  useECharts(chartRef, getOption, [data, cats, years], isDark)
-
-  useEffect(() => {
-    const el = chartRef.current; if (!el) return
-    const chart = echarts.getInstanceByDom(el); if (!chart) return
-    const handler = (p) => onDrill('category', cats[p.value[1]])
-    chart.on('click', handler)
-    return () => chart.off('click', handler)
-  }, [cats, onDrill])
-
-  if (!years.length || !cats.length) return (
-    <div style={{ textAlign:'center', padding:'24px 0', color:'var(--c-text-muted)', fontSize:13 }}>
-      Add categories + years to projects
-    </div>
-  )
-  return <div ref={chartRef} style={{ width:'100%', height: Math.max(120, cats.length * 28 + 40) }} />
-}
-
-
-// ── Finish Usage — ECharts horizontal bar ────────────────────────────────────
-function FinishUsage({ projects, onDrill , isDark = false }) {
-  const chartRef = useRef()
-
-  const data = useMemo(() => {
-    const m={}
-    projects.forEach(p=>{ const f=p.finish_used?.trim(); if(f) m[f]=(m[f]||0)+1 })
-    return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,8)
-  }, [projects])
-
-  const getOption = (dark) => ({
-    backgroundColor: 'transparent',
-    tooltip: {
-      trigger: 'axis', axisPointer:{type:'none'},
-      backgroundColor: cv('--chart-bg'),
-      borderColor: cv('--chart-border'),
-      textStyle: { color: EC.text(dark), fontSize: 12 },
-    },
-    grid: { top:4, left:4, right:40, bottom:4, containLabel:true },
-    xAxis: { type:'value', splitLine:{lineStyle:{color:EC.grid(dark)}}, axisLabel:{color:EC.text2(dark),fontSize:10} },
-    yAxis: { type:'category', data:data.map(([n])=>n).reverse(), axisLabel:{color:EC.text(dark),fontSize:11}, axisTick:{show:false}, axisLine:{show:false} },
-    series: [{
-      type:'bar', barMaxWidth:20,
-      data: data.map(([,v])=>v).reverse(),
-      label: { show:true, position:'right', color:EC.text2(dark), fontSize:10 },
-      itemStyle:{ color:{type:'linear',x:0,y:0,x2:1,y2:0, colorStops:[{offset:0,color:EC.green},{offset:1,color:'#4ADE80'}]}, borderRadius:[0,4,4,0] },
-      emphasis:{ itemStyle:{opacity:0.8} },
-      animationDelay: (i) => i*60,
-    }],
-  })
-
-  useECharts(chartRef, getOption, [data], isDark)
-
-  useEffect(()=>{
-    const el=chartRef.current; if (!el) return
-    const chart=echarts.getInstanceByDom(el); if(!chart) return
-    const handler=(p)=>onDrill('finish', data[data.length-1-p.dataIndex]?.[0])
-    chart.on('click',handler)
-    return ()=>chart.off('click',handler)
-  },[data,onDrill])
-
-  if (!data.length) return <div style={{textAlign:'center',padding:'24px 0',color:'var(--c-text-muted)',fontSize:13}}>No finishes logged yet</div>
-  return <div ref={chartRef} style={{ width:'100%', height: Math.max(120, data.length*28) }} />
-}
-
-
-
-// ── Wood Source Map ───────────────────────────────────────────────────────────
-function WoodSourceMap({ locations, woodStock, projectWoodSources, onLocationClick }) {
-  const mapRef = useRef(null)
-  const mapInstance = useRef(null)
-  const [expanded, setExpanded] = useState(false)
-
-  const sourceCounts = useMemo(() => {
-    const m = {}
-    ;(projectWoodSources || []).forEach(pws => {
-      const stock = (woodStock || []).find(w => w.id === pws.wood_stock_id)
-      if (stock?.location_id) m[stock.location_id] = (m[stock.location_id] || 0) + 1
-    })
-    return m
-  }, [projectWoodSources, woodStock])
-
-  const mappable = locations.filter(l => l.lat && l.lng)
-
-  useEffect(() => {
-    if (!mapRef.current || mappable.length === 0) return
-    if (mapInstance.current) { mapInstance.current.remove(); mapInstance.current = null }
-    const L = window.L; if (!L) return
-    const lats = mappable.map(l => l.lat), lngs = mappable.map(l => l.lng)
-    const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2
-    const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2
-    const map = L.map(mapRef.current, { zoomControl: true, scrollWheelZoom: true }).setView([centerLat || 43.5, centerLng || -71.5], mappable.length === 1 ? 10 : 7)
-    mapInstance.current = map
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{ attribution:'© CartoDB', maxZoom:19, subdomains:'abcd' }).addTo(map)
-    // B6: Force Leaflet to recalculate after layout settles (fixes iPhone blank tiles)
-    setTimeout(() => map.invalidateSize(), 300)
-    setTimeout(() => map.invalidateSize(), 800)
-    mappable.forEach(loc => {
-      const count = sourceCounts[loc.id] || 0
-      const size = Math.max(24, Math.min(40, 24 + count * 4))
-      const icon = L.divIcon({ className: '', html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:rgba(74,222,128,0.9);border:2px solid rgba(255,255,255,0.6);animation:markerPulse 2.4s ease-in-out infinite;display:flex;align-items:center;justify-content:center;color:#0F1E38;font-size:${count > 0 ? 11 : 9}px;font-weight:800;font-family:system-ui">${count > 0 ? count : '•'}</div>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] })
-      const marker = L.marker([loc.lat, loc.lng], { icon }).addTo(map)
-      marker.bindPopup(`<strong>${loc.name}</strong>${loc.address ? '<br>' + loc.address : ''}${count ? '<br>' + count + ' project' + (count > 1 ? 's' : '') + ' — click to view' : ''}`)
-      if (onLocationClick && count > 0) {
-        marker.on('click', () => { setTimeout(() => onLocationClick(loc.name), 200) })
-      }
-    })
-    return () => { if (mapInstance.current) { mapInstance.current.remove(); mapInstance.current = null } }
-  }, [mappable, sourceCounts, expanded])
-
-  if (!locations.length) return <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--c-text-muted)', fontSize: 13 }}>No wood locations added yet</div>
-  if (mappable.length === 0) return (
-    <div>{locations.map(l => (
-      <div key={l.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid var(--c-border-light)' }}>
-        <span style={{ fontSize: 12, color: 'var(--c-text-body)' }}>{l.name}</span>
-        <span style={{ fontSize: 12, color: 'var(--c-text-muted)' }}>{sourceCounts[l.id] || 0} projects</span>
-      </div>
-    ))}</div>
-  )
-  return (
-    <div>
-      <div ref={mapRef} onClick={() => setExpanded(true)} style={{ height: 200, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--c-border-light)', cursor: 'pointer', position: 'relative' }}>
-        <div style={{ position: 'absolute', bottom: 8, right: 8, zIndex: 1000, background: 'rgba(255,255,255,.85)', borderRadius: 6, padding: '3px 8px', fontSize: 11, fontWeight: 600, color: '#333', pointerEvents: 'none' }}>⤢ Expand</div>
-      </div>
-      <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
-        {locations.slice(0, 4).map(l => (
-          <div key={l.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-            <span style={{ color: 'var(--c-text-body)' }}>{l.name}</span>
-            <span style={{ color: 'var(--c-text-muted)' }}>{sourceCounts[l.id] || 0} uses</span>
-          </div>
-        ))}
-      </div>
-      {expanded && createPortal(
-        <div onClick={e => { if (e.target === e.currentTarget) setExpanded(false) }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.7)', zIndex: 2000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div className="map-modal-card">
-            <div className="map-modal-header">
-              <span style={{ color: 'var(--white)', fontWeight: 600, fontSize: 15 }}>Wood Source Locations</span>
-              <button onClick={() => setExpanded(false)} className="map-modal-close">×</button>
-            </div>
-            <div ref={mapRef} style={{ flex: 1 }} />
-          </div>
-        </div>,
-        document.body
-      )}
-    </div>
-  )
-}
-
-
-// ── ECharts hook ──────────────────────────────────────────────────────────────
-// Shared debounced ResizeObserver — one observer for all charts
-const _chartRefs = new Set()
-let _roTimer = null
-const _ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => {
-  clearTimeout(_roTimer)
-  _roTimer = setTimeout(() => {
-    _chartRefs.forEach(el => {
-      const c = echarts.getInstanceByDom(el)
-      if (c) c.resize()
-    })
-  }, 150)
-}) : null
-
-function useECharts(ref, getOption, deps, isDark) {
-  useEffect(() => {
-    if (!ref.current) return
-    let chart = echarts.getInstanceByDom(ref.current) ||
-                echarts.init(ref.current, null, { renderer: 'svg' })
-
-    chart.setOption(getOption(isDark), { notMerge: true })
-    chart.resize()
-
-    // Register with shared observer
-    if (_ro) { _ro.observe(ref.current); _chartRefs.add(ref.current) }
-
-    return () => {
-      if (_ro && ref.current) { _ro.unobserve(ref.current); _chartRefs.delete(ref.current) }
-      chart?.dispose()
-      chart = null
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [...deps, isDark])
-}
-
-
-// ── Theme colours ──────────────────────────────────────────────────────────────
-const EC = {
-  text:   () => cv('--chart-text'),
-  text2:  () => cv('--c-text-muted'),
-  bg:     () => cv('--chart-bg'),
-  grid:   () => cv('--chart-grid'),
-  accent: cv('--accent'),
-  green:  cv('--green'),
-  orange: cv('--orange'),
-  purple: cv('--purple'),
-  teal:   '#0891B2',
-  palette: [cv('--accent'), cv('--green'), cv('--orange'), cv('--purple'), '#0891B2', '#BE185D', '#15803D', '#9333EA'],
-}
-
-
-// ── Material Flow Sankey (NEW) — species → category → finish ─────────────────
-function MaterialFlow({ projects , isDark = false }) {
-  const chartRef = useRef()
-
-  const { nodes, links } = useMemo(() => {
-    const nodeSet = new Set()
-    const linkMap = {}
-    projects.forEach(p => {
-      const s = p.wood_type?.trim()
-      const c = p.category?.trim()
-      const f = p.finish_used?.trim()
-      if (!s || !c) return
-      const sc = `${s}→${c}`
-      nodeSet.add('S:'+s); nodeSet.add('C:'+c)
-      linkMap[sc] = (linkMap[sc]||0)+1
-      if (f) {
-        const cf = `${c}→${f}`
-        nodeSet.add('F:'+f)
-        linkMap[cf] = (linkMap[cf]||0)+1
-      }
-    })
-    const nodes = [...nodeSet].map(n => ({
-      name: n,
-      itemStyle: { color: n.startsWith('S:') ? EC.accent : n.startsWith('C:') ? EC.green : EC.orange }
-    }))
-    const links = Object.entries(linkMap).map(([key,value]) => {
-      const [from,to] = key.split('→')
-      const src = nodeSet.has('S:'+from) ? 'S:'+from : nodeSet.has('C:'+from) ? 'C:'+from : 'F:'+from
-      const tgt = nodeSet.has('C:'+to) ? 'C:'+to : 'F:'+to
-      return { source:src, target:tgt, value }
-    })
-    return { nodes, links }
-  }, [projects])
-
-  const getOption = (dark) => ({
-    backgroundColor: 'transparent',
-    tooltip: {
-      trigger:'item',
-      backgroundColor: cv('--chart-bg'),
-      borderColor: cv('--chart-border'),
-      textStyle: { color:EC.text(dark), fontSize:12 },
-      formatter: p => p.data.source
-        ? `${p.data.source.slice(2)} → ${p.data.target.slice(2)}: ${p.data.value}`
-        : p.name.slice(2),
-    },
-    series: [{
-      type:'sankey', layout:'none',
-      emphasis:{focus:'adjacency'},
-      nodeWidth:12, nodeGap:8,
-      data: nodes,
-      links: links,
-      label: { color:EC.text(dark), fontSize:10 },
-      lineStyle: { color:'gradient', opacity:0.4 },
-      animationDuration:1200, animationEasing:'cubicOut',
-    }],
-  })
-
-  useECharts(chartRef, getOption, [nodes, links], isDark)
-  if (!nodes.length) return <div style={{textAlign:'center',padding:'24px 0',color:'var(--c-text-muted)',fontSize:13}}>Log species + categories to see material flow</div>
-  return <div ref={chartRef} style={{ width:'100%', height: Math.max(160, nodes.length * 18) }} />
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
@@ -677,7 +121,7 @@ export default function Dashboard() {
   const projThumb = useMemo(() => {
     const m = {}
     data.photos.forEach(p => {
-      if (p.project_id && !m[p.project_id]) m[p.project_id] = p.url
+      if (p.project_id && !m[p.project_id]) m[p.project_id] = p
     })
     return m
   }, [data.photos])
@@ -838,11 +282,13 @@ export default function Dashboard() {
                 }}>
                   {/* Thumbnail */}
                   <div style={{
-                    width: 72, flexShrink: 0,
-                    background: thumb ? `url(${thumb}) center/cover` : 'var(--c-bg-subtle)',
+                    width: 72, flexShrink: 0, position: 'relative',
+                    background: 'var(--c-bg-subtle)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
-                    {!thumb && <IFolder size={20} color="var(--c-text-faint)" sw={1.5} />}
+                    {thumb
+                      ? <PhotoImg photo={thumb} alt="" loading="lazy" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                      : <IFolder size={20} color="var(--c-text-faint)" sw={1.5} />}
                   </div>
                   {/* Content */}
                   <div style={{ flex: 1, padding: '12px 14px', minWidth: 0 }}>
@@ -874,14 +320,17 @@ export default function Dashboard() {
         </>}
 
         <span className="section-label" style={{ marginTop: 16 }}>Analytics</span>
-        <div className="dash-grid">
-          <div className="card"><div className="label-caps-sm">Projects by Year</div><ProjectsByYear projects={data.projects} photos={data.photos} onDrill={handleDrill} isDark={theme === 'dark'} /></div>
-          <div className="card"><div className="label-caps-sm">Species Breakdown</div><SpeciesDonut projects={data.projects} onDrill={handleDrill} isDark={theme === 'dark'} /></div>
-          <div className="card"><div className="label-caps-sm">Category Heatmap</div><CategoryHeatmap projects={data.projects} categories={cats} onDrill={handleDrill} isDark={theme === 'dark'} /></div>
-          <div className="card"><div className="label-caps-sm">Finish Usage</div><FinishUsage projects={data.projects} onDrill={handleDrill} isDark={theme === 'dark'} /></div>
-          <div className="card"><div className="label-caps-sm">Wood Source Map</div><WoodSourceMap locations={locations} woodStock={data.woodStock} projectWoodSources={data.projectWoodSources} onLocationClick={(locName) => { setTab('projects'); window.__woodLocationFilter = locName; }} /></div>
-          <div className="card" style={{gridColumn:'1/-1'}}><div className="label-caps-sm">Material Flow — Species → Category → Finish</div><MaterialFlow projects={data.projects} isDark={theme === 'dark'} /></div>
-        </div>
+        <LazyOnView fallback={
+          <div className="dash-grid" aria-busy="true">
+            {[0,1,2,3,4].map(i => <div key={i} className="card" style={{ minHeight: 220 }} />)}
+          </div>
+        }>
+          <AnalyticsSection
+            data={data} categories={cats} locations={locations}
+            isDark={theme === 'dark'} onDrill={handleDrill}
+            onLocationClick={(locName) => { setTab('projects'); window.__woodLocationFilter = locName; }}
+          />
+        </LazyOnView>
 
         {data.photos.length > 0 && <>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '24px 20px 6px' }}>

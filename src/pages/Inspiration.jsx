@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { useCtx } from '../App.jsx'
-import { PhotoGrid, Sheet, FormCell, TagInput, ICamera } from '../components/Shared.jsx'
+import { PhotoGrid, PhotoImg, Sheet, FormCell, TagInput, ICamera } from '../components/Shared.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
 import { supabase, getCurrentUserId } from '../supabase.js'
@@ -168,7 +168,7 @@ function IdeaFromPhotoBody({ photo, onSave }) {
     <div>
       {/* Photo thumbnail */}
       <div style={{ marginBottom: 12, borderRadius: 8, overflow: 'hidden', maxHeight: 160 }}>
-        <img src={photo.url} alt="" style={{ width: '100%', objectFit: 'cover', maxHeight: 160, display: 'block' }} />
+        <PhotoImg photo={photo} size="medium" alt="" style={{ width: '100%', objectFit: 'cover', maxHeight: 160, display: 'block' }} />
       </div>
 
       <div className="form-group">

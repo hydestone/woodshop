@@ -1655,18 +1655,6 @@ body {
 .drop-zone p { font-size: 14px; color: var(--c-text-muted); }
 
 /* ─── Home page ──────────────────────────────────────────────────────────── */
-.home-page {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 24px;
-  text-align: center;
-}
-.home-logo { width: 120px; height: 120px; margin-bottom: 20px; }
-.home-title { font-size: 28px; font-weight: 700; letter-spacing: -.3px; margin-bottom: 6px; }
-.home-sub { font-size: 16px; color: var(--c-text-muted); }
 
 /* ─── Empty states ───────────────────────────────────────────────────────── */
 .empty {
@@ -1740,18 +1728,6 @@ body {
 }
 .error-box h2 { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
 .error-box p { font-size: 14px; color: var(--c-text-muted); line-height: 1.6; margin-bottom: 12px; }
-.error-code {
-  background: var(--c-bg-subtle-2);
-  border-radius: var(--r-sm);
-  padding: 10px 14px;
-  font-size: 13px;
-  text-align: left;
-  margin-bottom: 16px;
-  line-height: 1.8;
-  font-family: monospace;
-  color: var(--c-text-body);
-}
-
 /* ─── Search ─────────────────────────────────────────────────────────────── */
 .search-wrap { position: relative; flex-shrink: 1; width: 100%; }
 .search-input-wrap {

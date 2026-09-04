@@ -6,13 +6,11 @@
  */
 
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
-import { createPortal } from 'react-dom'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import { hapticLight } from '../db.js'
-import { photoUrl } from '../supabase.js'
 import * as db from '../db.js'
-import { IChevL, ICheck, IFolder } from '../components/Shared.jsx'
+import { IChevL, ICheck, IFolder, PhotoImg } from '../components/Shared.jsx'
 
 // ─── Swipe Card (Mobile) ─────────────────────────────────────────────────────
 function SwipeCard({ photo, onAssign, onSkip, projects }) {
@@ -55,7 +53,7 @@ function SwipeCard({ photo, onAssign, onSkip, projects }) {
         transform: `translateX(${exiting === 'right' ? '120%' : '-120%'}) rotate(${exiting === 'right' ? 15 : -15}deg)`,
         opacity: 0,
       }}>
-        <img src={photo.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: 16 }} />
+        <PhotoImg photo={photo} size="medium" alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: 16 }} />
       </div>
     )
   }
@@ -74,8 +72,8 @@ function SwipeCard({ photo, onAssign, onSkip, projects }) {
         cursor: 'grab',
       }}
     >
-      <img
-        src={photo.url}
+      <PhotoImg
+        photo={photo} size="medium"
         alt={photo.caption || ''}
         style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: 16, pointerEvents: 'none' }}
         draggable={false}
@@ -280,8 +278,8 @@ function DesktopTriage({ photos, projects, onAssign, onClose, statusBar }) {
                   transform: selected.has(photo.id) ? 'scale(0.95)' : 'scale(1)',
                 }}
               >
-                <img
-                  src={photo.url}
+                <PhotoImg
+                  photo={photo}
                   alt={photo.caption || ''}
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   draggable={false}
@@ -337,7 +335,7 @@ function DesktopTriage({ photos, projects, onAssign, onClose, statusBar }) {
                 }}
               >
                 {p._thumb ? (
-                  <img src={p._thumb} alt="" style={{ width: 32, height: 32, borderRadius: 6, objectFit: 'cover' }} />
+                  <PhotoImg photo={p._thumb} alt="" style={{ width: 32, height: 32, borderRadius: 6, objectFit: 'cover' }} />
                 ) : (
                   <div style={{ width: 32, height: 32, borderRadius: 6, background: 'var(--c-bg-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <IFolder size={16} color="var(--c-text-muted)" sw={1.5} />
@@ -375,7 +373,6 @@ export default function PhotoTriage({ onClose, onNewProject }) {
   const unsorted = useMemo(() =>
     data.photos
       .filter(p => p.photo_type === 'unsorted')
-      .map(p => ({ ...p, url: p.url || photoUrl(p.storage_path) }))
       .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)),
     [data.photos]
   )
@@ -388,7 +385,7 @@ export default function PhotoTriage({ onClose, onNewProject }) {
     list = list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
     return list.map(p => {
       const photo = data.photos.find(ph => ph.project_id === p.id)
-      return { ...p, _thumb: photo ? (photo.url || photoUrl(photo.storage_path)) : null }
+      return { ...p, _thumb: photo || null }
     })
   }, [data.projects, data.photos, statusFilter])
 

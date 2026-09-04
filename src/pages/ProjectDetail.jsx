@@ -3,10 +3,10 @@ import { createPortal } from 'react-dom'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
-import { hapticLight, hapticSuccess } from '../db.js'
+import { hapticLight } from '../db.js'
 import { addToGoogleCalendar } from '../supabase.js'
 import {
-  Sheet, FormCell, BulkAddSheet, ConfirmSheet, DropZone, PhotoGrid, TagInput, FilterSelect, SwipeRow,
+  Sheet, FormCell, BulkAddSheet, ConfirmSheet, DropZone, PhotoGrid, PhotoImg, TagInput, FilterSelect, SwipeRow,
   STATUS, coatStatus, fmtShort, localDt, useLongPress, BeforeAfterCompare,
   IPlus, ITrash, ICircle, ICheck, IChevR, IChevL, IEdit, ICal, ICamera, IBell, IGrid, IStar, IList, IDollar,
 } from '../components/Shared.jsx'
@@ -332,9 +332,13 @@ ${progressPhotos.length>12?`<div style="display:flex;align-items:center;justify-
         <div style={{
           position: 'relative',
           minHeight: heroPhoto ? 160 : 'auto',
-          background: heroPhoto ? `url(${heroPhoto.url}) center/cover` : 'transparent',
+          background: 'transparent',
           display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
+          overflow: 'hidden',
         }}>
+          {heroPhoto && (
+            <PhotoImg photo={heroPhoto} size="medium" alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+          )}
           {/* Gradient overlay for readability */}
           {heroPhoto && (
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,.3) 0%, rgba(0,0,0,.1) 40%, rgba(0,0,0,.7) 100%)' }} />

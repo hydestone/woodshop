@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
-import { supabase, BUCKET, photoUrl } from '../supabase.js'
+import { supabase, photoUrls } from '../supabase.js'
+import { PhotoImg } from '../components/Shared.jsx'
 
 // ── Ron Swanson splash screen ──────────────────────────────────────────────────
 function RonSplash({ onDone }) {
@@ -213,10 +214,12 @@ export default function Portfolio() {
 
   useEffect(() => {
     Promise.all([
-      supabase.from('photos').select('*').ilike('tags','%portfolio%').order('created_at',{ascending:false}),
-      supabase.from('projects').select('*'),
+      // Public views expose only portfolio-tagged photos and an allow-listed
+      // subset of their projects' columns; base tables are closed to anon.
+      supabase.from('portfolio_photos').select('*').order('created_at',{ascending:false}),
+      supabase.from('portfolio_projects').select('*'),
     ]).then(([ph, pr]) => {
-      setPhotos((ph.data||[]).map(p => ({ ...p, url: photoUrl(p.storage_path) })))
+      setPhotos((ph.data||[]).map(p => ({ ...p, ...photoUrls(p.storage_path) })))
       setProjects(pr.data||[])
       setLoading(false)
     }).catch(() => setLoading(false))
@@ -329,7 +332,7 @@ export default function Portfolio() {
                     style={{ breakInside: 'avoid', marginBottom: 16, background: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,.08)', cursor: 'pointer' }}
                     onClick={() => setLightboxIdx(filtered.indexOf(photo))}
                   >
-                    <img src={photo.url} alt={photo.caption || proj?.name || 'Finished piece'} loading="lazy" style={{ width: '100%', display: 'block', objectFit: 'cover' }} />
+                    <PhotoImg photo={photo} size="medium" alt={photo.caption || proj?.name || 'Finished piece'} loading="lazy" style={{ width: '100%', display: 'block', objectFit: 'cover' }} />
                     {(photo.caption || proj) && (
                       <div style={{ padding: '12px 14px' }}>
                         {photo.caption && <div style={{ fontWeight: 500, fontSize: 14, color: '#0F172A' }}>{photo.caption}</div>}

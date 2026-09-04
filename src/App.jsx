@@ -1,6 +1,6 @@
 import React from 'react'
 import { useState, useEffect, useCallback, useRef, createContext, useContext, lazy, Suspense } from 'react'
-import { seedSampleData, clearSampleData, getSampleIds } from './seed.js'
+import { seedSampleData, clearSampleData } from './seed.js'
 import * as db from './db.js'
 import { supabase, getSession, signOut, onAuthStateChange } from './supabase.js'
 import Auth from './pages/Auth.jsx'
@@ -22,25 +22,26 @@ import { ProjectDetail } from './pages/ProjectDetail.jsx'
 import Shopping         from './pages/Shopping.jsx'
 import Maintenance      from './pages/Maintenance.jsx'
 import Stock, { WoodStockGallery } from './pages/Stock.jsx'
-import Brainstorm       from './pages/Brainstorm.jsx'
-import Finishes         from './pages/Finishes.jsx'
-import Resources        from './pages/Resources.jsx'
 import ShopTools from './pages/ShopTools.jsx'
 import AllPhotos        from './pages/Photos.jsx'
-import FinishedProducts from './pages/FinishedProducts.jsx'
-import Inspiration      from './pages/Inspiration.jsx'
-import ProjectIdeas     from './pages/ProjectIdeas.jsx'
-import YearReview       from './pages/YearReview.jsx'
-import Costs            from './pages/Costs.jsx'
-import Settings         from './pages/Settings.jsx'
-import BulkImport       from './pages/BulkImport.jsx'
-import Audit            from './pages/Audit.jsx'
-import Help             from './pages/Help.jsx'
-import SmokeTest        from './pages/SmokeTest.jsx'
-import BetaQuestionnaire from './pages/BetaQuestionnaire.jsx'
 import Calculators      from './pages/Calculators.jsx'
-import Trash            from './pages/Trash.jsx'
-import Privacy          from './pages/Privacy.jsx'
+// Secondary pages load on first visit (own chunks); core shop tabs stay eager for instant switching
+const Brainstorm = lazy(() => import('./pages/Brainstorm.jsx'))
+const Finishes = lazy(() => import('./pages/Finishes.jsx'))
+const Resources = lazy(() => import('./pages/Resources.jsx'))
+const FinishedProducts = lazy(() => import('./pages/FinishedProducts.jsx'))
+const Inspiration = lazy(() => import('./pages/Inspiration.jsx'))
+const ProjectIdeas = lazy(() => import('./pages/ProjectIdeas.jsx'))
+const YearReview = lazy(() => import('./pages/YearReview.jsx'))
+const Costs = lazy(() => import('./pages/Costs.jsx'))
+const Settings = lazy(() => import('./pages/Settings.jsx'))
+const BulkImport = lazy(() => import('./pages/BulkImport.jsx'))
+const Audit = lazy(() => import('./pages/Audit.jsx'))
+const Help = lazy(() => import('./pages/Help.jsx'))
+const SmokeTest = lazy(() => import('./pages/SmokeTest.jsx'))
+const BetaQuestionnaire = lazy(() => import('./pages/BetaQuestionnaire.jsx'))
+const Trash = lazy(() => import('./pages/Trash.jsx'))
+const Privacy = lazy(() => import('./pages/Privacy.jsx'))
 import Tutorial, { useTutorialCheck } from './components/Tutorial.jsx'
 import ErrorBoundary  from './components/ErrorBoundary.jsx'
 
@@ -472,6 +473,8 @@ export default function App() {
   const [showQR, setShowQR]                 = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [isOffline, setIsOffline]           = useState(!navigator.onLine)
+  const [loadWarning, setLoadWarning]       = useState(null)
+  const firstLoadRef = useRef(true)
   const [needsPassword, setNeedsPassword]   = useState(false)
   const [celebrating, setCelebrating]       = useState(false)
   const prevProjectsRef = useRef(null)
@@ -556,13 +559,24 @@ export default function App() {
   }, [])
 
   const reload = useCallback(async () => {
-    const minTime = new Promise(r => setTimeout(r, 1500))
+    // Splash minimum applies to the first load only — pull-to-refresh should be instant
+    const minTime = new Promise(r => setTimeout(r, firstLoadRef.current ? 1500 : 0))
     try {
       setError(null)
       const [d] = await Promise.all([db.loadAll(), minTime])
+      firstLoadRef.current = false
+
+      // A failed core query must not masquerade as an empty account
+      const failed = d._meta?.failed || []
+      if (failed.includes('projects')) {
+        throw new Error(`Could not load projects (${failed.join(', ')})`)
+      }
+      setLoadWarning(failed.length ? `Some data didn't load: ${failed.join(', ')}. Pull to refresh.` : null)
 
       // Always set data first — app loads regardless of seed outcome
       setData(d)
+      // Housekeeping: drop trash older than 30 days (non-blocking)
+      db.purgeExpiredTrash().then(n => { if (n) setData(x => x && ({ ...x, trash: (x.trash || []).filter(t => Date.now() - new Date(t.deleted_at) < 30 * 86400000) })) })
 
       // Seed check for new users (non-blocking — failures don't prevent app load)
       try {
@@ -747,9 +761,8 @@ export default function App() {
   if (error) return (
     <div className="center-screen">
       <div className="error-box">
-        <h2>Connection error</h2>
-        <p>Could not connect to Supabase. Check your environment variables and make sure the database tables have been created.</p>
-        <div className="error-code">VITE_SUPABASE_URL{'\n'}VITE_SUPABASE_ANON_KEY</div>
+        <h2>Couldn't load your workshop</h2>
+        <p>Check your connection and try again. If this keeps happening, use Feedback in the More menu.</p>
         <p style={{ color: 'var(--red)', fontSize: 13, marginBottom: 16 }}>{error}</p>
         <button className="btn-primary" style={{ width: '100%', justifyContent: 'center' }} onClick={reload}>
           Try again
@@ -777,7 +790,8 @@ export default function App() {
     ? data?.projects?.find(p => p.id === projId)?.name || 'Project'
     : ALL_NAV.find(t => t.id === tab)?.label || 'Home'
 
-  const ctx = { data, mutate, reload, tab, setTab, navigate, projId, setProjId: openProject, theme, launchTutorial, sampleIds, tabAction, setTabAction }
+  const isOwner = db.isOwner(session?.user?.id)
+  const ctx = { data, mutate, reload, tab, setTab, navigate, projId, setProjId: openProject, theme, launchTutorial, sampleIds, tabAction, setTabAction, isOwner }
 
   return (
     <AppCtx.Provider value={ctx}>
@@ -911,6 +925,7 @@ export default function App() {
                 <ProjectDetail />
               ) : (
                 <div key={tabKey} className="tab-panel">
+                  <Suspense fallback={null}>
                   {tab === 'home'        && <>
                     {sampleIds?.projectId && (
                       <div className="sample-banner">
@@ -951,6 +966,7 @@ export default function App() {
                   {tab === 'scratchpad' && <ScratchPad />}
                   {tab === 'trash'       && <Trash />}
                   {tab === 'privacy'     && <Privacy />}
+                  </Suspense>
                 </div>
               )}
               </ErrorBoundary>
@@ -1001,6 +1017,11 @@ export default function App() {
       {isOffline && (
         <div className="offline-banner">
           ⚡ Offline — showing cached data
+        </div>
+      )}
+      {!isOffline && loadWarning && (
+        <div className="offline-banner" onClick={() => setLoadWarning(null)} role="status">
+          ⚠️ {loadWarning}
         </div>
       )}
 

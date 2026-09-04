@@ -70,11 +70,5 @@ create table if not exists shop_improvements (
   created_at timestamptz not null default now()
 );
 
--- Disable RLS on new tables
-alter table wood_stock       disable row level security;
-alter table moisture_log     disable row level security;
-alter table brainstorming    disable row level security;
-alter table finish_products  disable row level security;
-alter table resources        disable row level security;
-alter table shop_improvements disable row level security;
+-- New tables must be covered by hardening-migration.sql Section 2 (RLS + owner policies).
 ```

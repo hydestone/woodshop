@@ -2,11 +2,11 @@ import { useState, useRef, useMemo, useCallback } from 'react'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
-import { PhotoGrid, Sheet, FormCell, TagInput, ICamera, IPlus, IClose, IDuplicates, ISearch, IGrid, FilterSelect } from '../components/Shared.jsx'
+import { PhotoGrid, PhotoImg, Sheet, FormCell, TagInput, ICamera, IPlus, IClose, IDuplicates, ISearch, IGrid, FilterSelect } from '../components/Shared.jsx'
 import PhotoTriage from '../components/PhotoTriage.jsx'
 
 export default function AllPhotos() {
-  const { navigate, data, mutate } = useCtx()
+  const { navigate, data, mutate, isOwner } = useCtx()
   const toast = useToast()
   const [uploading, setUploading]       = useState(false)
   const [showLimit, setShowLimit]       = useState(false)
@@ -20,6 +20,7 @@ export default function AllPhotos() {
   const [showNewProject, setShowNewProject] = useState(false)
   const [scanning, setScanning]             = useState(false)
   const [scanProgress, setScanProgress]     = useState({ done: 0, total: 0 })
+  const [scanKind, setScanKind]             = useState('duplicates') // 'duplicates' | 'optimize'
   const [showDuplicates, setShowDuplicates] = useState(false)
   const [duplicateGroups, setDuplicateGroups] = useState([])
   const [selectMode, setSelectMode]     = useState(false)
@@ -139,6 +140,22 @@ export default function AllPhotos() {
     }
     setScanning(false)
   }, [data.photos, mutate, toast])
+
+  // Owner-only maintenance: generate thumb/medium derivatives for photos uploaded
+  // before the derivative pipeline existed. Safe to re-run.
+  const handleOptimize = useCallback(async () => {
+    setScanKind('optimize')
+    setScanning(true)
+    setScanProgress({ done: 0, total: data.photos.length })
+    try {
+      const n = await db.backfillDerivatives(data.photos, (done, total) => setScanProgress({ done, total }))
+      toast(`Optimized ${n} photo${n === 1 ? '' : 's'}`, 'success')
+    } catch (e) {
+      toast('Optimize failed: ' + e.message, 'error')
+    }
+    setScanning(false)
+    setScanKind('duplicates')
+  }, [data.photos, toast])
 
   const handleDeleteDuplicates = useCallback(async (photoIds) => {
     let deleted = 0
@@ -373,6 +390,20 @@ export default function AllPhotos() {
                     Sort →
                   </button>
                 </div>
+              )}
+              {/* Optimize (owner only) */}
+              {isOwner && (
+                <button onClick={handleOptimize} disabled={scanning} title="Generate fast-loading thumbnails for older photos"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 5,
+                    padding: '5px 10px', borderRadius: 6, cursor: 'pointer', flexShrink: 0,
+                    background: 'var(--c-bg-subtle)', border: '1.5px solid var(--c-border)',
+                    color: 'var(--c-text-muted)', fontSize: 12, fontWeight: 600,
+                    fontFamily: 'inherit', whiteSpace: 'nowrap',
+                  }}>
+                  <IGrid size={14} sw={2} />
+                  {!isMobile && <span>Optimize</span>}
+                </button>
               )}
               {/* Find duplicates button */}
               <button
@@ -656,11 +687,11 @@ export default function AllPhotos() {
           }}>
             <IDuplicates size={36} color="var(--accent)" sw={1.5} />
             <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--c-text-primary)', margin: '16px 0 8px' }}>
-              Scanning for duplicates
+              {scanKind === 'optimize' ? 'Optimizing photos' : 'Scanning for duplicates'}
             </h3>
             <p style={{ fontSize: 13, color: 'var(--c-text-muted)', margin: '0 0 20px' }}>
               {scanProgress.total > 0
-                ? `Analyzing ${scanProgress.done} of ${scanProgress.total} photos…`
+                ? `${scanKind === 'optimize' ? 'Processing' : 'Analyzing'} ${scanProgress.done} of ${scanProgress.total} photos…`
                 : 'Preparing scan…'
               }
             </p>
@@ -912,8 +943,8 @@ function DuplicateReview({ groups, projects, onDelete, onClose }) {
                       }}
                     >
                       <div style={{ width: '100%', aspectRatio: '1/1', position: 'relative', background: 'var(--c-bg-subtle)' }}>
-                        <img
-                          src={photo.url}
+                        <PhotoImg
+                          photo={photo}
                           alt={photo.caption || ''}
                           loading="lazy"
                           style={{

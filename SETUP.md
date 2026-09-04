@@ -69,13 +69,10 @@ create table if not exists photos (
   created_at timestamptz not null default now()
 );
 
--- Disable RLS on all tables (single-user personal app)
-alter table projects   disable row level security;
-alter table steps      disable row level security;
-alter table coats      disable row level security;
-alter table maintenance disable row level security;
-alter table shopping   disable row level security;
-alter table photos     disable row level security;
+-- Row-level security is REQUIRED (multi-user). After creating tables, run
+-- hardening-migration.sql from the repo root — it enables RLS on every table,
+-- adds owner-only policies, closes the photo bucket to non-owner writes, and
+-- creates the public portfolio views. Never disable RLS on a shared project.
 ```
 
 You should see "Success. No rows returned." for each statement.
@@ -93,20 +90,8 @@ You should see "Success. No rows returned." for each statement.
 Then go back to SQL Editor and run this:
 
 ```sql
--- Allow public reads of photos
-create policy "Public read photos"
-  on storage.objects for select
-  using ( bucket_id = 'woodshop-photos' );
-
--- Allow uploads
-create policy "Public upload photos"
-  on storage.objects for insert
-  with check ( bucket_id = 'woodshop-photos' );
-
--- Allow deletes
-create policy "Public delete photos"
-  on storage.objects for delete
-  using ( bucket_id = 'woodshop-photos' );
+-- Storage policies are created by hardening-migration.sql (Section 3):
+-- public read, owner-only insert/update/delete on bucket 'woodshop-photos'.
 ```
 
 ---

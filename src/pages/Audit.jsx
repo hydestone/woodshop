@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { useCtx } from '../App.jsx'
 import { useToast } from '../components/Toast.jsx'
 import * as db from '../db.js'
+import { PhotoImg } from '../components/Shared.jsx'
 
 const TAGS = ['finished', 'portfolio', 'progress', 'inspiration', 'before', 'after']
 
@@ -164,7 +165,7 @@ function PhotosAudit() {
               return (
                 <tr key={photo.id} style={{ borderBottom: '1px solid var(--c-border-light)', background: i % 2 === 0 ? 'transparent' : 'var(--c-bg-subtle)' }}>
                   <td style={{ padding: '6px 12px' }}>
-                    <img src={photo.url} alt="" style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 6, display: 'block' }} />
+                    <PhotoImg photo={photo} alt="" style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 6, display: 'block' }} />
                   </td>
                   <td style={{ padding: '6px 12px' }}>
                     <Cell value={photo.caption} missing={!photo.caption}
