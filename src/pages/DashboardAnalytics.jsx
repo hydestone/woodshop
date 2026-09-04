@@ -252,7 +252,7 @@ function CategoryHeatmap({ projects, categories, onDrill , isDark = false }) {
       if (p.category) cSet.add(p.category)
     })
     const years = [...ySet].sort().slice(-8)
-    const cats = categories.length ? categories.map(c => c.name) : [...cSet].sort()
+    const cats = categories.length ? [...new Set(categories.map(c => c.name))] : [...cSet].sort()
     const grid = {}
     projects.forEach(p => {
       if (p.year_completed && p.category) {
